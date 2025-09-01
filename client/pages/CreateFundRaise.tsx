@@ -367,7 +367,7 @@ export default function CreateFundRaise() {
                         {form.total_raise_mn || "Select amount"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="bottom" align="start" avoidCollisions={false} className="p-0 w-[200px]">
+                    <PopoverContent side="bottom" align="start" avoidCollisions={true} collisionPadding={8} className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto">
                       <Command>
                         <CommandInput placeholder="Search amount..." />
                         <CommandList>
@@ -400,7 +400,7 @@ export default function CreateFundRaise() {
                         {form.valuation_mn || "Select valuation"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="bottom" align="start" avoidCollisions={false} className="p-0 w-[200px]">
+                    <PopoverContent side="bottom" align="start" avoidCollisions={true} collisionPadding={8} className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto">
                       <Command>
                         <CommandInput placeholder="Search valuation..." />
                         <CommandList>
@@ -453,7 +453,7 @@ export default function CreateFundRaise() {
                       {form.total_raise_mn || "Select amount"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" avoidCollisions={false} className="p-0 w-[200px]">
+                  <PopoverContent side="bottom" align="start" avoidCollisions={true} collisionPadding={8} className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto">
                     <Command>
                       <CommandInput placeholder="Search amount..." />
                       <CommandList>
