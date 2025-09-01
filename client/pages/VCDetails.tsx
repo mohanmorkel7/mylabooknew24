@@ -452,9 +452,7 @@ export default function VCDetails() {
           <Card>
             <CardHeader>
               <CardTitle>VC Overview</CardTitle>
-              <CardDescription>
-                Basic VC information and funding details
-              </CardDescription>
+              <CardDescription>Essential VC information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
