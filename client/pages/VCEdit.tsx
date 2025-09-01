@@ -1082,13 +1082,24 @@ export default function VCEdit() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Country and City first */}
+              {/* Address, Country, State/Province, City */}
+              <div className="md:col-span-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="Street address"
+                  value={vcData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                />
+              </div>
+
               <div>
                 <Label htmlFor="country">Country</Label>
                 <Select
                   value={vcData.country || undefined}
                   onValueChange={(value) => {
                     handleInputChange("country", value);
+                    handleInputChange("state", "");
                     handleInputChange("city", "");
                   }}
                 >
@@ -1106,6 +1117,36 @@ export default function VCEdit() {
               </div>
 
               <div>
+                <Label htmlFor="state">State/Province</Label>
+                <Select
+                  value={vcData.state || undefined}
+                  onValueChange={(value) => {
+                    handleInputChange("state", value);
+                    handleInputChange("city", "");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select state/province" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(() => {
+                      const selectedCountry = Country.getAllCountries().find(
+                        (c: any) => c.name === vcData.country,
+                      );
+                      const states = selectedCountry
+                        ? State.getStatesOfCountry(selectedCountry.isoCode)
+                        : [];
+                      return states.map((s: any) => (
+                        <SelectItem key={`${s.isoCode}-${s.name}`} value={s.name}>
+                          {s.name}
+                        </SelectItem>
+                      ));
+                    })()}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
                 <Label htmlFor="city">City</Label>
                 <Select
                   value={vcData.city || undefined}
@@ -1115,21 +1156,39 @@ export default function VCEdit() {
                     <SelectValue placeholder="Select city" />
                   </SelectTrigger>
                   <SelectContent>
-                    {([...(vcData.country ? City.getCitiesOfCountry((Country.getAllCountries().find((c:any)=>c.name===vcData.country)?.isoCode||"")) : [])] as any[])
-                      .slice(0, 100)
-                      .map((c: any) => (
+                    {(() => {
+                      const selectedCountry = Country.getAllCountries().find(
+                        (c: any) => c.name === vcData.country,
+                      );
+                      const selectedState = (() => {
+                        if (!selectedCountry || !vcData.state) return null;
+                        const ss = State.getStatesOfCountry(selectedCountry.isoCode).find(
+                          (s: any) => s.name === vcData.state,
+                        );
+                        return ss || null;
+                      })();
+                      const cities = selectedCountry
+                        ? selectedState
+                          ? City.getCitiesOfState(
+                              selectedCountry.isoCode,
+                              (selectedState as any).isoCode,
+                            )
+                          : City.getCitiesOfCountry(selectedCountry.isoCode)
+                        : [];
+                      return (cities as any[]).slice(0, 100).map((c: any) => (
                         <SelectItem
                           key={`${c.name}-${c.stateCode || ""}-${c.countryCode || ""}-${c.latitude || ""}-${c.longitude || ""}`}
                           value={c.name}
                         >
                           {c.name}
                         </SelectItem>
-                      ))}
+                      ));
+                    })()}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Primary Contact in requested order */}
+              {/* Contact Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Contact Name 1</Label>
@@ -1165,28 +1224,6 @@ export default function VCEdit() {
                   />
                 </div>
               </div>
-
-              <div className="md:col-span-2">
-                <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
-                <Select
-                  value={vcData.investor_last_feedback}
-                  onValueChange={(value) =>
-                    handleInputChange("investor_last_feedback", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select last feedback" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INVESTOR_FEEDBACK.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
-                        {f.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
 
               {/* Additional Contacts */}
               <div className="space-y-4">
