@@ -82,13 +82,13 @@ import {
 } from "lucide-react";
 
 const VC_TYPES = [
-  { value: "early_stage", label: "Early Stage" },
-  { value: "accelerator", label: "Accelerator" },
-  { value: "growth", label: "Growth" },
-  { value: "strategic_bank", label: "Strategic - Bank" },
-  { value: "strategic_fintech", label: "Strategic - Fintech" },
-  { value: "strategic_individual", label: "Strategic - Individual" },
   { value: "angel", label: "Angel" },
+  { value: "vc", label: "VC" },
+  { value: "private_equity", label: "Private Equity" },
+  { value: "family_office", label: "Family Office" },
+  { value: "merchant_banker", label: "Merchant Banker" },
+  { value: "accelerator", label: "Accelerator" },
+  { value: "individual", label: "Individual" },
 ];
 
 const ROUND_STAGES = [
@@ -177,7 +177,7 @@ export default function VCEdit() {
 
     // Investor and Contact Info
     investor_category: "",
-    sector_focus: "",
+    industry: "",
     investor_last_feedback: "",
     investor_name: "",
     company_size: "",
@@ -517,7 +517,7 @@ export default function VCEdit() {
         lead_created_by: vcDataFromAPI.lead_created_by || user?.email || "",
         status: vcDataFromAPI.status || "in-progress",
         investor_category: vcDataFromAPI.investor_category || "",
-        sector_focus: (vcDataFromAPI as any).sector_focus || "",
+        industry: (vcDataFromAPI as any).industry || "",
         investor_last_feedback:
           (vcDataFromAPI as any).investor_last_feedback || "",
         investor_name: vcDataFromAPI.investor_name || "",
@@ -745,6 +745,8 @@ export default function VCEdit() {
         status: vcData.status,
         investor_category: vcData.investor_category,
         investor_name: vcData.investor_name,
+        industry: vcData.industry || null,
+        investor_last_feedback: vcData.investor_last_feedback || null,
         phone: vcData.phone,
         address: vcData.address,
         city: vcData.city,
@@ -1067,11 +1069,11 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="sector_focus">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus</Label>
                     <Select
-                      value={vcData.sector_focus}
+                      value={vcData.industry}
                       onValueChange={(value) =>
-                        handleInputChange("sector_focus", value)
+                        handleInputChange("industry", value)
                       }
                     >
                       <SelectTrigger>
