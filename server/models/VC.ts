@@ -43,6 +43,7 @@ export interface VC {
     | "private_equity"
     | "family_office"
     | "merchant_banker"
+    | "accelerator"
     | "individual";
   investor_name?: string;
   contact_person?: string;
