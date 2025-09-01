@@ -1534,54 +1534,6 @@ export default function VCDashboard() {
                               </h3>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                              <div>
-                                <p className="text-sm text-gray-600">
-                                  Investor
-                                </p>
-                                <p className="font-medium">
-                                  {vc.investor_name || "N/A"}
-                                </p>
-                                {vc.investor_category && (
-                                  <Badge
-                                    className={`${investorCategoryColors[vc.investor_category as keyof typeof investorCategoryColors]} border-0 text-xs`}
-                                  >
-                                    {vc.investor_category
-                                      .replace("_", " ")
-                                      .toUpperCase()}
-                                  </Badge>
-                                )}
-                              </div>
-
-                              <div>
-                                <p className="text-sm text-gray-600">
-                                  Round Details
-                                </p>
-                                <p className="font-medium">
-                                  {vc.round_stage
-                                    ? vc.round_stage
-                                        .replace("_", " ")
-                                        .toUpperCase()
-                                    : "N/A"}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {formatCurrency(
-                                    vc.round_size,
-                                    vc.billing_currency,
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-sm text-gray-600">Contact</p>
-                                <p className="font-medium">
-                                  {vc.contact_person || "N/A"}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {vc.email || "N/A"}
-                                </p>
-                              </div>
-                            </div>
 
                             <div className="flex items-center gap-4 text-sm text-gray-500">
                               <div className="flex items-center gap-1">
