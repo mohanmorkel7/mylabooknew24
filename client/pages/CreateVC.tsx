@@ -65,6 +65,10 @@ import {
   Presentation,
   HelpCircle,
 } from "lucide-react";
+import { ChevronsUpDown, Check } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 const INVESTOR_CATEGORIES = [
   { value: "angel", label: "Angel" },
