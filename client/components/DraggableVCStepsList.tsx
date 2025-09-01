@@ -106,7 +106,6 @@ export function DraggableVCStepsList({
       return;
     }
 
-    // Don't allow status updates on template steps
     if (step.isTemplate) {
       console.warn("Cannot update status on template step:", stepId);
       alert(
@@ -114,6 +113,9 @@ export function DraggableVCStepsList({
       );
       return;
     }
+
+    // Optimistically update UI
+    setItems((prev) => prev.map((s) => (s.id === stepId ? { ...s, status } : s)));
 
     const stepData = { status };
     console.log("Updating VC step status:", stepId, "to:", status);
