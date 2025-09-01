@@ -93,23 +93,16 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-const VC_TYPES = [
-  { value: "early_stage", label: "Early Stage" },
-  { value: "accelerator", label: "Accelerator" },
-  { value: "growth", label: "Growth" },
-  { value: "strategic_bank", label: "Strategic - Bank" },
-  { value: "strategic_fintech", label: "Strategic - Fintech" },
-  { value: "strategic_individual", label: "Strategic - Individual" },
+const INVESTOR_CATEGORIES = [
   { value: "angel", label: "Angel" },
+  { value: "vc", label: "VC" },
+  { value: "private_equity", label: "Private Equity" },
+  { value: "family_office", label: "Family Office" },
+  { value: "merchant_banker", label: "Merchant Banker" },
+  { value: "individual", label: "Individual" },
 ];
 
-const SECTOR_FOCUS = [
-  { value: "fintech", label: "Fintech" },
-  { value: "fintech_b2b", label: "Fintech -B2B" },
-  { value: "fintech_saas", label: "Fintech - SaaS" },
-  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
-  { value: "sector_agnostic", label: "Sector Agnostic" },
-];
+const SECTOR_FOCUS: any[] = [];
 
 const INVESTOR_FEEDBACK = [
   { value: "existing_investor", label: "Existing Investor" },
@@ -225,10 +218,8 @@ const CURRENCIES = [
 ];
 
 const TABS = [
-  { value: "lead", label: "Lead Information", icon: "📋" },
-  { value: "investor", label: "Investor Information", icon: "🏢" },
-  { value: "round", label: "Round Information", icon: "💰" },
-  { value: "additional", label: "Additional Information", icon: "📝" },
+  { value: "lead", label: "Investors Info", icon: "📋" },
+  { value: "investor", label: "Investors Contact Info", icon: "🏢" },
 ];
 
 export default function CreateVC() {
@@ -310,10 +301,7 @@ export default function CreateVC() {
           minimum_size: resumeData.minimum_size || "",
           maximum_size: resumeData.maximum_size || "",
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
-          vc_type: (resumeData as any).vc_type || "",
-          sector_focus: (resumeData as any).sector_focus || "",
-          investor_last_feedback:
-            (resumeData as any).investor_last_feedback || "",
+          investor_category: (resumeData as any).investor_category || "",
           contacts: resumeData.contacts
             ? typeof resumeData.contacts === "string"
               ? JSON.parse(resumeData.contacts)
@@ -394,9 +382,7 @@ export default function CreateVC() {
           minimum_size: "",
           maximum_size: "",
           minimum_arr_requirement: "",
-          vc_type: "",
-          sector_focus: "",
-          investor_last_feedback: "",
+          investor_category: "",
 
           // Contacts (start with one primary contact)
           contacts: [
@@ -803,7 +789,7 @@ export default function CreateVC() {
               // If user has already set custom country, preserve it
               if (prevData.custom_country && prevData.custom_country.trim()) {
                 console.log(
-                  "🐛 DEBUG - Preserving current custom_country:",
+                  "��� DEBUG - Preserving current custom_country:",
                   prevData.custom_country,
                 );
                 return prevData.custom_country;
@@ -1167,10 +1153,7 @@ export default function CreateVC() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-    if (!vcData.round_title.trim()) {
-      newErrors.round_title = "Round title is required";
-    }
-    if (!vcData.investor_name.trim()) {
+        if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
     if (!vcData.vc_type) {
@@ -1197,11 +1180,7 @@ export default function CreateVC() {
         lead_source_value: vcData.lead_source_value,
         lead_created_by: vcData.lead_created_by,
         status: vcData.status,
-        round_title: vcData.round_title,
-        round_description: vcData.project_description,
-        round_stage: vcData.round_stage || null,
-        round_size: vcData.round_size,
-        valuation: vcData.valuation,
+        investor_category: (vcData as any).investor_category || null,
         investor_name: vcData.investor_name,
         phone: vcData.phone,
         address: vcData.address,
@@ -1214,23 +1193,13 @@ export default function CreateVC() {
         website: vcData.website,
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
-        minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
-          : null,
-        maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
-          : null,
+        minimum_size: vcData.minimum_size ? parseInt(vcData.minimum_size) : null,
+        maximum_size: vcData.maximum_size ? parseInt(vcData.maximum_size) : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
-        priority_level: vcData.priority_level,
-        start_date: vcData.start_date || null,
-        targeted_end_date: vcData.targeted_end_date || null,
-        spoc: vcData.spoc,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
-        fund_raise_status: (vcData as any).fund_raise_status || null,
-        notes: vcData.notes,
         contacts: JSON.stringify(vcData.contacts),
         created_by: parseInt(user.id),
       };
@@ -1311,11 +1280,7 @@ export default function CreateVC() {
         lead_source_value: vcData.lead_source_value,
         lead_created_by: vcData.lead_created_by,
         status: vcData.status,
-        round_title: vcData.round_title,
-        round_description: vcData.project_description,
-        round_stage: vcData.round_stage || null,
-        round_size: vcData.round_size,
-        valuation: vcData.valuation,
+        investor_category: (vcData as any).investor_category || null,
         investor_name: vcData.investor_name || "PARTIAL_SAVE_IN_PROGRESS",
         phone: vcData.phone,
         address: vcData.address,
@@ -1325,23 +1290,13 @@ export default function CreateVC() {
         website: vcData.website,
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
-        minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
-          : null,
-        maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
-          : null,
+        minimum_size: vcData.minimum_size ? parseInt(vcData.minimum_size) : null,
+        maximum_size: vcData.maximum_size ? parseInt(vcData.maximum_size) : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
-        priority_level: vcData.priority_level,
-        start_date: vcData.start_date || null,
-        targeted_end_date: vcData.targeted_end_date || null,
-        spoc: vcData.spoc,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
-        fund_raise_status: (vcData as any).fund_raise_status || null,
-        notes: vcData.notes,
         contacts: JSON.stringify(vcData.contacts),
         created_by: parseInt(user.id),
         is_partial: true,
@@ -1430,11 +1385,9 @@ export default function CreateVC() {
 
       {/* Form Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="lead">Investors Info</TabsTrigger>
           <TabsTrigger value="investor">Investors Contact Info</TabsTrigger>
-          <TabsTrigger value="round">Fund Raise</TabsTrigger>
-          <TabsTrigger value="additional">Investor Status Queue</TabsTrigger>
         </TabsList>
 
         {/* Lead Info Tab */}
@@ -1600,18 +1553,18 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="vc_type">VC Type</Label>
+                    <Label htmlFor="investor_category">Investor Category</Label>
                     <Select
-                      value={vcData.vc_type}
+                      value={(vcData as any).investor_category}
                       onValueChange={(value) =>
-                        handleInputChange("vc_type", value)
+                        handleInputChange("investor_category" as any, value)
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select VC Type" />
+                        <SelectValue placeholder="Select investor category" />
                       </SelectTrigger>
                       <SelectContent>
-                        {VC_TYPES.map((t) => (
+                        {INVESTOR_CATEGORIES.map((t) => (
                           <SelectItem key={t.value} value={t.value}>
                             {t.label}
                           </SelectItem>
@@ -1620,27 +1573,7 @@ export default function CreateVC() {
                     </Select>
                   </div>
 
-                  <div>
-                    <Label htmlFor="sector_focus">Sector Focus</Label>
-                    <Select
-                      value={vcData.sector_focus}
-                      onValueChange={(value) =>
-                        handleInputChange("sector_focus", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Sector Focus" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {SECTOR_FOCUS.map((s) => (
-                          <SelectItem key={s.value} value={s.value}>
-                            {s.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
+                  
                   <div>
                     <Label htmlFor="website">Website</Label>
                     <Input
@@ -1677,29 +1610,7 @@ export default function CreateVC() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <Label htmlFor="investor_last_feedback">
-                      Investor Last Feedback
-                    </Label>
-                    <Select
-                      value={vcData.investor_last_feedback}
-                      onValueChange={(value) =>
-                        handleInputChange("investor_last_feedback", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select last feedback" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {INVESTOR_FEEDBACK.map((f) => (
-                          <SelectItem key={f.value} value={f.value}>
-                            {f.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+                                  </div>
 
                 {isEditMode && (
                   <div>
