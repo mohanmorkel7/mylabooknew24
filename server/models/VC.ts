@@ -54,6 +54,7 @@ export interface VC {
   country?: string;
   website?: string;
   company_size?: string;
+  investor_last_feedback?: string;
 
   // Investment Details
   potential_lead_investor?: boolean;
@@ -106,6 +107,7 @@ export interface CreateVCData {
   country?: string;
   website?: string;
   company_size?: string;
+  investor_last_feedback?: string;
   potential_lead_investor?: boolean;
   minimum_size?: number;
   maximum_size?: number;
@@ -144,6 +146,7 @@ export interface UpdateVCData {
   country?: string;
   website?: string;
   company_size?: string;
+  investor_last_feedback?: string;
   potential_lead_investor?: boolean;
   minimum_size?: number;
   maximum_size?: number;
@@ -168,6 +171,7 @@ export class VCRepository {
         round_title, round_description, round_stage, round_size, valuation,
         investor_category, investor_name, contact_person, email, phone,
         address, city, state, country, website, company_size, industry,
+        investor_last_feedback,
         potential_lead_investor, minimum_size, maximum_size, minimum_arr_requirement,
         priority_level,
         start_date::text as start_date,
@@ -207,6 +211,7 @@ export class VCRepository {
         round_title, round_description, round_stage, round_size, valuation,
         investor_category, investor_name, contact_person, email, phone,
         address, city, state, country, website, company_size, industry,
+        investor_last_feedback,
         potential_lead_investor, minimum_size, maximum_size, minimum_arr_requirement,
         priority_level,
         start_date::text as start_date,
@@ -292,6 +297,7 @@ export class VCRepository {
         round_title, round_description, round_stage, round_size, valuation,
         investor_category, investor_name, contact_person, email, phone,
         address, city, state, country, website, company_size,
+        investor_last_feedback,
         potential_lead_investor, minimum_size, maximum_size, minimum_arr_requirement,
         priority_level, start_date, targeted_end_date, spoc,
         billing_currency, template_id, contacts, created_by, assigned_to, notes, is_partial
@@ -299,7 +305,7 @@ export class VCRepository {
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
         $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
-        $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36
+        $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37
       )
       RETURNING *
     `;
@@ -347,6 +353,7 @@ export class VCRepository {
       countryValue,
       vcData.website || null,
       vcData.company_size || null,
+      vcData.investor_last_feedback || null,
       vcData.potential_lead_investor || false,
       vcData.minimum_size || null,
       vcData.maximum_size || null,
