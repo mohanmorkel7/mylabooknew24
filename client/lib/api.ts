@@ -555,6 +555,17 @@ export class ApiClient {
       };
     }
 
+    // VC endpoints fallbacks
+    if (endpoint.includes("/vc/stats")) {
+      return { total: 0, in_progress: 0, won: 0, lost: 0 };
+    }
+    if (endpoint.includes("/vc/progress") || endpoint.includes("/vc/follow-ups")) {
+      return [];
+    }
+    if (endpoint.endsWith("/vc") || endpoint.includes("/vc?")) {
+      return [];
+    }
+
     // Default empty response
     return [];
   }
