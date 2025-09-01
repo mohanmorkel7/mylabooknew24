@@ -76,6 +76,13 @@ const navigationItems: NavigationItem[] = [
     permissions: ["vc"],
   },
   {
+    name: "Fund Raise",
+    href: "/fundraise",
+    icon: Megaphone,
+    roles: ["admin", "sales", "product"],
+    permissions: ["vc"],
+  },
+  {
     name: "Follow-ups",
     href: "/follow-ups",
     icon: MessageCircle,
