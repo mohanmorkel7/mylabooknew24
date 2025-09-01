@@ -4,10 +4,24 @@ export interface FundRaise {
   id: number;
   vc_id?: number | null;
   investor_name?: string | null;
-  ui_status?: 'WIP' | 'Closed' | 'Dropped';
-  status?: 'in-progress' | 'won' | 'lost' | 'completed';
-  investor_status?: 'Pass' | 'WIP' | 'Closed' | 'Yet to Connect' | 'Future Potential';
-  round_stage?: 'pre_seed' | 'pre_series_a' | 'seed' | 'series_a' | 'series_b' | 'series_c' | 'bridge' | 'growth' | 'ipo';
+  ui_status?: "WIP" | "Closed" | "Dropped";
+  status?: "in-progress" | "won" | "lost" | "completed";
+  investor_status?:
+    | "Pass"
+    | "WIP"
+    | "Closed"
+    | "Yet to Connect"
+    | "Future Potential";
+  round_stage?:
+    | "pre_seed"
+    | "pre_series_a"
+    | "seed"
+    | "series_a"
+    | "series_b"
+    | "series_c"
+    | "bridge"
+    | "growth"
+    | "ipo";
   start_date?: string | null;
   end_date?: string | null;
   total_raise_mn?: string | null;
@@ -20,16 +34,16 @@ export interface FundRaise {
   updated_at?: string;
 }
 
-function mapUIStatusToInternal(ui?: string | null): FundRaise['status'] {
+function mapUIStatusToInternal(ui?: string | null): FundRaise["status"] {
   switch (ui) {
-    case 'WIP':
-      return 'in-progress';
-    case 'Closed':
-      return 'completed';
-    case 'Dropped':
-      return 'lost';
+    case "WIP":
+      return "in-progress";
+    case "Closed":
+      return "completed";
+    case "Dropped":
+      return "lost";
     default:
-      return 'in-progress';
+      return "in-progress";
   }
 }
 
@@ -45,14 +59,13 @@ export class FundRaiseRepository {
   }
 
   static async findById(id: number): Promise<FundRaise | null> {
-    const result = await pool.query(
-      `SELECT * FROM fund_raises WHERE id = $1`,
-      [id],
-    );
+    const result = await pool.query(`SELECT * FROM fund_raises WHERE id = $1`, [
+      id,
+    ]);
     return result.rows[0] || null;
   }
 
-  static async findByVC(vcId: number): Promise<FundRaise[] > {
+  static async findByVC(vcId: number): Promise<FundRaise[]> {
     const result = await pool.query(
       `SELECT * FROM fund_raises WHERE vc_id = $1 ORDER BY created_at DESC`,
       [vcId],
@@ -60,8 +73,11 @@ export class FundRaiseRepository {
     return result.rows;
   }
 
-  static async createFull(data: Omit<FundRaise, 'id' | 'created_at' | 'updated_at'>): Promise<FundRaise> {
-    const statusInternal = data.status || mapUIStatusToInternal(data.ui_status || 'WIP');
+  static async createFull(
+    data: Omit<FundRaise, "id" | "created_at" | "updated_at">,
+  ): Promise<FundRaise> {
+    const statusInternal =
+      data.status || mapUIStatusToInternal(data.ui_status || "WIP");
     const query = `
       INSERT INTO fund_raises (
         vc_id, investor_name, ui_status, status, investor_status,
@@ -76,9 +92,9 @@ export class FundRaiseRepository {
     const values = [
       data.vc_id ?? null,
       data.investor_name ?? null,
-      data.ui_status ?? 'WIP',
+      data.ui_status ?? "WIP",
       statusInternal,
-      data.investor_status ?? 'WIP',
+      data.investor_status ?? "WIP",
       data.round_stage ?? null,
       data.start_date ?? null,
       data.end_date ?? null,
@@ -93,7 +109,10 @@ export class FundRaiseRepository {
     return result.rows[0];
   }
 
-  static async update(id: number, data: Partial<FundRaise>): Promise<FundRaise | null> {
+  static async update(
+    id: number,
+    data: Partial<FundRaise>,
+  ): Promise<FundRaise | null> {
     const toUpdate = { ...data } as any;
     if (toUpdate.ui_status && !toUpdate.status) {
       toUpdate.status = mapUIStatusToInternal(toUpdate.ui_status);
@@ -112,14 +131,16 @@ export class FundRaiseRepository {
     if (fields.length === 0) return this.findById(id);
     values.push(id);
     const result = await pool.query(
-      `UPDATE fund_raises SET ${fields.join(', ')}, updated_at = NOW() WHERE id = $${i} RETURNING *`,
+      `UPDATE fund_raises SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $${i} RETURNING *`,
       values,
     );
     return result.rows[0] || null;
   }
 
   static async delete(id: number): Promise<boolean> {
-    const result = await pool.query(`DELETE FROM fund_raises WHERE id = $1`, [id]);
+    const result = await pool.query(`DELETE FROM fund_raises WHERE id = $1`, [
+      id,
+    ]);
     return result.rowCount > 0;
   }
 }

@@ -57,7 +57,12 @@ router.post("/", async (req: Request, res: Response) => {
       const row = await FundRaiseRepository.createFull({
         vc_id: body.vc_id ?? null,
         investor_name: body.investor_name ?? null,
-        ui_status: body.ui_status ?? body.uiStatus ?? body.status_ui ?? body.statusLabel ?? 'WIP',
+        ui_status:
+          body.ui_status ??
+          body.uiStatus ??
+          body.status_ui ??
+          body.statusLabel ??
+          "WIP",
         status: body.status ?? null,
         investor_status: body.investor_status ?? null,
         round_stage: body.round_stage ?? null,
