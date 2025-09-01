@@ -22,7 +22,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Save, Calendar, DollarSign, Building } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import { ArrowLeft, Save, Calendar, DollarSign, Building, ChevronsUpDown } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Dropped", label: "Dropped" },
@@ -59,6 +62,9 @@ const INVESTOR_STATUS_OPTIONS = [
   { value: "Yet to Connect", label: "Yet to Connect" },
   { value: "Future Potential", label: "Future Potential" },
 ];
+
+const FUND_MN_OPTIONS = Array.from({ length: 200 }, (_, i) => (0.05 + i * 0.05).toFixed(2)).filter(v => parseFloat(v) <= 10);
+const VALUATION_MN_OPTIONS = ["0.50", ...Array.from({ length: 100 }, (_, i) => (i + 1).toFixed(2))];
 
 export default function FundRaiseEdit() {
   const navigate = useNavigate();
@@ -331,32 +337,76 @@ export default function FundRaiseEdit() {
 
                 <div>
                   <Label>Total Fund Raise $ Mn</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="e.g. 10"
-                      className="pl-10"
-                      value={form.total_raise_mn}
-                      onChange={(e) =>
-                        handleChange("total_raise_mn", e.target.value)
-                      }
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {form.total_raise_mn || "Select amount"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={true}
+                      collisionPadding={8}
+                      className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Search amount..." />
+                        <CommandList>
+                          <CommandEmpty>No amounts found.</CommandEmpty>
+                          <CommandGroup>
+                            {FUND_MN_OPTIONS.map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(val) => handleChange("total_raise_mn", val)}
+                              >
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
                   <Label>Valuation $ Mn</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="e.g. 100"
-                      className="pl-10"
-                      value={form.valuation_mn}
-                      onChange={(e) =>
-                        handleChange("valuation_mn", e.target.value)
-                      }
-                    />
-                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {form.valuation_mn || "Select valuation"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={true}
+                      collisionPadding={8}
+                      className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Search valuation..." />
+                        <CommandList>
+                          <CommandEmpty>No valuations found.</CommandEmpty>
+                          <CommandGroup>
+                            {VALUATION_MN_OPTIONS.map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(val) => handleChange("valuation_mn", val)}
+                              >
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 

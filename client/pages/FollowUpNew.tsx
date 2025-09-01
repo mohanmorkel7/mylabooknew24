@@ -153,7 +153,7 @@ export default function FollowUpNew() {
       // Navigate back based on context
       if (isFromChat) {
         if (isVC) {
-          navigate(`/vc/${context?.vcId}`);
+          navigate(`/fundraise/${context?.vcId}`);
         } else {
           navigate(`/leads`);
         }
@@ -172,7 +172,7 @@ export default function FollowUpNew() {
   const handleCancel = () => {
     if (isFromChat) {
       if (isVC) {
-        navigate(`/vc/${context?.vcId}`);
+        navigate(`/fundraise/${context?.vcId}`);
       } else {
         navigate(`/leads`);
       }
