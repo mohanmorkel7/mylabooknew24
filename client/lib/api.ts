@@ -180,7 +180,7 @@ export class ApiClient {
           fetchError instanceof TypeError &&
           fetchError.message.includes("Failed to fetch")
         ) {
-          console.error("Network connectivity issue detected");
+          console.warn("Network connectivity issue detected");
           this.failureCount++;
           this.lastFailureTime = Date.now();
           this.checkOfflineMode();
