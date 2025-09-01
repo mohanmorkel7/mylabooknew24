@@ -1995,7 +1995,7 @@ export default function CreateVC() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="round_title">Round Title *</Label>
+                  <Label htmlFor="round_title">Fund Raise Title *</Label>
                   <Input
                     id="round_title"
                     placeholder="e.g., Series A Funding"
