@@ -207,6 +207,27 @@ export async function initializeDatabase() {
       );
     }
 
+    // Update investor_category allowed values (add accelerator, individual)
+    try {
+      const vcInvestorCategoryMigrationPath = path.join(
+        __dirname,
+        "update-vc-investor-category-options.sql",
+      );
+      if (fs.existsSync(vcInvestorCategoryMigrationPath)) {
+        const vcInvestorCategoryMigration = fs.readFileSync(
+          vcInvestorCategoryMigrationPath,
+          "utf8",
+        );
+        await client.query(vcInvestorCategoryMigration);
+        console.log("VC investor_category options migration applied successfully");
+      }
+    } catch (vcInvestorCategoryMigrationError) {
+      console.log(
+        "VC investor_category options migration already applied or error:",
+        vcInvestorCategoryMigrationError.message,
+      );
+    }
+
     // Always try to add investor_last_feedback column
     try {
       const investorFeedbackMigrationPath = path.join(

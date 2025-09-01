@@ -333,7 +333,7 @@ export class VCRepository {
 
     const values = [
       vcId,
-      vcData.lead_source,
+      vcData.lead_source || "email",
       vcData.lead_source_value || null,
       vcData.lead_created_by || null,
       vcData.status,
