@@ -357,6 +357,7 @@ export default function CreateVC() {
           spoc: resumeData.spoc || "",
           template_id: resumeData.template_id || "",
           billing_currency: resumeData.billing_currency || "INR",
+          fund_raise_status: (resumeData as any).fund_raise_status || "",
           flat_fee_config: [],
           probability: resumeData.probability || "0",
           notes: resumeData.notes || "",
