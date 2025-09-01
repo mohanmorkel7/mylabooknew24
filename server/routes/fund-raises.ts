@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { FundRaiseRepository } from "../models/FundRaise";
-import { isDatabaseAvailable } from "../database/connection";
+import { isDatabaseAvailable, pool, withTimeout } from "../database/connection";
 
 const router = Router();
 
