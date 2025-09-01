@@ -5,7 +5,7 @@ import path from "path";
 // Use environment variables or fallback values for local development
 const dbConfig = {
   user: process.env.PG_USER || "crmuser",
-  host: process.env.PG_HOST || "localhost",
+  host: process.env.PG_HOST || "10.30.11.95",
   database: process.env.PG_DB || "crm_test",
   password: process.env.PG_PASSWORD || "myl@p@y-crm$102019",
   port: Number(process.env.PG_PORT) || 2019,
