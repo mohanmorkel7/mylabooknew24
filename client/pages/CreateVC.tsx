@@ -1212,7 +1212,7 @@ export default function CreateVC() {
       };
 
       console.log("🚀 DEBUG - Submitting final data:", submitData);
-      console.log("�� DEBUG - Country values at submit time:", {
+      console.log("🚀 DEBUG - Country values at submit time:", {
         "vcData.country": vcData.country,
         "vcData.custom_country": vcData.custom_country,
         "submitData.country": submitData.country,
@@ -1637,7 +1637,28 @@ export default function CreateVC() {
                     />
                   </div>
 
-                                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
+                    <Select
+                      value={(vcData as any).investor_last_feedback}
+                      onValueChange={(value) =>
+                        handleInputChange("investor_last_feedback" as any, value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select last feedback" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVESTOR_FEEDBACK.map((f) => (
+                          <SelectItem key={f.value} value={f.value}>
+                            {f.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  </div>
 
                 {isEditMode && (
                   <div>
