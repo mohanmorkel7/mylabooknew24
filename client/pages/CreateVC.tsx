@@ -806,7 +806,7 @@ export default function CreateVC() {
             setActiveTab(savedTab);
           }
         } catch (error) {
-          console.error("🐛 ERROR - Failed to fetch draft data:", error);
+          console.error("��� ERROR - Failed to fetch draft data:", error);
         }
       }
     };
@@ -1287,7 +1287,7 @@ export default function CreateVC() {
         <TabsContent value="lead" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Lead Information</CardTitle>
+              <CardTitle>Investors Info</CardTitle>
               <CardDescription>
                 Basic information about this VC opportunity lead
               </CardDescription>
