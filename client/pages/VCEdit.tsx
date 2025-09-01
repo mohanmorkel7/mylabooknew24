@@ -64,13 +64,14 @@ import {
   HelpCircle,
 } from "lucide-react";
 
-const INVESTOR_CATEGORIES = [
+const VC_TYPES = [
+  { value: "early_stage", label: "Early Stage" },
+  { value: "accelerator", label: "Accelerator" },
+  { value: "growth", label: "Growth" },
+  { value: "strategic_bank", label: "Strategic - Bank" },
+  { value: "strategic_fintech", label: "Strategic - Fintech" },
+  { value: "strategic_individual", label: "Strategic - Individual" },
   { value: "angel", label: "Angel" },
-  { value: "vc", label: "VC" },
-  { value: "private_equity", label: "Private Equity" },
-  { value: "family_office", label: "Family Office" },
-  { value: "merchant_banker", label: "Merchant Banker" },
-  { value: "individual", label: "Individual" },
 ];
 
 const ROUND_STAGES = [
@@ -83,6 +84,22 @@ const ROUND_STAGES = [
   { value: "bridge", label: "Bridge" },
   { value: "growth", label: "Growth" },
   { value: "ipo", label: "IPO" },
+];
+
+const SECTOR_FOCUS = [
+  { value: "fintech", label: "Fintech" },
+  { value: "fintech_b2b", label: "Fintech -B2B" },
+  { value: "fintech_saas", label: "Fintech - SaaS" },
+  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
+  { value: "sector_agnostic", label: "Sector Agnostic" },
+];
+
+const INVESTOR_FEEDBACK = [
+  { value: "existing_investor", label: "Existing Investor" },
+  { value: "general", label: "General" },
+  { value: "pass", label: "Pass" },
+  { value: "ghosting", label: "Ghosting" },
+  { value: "potential_future", label: "Potential Future" },
 ];
 
 const COUNTRIES = [
@@ -126,6 +143,8 @@ export default function VCEdit() {
 
     // Investor and Contact Info
     investor_category: "",
+    sector_focus: "",
+    investor_last_feedback: "",
     investor_name: "",
     company_size: "",
     phone: "",
@@ -434,6 +453,8 @@ export default function VCEdit() {
         lead_created_by: vcDataFromAPI.lead_created_by || user?.email || "",
         status: vcDataFromAPI.status || "in-progress",
         investor_category: vcDataFromAPI.investor_category || "",
+        sector_focus: (vcDataFromAPI as any).sector_focus || "",
+        investor_last_feedback: (vcDataFromAPI as any).investor_last_feedback || "",
         investor_name: vcDataFromAPI.investor_name || "",
         company_size: (() => {
           console.log(
@@ -633,7 +654,7 @@ export default function VCEdit() {
       newErrors.investor_name = "Investor name is required";
     }
     if (!vcData.investor_category) {
-      newErrors.investor_category = "Investor category is required";
+      newErrors.investor_category = "VC Type is required";
     }
     if (!vcData.lead_source) {
       newErrors.lead_source = "Lead source is required";
@@ -976,7 +997,7 @@ export default function VCEdit() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="investor_category">Investor Category *</Label>
+                  <Label htmlFor="investor_category">VC Type *</Label>
                   <Select
                     value={vcData.investor_category}
                     onValueChange={(value) =>
@@ -984,12 +1005,12 @@ export default function VCEdit() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select investor category" />
+                      <SelectValue placeholder="Select VC Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {INVESTOR_CATEGORIES.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
+                      {VC_TYPES.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1017,6 +1038,27 @@ export default function VCEdit() {
                       {errors.investor_name}
                     </p>
                   )}
+                </div>
+
+                <div>
+                  <Label htmlFor="sector_focus">Sector Focus</Label>
+                  <Select
+                    value={vcData.sector_focus}
+                    onValueChange={(value) =>
+                      handleInputChange("sector_focus", value)
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Sector Focus" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SECTOR_FOCUS.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
@@ -1059,6 +1101,27 @@ export default function VCEdit() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="md:col-span-2">
+                <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
+                <Select
+                  value={vcData.investor_last_feedback}
+                  onValueChange={(value) =>
+                    handleInputChange("investor_last_feedback", value)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select last feedback" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVESTOR_FEEDBACK.map((f) => (
+                      <SelectItem key={f.value} value={f.value}>
+                        {f.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Address Information */}
