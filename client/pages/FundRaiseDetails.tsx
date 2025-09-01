@@ -136,7 +136,7 @@ export default function FundRaiseDetails() {
     isLoading: stepsLoading,
     refetch: refetchSteps,
   } = useQuery({
-    queryKey: ["fundraise-steps", id],
+    queryKey: ["vc-steps", id],
     queryFn: async () =>
       apiClient.request(`/vc/${id}/steps`, {
         headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
