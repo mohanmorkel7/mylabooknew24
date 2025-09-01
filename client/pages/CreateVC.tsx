@@ -392,6 +392,8 @@ export default function CreateVC() {
           maximum_size: "",
           minimum_arr_requirement: "",
           investor_category: "",
+          sector_focus: "",
+          investor_last_feedback: "",
 
           // Contacts (start with one primary contact)
           contacts: [
