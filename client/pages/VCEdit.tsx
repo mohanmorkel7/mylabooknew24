@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
-import { Country, City } from "country-state-city";
+import { Country, State, City } from "country-state-city";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
