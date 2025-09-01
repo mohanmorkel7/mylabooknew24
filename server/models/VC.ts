@@ -54,6 +54,7 @@ export interface VC {
   country?: string;
   website?: string;
   company_size?: string;
+  investor_last_feedback?: string;
 
   // Investment Details
   potential_lead_investor?: boolean;
@@ -106,6 +107,7 @@ export interface CreateVCData {
   country?: string;
   website?: string;
   company_size?: string;
+  investor_last_feedback?: string;
   potential_lead_investor?: boolean;
   minimum_size?: number;
   maximum_size?: number;
@@ -144,6 +146,7 @@ export interface UpdateVCData {
   country?: string;
   website?: string;
   company_size?: string;
+  investor_last_feedback?: string;
   potential_lead_investor?: boolean;
   minimum_size?: number;
   maximum_size?: number;
