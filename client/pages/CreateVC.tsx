@@ -309,7 +309,7 @@ export default function CreateVC() {
           maximum_size: resumeData.maximum_size || "",
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
           investor_category: (resumeData as any).investor_category || "",
-          sector_focus: (resumeData as any).sector_focus || "",
+          industry: (resumeData as any).industry || (resumeData as any).sector_focus || "",
           investor_last_feedback:
             (resumeData as any).investor_last_feedback || "",
           contacts: resumeData.contacts
@@ -801,7 +801,7 @@ export default function CreateVC() {
               // If user has already set custom country, preserve it
               if (prevData.custom_country && prevData.custom_country.trim()) {
                 console.log(
-                  "�� DEBUG - Preserving current custom_country:",
+                  "🐛 DEBUG - Preserving current custom_country:",
                   prevData.custom_country,
                 );
                 return prevData.custom_country;
