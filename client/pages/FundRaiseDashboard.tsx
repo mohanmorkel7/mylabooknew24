@@ -977,7 +977,6 @@ export default function FundRaiseDashboard() {
                           </div>
                         </div>
                       </div>
-
                     </div>
                   </div>
                 );

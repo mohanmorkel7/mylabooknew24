@@ -22,10 +22,28 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
-import { ArrowLeft, Save, Calendar, DollarSign, Building, ChevronsUpDown } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Calendar,
+  DollarSign,
+  Building,
+  ChevronsUpDown,
+} from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Dropped", label: "Dropped" },
@@ -63,8 +81,13 @@ const INVESTOR_STATUS_OPTIONS = [
   { value: "Future Potential", label: "Future Potential" },
 ];
 
-const FUND_MN_OPTIONS = Array.from({ length: 200 }, (_, i) => (0.05 + i * 0.05).toFixed(2)).filter(v => parseFloat(v) <= 10);
-const VALUATION_MN_OPTIONS = ["0.50", ...Array.from({ length: 100 }, (_, i) => (i + 1).toFixed(2))];
+const FUND_MN_OPTIONS = Array.from({ length: 200 }, (_, i) =>
+  (0.05 + i * 0.05).toFixed(2),
+).filter((v) => parseFloat(v) <= 10);
+const VALUATION_MN_OPTIONS = [
+  "0.50",
+  ...Array.from({ length: 100 }, (_, i) => (i + 1).toFixed(2)),
+];
 
 export default function FundRaiseEdit() {
   const navigate = useNavigate();
@@ -339,7 +362,10 @@ export default function FundRaiseEdit() {
                   <Label>Total Fund Raise $ Mn</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         {form.total_raise_mn || "Select amount"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -360,7 +386,9 @@ export default function FundRaiseEdit() {
                               <CommandItem
                                 key={v}
                                 value={v}
-                                onSelect={(val) => handleChange("total_raise_mn", val)}
+                                onSelect={(val) =>
+                                  handleChange("total_raise_mn", val)
+                                }
                               >
                                 {v}
                               </CommandItem>
@@ -376,7 +404,10 @@ export default function FundRaiseEdit() {
                   <Label>Valuation $ Mn</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         {form.valuation_mn || "Select valuation"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -397,7 +428,9 @@ export default function FundRaiseEdit() {
                               <CommandItem
                                 key={v}
                                 value={v}
-                                onSelect={(val) => handleChange("valuation_mn", val)}
+                                onSelect={(val) =>
+                                  handleChange("valuation_mn", val)
+                                }
                               >
                                 {v}
                               </CommandItem>

@@ -17,7 +17,7 @@ router.get("/progress", async (_req: Request, res: Response) => {
             `SELECT id as fr_id, vc_id, investor_name, ui_status, status, round_stage
              FROM fund_raises
              ORDER BY created_at DESC
-             LIMIT 20`
+             LIMIT 20`,
           ),
           7000,
         );
@@ -36,10 +36,13 @@ router.get("/progress", async (_req: Request, res: Response) => {
               5000,
             );
             const steps = stepsResult.rows || [];
-            const completedSteps = steps.filter((s: any) => s.status === "completed");
+            const completedSteps = steps.filter(
+              (s: any) => s.status === "completed",
+            );
             const totalCompletedProbability = Math.round(
               completedSteps.reduce(
-                (sum: number, s: any) => sum + (parseFloat(s.probability_percent) || 0),
+                (sum: number, s: any) =>
+                  sum + (parseFloat(s.probability_percent) || 0),
                 0,
               ),
             );
@@ -63,7 +66,8 @@ router.get("/progress", async (_req: Request, res: Response) => {
               current_step: currentStep
                 ? {
                     name: currentStep.name,
-                    probability: parseFloat(currentStep.probability_percent) || 0,
+                    probability:
+                      parseFloat(currentStep.probability_percent) || 0,
                   }
                 : null,
               all_steps: steps.map((s: any) => ({

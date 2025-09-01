@@ -187,7 +187,8 @@ export default function FundRaiseDetails() {
                 due_date: "",
                 priority: "medium",
                 status: "pending",
-                estimated_days: tStep.default_eta_days || tStep.estimated_days || 1,
+                estimated_days:
+                  tStep.default_eta_days || tStep.estimated_days || 1,
                 probability_percent: tStep.probability_percent || 0,
                 order_index: tStep.step_order || index + 1,
                 created_by: parseInt(user?.id || "1"),
@@ -332,11 +333,17 @@ export default function FundRaiseDetails() {
         return Math.min(100, Math.round(totalCompletedProbability));
       }
 
-      const completedCount = vcSteps.filter((s: any) => s.status === "completed").length;
-      const inProgressCount = vcSteps.filter((s: any) => s.status === "in_progress").length;
+      const completedCount = vcSteps.filter(
+        (s: any) => s.status === "completed",
+      ).length;
+      const inProgressCount = vcSteps.filter(
+        (s: any) => s.status === "in_progress",
+      ).length;
       const totalSteps = vcSteps.length;
       return totalSteps > 0
-        ? Math.round(((completedCount + inProgressCount * 0.5) / totalSteps) * 100)
+        ? Math.round(
+            ((completedCount + inProgressCount * 0.5) / totalSteps) * 100,
+          )
         : 0;
     }
     return vcData?.probability || 0;

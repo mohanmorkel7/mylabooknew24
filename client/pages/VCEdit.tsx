@@ -345,7 +345,10 @@ export default function VCEdit() {
     vcData.country === "Other" ? vcData.custom_country : vcData.country;
   const selectedCountry = findCountry(selectedCountryName);
   const availableStates = useMemo(
-    () => (selectedCountry ? State.getStatesOfCountry((selectedCountry as any).isoCode) : []),
+    () =>
+      selectedCountry
+        ? State.getStatesOfCountry((selectedCountry as any).isoCode)
+        : [],
     [selectedCountry?.isoCode],
   );
   const selectedStateObj = useMemo(
