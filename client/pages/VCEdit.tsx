@@ -804,7 +804,7 @@ export default function VCEdit() {
         <TabsContent value="lead-info" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Lead Information</CardTitle>
+              <CardTitle>Investors Info</CardTitle>
               <CardDescription>
                 Basic information about this VC opportunity lead
               </CardDescription>
