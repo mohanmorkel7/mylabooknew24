@@ -103,7 +103,13 @@ const VC_TYPES = [
   { value: "angel", label: "Angel" },
 ];
 
-const SECTOR_FOCUS: any[] = [];
+const SECTOR_FOCUS = [
+  { value: "fintech", label: "Fintech" },
+  { value: "fintech_b2b", label: "Fintech -B2B" },
+  { value: "fintech_saas", label: "Fintech - SaaS" },
+  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
+  { value: "sector_agnostic", label: "Sector Agnostic" },
+];
 
 const INVESTOR_FEEDBACK = [
   { value: "existing_investor", label: "Existing Investor" },
