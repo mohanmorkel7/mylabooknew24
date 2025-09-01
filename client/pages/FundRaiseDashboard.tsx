@@ -1250,6 +1250,19 @@ export default function FundRaiseDashboard() {
                   fr.status ||
                   UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
                   "in-progress";
+
+                const pd = (vcProgressData || []).find(
+                  (p: any) => p.vc_id === fr.vc_id,
+                );
+                const completedProb = pd?.total_completed_probability || 0;
+                const inProgressProb = pd?.current_step?.probability
+                  ? Math.round((pd.current_step.probability as number) * 0.5)
+                  : 0;
+                const progressPercent = Math.max(
+                  0,
+                  Math.min(100, completedProb + inProgressProb),
+                );
+
                 return (
                   <div
                     key={fr.id}
@@ -1271,9 +1284,22 @@ export default function FundRaiseDashboard() {
                           .replace("-", " ")}
                       </Badge>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm text-gray-700">
-                        {fr.total_raise_mn ? `$${fr.total_raise_mn} Mn` : ""}
+                    <div className="flex items-center gap-4">
+                      <div className="hidden md:flex items-center gap-2">
+                        <div className="w-32 bg-gray-200 rounded h-2">
+                          <div
+                            className={`${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                        <span className="text-xs text-gray-700 font-medium w-8 text-right">
+                          {progressPercent}%
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-700">
+                          {fr.total_raise_mn ? `$${fr.total_raise_mn} Mn` : ""}
+                        </div>
                       </div>
                     </div>
                   </div>
