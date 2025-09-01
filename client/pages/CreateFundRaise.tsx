@@ -22,6 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ArrowLeft, Plus, Calendar, DollarSign, Building } from "lucide-react";
 
 const STATUS_OPTIONS = [
@@ -75,6 +77,7 @@ export default function CreateFundRaise() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [fundMnOpen, setFundMnOpen] = useState(false);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -408,21 +411,35 @@ export default function CreateFundRaise() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Fund $ Mn</Label>
-                <Select
-                  value={form.total_raise_mn}
-                  onValueChange={(v) => handleChange("total_raise_mn", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select amount" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {FUND_MN_OPTIONS.map((v) => (
-                      <SelectItem key={v} value={v}>
-                        {v}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      {form.total_raise_mn || "Select amount"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent side="bottom" align="start" avoidCollisions={false} className="p-0 w-[200px]">
+                    <Command>
+                      <CommandInput placeholder="Search amount..." />
+                      <CommandList>
+                        <CommandEmpty>No amounts found.</CommandEmpty>
+                        <CommandGroup>
+                          {FUND_MN_OPTIONS.map((v) => (
+                            <CommandItem
+                              key={v}
+                              value={v}
+                              onSelect={(val) => {
+                                handleChange("total_raise_mn", val);
+                                setFundMnOpen(false);
+                              }}
+                            >
+                              {v}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>Investor Status</Label>
