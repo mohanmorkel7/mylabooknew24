@@ -308,6 +308,27 @@ export async function initializeDatabase() {
       );
     }
 
+    // Always try to apply Fund Raises table migration
+    try {
+      const fundRaisesMigrationPath = path.join(
+        __dirname,
+        "create-fund-raises-table.sql",
+      );
+      if (fs.existsSync(fundRaisesMigrationPath)) {
+        const fundRaisesMigration = fs.readFileSync(
+          fundRaisesMigrationPath,
+          "utf8",
+        );
+        await client.query(fundRaisesMigration);
+        console.log("Fund Raises table migration applied successfully");
+      }
+    } catch (fundRaisesMigrationError) {
+      console.log(
+        "Fund Raises table migration already applied or error:",
+        (fundRaisesMigrationError as any).message,
+      );
+    }
+
     // await client.query(schema);
     console.log("Database initialized successfully");
     client.release();
