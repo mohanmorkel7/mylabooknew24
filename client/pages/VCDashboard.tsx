@@ -199,7 +199,6 @@ export default function VCDashboard() {
     staleTime: 60000, // 1 minute
   });
 
-
   // Fetch VC templates for quick insights
   const { data: vcTemplates = [], isLoading: templatesLoading } = useQuery({
     queryKey: ["vc-templates-dashboard"],
@@ -568,8 +567,6 @@ export default function VCDashboard() {
           </CardContent>
         </Card>
       )}
-
-
 
       {/* Tab Navigation */}
       <Card>
