@@ -193,7 +193,7 @@ export class ApiClient {
             return this.getEmptyFallbackResponse(endpoint);
           }
         } else if (fetchError.message === "Request timeout") {
-          console.error("Request timed out - server may be unresponsive");
+          console.warn("Request timed out - server may be unresponsive");
           // For timeouts, increment failure count for circuit breaker
           this.failureCount++;
           this.lastFailureTime = Date.now();
