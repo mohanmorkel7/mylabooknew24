@@ -507,41 +507,6 @@ export default function FundRaiseDetails() {
                     </div>
                   </div>
                 </div>
-                <div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Contact Person:
-                      </span>
-                      <span className="text-gray-900">
-                        {getPrimaryContact(vcData)?.contact_name ||
-                          "Not provided"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Email:</span>
-                      {getPrimaryContact(vcData)?.email ? (
-                        <a
-                          href={`mailto:${getPrimaryContact(vcData)?.email}`}
-                          className="text-blue-600 hover:underline"
-                        >
-                          {getPrimaryContact(vcData)?.email}
-                        </a>
-                      ) : (
-                        <span className="text-gray-900">Not provided</span>
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Phone:</span>
-                      <span className="text-gray-900">
-                        {getPrimaryContact(vcData)?.phone || "Not provided"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               <Separator />
