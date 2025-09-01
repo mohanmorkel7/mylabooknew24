@@ -1724,82 +1724,116 @@ export default function CreateVC() {
                   />
                 </div>
 
+                {/* Searchable Location Fields */}
                 <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    placeholder="City"
-                    value={vcData.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                  />
+                  <Label htmlFor="country">Country</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                        {vcData.country || "Select country"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search country..." />
+                        <CommandEmpty>No country found.</CommandEmpty>
+                        <CommandList>
+                          <CommandGroup>
+                            {COUNTRIES.map((country) => (
+                              <CommandItem
+                                key={country}
+                                value={country}
+                                onSelect={(value) => {
+                                  handleInputChange("country", value);
+                                  handleInputChange("state", "");
+                                  handleInputChange("city", "");
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", vcData.country === country ? "opacity-100" : "opacity-0")} />
+                                {country}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
                   <Label htmlFor="state">State/Province</Label>
-                  <Input
-                    id="state"
-                    placeholder="State or Province"
-                    value={vcData.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                        {vcData.state || "Select state"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search state..." />
+                        <CommandEmpty>No state found.</CommandEmpty>
+                        <CommandList>
+                          <CommandGroup>
+                            {(STATES_BY_COUNTRY[vcData.country] || []).map((state) => (
+                              <CommandItem
+                                key={state}
+                                value={state}
+                                onSelect={(value) => {
+                                  handleInputChange("state", value);
+                                  handleInputChange("city", "");
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", vcData.state === state ? "opacity-100" : "opacity-0")} />
+                                {state}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
-                  <Label htmlFor="country">Country *</Label>
-                  <Select
-                    value={
-                      vcData.country && vcData.country.trim()
-                        ? vcData.country
-                        : undefined
-                    }
-                    onValueChange={(value) => {
-                      console.log(
-                        "🐛 DEBUG - Country dropdown changed to:",
-                        value,
-                      );
-                      console.log(
-                        "🐛 DEBUG - Current vcData.country before change:",
-                        vcData.country,
-                      );
-                      handleInputChange("country", value);
-                      if (value !== "Other") {
-                        console.log(
-                          "🐛 DEBUG - Clearing custom_country because not Other",
-                        );
-                        handleInputChange("custom_country", "");
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="city">City</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                        {vcData.city || "Select city"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search city..." />
+                        <CommandEmpty>No city found.</CommandEmpty>
+                        <CommandList>
+                          <CommandGroup>
+                            {(CITIES_BY_STATE[vcData.state] || CITY_INDEX.filter(c => !vcData.state || c.country === vcData.country).map(c => c.city)).map((city) => (
+                              <CommandItem
+                                key={city}
+                                value={city}
+                                onSelect={(value) => {
+                                  handleInputChange("city", value);
+                                  const match = CITY_INDEX.find(c => c.city === value);
+                                  if (match) {
+                                    handleInputChange("state", match.state);
+                                    handleInputChange("country", match.country);
+                                  }
+                                }}
+                              >
+                                <Check className={cn("mr-2 h-4 w-4", vcData.city === city ? "opacity-100" : "opacity-0")} />
+                                {city}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
-
-                {vcData.country === "Other" && (
-                  <div>
-                    <Label htmlFor="custom_country">Custom Country</Label>
-                    <Input
-                      id="custom_country"
-                      placeholder="Enter country name"
-                      value={vcData.custom_country}
-                      onChange={(e) => {
-                        console.log(
-                          "🐛 DEBUG - Custom country changed to:",
-                          e.target.value,
-                        );
-                        handleInputChange("custom_country", e.target.value);
-                      }}
-                    />
-                  </div>
-                )}
               </div>
 
 
