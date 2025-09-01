@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useCreateLead, usePartialSaveLead, useTemplate } from "@/hooks/useApi";
@@ -69,6 +69,7 @@ import { ChevronsUpDown, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { Country, State, City } from "country-state-city";
 
 const INVESTOR_CATEGORIES = [
   { value: "angel", label: "Angel" },
@@ -120,9 +121,23 @@ const INVESTOR_FEEDBACK = [
 const COUNTRIES = [
   "India",
   "United States",
+  "United Arab Emirates",
+  "Saudi Arabia",
+  "Qatar",
+  "Kuwait",
+  "Bahrain",
+  "Oman",
+  "Israel",
+  "Jordan",
+  "Lebanon",
+  "Egypt",
+  "Iraq",
+  "Iran",
+  "Yemen",
+  "Syria",
+  "Palestine",
   "United Kingdom",
   "Singapore",
-  "UAE",
   "Canada",
   "Australia",
   "Germany",
@@ -137,6 +152,20 @@ const PHONE_PREFIXES = [
   { code: "+44", label: "+44 (UK)" },
   { code: "+65", label: "+65 (SG)" },
   { code: "+971", label: "+971 (UAE)" },
+  { code: "+966", label: "+966 (SA)" },
+  { code: "+974", label: "+974 (QA)" },
+  { code: "+965", label: "+965 (KW)" },
+  { code: "+973", label: "+973 (BH)" },
+  { code: "+968", label: "+968 (OM)" },
+  { code: "+972", label: "+972 (IL)" },
+  { code: "+962", label: "+962 (JO)" },
+  { code: "+961", label: "+961 (LB)" },
+  { code: "+20", label: "+20 (EG)" },
+  { code: "+964", label: "+964 (IQ)" },
+  { code: "+98", label: "+98 (IR)" },
+  { code: "+967", label: "+967 (YE)" },
+  { code: "+963", label: "+963 (SY)" },
+  { code: "+970", label: "+970 (PS)" },
   { code: "+61", label: "+61 (AU)" },
   { code: "+49", label: "+49 (DE)" },
   { code: "+33", label: "+33 (FR)" },
@@ -205,6 +234,25 @@ export default function CreateVC() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Dynamic location data via country-state-city
+  const allCountries = useMemo(() => Country.getAllCountries(), []);
+  const nameToCountry = useMemo(() => {
+    const m = new Map<string, any>();
+    allCountries.forEach((c: any) => m.set(c.name, c));
+    return m;
+  }, [allCountries]);
+  const selectedCountryName = vcData.country === "Other" ? vcData.custom_country : vcData.country;
+  const selectedCountry = selectedCountryName ? nameToCountry.get(selectedCountryName) : undefined;
+  const availableStates = useMemo(() => {
+    return selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+  }, [selectedCountry && selectedCountry.isoCode]);
+  const selectedStateObj = vcData.state ? availableStates.find((s: any) => s.name === vcData.state) : undefined;
+  const availableCities = useMemo(() => {
+    if (!selectedCountry) return [] as any[];
+    if (selectedStateObj) return City.getCitiesOfState(selectedCountry.isoCode, selectedStateObj.isoCode);
+    return City.getCitiesOfCountry(selectedCountry.isoCode);
+  }, [selectedCountry && selectedCountry.isoCode, selectedStateObj && selectedStateObj.isoCode]);
 
   // Check if we're in edit mode or resuming from draft
   const isEditMode = !!id;
@@ -1748,17 +1796,23 @@ export default function CreateVC() {
                         <CommandEmpty>No state found.</CommandEmpty>
                         <CommandList>
                           <CommandGroup>
-                            {(STATES_BY_COUNTRY[vcData.country] || []).map((state) => (
+                            {availableStates.map((state: any) => (
                               <CommandItem
-                                key={state}
-                                value={state}
+                                key={state.isoCode}
+                                value={state.isoCode}
                                 onSelect={(value) => {
-                                  handleInputChange("state", value);
-                                  handleInputChange("city", "");
+                                  const st = availableStates.find((s: any) => s.isoCode === value);
+                                  if (st) {
+                                    handleInputChange("state", st.name);
+                                    if (selectedCountry) {
+                                      handleInputChange("country", selectedCountry.name);
+                                    }
+                                    handleInputChange("city", "");
+                                  }
                                 }}
                               >
-                                <Check className={cn("mr-2 h-4 w-4", vcData.state === state ? "opacity-100" : "opacity-0")} />
-                                {state}
+                                <Check className={cn("mr-2 h-4 w-4", vcData.state === state.name ? "opacity-100" : "opacity-0")} />
+                                {state.name}
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -1783,23 +1837,28 @@ export default function CreateVC() {
                         <CommandEmpty>No city found.</CommandEmpty>
                         <CommandList>
                           <CommandGroup>
-                            {(CITIES_BY_STATE[vcData.state] || CITY_INDEX.filter(c => !vcData.state || c.country === vcData.country).map(c => c.city)).map((city) => (
-                              <CommandItem
-                                key={city}
-                                value={city}
-                                onSelect={(value) => {
-                                  handleInputChange("city", value);
-                                  const match = CITY_INDEX.find(c => c.city === value);
-                                  if (match) {
-                                    handleInputChange("state", match.state);
-                                    handleInputChange("country", match.country);
-                                  }
-                                }}
-                              >
-                                <Check className={cn("mr-2 h-4 w-4", vcData.city === city ? "opacity-100" : "opacity-0")} />
-                                {city}
-                              </CommandItem>
-                            ))}
+                            {availableCities.map((city: any) => {
+                              const value = `${city.name}|${city.stateCode || ""}|${city.countryCode}`;
+                              return (
+                                <CommandItem
+                                  key={value}
+                                  value={value}
+                                  onSelect={(val) => {
+                                    const [name, stateCode, countryCode] = val.split("|");
+                                    handleInputChange("city", name);
+                                    const countryObj = Country.getAllCountries().find((c: any) => c.isoCode === countryCode);
+                                    if (countryObj) handleInputChange("country", countryObj.name);
+                                    if (stateCode) {
+                                      const stObj = State.getStateByCodeAndCountry(stateCode, countryCode);
+                                      if (stObj) handleInputChange("state", stObj.name);
+                                    }
+                                  }}
+                                >
+                                  <Check className={cn("mr-2 h-4 w-4", vcData.city === city.name ? "opacity-100" : "opacity-0")} />
+                                  {city.name}
+                                </CommandItem>
+                              );
+                            })}
                           </CommandGroup>
                         </CommandList>
                       </Command>
