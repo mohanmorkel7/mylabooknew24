@@ -43,6 +43,7 @@ export interface VC {
     | "private_equity"
     | "family_office"
     | "merchant_banker"
+    | "accelerator"
     | "individual";
   investor_name?: string;
   contact_person?: string;
@@ -333,7 +334,7 @@ export class VCRepository {
 
     const values = [
       vcId,
-      vcData.lead_source,
+      vcData.lead_source || "email",
       vcData.lead_source_value || null,
       vcData.lead_created_by || null,
       vcData.status,

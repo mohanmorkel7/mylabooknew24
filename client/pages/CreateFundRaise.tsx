@@ -132,6 +132,10 @@ export default function CreateFundRaise() {
       "Fund Raise";
 
     const payload: any = {
+      lead_source: "email",
+      lead_source_value: (user as any)?.email || "fundraise-form",
+      lead_created_by: (user as any)?.email || "fundraise-form",
+      investor_category: "vc",
       investor_name: form.vc_investor,
       status: STATUS_MAP[form.status] || "in-progress",
       round_stage: form.round_stage,
