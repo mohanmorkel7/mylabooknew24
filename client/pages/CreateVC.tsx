@@ -1194,6 +1194,8 @@ export default function CreateVC() {
         status: vcData.status,
         investor_category: (vcData as any).investor_category || null,
         investor_name: vcData.investor_name,
+        industry: (vcData as any).industry || null,
+        investor_last_feedback: (vcData as any).investor_last_feedback || null,
         phone: vcData.phone,
         address: vcData.address,
         city: vcData.city,
