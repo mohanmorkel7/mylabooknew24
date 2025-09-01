@@ -105,6 +105,7 @@ export default function CreateFundRaise() {
     valuation_mn: "",
     template_id: 1,
     investor_status: "",
+    queue_total_raise_mn: "",
   });
 
   const { data: vcList = [] } = useQuery({
