@@ -54,6 +54,24 @@ router.post("/", async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
     if (await isDatabaseAvailable()) {
+      // If vc_id provided, ensure it exists to avoid FK errors
+      if (body.vc_id) {
+        try {
+          const { pool } = await import("../database/connection");
+          const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [
+            Number(body.vc_id),
+          ]);
+          if (check.rowCount === 0) {
+            return res.status(202).json({
+              warning: "VC not found in database; fund raise record not created",
+              vc_id: body.vc_id,
+            });
+          }
+        } catch (e) {
+          // continue; FK will enforce
+        }
+      }
+
       const row = await FundRaiseRepository.createFull({
         vc_id: body.vc_id ?? null,
         investor_name: body.investor_name ?? null,
@@ -79,6 +97,11 @@ router.post("/", async (req: Request, res: Response) => {
     }
     return res.status(503).json({ error: "Database unavailable" });
   } catch (error: any) {
+    if (error && error.code === "23503") {
+      return res
+        .status(202)
+        .json({ warning: "Invalid vc_id, record not created" });
+    }
     console.error("Error creating fund_raise:", error.message);
     return res.status(500).json({ error: "Failed" });
   }
