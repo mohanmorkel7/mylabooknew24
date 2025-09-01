@@ -46,7 +46,7 @@ import {
   Award,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -166,6 +166,45 @@ export default function FundRaiseDetails() {
       });
     },
   });
+
+  // Seed VC steps from template 1 when no steps exist
+  const seededRef = useRef(false);
+  useEffect(() => {
+    const seedFromTemplate = async () => {
+      if (seededRef.current || !id) return;
+      if (Array.isArray(vcSteps) && vcSteps.length > 0) return;
+      try {
+        const template = await apiClient.request(`/templates-production/1`);
+        const steps = template?.steps || [];
+        if (!Array.isArray(steps) || steps.length === 0) return;
+        for (const [index, tStep] of steps.entries()) {
+          try {
+            await apiClient.request(`/vc/${id}/steps`, {
+              method: "POST",
+              body: JSON.stringify({
+                name: tStep.name,
+                description: tStep.description || tStep.name,
+                due_date: "",
+                priority: "medium",
+                status: "pending",
+                estimated_days: tStep.default_eta_days || tStep.estimated_days || 1,
+                probability_percent: tStep.probability_percent || 0,
+                order_index: tStep.step_order || index + 1,
+                created_by: parseInt(user?.id || "1"),
+              }),
+            });
+          } catch (e) {
+            // continue
+          }
+        }
+        seededRef.current = true;
+        setTimeout(() => refetchSteps(), 300);
+      } catch (e) {
+        // ignore
+      }
+    };
+    if (!stepsLoading) seedFromTemplate();
+  }, [id, stepsLoading, vcSteps, user?.id, refetchSteps]);
 
   const handleAddStep = async () => {
     if (!newStep.name.trim() || !newStep.description.trim()) return;
