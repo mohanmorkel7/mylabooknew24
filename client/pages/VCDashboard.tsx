@@ -1616,33 +1616,13 @@ export default function VCDashboard() {
                               )}
                             </div>
 
-                            <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
-                              <span>
-                                Investor:{" "}
-                                <span className="font-medium">
-                                  {vc.investor_name || "N/A"}
-                                </span>
-                              </span>
-                              {vc.round_stage && (
-                                <span>
-                                  Stage:{" "}
-                                  <span className="font-medium">
-                                    {vc.round_stage
-                                      .replace("_", " ")
-                                      .toUpperCase()}
-                                  </span>
-                                </span>
-                              )}
-                              {(vc.round_size || vc.billing_currency) && (
-                                <span>
-                                  Size:{" "}
-                                  <span className="font-medium">
-                                    {formatCurrency(
-                                      vc.round_size,
-                                      vc.billing_currency,
-                                    )}
-                                  </span>
-                                </span>
+                            <div className="mt-1 text-sm text-gray-700 flex flex-wrap gap-4">
+                              <span>Venture Capital Name: <span className="font-medium">{vc.investor_name || "N/A"}</span></span>
+                              <span>VC Type: <span className="font-medium capitalize">{(vc.investor_category || "N/A").replace("_", " ")}</span></span>
+                              <span>Sector Focus: <span className="font-medium">{vc.industry || "N/A"}</span></span>
+                              <span>Source: <span className="font-medium capitalize">{vc.lead_source?.replace("-", " ") || "N/A"}</span></span>
+                              {vc.website && (
+                                <a href={vc.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">Website</a>
                               )}
                             </div>
                           </div>
