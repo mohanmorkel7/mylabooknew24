@@ -131,6 +131,61 @@ const COUNTRIES = [
   "Other",
 ];
 
+const PHONE_PREFIXES = [
+  { code: "+1", label: "+1 (US)" },
+  { code: "+91", label: "+91 (IN)" },
+  { code: "+44", label: "+44 (UK)" },
+  { code: "+65", label: "+65 (SG)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+61", label: "+61 (AU)" },
+  { code: "+49", label: "+49 (DE)" },
+  { code: "+33", label: "+33 (FR)" },
+  { code: "+81", label: "+81 (JP)" },
+];
+
+const CITY_INDEX: Array<{ city: string; state: string; country: string }> = [
+  { city: "San Francisco", state: "California", country: "United States" },
+  { city: "New York", state: "New York", country: "United States" },
+  { city: "Bengaluru", state: "Karnataka", country: "India" },
+  { city: "Mumbai", state: "Maharashtra", country: "India" },
+  { city: "London", state: "England", country: "United Kingdom" },
+  { city: "Singapore", state: "Central", country: "Singapore" },
+  { city: "Dubai", state: "Dubai", country: "UAE" },
+  { city: "Toronto", state: "Ontario", country: "Canada" },
+  { city: "Sydney", state: "New South Wales", country: "Australia" },
+  { city: "Berlin", state: "Berlin", country: "Germany" },
+  { city: "Paris", state: "Île-de-France", country: "France" },
+  { city: "Tokyo", state: "Tokyo", country: "Japan" },
+];
+
+const STATES_BY_COUNTRY: Record<string, string[]> = {
+  "United States": ["California", "New York"],
+  India: ["Karnataka", "Maharashtra"],
+  "United Kingdom": ["England"],
+  Singapore: ["Central"],
+  UAE: ["Dubai"],
+  Canada: ["Ontario"],
+  Australia: ["New South Wales"],
+  Germany: ["Berlin"],
+  France: ["Île-de-France"],
+  Japan: ["Tokyo"],
+};
+
+const CITIES_BY_STATE: Record<string, string[]> = {
+  California: ["San Francisco"],
+  "New York": ["New York"],
+  Karnataka: ["Bengaluru"],
+  Maharashtra: ["Mumbai"],
+  England: ["London"],
+  Central: ["Singapore"],
+  Dubai: ["Dubai"],
+  Ontario: ["Toronto"],
+  "New South Wales": ["Sydney"],
+  Berlin: ["Berlin"],
+  "Île-de-France": ["Paris"],
+  Tokyo: ["Tokyo"],
+};
+
 const CURRENCIES = [
   { value: "INR", label: "INR (₹)", symbol: "₹" },
   { value: "USD", label: "USD ($)", symbol: "$" },
