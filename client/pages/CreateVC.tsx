@@ -309,7 +309,10 @@ export default function CreateVC() {
           maximum_size: resumeData.maximum_size || "",
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
           investor_category: (resumeData as any).investor_category || "",
-          sector_focus: (resumeData as any).sector_focus || "",
+          industry:
+            (resumeData as any).industry ||
+            (resumeData as any).sector_focus ||
+            "",
           investor_last_feedback:
             (resumeData as any).investor_last_feedback || "",
           contacts: resumeData.contacts
@@ -393,7 +396,7 @@ export default function CreateVC() {
           maximum_size: "",
           minimum_arr_requirement: "",
           investor_category: "",
-          sector_focus: "",
+          industry: "",
           investor_last_feedback: "",
 
           // Contacts (start with one primary contact)
@@ -1194,6 +1197,8 @@ export default function CreateVC() {
         status: vcData.status,
         investor_category: (vcData as any).investor_category || null,
         investor_name: vcData.investor_name,
+        industry: (vcData as any).industry || null,
+        investor_last_feedback: (vcData as any).investor_last_feedback || null,
         phone: vcData.phone,
         address: vcData.address,
         city: vcData.city,
@@ -1298,6 +1303,8 @@ export default function CreateVC() {
         status: vcData.status,
         investor_category: (vcData as any).investor_category || null,
         investor_name: vcData.investor_name || "PARTIAL_SAVE_IN_PROGRESS",
+        industry: (vcData as any).industry || null,
+        investor_last_feedback: (vcData as any).investor_last_feedback || null,
         phone: vcData.phone,
         address: vcData.address,
         city: vcData.city,
@@ -1594,11 +1601,11 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="sector_focus">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus</Label>
                     <Select
-                      value={(vcData as any).sector_focus}
+                      value={(vcData as any).industry}
                       onValueChange={(value) =>
-                        handleInputChange("sector_focus" as any, value)
+                        handleInputChange("industry" as any, value)
                       }
                     >
                       <SelectTrigger>

@@ -354,6 +354,7 @@ export class VCRepository {
       countryValue,
       vcData.website || null,
       vcData.company_size || null,
+      vcData.industry || null,
       vcData.investor_last_feedback || null,
       vcData.potential_lead_investor || false,
       vcData.minimum_size || null,
