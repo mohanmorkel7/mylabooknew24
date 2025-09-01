@@ -681,6 +681,7 @@ export default function VCEdit() {
         {
           contact_name: "",
           designation: "",
+          phone_prefix: "+1",
           phone: "",
           email: "",
           linkedin: "",
