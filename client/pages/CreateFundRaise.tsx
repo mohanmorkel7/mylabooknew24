@@ -56,28 +56,26 @@ const INVESTOR_STATUS_OPTIONS = [
   { value: "Future Potential", label: "Future Potential" },
 ];
 
-const FUND_MN_OPTIONS = [
-  "0.05",
-  "0.10",
-  "0.25",
-  "0.50",
-  "1.00",
-  "2.00",
-  "3.00",
-  "4.00",
-  "5.00",
-  "6.00",
-  "7.00",
-  "8.00",
-  "9.00",
-  "10.00",
-];
+function generateStepOptions(start: number, end: number, step: number): string[] {
+  const result: string[] = [];
+  const scale = 100; // to avoid floating-point errors
+  const startScaled = Math.round(start * scale);
+  const endScaled = Math.round(end * scale);
+  const stepScaled = Math.round(step * scale);
+  for (let v = startScaled; v <= endScaled; v += stepScaled) {
+    result.push((v / scale).toFixed(2));
+  }
+  return result;
+}
+
+const FUND_MN_OPTIONS = generateStepOptions(0.05, 10, 0.05);
 
 export default function CreateFundRaise() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [fundMnOpen, setFundMnOpen] = useState(false);
+  const [fundMnOpenMain, setFundMnOpenMain] = useState(false);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -361,17 +359,35 @@ export default function CreateFundRaise() {
 
                 <div>
                   <Label>Total Fund Raise $ Mn</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="e.g. 10"
-                      className="pl-10"
-                      value={form.total_raise_mn}
-                      onChange={(e) =>
-                        handleChange("total_raise_mn", e.target.value)
-                      }
-                    />
-                  </div>
+                  <Popover open={fundMnOpenMain} onOpenChange={setFundMnOpenMain}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {form.total_raise_mn || "Select amount"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="start" avoidCollisions={false} className="p-0 w-[200px]">
+                      <Command>
+                        <CommandInput placeholder="Search amount..." />
+                        <CommandList>
+                          <CommandEmpty>No amounts found.</CommandEmpty>
+                          <CommandGroup>
+                            {FUND_MN_OPTIONS.map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(val) => {
+                                  handleChange("total_raise_mn", val);
+                                  setFundMnOpenMain(false);
+                                }}
+                              >
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
