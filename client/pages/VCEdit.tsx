@@ -1211,8 +1211,9 @@ export default function VCEdit() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
@@ -1262,8 +1263,9 @@ export default function VCEdit() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
