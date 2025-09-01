@@ -947,24 +947,110 @@ export default function VCEdit() {
                   </div>
                 )}
 
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={vcData.status}
-                    onValueChange={(value) =>
-                      handleInputChange("status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="won">Won</SelectItem>
-                      <SelectItem value="lost">Lost</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label htmlFor="investor_name">Venture Capital Name *</Label>
+                    <Input
+                      id="investor_name"
+                      placeholder="Name of the VC firm"
+                      value={vcData.investor_name}
+                      onChange={(e) => handleInputChange("investor_name", e.target.value)}
+                      className={errors.investor_name ? "border-red-500" : ""}
+                    />
+                    {errors.investor_name && (
+                      <p className="text-sm text-red-600 mt-1">{errors.investor_name}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="investor_category">VC Type *</Label>
+                    <Select
+                      value={vcData.investor_category}
+                      onValueChange={(value) => handleInputChange("investor_category", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select VC Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VC_TYPES.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.investor_category && (
+                      <p className="text-sm text-red-600 mt-1">{errors.investor_category}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sector_focus">Sector Focus</Label>
+                    <Select
+                      value={vcData.sector_focus}
+                      onValueChange={(value) => handleInputChange("sector_focus", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Sector Focus" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SECTOR_FOCUS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      placeholder="https://investor.com"
+                      value={vcData.website}
+                      onChange={(e) => handleInputChange("website", e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
+                    <Input
+                      id="minimum_size"
+                      placeholder="e.g., 1"
+                      value={vcData.minimum_size}
+                      onChange={(e) => handleInputChange("minimum_size", e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
+                    <Input
+                      id="maximum_size"
+                      placeholder="e.g., 10"
+                      value={vcData.maximum_size}
+                      onChange={(e) => handleInputChange("maximum_size", e.target.value)}
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
+                    <Select
+                      value={vcData.investor_last_feedback}
+                      onValueChange={(value) => handleInputChange("investor_last_feedback", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select last feedback" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVESTOR_FEEDBACK.map((f) => (
+                          <SelectItem key={f.value} value={f.value}>
+                            {f.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>
