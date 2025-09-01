@@ -73,7 +73,7 @@ export default function CreateFundRaise() {
     },
     staleTime: 30000,
     refetchOnWindowFocus: false,
-    retry: 1,
+    retry: 0,
   });
 
   const investorOptions = useMemo(() => {
