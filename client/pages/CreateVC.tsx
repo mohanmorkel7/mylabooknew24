@@ -303,6 +303,9 @@ export default function CreateVC() {
           minimum_size: "",
           maximum_size: "",
           minimum_arr_requirement: "",
+          vc_type: "",
+          sector_focus: "",
+          investor_last_feedback: "",
 
           // Additional contacts (similar to CreateLead)
           contacts: [
