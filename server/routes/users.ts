@@ -2,15 +2,16 @@ import { Router, Request, Response } from "express";
 import { UserRepository, CreateUserData, UpdateUserData } from "../models/User";
 import { MockDataService } from "../services/mockData";
 import bcrypt from "bcryptjs";
+import { isDatabaseAvailable as checkDatabaseAvailable } from "../database/connection";
 
 const router = Router();
 
-// Helper function to check if database is available
+// Helper function to check if database is available (fast, with internal timeouts)
 async function isDatabaseAvailable() {
   try {
-    await UserRepository.findAll();
-    return true;
-  } catch (error) {
+    return await checkDatabaseAvailable();
+  } catch (error: any) {
+    console.log("Fast DB availability check error:", error?.message || String(error));
     return false;
   }
 }
