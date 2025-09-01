@@ -509,37 +509,55 @@ export default function FundRaiseDetails() {
                 </div>
                 <div>
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">Funding Information</h4>
+                    <h4 className="font-medium text-gray-900">
+                      Funding Information
+                    </h4>
                     <div className="space-y-2">
                       <div>
-                        <span className="font-medium text-gray-600">Round Stage: </span>
-                        <Badge className={
-                          roundStageColors[
-                            vcData.round_stage as keyof typeof roundStageColors
-                          ]
-                        }>
+                        <span className="font-medium text-gray-600">
+                          Round Stage:{" "}
+                        </span>
+                        <Badge
+                          className={
+                            roundStageColors[
+                              vcData.round_stage as keyof typeof roundStageColors
+                            ]
+                          }
+                        >
                           {getRoundStageDisplay(vcData.round_stage)}
                         </Badge>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Round Size: </span>
-                        <span className="text-gray-900">{formatCurrency(
-                          vcData.round_size,
-                          vcData.billing_currency,
-                        ) || "TBD"}</span>
+                        <span className="font-medium text-gray-600">
+                          Round Size:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {formatCurrency(
+                            vcData.round_size,
+                            vcData.billing_currency,
+                          ) || "TBD"}
+                        </span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-600">Valuation: </span>
-                        <span className="text-gray-900">{formatCurrency(
-                          vcData.valuation,
-                          vcData.billing_currency,
-                        ) || "TBD"}</span>
+                        <span className="font-medium text-gray-600">
+                          Valuation:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {formatCurrency(
+                            vcData.valuation,
+                            vcData.billing_currency,
+                          ) || "TBD"}
+                        </span>
                       </div>
                     </div>
                     {vcData.round_description && (
                       <div className="mt-1">
-                        <span className="font-medium text-gray-600">Description: </span>
-                        <span className="text-gray-900">{vcData.round_description}</span>
+                        <span className="font-medium text-gray-600">
+                          Description:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {vcData.round_description}
+                        </span>
                       </div>
                     )}
                   </div>
