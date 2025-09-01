@@ -789,7 +789,7 @@ export default function CreateVC() {
               // If user has already set custom country, preserve it
               if (prevData.custom_country && prevData.custom_country.trim()) {
                 console.log(
-                  "��� DEBUG - Preserving current custom_country:",
+                  "🐛 DEBUG - Preserving current custom_country:",
                   prevData.custom_country,
                 );
                 return prevData.custom_country;
@@ -1156,8 +1156,8 @@ export default function CreateVC() {
         if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
-    if (!vcData.vc_type) {
-      newErrors.vc_type = "VC Type is required";
+    if (!(vcData as any).investor_category) {
+      (newErrors as any).investor_category = "Investor category is required";
     }
     if (!vcData.lead_source) {
       newErrors.lead_source = "Lead source is required";
