@@ -142,7 +142,7 @@ export default function FundRaiseDashboard() {
         const mock: any[] = [
           {
             id: 1,
-            vc_id: null,
+            vc_id: 1,
             investor_name: "Alpha Ventures",
             ui_status: "WIP",
             status: "in-progress",
@@ -153,7 +153,7 @@ export default function FundRaiseDashboard() {
           },
           {
             id: 2,
-            vc_id: null,
+            vc_id: 2,
             investor_name: "Beta Capital",
             ui_status: "Closed",
             status: "completed",
@@ -164,7 +164,7 @@ export default function FundRaiseDashboard() {
           },
           {
             id: 3,
-            vc_id: null,
+            vc_id: 3,
             investor_name: "Gamma Partners",
             ui_status: "Dropped",
             status: "lost",
