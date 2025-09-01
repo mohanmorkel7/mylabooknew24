@@ -87,6 +87,32 @@ const ROUND_STAGES = [
   { value: "ipo", label: "IPO" },
 ];
 
+const VC_TYPES = [
+  { value: "early_stage", label: "Early Stage" },
+  { value: "accelerator", label: "Accelerator" },
+  { value: "growth", label: "Growth" },
+  { value: "strategic_bank", label: "Strategic - Bank" },
+  { value: "strategic_fintech", label: "Strategic - Fintech" },
+  { value: "strategic_individual", label: "Strategic - Individual" },
+  { value: "angel", label: "Angel" },
+];
+
+const SECTOR_FOCUS = [
+  { value: "fintech", label: "Fintech" },
+  { value: "fintech_b2b", label: "Fintech -B2B" },
+  { value: "fintech_saas", label: "Fintech - SaaS" },
+  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
+  { value: "sector_agnostic", label: "Sector Agnostic" },
+];
+
+const INVESTOR_FEEDBACK = [
+  { value: "existing_investor", label: "Existing Investor" },
+  { value: "general", label: "General" },
+  { value: "pass", label: "Pass" },
+  { value: "ghosting", label: "Ghosting" },
+  { value: "potential_future", label: "Potential Future" },
+];
+
 const COUNTRIES = [
   "India",
   "United States",
