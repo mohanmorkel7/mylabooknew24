@@ -1212,7 +1212,7 @@ export default function CreateVC() {
       };
 
       console.log("🚀 DEBUG - Submitting final data:", submitData);
-      console.log("🚀 DEBUG - Country values at submit time:", {
+      console.log("�� DEBUG - Country values at submit time:", {
         "vcData.country": vcData.country,
         "vcData.custom_country": vcData.custom_country,
         "submitData.country": submitData.country,
@@ -1580,7 +1580,27 @@ export default function CreateVC() {
                     </Select>
                   </div>
 
-                  
+                  <div>
+                    <Label htmlFor="sector_focus">Sector Focus</Label>
+                    <Select
+                      value={(vcData as any).sector_focus}
+                      onValueChange={(value) =>
+                        handleInputChange("sector_focus" as any, value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Sector Focus" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SECTOR_FOCUS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div>
                     <Label htmlFor="website">Website</Label>
                     <Input
