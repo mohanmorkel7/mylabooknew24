@@ -6,11 +6,43 @@ import { useAuth } from "@/lib/auth-context";
 import { useMyVCPartialSaves } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Search, Plus, TrendingUp, Target, CheckCircle, Clock, XCircle, FileText, BarChart3 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Search,
+  Plus,
+  TrendingUp,
+  Target,
+  CheckCircle,
+  Clock,
+  XCircle,
+  FileText,
+  BarChart3,
+} from "lucide-react";
 
 const statusColors: Record<string, string> = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -32,10 +64,12 @@ export default function FundRaiseDashboard() {
 
   const userId = user?.id ? parseInt(user.id) : undefined;
 
-  const { data: vcPartialSaves = [], refetch: refetchVCPartialSaves } = useMyVCPartialSaves(userId);
+  const { data: vcPartialSaves = [], refetch: refetchVCPartialSaves } =
+    useMyVCPartialSaves(userId);
 
   const deleteVC = useMutation({
-    mutationFn: (vcId: number) => apiClient.request(`/vc/${vcId}`, { method: "DELETE" }),
+    mutationFn: (vcId: number) =>
+      apiClient.request(`/vc/${vcId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vcs"] });
       queryClient.invalidateQueries({ queryKey: ["my-vc-partial-saves"] });
@@ -43,12 +77,18 @@ export default function FundRaiseDashboard() {
     },
   });
 
-  const { data: vcList = [], refetch: refetchVCs, error: vcError, isLoading: vcLoading } = useQuery({
+  const {
+    data: vcList = [],
+    refetch: refetchVCs,
+    error: vcError,
+    isLoading: vcLoading,
+  } = useQuery({
     queryKey: ["vcs", statusFilter, categoryFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (statusFilter !== "all") params.append("status", statusFilter);
-      if (categoryFilter !== "all") params.append("investor_category", categoryFilter);
+      if (categoryFilter !== "all")
+        params.append("investor_category", categoryFilter);
       const queryString = params.toString();
       const url = queryString ? `/vc?${queryString}` : "/vc";
       try {
@@ -62,7 +102,11 @@ export default function FundRaiseDashboard() {
     staleTime: 30000,
   });
 
-  const { data: vcStats = { total: 0, in_progress: 0, won: 0, lost: 0 }, error: statsError, isLoading: statsLoading } = useQuery({
+  const {
+    data: vcStats = { total: 0, in_progress: 0, won: 0, lost: 0 },
+    error: statsError,
+    isLoading: statsLoading,
+  } = useQuery({
     queryKey: ["vc-stats"],
     queryFn: async () => {
       try {
@@ -90,7 +134,11 @@ export default function FundRaiseDashboard() {
     staleTime: 30000,
   });
 
-  const { data: vcFollowUps = [], isLoading: followUpsLoading, refetch: refetchFollowUps } = useQuery({
+  const {
+    data: vcFollowUps = [],
+    isLoading: followUpsLoading,
+    refetch: refetchFollowUps,
+  } = useQuery({
     queryKey: ["vc-follow-ups"],
     queryFn: async () => {
       try {
@@ -109,10 +157,15 @@ export default function FundRaiseDashboard() {
     queryKey: ["vc-templates-dashboard"],
     queryFn: async () => {
       try {
-        const categories = await apiClient.request("/templates-production/categories");
+        const categories = await apiClient.request(
+          "/templates-production/categories",
+        );
         if (!categories || !Array.isArray(categories)) return [];
         const vcCategory = categories.find((cat: any) => cat.name === "VC");
-        if (vcCategory) return await apiClient.request(`/templates-production/category/${vcCategory.id}`);
+        if (vcCategory)
+          return await apiClient.request(
+            `/templates-production/category/${vcCategory.id}`,
+          );
         return [];
       } catch {
         return [];
@@ -123,7 +176,11 @@ export default function FundRaiseDashboard() {
 
   const filteredVCs = (vcList || [])
     .filter((vc: any) => {
-      if (vc.is_partial === true || vc.investor_name === "PARTIAL_SAVE_IN_PROGRESS") return false;
+      if (
+        vc.is_partial === true ||
+        vc.investor_name === "PARTIAL_SAVE_IN_PROGRESS"
+      )
+        return false;
       if (!searchTerm) return true;
       const searchLower = searchTerm.toLowerCase();
       return (
@@ -136,7 +193,13 @@ export default function FundRaiseDashboard() {
     .sort((a: any, b: any) => {
       const aValue = a[sortBy] || "";
       const bValue = b[sortBy] || "";
-      return sortOrder === "asc" ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+      return sortOrder === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+          ? 1
+          : -1;
     });
 
   if (vcError) {
@@ -144,7 +207,11 @@ export default function FundRaiseDashboard() {
       <div className="p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <Card className="bg-red-50 border-red-200"><CardContent className="p-6 text-center">Failed to load data</CardContent></Card>
+            <Card className="bg-red-50 border-red-200">
+              <CardContent className="p-6 text-center">
+                Failed to load data
+              </CardContent>
+            </Card>
             <Button onClick={() => refetchVCs()}>Try Again</Button>
           </div>
         </div>
@@ -156,10 +223,12 @@ export default function FundRaiseDashboard() {
     <div className="p-6 max-w-7xl mx-auto space-y-6 overflow-x-hidden">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Fund Raise Dashboard</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Fund Raise Dashboard
+          </h1>
           <p className="text-gray-600 mt-1">Manage fund raises</p>
         </div>
-        <Button onClick={() => navigate("/fundraise/create")}> 
+        <Button onClick={() => navigate("/fundraise/create")}>
           <Plus className="w-4 h-4 mr-2" />
           Create Fund Raise
         </Button>
@@ -168,47 +237,80 @@ export default function FundRaiseDashboard() {
       {statsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"><CardContent className="p-6"><div className="h-16 bg-gray-200 rounded animate-pulse" /></CardContent></Card>
+            <Card
+              key={i}
+              className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
+            >
+              <CardContent className="p-6">
+                <div className="h-16 bg-gray-200 rounded animate-pulse" />
+              </CardContent>
+            </Card>
           ))}
         </div>
       ) : statsError ? (
-        <Card className="bg-red-50 border-red-200"><CardContent className="p-6 text-center">Failed to load statistics</CardContent></Card>
+        <Card className="bg-red-50 border-red-200">
+          <CardContent className="p-6 text-center">
+            Failed to load statistics
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-blue-600 text-sm font-medium">Total Fund Raises</p>
-                <p className="text-2xl font-bold text-blue-900">{vcStats?.total || 0}</p>
+                <p className="text-blue-600 text-sm font-medium">
+                  Total Fund Raises
+                </p>
+                <p className="text-2xl font-bold text-blue-900">
+                  {vcStats?.total || 0}
+                </p>
               </div>
-              <div className="bg-blue-200 p-3 rounded-full"><Target className="w-6 h-6 text-blue-600" /></div>
+              <div className="bg-blue-200 p-3 rounded-full">
+                <Target className="w-6 h-6 text-blue-600" />
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-orange-600 text-sm font-medium">In Progress</p>
-                <p className="text-2xl font-bold text-orange-900">{vcStats?.in_progress || 0}</p>
+                <p className="text-orange-600 text-sm font-medium">
+                  In Progress
+                </p>
+                <p className="text-2xl font-bold text-orange-900">
+                  {vcStats?.in_progress || 0}
+                </p>
               </div>
-              <div className="bg-orange-200 p-3 rounded-full"><Clock className="w-6 h-6 text-orange-600" /></div>
+              <div className="bg-orange-200 p-3 rounded-full">
+                <Clock className="w-6 h-6 text-orange-600" />
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
                 <p className="text-green-600 text-sm font-medium">Successful</p>
-                <p className="text-2xl font-bold text-green-900">{vcStats?.won || 0}</p>
+                <p className="text-2xl font-bold text-green-900">
+                  {vcStats?.won || 0}
+                </p>
               </div>
-              <div className="bg-green-200 p-3 rounded-full"><TrendingUp className="w-6 h-6 text-green-600" /></div>
+              <div className="bg-green-200 p-3 rounded-full">
+                <TrendingUp className="w-6 h-6 text-green-600" />
+              </div>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-purple-600 text-sm font-medium">VC Templates</p>
-                <p className="text-2xl font-bold text-purple-900">{(vcTemplates || []).length}</p>
+                <p className="text-purple-600 text-sm font-medium">
+                  VC Templates
+                </p>
+                <p className="text-2xl font-bold text-purple-900">
+                  {(vcTemplates || []).length}
+                </p>
               </div>
-              <div className="bg-purple-200 p-3 rounded-full"><FileText className="w-6 h-6 text-purple-600" /></div>
+              <div className="bg-purple-200 p-3 rounded-full">
+                <FileText className="w-6 h-6 text-purple-600" />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -221,12 +323,19 @@ export default function FundRaiseDashboard() {
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input placeholder="Search fund raises..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+                  <Input
+                    placeholder="Search fund raises..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]"><SelectValue placeholder="Filter by status" /></SelectTrigger>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="in-progress">In Progress</SelectItem>
@@ -236,15 +345,28 @@ export default function FundRaiseDashboard() {
                 </SelectContent>
               </Select>
 
-              <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => { const [field, order] = value.split("-"); setSortBy(field); setSortOrder(order as any); }}>
-                <SelectTrigger className="w-full md:w-[200px]"><SelectValue placeholder="Sort by" /></SelectTrigger>
+              <Select
+                value={`${sortBy}-${sortOrder}`}
+                onValueChange={(value) => {
+                  const [field, order] = value.split("-");
+                  setSortBy(field);
+                  setSortOrder(order as any);
+                }}
+              >
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="created_at-desc">Newest First</SelectItem>
                   <SelectItem value="created_at-asc">Oldest First</SelectItem>
                   <SelectItem value="round_title-asc">Round A-Z</SelectItem>
                   <SelectItem value="round_title-desc">Round Z-A</SelectItem>
-                  <SelectItem value="investor_name-asc">Investor A-Z</SelectItem>
-                  <SelectItem value="investor_name-desc">Investor Z-A</SelectItem>
+                  <SelectItem value="investor_name-asc">
+                    Investor A-Z
+                  </SelectItem>
+                  <SelectItem value="investor_name-desc">
+                    Investor Z-A
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -258,7 +380,8 @@ export default function FundRaiseDashboard() {
             <Card className="max-w-full">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart3 className="w-5 h-5" /> Fund Raise Progress Dashboard
+                  <BarChart3 className="w-5 h-5" /> Fund Raise Progress
+                  Dashboard
                 </CardTitle>
                 <CardDescription>Loading progress data...</CardDescription>
               </CardHeader>
@@ -347,10 +470,8 @@ export default function FundRaiseDashboard() {
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                       <div className="bg-gray-50 p-4 rounded-lg overflow-hidden">
                         <div className="text-sm font-medium text-gray-700 mb-4">
-                          All Fund Raises Progress Overview ({
-                            (vcProgressData || []).length
-                          }{" "}
-                          rounds)
+                          All Fund Raises Progress Overview (
+                          {(vcProgressData || []).length} rounds)
                         </div>
                         <div className="w-full">
                           <div className="w-full">
@@ -429,68 +550,76 @@ export default function FundRaiseDashboard() {
                                           className="relative"
                                           style={{ width: `${vcWidth}%` }}
                                         >
-                                          {(vcProgress.completed_steps || []).map(
-                                            (step: any) => {
-                                              const stepIndex = allSteps.indexOf(
-                                                step.name,
-                                              );
-                                              if (stepIndex === -1) return null;
-                                              const stepHeight =
-                                                chartHeight / allSteps.length;
-                                              const yPosition =
-                                                (allSteps.length - 1 - stepIndex) *
-                                                stepHeight;
-                                              return (
-                                                <div
-                                                  key={step.name}
-                                                  className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded transition-all duration-300 cursor-pointer group flex items-center justify-center"
-                                                  style={{
-                                                    top: `${yPosition}px`,
-                                                    height: `${stepHeight}px`,
-                                                    backgroundColor: getStepColor(
-                                                      stepIndex,
-                                                    ),
-                                                    opacity: 0.8,
-                                                  }}
-                                                  title={`${vcProgress.round_title}: ${step.name} - ${step.probability}% (Completed)`}
-                                                >
-                                                  <span className="text-xs font-bold text-gray-800">
-                                                    {step.probability}%
-                                                  </span>
-                                                </div>
-                                              );
-                                            },
-                                          )}
-
-                                          {vcProgress.current_step && (() => {
+                                          {(
+                                            vcProgress.completed_steps || []
+                                          ).map((step: any) => {
                                             const stepIndex = allSteps.indexOf(
-                                              vcProgress.current_step.name,
+                                              step.name,
                                             );
                                             if (stepIndex === -1) return null;
                                             const stepHeight =
                                               chartHeight / allSteps.length;
                                             const yPosition =
-                                              (allSteps.length - 1 - stepIndex) *
+                                              (allSteps.length -
+                                                1 -
+                                                stepIndex) *
                                               stepHeight;
                                             return (
                                               <div
-                                                className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded border-2 border-blue-600 transition-all duration-300 cursor-pointer group flex items-center justify-center"
+                                                key={step.name}
+                                                className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded transition-all duration-300 cursor-pointer group flex items-center justify-center"
                                                 style={{
                                                   top: `${yPosition}px`,
                                                   height: `${stepHeight}px`,
-                                                  backgroundColor: getStepColor(
-                                                    stepIndex,
-                                                  ),
-                                                  opacity: 1,
+                                                  backgroundColor:
+                                                    getStepColor(stepIndex),
+                                                  opacity: 0.8,
                                                 }}
-                                                title={`${vcProgress.round_title}: ${vcProgress.current_step.name} - ${vcProgress.current_step.probability}% (Current)`}
+                                                title={`${vcProgress.round_title}: ${step.name} - ${step.probability}% (Completed)`}
                                               >
                                                 <span className="text-xs font-bold text-gray-800">
-                                                  {vcProgress.current_step.probability}%
+                                                  {step.probability}%
                                                 </span>
                                               </div>
                                             );
-                                          })()}
+                                          })}
+
+                                          {vcProgress.current_step &&
+                                            (() => {
+                                              const stepIndex =
+                                                allSteps.indexOf(
+                                                  vcProgress.current_step.name,
+                                                );
+                                              if (stepIndex === -1) return null;
+                                              const stepHeight =
+                                                chartHeight / allSteps.length;
+                                              const yPosition =
+                                                (allSteps.length -
+                                                  1 -
+                                                  stepIndex) *
+                                                stepHeight;
+                                              return (
+                                                <div
+                                                  className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded border-2 border-blue-600 transition-all duration-300 cursor-pointer group flex items-center justify-center"
+                                                  style={{
+                                                    top: `${yPosition}px`,
+                                                    height: `${stepHeight}px`,
+                                                    backgroundColor:
+                                                      getStepColor(stepIndex),
+                                                    opacity: 1,
+                                                  }}
+                                                  title={`${vcProgress.round_title}: ${vcProgress.current_step.name} - ${vcProgress.current_step.probability}% (Current)`}
+                                                >
+                                                  <span className="text-xs font-bold text-gray-800">
+                                                    {
+                                                      vcProgress.current_step
+                                                        .probability
+                                                    }
+                                                    %
+                                                  </span>
+                                                </div>
+                                              );
+                                            })()}
                                         </div>
                                       );
                                     },
@@ -507,31 +636,36 @@ export default function FundRaiseDashboard() {
                                   minWidth: `${Math.min((vcProgressData || []).length * 80, 800)}px`,
                                 }}
                               >
-                                {(vcProgressData || []).map((vcProgress: any) => {
-                                  const vcWidth =
-                                    100 /
-                                    Math.max(
-                                      (vcProgressData || []).length,
-                                      1,
+                                {(vcProgressData || []).map(
+                                  (vcProgress: any) => {
+                                    const vcWidth =
+                                      100 /
+                                      Math.max(
+                                        (vcProgressData || []).length,
+                                        1,
+                                      );
+                                    return (
+                                      <div
+                                        key={vcProgress.vc_id}
+                                        className="text-center"
+                                        style={{ width: `${vcWidth}%` }}
+                                      >
+                                        <div className="text-xs font-medium text-gray-700 mb-1">
+                                          {vcProgress.round_title}
+                                        </div>
+                                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
+                                          {
+                                            vcProgress.total_completed_probability
+                                          }
+                                          %
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-800 break-words px-1">
+                                          {vcProgress.investor_name}
+                                        </div>
+                                      </div>
                                     );
-                                  return (
-                                    <div
-                                      key={vcProgress.vc_id}
-                                      className="text-center"
-                                      style={{ width: `${vcWidth}%` }}
-                                    >
-                                      <div className="text-xs font-medium text-gray-700 mb-1">
-                                        {vcProgress.round_title}
-                                      </div>
-                                      <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
-                                        {vcProgress.total_completed_probability}%
-                                      </div>
-                                      <div className="text-sm font-semibold text-gray-800 break-words px-1">
-                                        {vcProgress.investor_name}
-                                      </div>
-                                    </div>
-                                  );
-                                })}
+                                  },
+                                )}
                               </div>
                             </div>
                           </div>
@@ -565,7 +699,9 @@ export default function FundRaiseDashboard() {
                               );
 
                               const maxVCsAtStep = Math.max(
-                                ...stepDistribution.map((s) => s.totalVCsAtStep),
+                                ...stepDistribution.map(
+                                  (s) => s.totalVCsAtStep,
+                                ),
                                 1,
                               );
 
@@ -588,7 +724,9 @@ export default function FundRaiseDashboard() {
                                           <div
                                             key={stepName}
                                             className="flex items-center justify-end text-right border-b border-gray-200"
-                                            style={{ height: `${stepHeight}px` }}
+                                            style={{
+                                              height: `${stepHeight}px`,
+                                            }}
                                           >
                                             <span className="text-sm font-medium text-gray-700">
                                               {stepName}
@@ -647,9 +785,8 @@ export default function FundRaiseDashboard() {
                                                 left: "10px",
                                                 height: `${stepHeight * 0.6}px`,
                                                 width: `${Math.max(barWidth, 5)}%`,
-                                                backgroundColor: getStepColor(
-                                                  stepIndex,
-                                                ),
+                                                backgroundColor:
+                                                  getStepColor(stepIndex),
                                                 opacity: 0.8,
                                               }}
                                               title={`${stepData.stepName}: ${stepData.totalVCsAtStep} Fund Raises in progress`}
@@ -666,7 +803,8 @@ export default function FundRaiseDashboard() {
                                                   )
                                                     .filter(
                                                       (vc: any) =>
-                                                        vc.current_step?.name ===
+                                                        vc.current_step
+                                                          ?.name ===
                                                         stepData.stepName,
                                                     )
                                                     .map(
@@ -710,7 +848,11 @@ export default function FundRaiseDashboard() {
                             Active Fund Raises
                           </div>
                           <div className="text-2xl font-bold text-blue-900">
-                            {(vcProgressData || []).filter((vc: any) => vc.current_step).length}
+                            {
+                              (vcProgressData || []).filter(
+                                (vc: any) => vc.current_step,
+                              ).length
+                            }
                           </div>
                         </div>
 
@@ -725,7 +867,8 @@ export default function FundRaiseDashboard() {
                                   ? Math.round(
                                       (vcProgressData || []).reduce(
                                         (sum: number, vc: any) =>
-                                          sum + (vc.total_completed_probability || 0),
+                                          sum +
+                                          (vc.total_completed_probability || 0),
                                         0,
                                       ) / (vcProgressData || []).length,
                                     )
@@ -754,7 +897,9 @@ export default function FundRaiseDashboard() {
                                 </div>
                                 <Badge
                                   className={
-                                    statusColors[vc.status as keyof typeof statusColors]
+                                    statusColors[
+                                      vc.status as keyof typeof statusColors
+                                    ]
                                   }
                                 >
                                   {vc.status.replace("-", " ")}
@@ -762,10 +907,12 @@ export default function FundRaiseDashboard() {
                               </div>
                               <div className="text-right">
                                 <div className="text-sm font-medium text-gray-700">
-                                  {vc.total_completed_probability || 0}% completed
+                                  {vc.total_completed_probability || 0}%
+                                  completed
                                 </div>
                                 <div className="text-xs text-gray-500">
-                                  {vc.current_step?.name || "All steps completed"}
+                                  {vc.current_step?.name ||
+                                    "All steps completed"}
                                 </div>
                               </div>
                             </div>
@@ -785,21 +932,27 @@ export default function FundRaiseDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {(() => {
           const now = new Date();
-          const currentDueFollowUps = (vcFollowUps || []).filter((followUp: any) => {
-            if (!followUp.due_date || followUp.status === "completed") return false;
-            const dueDate = new Date(followUp.due_date);
-            if (isNaN(dueDate.getTime())) return false;
-            const timeDiff = dueDate.getTime() - now.getTime();
-            const diffDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-            return diffDays >= 0 && diffDays <= 7;
-          });
+          const currentDueFollowUps = (vcFollowUps || []).filter(
+            (followUp: any) => {
+              if (!followUp.due_date || followUp.status === "completed")
+                return false;
+              const dueDate = new Date(followUp.due_date);
+              if (isNaN(dueDate.getTime())) return false;
+              const timeDiff = dueDate.getTime() - now.getTime();
+              const diffDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+              return diffDays >= 0 && diffDays <= 7;
+            },
+          );
 
-          const overdueFollowUps = (vcFollowUps || []).filter((followUp: any) => {
-            if (!followUp.due_date || followUp.status === "completed") return false;
-            const dueDate = new Date(followUp.due_date);
-            if (isNaN(dueDate.getTime())) return false;
-            return dueDate < now;
-          });
+          const overdueFollowUps = (vcFollowUps || []).filter(
+            (followUp: any) => {
+              if (!followUp.due_date || followUp.status === "completed")
+                return false;
+              const dueDate = new Date(followUp.due_date);
+              if (isNaN(dueDate.getTime())) return false;
+              return dueDate < now;
+            },
+          );
 
           return (
             <>
@@ -812,69 +965,113 @@ export default function FundRaiseDashboard() {
                         Follow-ups Due
                       </CardTitle>
                       <CardDescription className="text-blue-700">
-                        Follow-ups due within the next 7 days ({currentDueFollowUps.length} items)
+                        Follow-ups due within the next 7 days (
+                        {currentDueFollowUps.length} items)
                       </CardDescription>
                     </div>
-                    <Badge variant="secondary" className="bg-blue-200 text-blue-800">
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-200 text-blue-800"
+                    >
                       {currentDueFollowUps.length}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   {followUpsLoading ? (
-                    <div className="p-6 text-center text-gray-500">Loading follow-ups...</div>
+                    <div className="p-6 text-center text-gray-500">
+                      Loading follow-ups...
+                    </div>
                   ) : currentDueFollowUps.length === 0 ? (
                     <div className="p-6 text-center">
                       <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <CheckCircle className="w-6 h-6 text-blue-500" />
                       </div>
-                      <p className="text-gray-600 font-medium">All caught up!</p>
-                      <p className="text-gray-500 text-sm">No follow-ups due in the next 7 days</p>
+                      <p className="text-gray-600 font-medium">
+                        All caught up!
+                      </p>
+                      <p className="text-gray-500 text-sm">
+                        No follow-ups due in the next 7 days
+                      </p>
                     </div>
                   ) : (
                     <div className="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
-                      {currentDueFollowUps.map((followUp: any, index: number) => {
-                        const dueDate = new Date(followUp.due_date);
-                        const diffDays = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                        const isToday = diffDays === 0;
-                        const isTomorrow = diffDays === 1;
-                        return (
-                          <div
-                            key={followUp.id}
-                            className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${index === currentDueFollowUps.length - 1 ? "border-b-0" : ""}`}
-                            onClick={() => navigate(`/fundraise/${followUp.vc_id}`)}
-                            title={followUp.description || followUp.title || "No description available"}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-1">
-                                  <h4 className="font-medium text-gray-900 text-sm line-clamp-1">{followUp.title}</h4>
-                                  <Badge
-                                    variant="outline"
-                                    className={`text-xs ${isToday ? "border-orange-300 text-orange-700 bg-orange-50" : isTomorrow ? "border-yellow-300 text-yellow-700 bg-yellow-50" : "border-blue-300 text-blue-700 bg-blue-50"}`}
-                                  >
-                                    {isToday ? "Today" : isTomorrow ? "Tomorrow" : `${diffDays} days`}
-                                  </Badge>
+                      {currentDueFollowUps.map(
+                        (followUp: any, index: number) => {
+                          const dueDate = new Date(followUp.due_date);
+                          const diffDays = Math.ceil(
+                            (dueDate.getTime() - now.getTime()) /
+                              (1000 * 60 * 60 * 24),
+                          );
+                          const isToday = diffDays === 0;
+                          const isTomorrow = diffDays === 1;
+                          return (
+                            <div
+                              key={followUp.id}
+                              className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${index === currentDueFollowUps.length - 1 ? "border-b-0" : ""}`}
+                              onClick={() =>
+                                navigate(`/fundraise/${followUp.vc_id}`)
+                              }
+                              title={
+                                followUp.description ||
+                                followUp.title ||
+                                "No description available"
+                              }
+                            >
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
+                                      {followUp.title}
+                                    </h4>
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-xs ${isToday ? "border-orange-300 text-orange-700 bg-orange-50" : isTomorrow ? "border-yellow-300 text-yellow-700 bg-yellow-50" : "border-blue-300 text-blue-700 bg-blue-50"}`}
+                                    >
+                                      {isToday
+                                        ? "Today"
+                                        : isTomorrow
+                                          ? "Tomorrow"
+                                          : `${diffDays} days`}
+                                    </Badge>
+                                  </div>
+                                  <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                    <span>
+                                      Round: {followUp.round_title || "Unknown"}
+                                    </span>
+                                    <span>
+                                      Step: {followUp.step_name || "N/A"}
+                                    </span>
+                                    <span>
+                                      Assigned to:{" "}
+                                      {followUp.assigned_user_name ||
+                                        "Unassigned"}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="flex items-center space-x-4 text-xs text-gray-500">
-                                  <span>Round: {followUp.round_title || "Unknown"}</span>
-                                  <span>Step: {followUp.step_name || "N/A"}</span>
-                                  <span>Assigned to: {followUp.assigned_user_name || "Unassigned"}</span>
+                                <div className="text-right text-xs text-gray-500">
+                                  Due:{" "}
+                                  {followUp.due_date
+                                    ? (() => {
+                                        const utcDate = new Date(
+                                          followUp.due_date,
+                                        );
+                                        const year = utcDate.getFullYear();
+                                        const month = String(
+                                          utcDate.getMonth() + 1,
+                                        ).padStart(2, "0");
+                                        const day = String(
+                                          utcDate.getDate(),
+                                        ).padStart(2, "0");
+                                        return `${year}-${month}-${day}`;
+                                      })()
+                                    : "No date"}
                                 </div>
-                              </div>
-                              <div className="text-right text-xs text-gray-500">
-                                Due: {followUp.due_date ? (() => {
-                                  const utcDate = new Date(followUp.due_date);
-                                  const year = utcDate.getFullYear();
-                                  const month = String(utcDate.getMonth() + 1).padStart(2, "0");
-                                  const day = String(utcDate.getDate()).padStart(2, "0");
-                                  return `${year}-${month}-${day}`;
-                                })() : "No date"}
                               </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        },
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -889,24 +1086,32 @@ export default function FundRaiseDashboard() {
                         Overdue Follow-ups
                       </CardTitle>
                       <CardDescription className="text-red-700">
-                        Follow-ups that are past their due date ({overdueFollowUps.length} items)
+                        Follow-ups that are past their due date (
+                        {overdueFollowUps.length} items)
                       </CardDescription>
                     </div>
-                    <Badge variant="destructive" className="bg-red-200 text-red-800">
+                    <Badge
+                      variant="destructive"
+                      className="bg-red-200 text-red-800"
+                    >
                       {overdueFollowUps.length}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
                   {followUpsLoading ? (
-                    <div className="p-6 text-center text-gray-500">Loading follow-ups...</div>
+                    <div className="p-6 text-center text-gray-500">
+                      Loading follow-ups...
+                    </div>
                   ) : overdueFollowUps.length === 0 ? (
                     <div className="p-6 text-center">
                       <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                         <CheckCircle className="w-6 h-6 text-green-500" />
                       </div>
                       <p className="text-gray-600 font-medium">Great job!</p>
-                      <p className="text-gray-500 text-sm">No overdue follow-ups</p>
+                      <p className="text-gray-500 text-sm">
+                        No overdue follow-ups
+                      </p>
                     </div>
                   ) : (
                     <div className="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
@@ -914,28 +1119,48 @@ export default function FundRaiseDashboard() {
                         <div
                           key={followUp.id}
                           className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/fundraise/${followUp.vc_id}`)}
-                          title={followUp.description || followUp.title || "No description available"}
+                          onClick={() =>
+                            navigate(`/fundraise/${followUp.vc_id}`)
+                          }
+                          title={
+                            followUp.description ||
+                            followUp.title ||
+                            "No description available"
+                          }
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-1">
-                                <h4 className="font-medium text-gray-900 text-sm line-clamp-1">{followUp.title}</h4>
+                                <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
+                                  {followUp.title}
+                                </h4>
                               </div>
                               <div className="flex items-center space-x-4 text-xs text-gray-500">
-                                <span>Round: {followUp.round_title || "Unknown"}</span>
+                                <span>
+                                  Round: {followUp.round_title || "Unknown"}
+                                </span>
                                 <span>Step: {followUp.step_name || "N/A"}</span>
-                                <span>Assigned to: {followUp.assigned_user_name || "Unassigned"}</span>
+                                <span>
+                                  Assigned to:{" "}
+                                  {followUp.assigned_user_name || "Unassigned"}
+                                </span>
                               </div>
                             </div>
                             <div className="text-right text-xs text-gray-500">
-                              Due: {followUp.due_date ? (() => {
-                                const utcDate = new Date(followUp.due_date);
-                                const year = utcDate.getFullYear();
-                                const month = String(utcDate.getMonth() + 1).padStart(2, "0");
-                                const day = String(utcDate.getDate()).padStart(2, "0");
-                                return `${year}-${month}-${day}`;
-                              })() : "No date"}
+                              Due:{" "}
+                              {followUp.due_date
+                                ? (() => {
+                                    const utcDate = new Date(followUp.due_date);
+                                    const year = utcDate.getFullYear();
+                                    const month = String(
+                                      utcDate.getMonth() + 1,
+                                    ).padStart(2, "0");
+                                    const day = String(
+                                      utcDate.getDate(),
+                                    ).padStart(2, "0");
+                                    return `${year}-${month}-${day}`;
+                                  })()
+                                : "No date"}
                             </div>
                           </div>
                         </div>
@@ -964,11 +1189,17 @@ export default function FundRaiseDashboard() {
                 title="Open Fund Raise Overview"
               >
                 <div className="flex items-center gap-3">
-                  <div className="font-medium text-gray-900">{vc.round_title || "Fund Raise"}</div>
-                  <Badge className={statusColors[vc.status] || ""}>{(vc.status || "").replace("-", " ")}</Badge>
+                  <div className="font-medium text-gray-900">
+                    {vc.round_title || "Fund Raise"}
+                  </div>
+                  <Badge className={statusColors[vc.status] || ""}>
+                    {(vc.status || "").replace("-", " ")}
+                  </Badge>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-700">{vc.investor_name || "N/A"}</div>
+                  <div className="text-sm text-gray-700">
+                    {vc.investor_name || "N/A"}
+                  </div>
                 </div>
               </div>
             ))}

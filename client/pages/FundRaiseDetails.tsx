@@ -100,7 +100,11 @@ export default function FundRaiseDetails() {
     estimated_days: 1,
   });
 
-  const { data: vcData, isLoading: vcLoading, error: vcError } = useQuery({
+  const {
+    data: vcData,
+    isLoading: vcLoading,
+    error: vcError,
+  } = useQuery({
     queryKey: ["fundraise", id],
     queryFn: async () => apiClient.request(`/vc/${id}`),
     enabled: !!id,
@@ -132,7 +136,13 @@ export default function FundRaiseDetails() {
     onSuccess: () => {
       refetchSteps();
       setNewStepDialog(false);
-      setNewStep({ name: "", description: "", due_date: "", priority: "medium", estimated_days: 1 });
+      setNewStep({
+        name: "",
+        description: "",
+        due_date: "",
+        priority: "medium",
+        estimated_days: 1,
+      });
     },
   });
 
@@ -175,7 +185,10 @@ export default function FundRaiseDetails() {
 
   const handleReorderSteps = async (reorderedSteps: any[]) => {
     try {
-      const stepOrders = reorderedSteps.map((step, index) => ({ id: step.id, order: index + 1 }));
+      const stepOrders = reorderedSteps.map((step, index) => ({
+        id: step.id,
+        order: index + 1,
+      }));
       await apiClient.request(`/vc/${id}/steps/reorder`, {
         method: "PUT",
         body: JSON.stringify({ stepOrders }),
@@ -188,23 +201,41 @@ export default function FundRaiseDetails() {
 
   const getPrimaryContact = (data: any) => {
     try {
-      const contacts = typeof data?.contacts === "string" ? JSON.parse(data.contacts) : data?.contacts;
-      return Array.isArray(contacts) && contacts.length > 0 ? contacts[0] : null;
+      const contacts =
+        typeof data?.contacts === "string"
+          ? JSON.parse(data.contacts)
+          : data?.contacts;
+      return Array.isArray(contacts) && contacts.length > 0
+        ? contacts[0]
+        : null;
     } catch {
       return null;
     }
   };
 
-  const formatCurrency = (amount: string | number, currency: string = "INR") => {
+  const formatCurrency = (
+    amount: string | number,
+    currency: string = "INR",
+  ) => {
     if (!amount) return "N/A";
     const amountStr = typeof amount === "number" ? amount.toString() : amount;
-    if (amountStr.includes("$") || amountStr.includes("₹") || amountStr.includes("د.إ")) return amountStr;
+    if (
+      amountStr.includes("$") ||
+      amountStr.includes("₹") ||
+      amountStr.includes("د.إ")
+    )
+      return amountStr;
     const symbol = currency === "USD" ? "$" : currency === "AED" ? "د.إ" : "₹";
     return `${symbol}${amountStr}`;
   };
 
   const getRoundStageDisplay = (stage: string) => {
-    return stage?.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "N/A";
+    return (
+      stage
+        ?.split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ") || "N/A"
+    );
   };
 
   if (vcLoading) {
@@ -223,16 +254,25 @@ export default function FundRaiseDetails() {
     );
   }
 
-  const SourceIcon = sourceIcons[vcData.lead_source as keyof typeof sourceIcons] || Zap;
+  const SourceIcon =
+    sourceIcons[vcData.lead_source as keyof typeof sourceIcons] || Zap;
 
   const completionPercentage = (() => {
     if (vcSteps && vcSteps.length > 0) {
       const completedProbability = vcSteps
         .filter((s: any) => s.status === "completed")
-        .reduce((sum: number, s: any) => sum + (parseFloat(s.probability_percent) || 0), 0);
+        .reduce(
+          (sum: number, s: any) =>
+            sum + (parseFloat(s.probability_percent) || 0),
+          0,
+        );
       const inProgressProbability = vcSteps
         .filter((s: any) => s.status === "in_progress")
-        .reduce((sum: number, s: any) => sum + (parseFloat(s.probability_percent) || 0) * 0.5, 0);
+        .reduce(
+          (sum: number, s: any) =>
+            sum + (parseFloat(s.probability_percent) || 0) * 0.5,
+          0,
+        );
       const total = completedProbability + inProgressProbability;
       return isNaN(total) ? 0 : Math.round(total);
     }
@@ -243,22 +283,34 @@ export default function FundRaiseDetails() {
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm" onClick={() => navigate("/fundraise") }>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/fundraise")}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Fund Raise
           </Button>
           <div>
             <div className="flex items-center space-x-3">
-              <h1 className="text-2xl font-bold text-gray-900">{vcData.round_title || vcData.investor_name}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">
+                {vcData.round_title || vcData.investor_name}
+              </h1>
               <Badge className="text-xs">{vcData.vc_id}</Badge>
-              <Badge className={statusColors[vcData.status as keyof typeof statusColors]}>
+              <Badge
+                className={
+                  statusColors[vcData.status as keyof typeof statusColors]
+                }
+              >
                 {vcData.status.replace("-", " ")}
               </Badge>
             </div>
             <p className="text-gray-600 mt-1">Fund Raise Details & Pipeline</p>
             <div className="mt-3">
               <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-gray-700">Progress:</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Progress:
+                </span>
                 <div className="flex-1 max-w-sm">
                   <div className="w-full bg-gray-200 rounded-full h-3 relative">
                     <div
@@ -276,7 +328,10 @@ export default function FundRaiseDetails() {
                       style={{ width: `${completionPercentage}%` }}
                     />
                     {completionPercentage > 0 && (
-                      <div className="absolute top-0 h-3 w-1 bg-white opacity-75 rounded-full" style={{ left: `${completionPercentage}%` }} />
+                      <div
+                        className="absolute top-0 h-3 w-1 bg-white opacity-75 rounded-full"
+                        style={{ left: `${completionPercentage}%` }}
+                      />
                     )}
                   </div>
                   <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -286,9 +341,15 @@ export default function FundRaiseDetails() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-bold text-blue-600">{completionPercentage}% Complete</div>
+                  <div className="text-sm font-bold text-blue-600">
+                    {completionPercentage}% Complete
+                  </div>
                   <div className="text-xs text-gray-500">
-                    {vcSteps ? vcSteps.filter((s: any) => s.status === "completed").length : 0} of {vcSteps?.length || 0} steps
+                    {vcSteps
+                      ? vcSteps.filter((s: any) => s.status === "completed")
+                          .length
+                      : 0}{" "}
+                    of {vcSteps?.length || 0} steps
                   </div>
                 </div>
               </div>
@@ -296,7 +357,10 @@ export default function FundRaiseDetails() {
           </div>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" onClick={() => navigate(`/fundraise/${id}/edit`)}>
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/fundraise/${id}/edit`)}
+          >
             <Edit className="w-4 h-4 mr-2" />
             Edit Fund Raise
           </Button>
@@ -308,28 +372,52 @@ export default function FundRaiseDetails() {
           <Card>
             <CardHeader>
               <CardTitle>Fund Raise Overview</CardTitle>
-              <CardDescription>Basic information and funding details</CardDescription>
+              <CardDescription>
+                Basic information and funding details
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Lead Source:</span>
+                      <span className="font-medium text-gray-600">
+                        Lead Source:
+                      </span>
                       <div className="flex items-center space-x-2">
-                        <div className={`p-1 rounded ${ (sourceIcons as any)[vcData.lead_source] ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700" }`}>
+                        <div
+                          className={`p-1 rounded ${(sourceIcons as any)[vcData.lead_source] ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}
+                        >
                           <SourceIcon className="w-3 h-3" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="capitalize">{vcData.lead_source?.replace("-", " ")}</span>
+                          <span className="capitalize">
+                            {vcData.lead_source?.replace("-", " ")}
+                          </span>
                           {vcData.lead_source_value && (
-                            <span className="text-sm text-blue-600 hover:underline cursor-pointer" title={vcData.lead_source_value}>
+                            <span
+                              className="text-sm text-blue-600 hover:underline cursor-pointer"
+                              title={vcData.lead_source_value}
+                            >
                               {vcData.lead_source === "email" ? (
-                                <a href={`mailto:${vcData.lead_source_value}`}>{vcData.lead_source_value}</a>
-                              ) : vcData.lead_source === "phone" || vcData.lead_source === "cold-call" ? (
-                                <a href={`tel:${vcData.lead_source_value}`}>{vcData.lead_source_value}</a>
+                                <a href={`mailto:${vcData.lead_source_value}`}>
+                                  {vcData.lead_source_value}
+                                </a>
+                              ) : vcData.lead_source === "phone" ||
+                                vcData.lead_source === "cold-call" ? (
+                                <a href={`tel:${vcData.lead_source_value}`}>
+                                  {vcData.lead_source_value}
+                                </a>
                               ) : vcData.lead_source === "website" ? (
-                                <a href={vcData.lead_source_value.startsWith("http") ? vcData.lead_source_value : `https://${vcData.lead_source_value}`} target="_blank" rel="noopener noreferrer">
+                                <a
+                                  href={
+                                    vcData.lead_source_value.startsWith("http")
+                                      ? vcData.lead_source_value
+                                      : `https://${vcData.lead_source_value}`
+                                  }
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
                                   {vcData.lead_source_value}
                                 </a>
                               ) : (
@@ -342,19 +430,39 @@ export default function FundRaiseDetails() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="font-medium text-gray-600">Status:</span>
-                      <Badge className={statusColors[vcData.status as keyof typeof statusColors]}>
-                        {vcData.status?.charAt(0).toUpperCase() + vcData.status?.slice(1).replace("-", " ")}
+                      <Badge
+                        className={
+                          statusColors[
+                            vcData.status as keyof typeof statusColors
+                          ]
+                        }
+                      >
+                        {vcData.status?.charAt(0).toUpperCase() +
+                          vcData.status?.slice(1).replace("-", " ")}
                       </Badge>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Priority:</span>
-                      <Badge className={priorityColors[vcData.priority_level as keyof typeof priorityColors]}>
-                        {vcData.priority_level?.charAt(0).toUpperCase() + vcData.priority_level?.slice(1)}
+                      <span className="font-medium text-gray-600">
+                        Priority:
+                      </span>
+                      <Badge
+                        className={
+                          priorityColors[
+                            vcData.priority_level as keyof typeof priorityColors
+                          ]
+                        }
+                      >
+                        {vcData.priority_level?.charAt(0).toUpperCase() +
+                          vcData.priority_level?.slice(1)}
                       </Badge>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Investor:</span>
-                      <span className="text-gray-900">{vcData.investor_name}</span>
+                      <span className="font-medium text-gray-600">
+                        Investor:
+                      </span>
+                      <span className="text-gray-900">
+                        {vcData.investor_name}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -362,14 +470,22 @@ export default function FundRaiseDetails() {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
                       <User className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Contact Person:</span>
-                      <span className="text-gray-900">{getPrimaryContact(vcData)?.contact_name || "Not provided"}</span>
+                      <span className="font-medium text-gray-600">
+                        Contact Person:
+                      </span>
+                      <span className="text-gray-900">
+                        {getPrimaryContact(vcData)?.contact_name ||
+                          "Not provided"}
+                      </span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Mail className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">Email:</span>
                       {getPrimaryContact(vcData)?.email ? (
-                        <a href={`mailto:${getPrimaryContact(vcData)?.email}`} className="text-blue-600 hover:underline">
+                        <a
+                          href={`mailto:${getPrimaryContact(vcData)?.email}`}
+                          className="text-blue-600 hover:underline"
+                        >
                           {getPrimaryContact(vcData)?.email}
                         </a>
                       ) : (
@@ -379,7 +495,9 @@ export default function FundRaiseDetails() {
                     <div className="flex items-center space-x-2">
                       <Phone className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">Phone:</span>
-                      <span className="text-gray-900">{getPrimaryContact(vcData)?.phone || "Not provided"}</span>
+                      <span className="text-gray-900">
+                        {getPrimaryContact(vcData)?.phone || "Not provided"}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -387,30 +505,58 @@ export default function FundRaiseDetails() {
 
               <Separator />
               <div>
-                <h4 className="font-medium text-gray-900 mb-2">Funding Information</h4>
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Funding Information
+                </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <div>
-                      <span className="font-medium text-gray-600">Round Stage: </span>
-                      <Badge className={roundStageColors[vcData.round_stage as keyof typeof roundStageColors]}>
+                      <span className="font-medium text-gray-600">
+                        Round Stage:{" "}
+                      </span>
+                      <Badge
+                        className={
+                          roundStageColors[
+                            vcData.round_stage as keyof typeof roundStageColors
+                          ]
+                        }
+                      >
                         {getRoundStageDisplay(vcData.round_stage)}
                       </Badge>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Round Size: </span>
-                      <span className="text-gray-900">{formatCurrency(vcData.round_size, vcData.billing_currency) || "TBD"}</span>
+                      <span className="font-medium text-gray-600">
+                        Round Size:{" "}
+                      </span>
+                      <span className="text-gray-900">
+                        {formatCurrency(
+                          vcData.round_size,
+                          vcData.billing_currency,
+                        ) || "TBD"}
+                      </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Valuation: </span>
-                      <span className="text-gray-900">{formatCurrency(vcData.valuation, vcData.billing_currency) || "TBD"}</span>
+                      <span className="font-medium text-gray-600">
+                        Valuation:{" "}
+                      </span>
+                      <span className="text-gray-900">
+                        {formatCurrency(
+                          vcData.valuation,
+                          vcData.billing_currency,
+                        ) || "TBD"}
+                      </span>
                     </div>
                   </div>
                 </div>
 
                 {vcData.round_description && (
                   <div className="mt-3">
-                    <span className="font-medium text-gray-600">Description: </span>
-                    <span className="text-gray-900">{vcData.round_description}</span>
+                    <span className="font-medium text-gray-600">
+                      Description:{" "}
+                    </span>
+                    <span className="text-gray-900">
+                      {vcData.round_description}
+                    </span>
                   </div>
                 )}
               </div>
@@ -423,7 +569,9 @@ export default function FundRaiseDetails() {
                       <Target className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">Notes:</span>
                     </div>
-                    <div className="pl-6 text-gray-900 whitespace-pre-wrap">{vcData.notes}</div>
+                    <div className="pl-6 text-gray-900 whitespace-pre-wrap">
+                      {vcData.notes}
+                    </div>
                   </div>
                 </>
               )}
@@ -447,25 +595,59 @@ export default function FundRaiseDetails() {
                   <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                     <DialogHeader className="flex-shrink-0">
                       <DialogTitle>Add New Step</DialogTitle>
-                      <DialogDescription>Create a custom step for this fund raise</DialogDescription>
+                      <DialogDescription>
+                        Create a custom step for this fund raise
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4 overflow-y-auto flex-1 px-1">
                       <div>
                         <Label htmlFor="stepName">Step Name *</Label>
-                        <Input id="stepName" value={newStep.name} onChange={(e) => setNewStep((p) => ({ ...p, name: e.target.value }))} placeholder="e.g., Due Diligence Review" />
+                        <Input
+                          id="stepName"
+                          value={newStep.name}
+                          onChange={(e) =>
+                            setNewStep((p) => ({ ...p, name: e.target.value }))
+                          }
+                          placeholder="e.g., Due Diligence Review"
+                        />
                       </div>
                       <div>
                         <Label htmlFor="stepDescription">Description *</Label>
-                        <Textarea id="stepDescription" value={newStep.description} onChange={(e) => setNewStep((p) => ({ ...p, description: e.target.value }))} rows={3} />
+                        <Textarea
+                          id="stepDescription"
+                          value={newStep.description}
+                          onChange={(e) =>
+                            setNewStep((p) => ({
+                              ...p,
+                              description: e.target.value,
+                            }))
+                          }
+                          rows={3}
+                        />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="dueDate">Due Date</Label>
-                          <Input id="dueDate" type="date" value={newStep.due_date} onChange={(e) => setNewStep((p) => ({ ...p, due_date: e.target.value }))} />
+                          <Input
+                            id="dueDate"
+                            type="date"
+                            value={newStep.due_date}
+                            onChange={(e) =>
+                              setNewStep((p) => ({
+                                ...p,
+                                due_date: e.target.value,
+                              }))
+                            }
+                          />
                         </div>
                         <div>
                           <Label htmlFor="priority">Priority</Label>
-                          <Select value={newStep.priority} onValueChange={(v: "low" | "medium" | "high") => setNewStep((p) => ({ ...p, priority: v }))}>
+                          <Select
+                            value={newStep.priority}
+                            onValueChange={(v: "low" | "medium" | "high") =>
+                              setNewStep((p) => ({ ...p, priority: v }))
+                            }
+                          >
                             <SelectTrigger>
                               <SelectValue />
                             </SelectTrigger>
@@ -479,13 +661,38 @@ export default function FundRaiseDetails() {
                       </div>
                       <div>
                         <Label htmlFor="estimatedDays">Estimated Days</Label>
-                        <Input id="estimatedDays" type="number" min="1" value={newStep.estimated_days} onChange={(e) => setNewStep((p) => ({ ...p, estimated_days: parseInt(e.target.value) || 1 }))} />
+                        <Input
+                          id="estimatedDays"
+                          type="number"
+                          min="1"
+                          value={newStep.estimated_days}
+                          onChange={(e) =>
+                            setNewStep((p) => ({
+                              ...p,
+                              estimated_days: parseInt(e.target.value) || 1,
+                            }))
+                          }
+                        />
                       </div>
                     </div>
                     <DialogFooter className="flex-shrink-0 mt-6 pt-4 border-t">
-                      <Button variant="outline" onClick={() => setNewStepDialog(false)}>Cancel</Button>
-                      <Button onClick={handleAddStep} disabled={!newStep.name.trim() || !newStep.description.trim() || createStepMutation.isPending}>
-                        {createStepMutation.isPending ? "Adding..." : "Add Step"}
+                      <Button
+                        variant="outline"
+                        onClick={() => setNewStepDialog(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleAddStep}
+                        disabled={
+                          !newStep.name.trim() ||
+                          !newStep.description.trim() ||
+                          createStepMutation.isPending
+                        }
+                      >
+                        {createStepMutation.isPending
+                          ? "Adding..."
+                          : "Add Step"}
                       </Button>
                     </DialogFooter>
                   </DialogContent>
@@ -501,8 +708,12 @@ export default function FundRaiseDetails() {
               ) : vcSteps.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No funding steps yet</h3>
-                  <p className="text-gray-600 mb-4">Create steps to track your funding process.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No funding steps yet
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Create steps to track your funding process.
+                  </p>
                   <Button onClick={() => setNewStepDialog(true)}>
                     <Plus className="w-4 h-4 mr-2" />
                     Add Funding Step
@@ -529,20 +740,26 @@ export default function FundRaiseDetails() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <div className="text-sm text-gray-500">{completionPercentage}% complete</div>
+                <div className="text-sm text-gray-500">
+                  {completionPercentage}% complete
+                </div>
               </div>
               <Separator />
               <div className="space-y-2 text-sm">
                 {vcData.start_date && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Started:</span>
-                    <span className="text-gray-900">{new Date(vcData.start_date).toLocaleDateString()}</span>
+                    <span className="text-gray-900">
+                      {new Date(vcData.start_date).toLocaleDateString()}
+                    </span>
                   </div>
                 )}
                 {vcData.targeted_end_date && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Target Close:</span>
-                    <span className="text-gray-900">{new Date(vcData.targeted_end_date).toLocaleDateString()}</span>
+                    <span className="text-gray-900">
+                      {new Date(vcData.targeted_end_date).toLocaleDateString()}
+                    </span>
                   </div>
                 )}
               </div>

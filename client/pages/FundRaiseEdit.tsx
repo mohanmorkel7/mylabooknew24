@@ -4,11 +4,23 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Save, Calendar, DollarSign, Building } from "lucide-react";
 
@@ -112,8 +124,12 @@ export default function FundRaiseEdit() {
       investor_status: current.investor_last_feedback || "",
       reason: current.notes || "",
       round_stage: current.round_stage || "",
-      start_date: current.start_date ? new Date(current.start_date).toISOString().split("T")[0] : "",
-      end_date: current.targeted_end_date ? new Date(current.targeted_end_date).toISOString().split("T")[0] : "",
+      start_date: current.start_date
+        ? new Date(current.start_date).toISOString().split("T")[0]
+        : "",
+      end_date: current.targeted_end_date
+        ? new Date(current.targeted_end_date).toISOString().split("T")[0]
+        : "",
       total_raise_mn: current.round_size || "",
       valuation_mn: current.valuation || "",
       template_id: current.template_id || 1,
@@ -135,7 +151,8 @@ export default function FundRaiseEdit() {
     },
   });
 
-  const handleChange = (field: string, value: any) => setForm((p) => ({ ...p, [field]: value }));
+  const handleChange = (field: string, value: any) =>
+    setForm((p) => ({ ...p, [field]: value }));
 
   const handleSubmit = async () => {
     const payload: any = {
@@ -172,12 +189,18 @@ export default function FundRaiseEdit() {
     <div className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => navigate(`/fundraise/${id}`)}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/fundraise/${id}`)}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Overview
           </Button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Edit Fund Raise</h1>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Edit Fund Raise
+            </h1>
             <p className="text-gray-600">Update fund raise details</p>
           </div>
         </div>
@@ -203,7 +226,10 @@ export default function FundRaiseEdit() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>VC</Label>
-                  <Select value={form.vc_investor} onValueChange={(v) => handleChange("vc_investor", v)}>
+                  <Select
+                    value={form.vc_investor}
+                    onValueChange={(v) => handleChange("vc_investor", v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select VC" />
                     </SelectTrigger>
@@ -221,13 +247,18 @@ export default function FundRaiseEdit() {
 
                 <div>
                   <Label>Status</Label>
-                  <Select value={form.status} onValueChange={(v) => handleChange("status", v)}>
+                  <Select
+                    value={form.status}
+                    onValueChange={(v) => handleChange("status", v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Status" />
                     </SelectTrigger>
                     <SelectContent>
                       {STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -235,13 +266,18 @@ export default function FundRaiseEdit() {
 
                 <div>
                   <Label>Investor Status</Label>
-                  <Select value={form.investor_status} onValueChange={(v) => handleChange("investor_status", v)}>
+                  <Select
+                    value={form.investor_status}
+                    onValueChange={(v) => handleChange("investor_status", v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Investor Status" />
                     </SelectTrigger>
                     <SelectContent>
                       {INVESTOR_STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -249,13 +285,18 @@ export default function FundRaiseEdit() {
 
                 <div>
                   <Label>Investment Stage</Label>
-                  <Select value={form.round_stage} onValueChange={(v) => handleChange("round_stage", v)}>
+                  <Select
+                    value={form.round_stage}
+                    onValueChange={(v) => handleChange("round_stage", v)}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select Stage" />
                     </SelectTrigger>
                     <SelectContent>
                       {ROUND_STAGES.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -265,7 +306,14 @@ export default function FundRaiseEdit() {
                   <Label>Start Date</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input type="date" className="pl-10" value={form.start_date} onChange={(e) => handleChange("start_date", e.target.value)} />
+                    <Input
+                      type="date"
+                      className="pl-10"
+                      value={form.start_date}
+                      onChange={(e) =>
+                        handleChange("start_date", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
 
@@ -273,7 +321,12 @@ export default function FundRaiseEdit() {
                   <Label>End Date</Label>
                   <div className="relative">
                     <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input type="date" className="pl-10" value={form.end_date} onChange={(e) => handleChange("end_date", e.target.value)} />
+                    <Input
+                      type="date"
+                      className="pl-10"
+                      value={form.end_date}
+                      onChange={(e) => handleChange("end_date", e.target.value)}
+                    />
                   </div>
                 </div>
 
@@ -281,7 +334,14 @@ export default function FundRaiseEdit() {
                   <Label>Total Fund Raise $ Mn</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input placeholder="e.g. 10" className="pl-10" value={form.total_raise_mn} onChange={(e) => handleChange("total_raise_mn", e.target.value)} />
+                    <Input
+                      placeholder="e.g. 10"
+                      className="pl-10"
+                      value={form.total_raise_mn}
+                      onChange={(e) =>
+                        handleChange("total_raise_mn", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
 
@@ -289,14 +349,25 @@ export default function FundRaiseEdit() {
                   <Label>Valuation $ Mn</Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input placeholder="e.g. 100" className="pl-10" value={form.valuation_mn} onChange={(e) => handleChange("valuation_mn", e.target.value)} />
+                    <Input
+                      placeholder="e.g. 100"
+                      className="pl-10"
+                      value={form.valuation_mn}
+                      onChange={(e) =>
+                        handleChange("valuation_mn", e.target.value)
+                      }
+                    />
                   </div>
                 </div>
               </div>
 
               <div>
                 <Label>Reason</Label>
-                <Textarea placeholder="Add details/reason" value={form.reason} onChange={(e) => handleChange("reason", e.target.value)} />
+                <Textarea
+                  placeholder="Add details/reason"
+                  value={form.reason}
+                  onChange={(e) => handleChange("reason", e.target.value)}
+                />
               </div>
             </CardContent>
           </Card>
@@ -311,26 +382,36 @@ export default function FundRaiseEdit() {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label>Status</Label>
-                <Select value={form.status} onValueChange={(v) => handleChange("status", v)}>
+                <Select
+                  value={form.status}
+                  onValueChange={(v) => handleChange("status", v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
                     {STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <Label>Investor Status</Label>
-                <Select value={form.investor_status} onValueChange={(v) => handleChange("investor_status", v)}>
+                <Select
+                  value={form.investor_status}
+                  onValueChange={(v) => handleChange("investor_status", v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Investor Status" />
                   </SelectTrigger>
                   <SelectContent>
                     {INVESTOR_STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

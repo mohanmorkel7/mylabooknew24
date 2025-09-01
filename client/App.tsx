@@ -675,7 +675,6 @@ function AppRoutes() {
         }
       />
 
-
       <Route
         path="/leads/:id/follow-up"
         element={
