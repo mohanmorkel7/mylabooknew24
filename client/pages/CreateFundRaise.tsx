@@ -68,7 +68,7 @@ function generateStepOptions(start: number, end: number, step: number): string[]
   return result;
 }
 
-const FUND_MN_OPTIONS = generateStepOptions(0.05, 9.95, 0.05);
+const FUND_MN_OPTIONS = generateStepOptions(0.05, 10, 0.05);
 const VALUATION_MN_OPTIONS = ["0.50", ...generateStepOptions(1, 100, 1)];
 
 export default function CreateFundRaise() {
