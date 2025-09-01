@@ -806,7 +806,7 @@ export default function CreateVC() {
             setActiveTab(savedTab);
           }
         } catch (error) {
-          console.error("��� ERROR - Failed to fetch draft data:", error);
+          console.error("🐛 ERROR - Failed to fetch draft data:", error);
         }
       }
     };
@@ -1307,7 +1307,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="lead_source">Lead Source *</Label>
+                  <Label htmlFor="lead_source">Source</Label>
                   <Select
                     value={vcData.lead_source}
                     onValueChange={(value) =>
