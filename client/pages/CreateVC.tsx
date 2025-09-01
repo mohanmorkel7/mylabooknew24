@@ -121,7 +121,9 @@ const INVESTOR_FEEDBACK = [
 const COUNTRIES = [
   "India",
   "United States",
+  "USA",
   "United Arab Emirates",
+  "UAE",
   "Saudi Arabia",
   "Qatar",
   "Kuwait",
