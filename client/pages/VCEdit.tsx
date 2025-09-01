@@ -1075,9 +1075,9 @@ export default function VCEdit() {
         <TabsContent value="investor-contact" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Investor Information</CardTitle>
+              <CardTitle>Investors Contact Info</CardTitle>
               <CardDescription>
-                Details about the investor and contact information
+                Country, city and primary contact details
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
