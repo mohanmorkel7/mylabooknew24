@@ -1648,7 +1648,7 @@ export default function CreateVC() {
         <TabsContent value="investor" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Investor Information</CardTitle>
+              <CardTitle>Investors Contact Info</CardTitle>
               <CardDescription>
                 Details about the investor and contact information
               </CardDescription>
