@@ -434,102 +434,7 @@ export default function VCDetails() {
                 {vcData.status.replace("-", " ")}
               </Badge>
             </div>
-            <p className="text-gray-600 mt-1">VC Details & Funding Pipeline</p>
-            {/* Enhanced Progress Bar */}
-            <div className="mt-3">
-              <div className="flex items-center space-x-3">
-                <span className="text-sm font-medium text-gray-700">
-                  Progress:
-                </span>
-                <div className="flex-1 max-w-sm">
-                  <div className="w-full bg-gray-200 rounded-full h-3 relative">
-                    <div
-                      className={`h-3 rounded-full transition-all duration-500 ${
-                        completionPercentage === 100
-                          ? "bg-green-500"
-                          : completionPercentage >= 75
-                            ? "bg-blue-500"
-                            : completionPercentage >= 50
-                              ? "bg-yellow-500"
-                              : completionPercentage >= 25
-                                ? "bg-orange-500"
-                                : "bg-red-500"
-                      }`}
-                      style={{ width: `${completionPercentage}%` }}
-                    ></div>
-                    {completionPercentage > 0 && (
-                      <div
-                        className="absolute top-0 h-3 w-1 bg-white opacity-75 rounded-full"
-                        style={{ left: `${completionPercentage}%` }}
-                      ></div>
-                    )}
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>0%</span>
-                    <span>50%</span>
-                    <span>100%</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-bold text-blue-600">
-                    {completionPercentage}% Complete
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {vcSteps
-                      ? vcSteps.filter((s: any) => s.status === "completed")
-                          .length
-                      : 0}{" "}
-                    of {vcSteps?.length || 0} steps
-                  </div>
-                </div>
-              </div>
-
-              {/* Step-by-step breakdown - moved below */}
-              {vcSteps && vcSteps.length > 0 && (
-                <div className="mt-3 text-xs text-gray-600">
-                  <details className="cursor-pointer">
-                    <summary className="hover:text-gray-800 select-none">
-                      📊 View detailed progress breakdown
-                    </summary>
-                    <div className="mt-2 p-3 bg-gray-50 rounded border space-y-1">
-                      {vcSteps.map((step, index) => {
-                        // Use actual database probability_percent or fallback to equal distribution
-                        const stepProbability =
-                          step.probability_percent || 100 / vcSteps.length;
-                        return (
-                          <div
-                            key={step.id}
-                            className="flex justify-between items-center"
-                          >
-                            <span className="flex items-center space-x-2">
-                              {step.status === "completed" ? (
-                                <span className="text-green-600">✓</span>
-                              ) : step.status === "in_progress" ? (
-                                <span className="text-blue-600">⋯</span>
-                              ) : (
-                                <span className="text-gray-400">○</span>
-                              )}
-                              <span
-                                className={
-                                  step.status === "completed"
-                                    ? "line-through text-gray-500"
-                                    : ""
-                                }
-                              >
-                                {step.name}
-                              </span>
-                            </span>
-                            <span className="font-medium">
-                              {Math.round(stepProbability)}%
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </details>
-                </div>
-              )}
-            </div>
+            <p className="text-gray-600 mt-1">VC Details</p>
           </div>
         </div>
         <div className="flex space-x-3">
@@ -589,17 +494,15 @@ export default function VCDetails() {
                   },
                   {
                     label: "Contact Person",
-                    value:
-                      vcData.contact_person ||
-                      getPrimaryContact(vcData)?.contact_name,
+                    value: getPrimaryContact(vcData)?.contact_name,
                   },
                   {
                     label: "Email",
-                    value: vcData.email || getPrimaryContact(vcData)?.email,
+                    value: getPrimaryContact(vcData)?.email,
                   },
                   {
                     label: "Phone",
-                    value: vcData.phone || getPrimaryContact(vcData)?.phone,
+                    value: getPrimaryContact(vcData)?.phone,
                   },
                   { label: "Address", value: vcData.address },
                   { label: "City", value: vcData.city },
@@ -801,183 +704,6 @@ export default function VCDetails() {
             </CardContent>
           </Card>
 
-          {/* Funding Pipeline */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Funding Pipeline</CardTitle>
-                  <CardDescription>
-                    Manage VC-specific funding steps with rich communication
-                  </CardDescription>
-                </div>
-                <Dialog open={newStepDialog} onOpenChange={setNewStepDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Step
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle>Add New Step</DialogTitle>
-                      <DialogDescription>
-                        Create a custom step for this VC's funding process
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 overflow-y-auto flex-1 px-1">
-                      <div>
-                        <Label htmlFor="stepName">Step Name *</Label>
-                        <Input
-                          id="stepName"
-                          value={newStep.name}
-                          onChange={(e) =>
-                            setNewStep((prev) => ({
-                              ...prev,
-                              name: e.target.value,
-                            }))
-                          }
-                          placeholder="e.g., Due Diligence Review"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="stepDescription">Description *</Label>
-                        <Textarea
-                          id="stepDescription"
-                          value={newStep.description}
-                          onChange={(e) =>
-                            setNewStep((prev) => ({
-                              ...prev,
-                              description: e.target.value,
-                            }))
-                          }
-                          placeholder="Describe what needs to be done in this step"
-                          rows={3}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="dueDate">Due Date</Label>
-                          <Input
-                            id="dueDate"
-                            type="date"
-                            value={newStep.due_date}
-                            onChange={(e) =>
-                              setNewStep((prev) => ({
-                                ...prev,
-                                due_date: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="priority">Priority</Label>
-                          <Select
-                            value={newStep.priority}
-                            onValueChange={(value: "low" | "medium" | "high") =>
-                              setNewStep((prev) => ({
-                                ...prev,
-                                priority: value,
-                              }))
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="low">Low</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="estimatedDays">Estimated Days</Label>
-                        <Input
-                          id="estimatedDays"
-                          type="number"
-                          min="1"
-                          value={newStep.estimated_days}
-                          onChange={(e) =>
-                            setNewStep((prev) => ({
-                              ...prev,
-                              estimated_days: parseInt(e.target.value) || 1,
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter className="flex-shrink-0 mt-6 pt-4 border-t">
-                      <Button
-                        variant="outline"
-                        onClick={() => setNewStepDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleAddStep}
-                        disabled={
-                          !newStep.name.trim() ||
-                          !newStep.description.trim() ||
-                          createStepMutation.isPending
-                        }
-                      >
-                        {createStepMutation.isPending
-                          ? "Adding..."
-                          : "Add Step"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {/* VC Steps Pipeline */}
-              {(() => {
-                // Show loading state if steps are still loading
-                if (stepsLoading) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                      <p>Loading pipeline steps...</p>
-                    </div>
-                  );
-                }
-
-                // Show empty state or steps
-                if (vcSteps.length === 0) {
-                  return (
-                    <div className="text-center py-8 text-gray-500">
-                      <Target className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        No funding steps yet
-                      </h3>
-                      <p className="text-gray-600 mb-4">
-                        Create steps to track your funding process for this VC.
-                      </p>
-                      <Button onClick={() => setNewStepDialog(true)}>
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Funding Step
-                      </Button>
-                    </div>
-                  );
-                } else {
-                  return (
-                    <DraggableVCStepsList
-                      vcId={vcId}
-                      steps={vcSteps}
-                      expandedSteps={expandedSteps}
-                      onToggleExpansion={handleToggleExpansion}
-                      onDeleteStep={handleDeleteStep}
-                      onReorderSteps={handleReorderSteps}
-                    />
-                  );
-                }
-              })()}
-            </CardContent>
-          </Card>
         </div>
 
         {/* Right Column - Quick Actions & Info */}
