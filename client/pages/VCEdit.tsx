@@ -315,17 +315,37 @@ export default function VCEdit() {
     vcData.billing_currency || "INR",
   );
 
-  // Location helpers to match Create VC behavior
+  // Location helpers with alias mapping to ensure state/city lists populate correctly
   const allCountries = useMemo(() => Country.getAllCountries(), []);
-  const selectedCountry = useMemo(
-    () => allCountries.find((c: any) => c.name === vcData.country),
-    [allCountries, vcData.country],
+  const COUNTRY_ALIASES: Record<string, string> = useMemo(
+    () => ({
+      uae: "United Arab Emirates",
+      usa: "United States",
+      us: "United States",
+      uk: "United Kingdom",
+      ksa: "Saudi Arabia",
+    }),
+    [],
   );
+  const findCountry = useCallback(
+    (input?: string) => {
+      if (!input) return undefined;
+      const s = input.trim();
+      const alias = COUNTRY_ALIASES[s.toLowerCase()];
+      const target = alias || s;
+      return allCountries.find(
+        (c: any) =>
+          c.name.toLowerCase() === target.toLowerCase() ||
+          c.isoCode.toLowerCase() === target.toLowerCase(),
+      );
+    },
+    [allCountries, COUNTRY_ALIASES],
+  );
+  const selectedCountryName =
+    vcData.country === "Other" ? vcData.custom_country : vcData.country;
+  const selectedCountry = findCountry(selectedCountryName);
   const availableStates = useMemo(
-    () =>
-      selectedCountry
-        ? State.getStatesOfCountry((selectedCountry as any).isoCode)
-        : [],
+    () => (selectedCountry ? State.getStatesOfCountry((selectedCountry as any).isoCode) : []),
     [selectedCountry?.isoCode],
   );
   const selectedStateObj = useMemo(
@@ -667,7 +687,7 @@ export default function VCEdit() {
               dateStr = dateStr.split("T")[0];
             }
 
-            console.log("🐛 DEBUG - start_date conversion:", {
+            console.log("�� DEBUG - start_date conversion:", {
               original: vcDataFromAPI.start_date,
               extracted: dateStr,
             });
