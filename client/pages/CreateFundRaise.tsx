@@ -407,18 +407,18 @@ export default function CreateFundRaise() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Status</Label>
+                <Label>Fund $ Mn</Label>
                 <Select
-                  value={form.status}
-                  onValueChange={(v) => handleChange("status", v)}
+                  value={form.total_raise_mn}
+                  onValueChange={(v) => handleChange("total_raise_mn", v)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
+                    <SelectValue placeholder="Select amount" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
+                    {FUND_MN_OPTIONS.map((v) => (
+                      <SelectItem key={v} value={v}>
+                        {v}
                       </SelectItem>
                     ))}
                   </SelectContent>
