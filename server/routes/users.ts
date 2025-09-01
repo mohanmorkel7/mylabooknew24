@@ -11,7 +11,10 @@ async function isDatabaseAvailable() {
   try {
     return await checkDatabaseAvailable();
   } catch (error: any) {
-    console.log("Fast DB availability check error:", error?.message || String(error));
+    console.log(
+      "Fast DB availability check error:",
+      error?.message || String(error),
+    );
     return false;
   }
 }

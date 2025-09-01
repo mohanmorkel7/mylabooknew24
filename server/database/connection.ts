@@ -9,9 +9,8 @@ const dbConfig = {
   database: process.env.PG_DB || "crm_test",
   password: process.env.PG_PASSWORD || "myl@p@y-crm$102019",
   port: Number(process.env.PG_PORT) || 2019,
-  ssl:false,
+  ssl: false,
 };
-
 
 // Log the actual connection parameters being used (hide password for security)
 console.log("🔗 Database connection config:", {

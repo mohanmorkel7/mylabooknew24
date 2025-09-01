@@ -136,7 +136,11 @@ export class ApiClient {
           );
 
           // Add timeout to prevent hanging requests - longer for notifications and login
-          const timeoutMs = (endpoint.includes("notifications") || endpoint.includes("/auth/login")) ? 15000 : 8000; // 15s for notifications/login, 8s for others
+          const timeoutMs =
+            endpoint.includes("notifications") ||
+            endpoint.includes("/auth/login")
+              ? 15000
+              : 8000; // 15s for notifications/login, 8s for others
           const timeoutPromise = new Promise<never>((_, reject) => {
             setTimeout(() => reject(new Error("Request timeout")), timeoutMs);
           });

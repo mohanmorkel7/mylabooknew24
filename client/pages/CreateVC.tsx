@@ -66,11 +66,21 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { ChevronsUpDown, Check } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Country, State, City } from "country-state-city";
-
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
@@ -228,7 +238,6 @@ export default function CreateVC() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-
   // Check if we're in edit mode or resuming from draft
   const isEditMode = !!id;
   const resumeData = location.state?.resumeData;
@@ -303,7 +312,8 @@ export default function CreateVC() {
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
           vc_type: (resumeData as any).vc_type || "",
           sector_focus: (resumeData as any).sector_focus || "",
-          investor_last_feedback: (resumeData as any).investor_last_feedback || "",
+          investor_last_feedback:
+            (resumeData as any).investor_last_feedback || "",
           contacts: resumeData.contacts
             ? typeof resumeData.contacts === "string"
               ? JSON.parse(resumeData.contacts)
@@ -451,15 +461,24 @@ export default function CreateVC() {
         c.isoCode.toLowerCase() === target.toLowerCase(),
     );
   };
-  const selectedCountryName = vcData.country === "Other" ? vcData.custom_country : vcData.country;
+  const selectedCountryName =
+    vcData.country === "Other" ? vcData.custom_country : vcData.country;
   const selectedCountry = findCountry(selectedCountryName);
   const availableStates = useMemo(() => {
-    return selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+    return selectedCountry
+      ? State.getStatesOfCountry(selectedCountry.isoCode)
+      : [];
   }, [selectedCountry?.isoCode]);
-  const selectedStateObj = vcData.state ? availableStates.find((s: any) => s.name === vcData.state) : undefined;
+  const selectedStateObj = vcData.state
+    ? availableStates.find((s: any) => s.name === vcData.state)
+    : undefined;
   const availableCities = useMemo(() => {
     if (!selectedCountry) return [] as any[];
-    if (selectedStateObj) return City.getCitiesOfState(selectedCountry.isoCode, selectedStateObj.isoCode);
+    if (selectedStateObj)
+      return City.getCitiesOfState(
+        selectedCountry.isoCode,
+        selectedStateObj.isoCode,
+      );
     return City.getCitiesOfCountry(selectedCountry.isoCode);
   }, [selectedCountry?.isoCode, selectedStateObj?.isoCode]);
 
@@ -1514,8 +1533,7 @@ export default function CreateVC() {
                       {vcData.lead_source === "social-media" &&
                         "Social Media Profile/Link"}
                       {vcData.lead_source === "website" && "Website URL"}
-                      {vcData.lead_source === "referral" &&
-                        "Referred by"}
+                      {vcData.lead_source === "referral" && "Referred by"}
                       {vcData.lead_source === "cold-call" &&
                         "Phone Number Called"}
                       {vcData.lead_source === "event" && "Event Name/Details"}
@@ -1562,16 +1580,22 @@ export default function CreateVC() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <Label htmlFor="investor_name">Venture Capital Name *</Label>
+                    <Label htmlFor="investor_name">
+                      Venture Capital Name *
+                    </Label>
                     <Input
                       id="investor_name"
                       placeholder="Name of the VC firm"
                       value={vcData.investor_name}
-                      onChange={(e) => handleInputChange("investor_name", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("investor_name", e.target.value)
+                      }
                       className={errors.investor_name ? "border-red-500" : ""}
                     />
                     {errors.investor_name && (
-                      <p className="text-sm text-red-600 mt-1">{errors.investor_name}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_name}
+                      </p>
                     )}
                   </div>
 
@@ -1579,7 +1603,9 @@ export default function CreateVC() {
                     <Label htmlFor="vc_type">VC Type</Label>
                     <Select
                       value={vcData.vc_type}
-                      onValueChange={(value) => handleInputChange("vc_type", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("vc_type", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select VC Type" />
@@ -1598,7 +1624,9 @@ export default function CreateVC() {
                     <Label htmlFor="sector_focus">Sector Focus</Label>
                     <Select
                       value={vcData.sector_focus}
-                      onValueChange={(value) => handleInputChange("sector_focus", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("sector_focus", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Sector Focus" />
@@ -1619,7 +1647,9 @@ export default function CreateVC() {
                       id="website"
                       placeholder="https://investor.com"
                       value={vcData.website}
-                      onChange={(e) => handleInputChange("website", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("website", e.target.value)
+                      }
                     />
                   </div>
 
@@ -1629,7 +1659,9 @@ export default function CreateVC() {
                       id="minimum_size"
                       placeholder="e.g., 1"
                       value={vcData.minimum_size}
-                      onChange={(e) => handleInputChange("minimum_size", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("minimum_size", e.target.value)
+                      }
                     />
                   </div>
 
@@ -1639,15 +1671,21 @@ export default function CreateVC() {
                       id="maximum_size"
                       placeholder="e.g., 10"
                       value={vcData.maximum_size}
-                      onChange={(e) => handleInputChange("maximum_size", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("maximum_size", e.target.value)
+                      }
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
+                    <Label htmlFor="investor_last_feedback">
+                      Investor Last Feedback
+                    </Label>
                     <Select
                       value={vcData.investor_last_feedback}
-                      onValueChange={(value) => handleInputChange("investor_last_feedback", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("investor_last_feedback", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select last feedback" />
@@ -1714,10 +1752,6 @@ export default function CreateVC() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-
-
-
                 <div className="md:col-span-2">
                   <Label htmlFor="address">Address</Label>
                   <Input
@@ -1735,12 +1769,20 @@ export default function CreateVC() {
                   <Label htmlFor="country">Country</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={false}
+                        className="w-full justify-between"
+                      >
                         {vcData.country || "Select country"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandInput placeholder="Search country..." />
                         <CommandEmpty>No country found.</CommandEmpty>
@@ -1756,7 +1798,14 @@ export default function CreateVC() {
                                   handleInputChange("city", "");
                                 }}
                               >
-                                <Check className={cn("mr-2 h-4 w-4", vcData.country === country ? "opacity-100" : "opacity-0")} />
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    vcData.country === country
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
                                 {country}
                               </CommandItem>
                             ))}
@@ -1771,12 +1820,20 @@ export default function CreateVC() {
                   <Label htmlFor="state">State/Province</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={false}
+                        className="w-full justify-between"
+                      >
                         {vcData.state || "Select state"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandInput placeholder="Search state..." />
                         <CommandEmpty>No state found.</CommandEmpty>
@@ -1787,17 +1844,29 @@ export default function CreateVC() {
                                 key={state.isoCode}
                                 value={state.isoCode}
                                 onSelect={(value) => {
-                                  const st = availableStates.find((s: any) => s.isoCode === value);
+                                  const st = availableStates.find(
+                                    (s: any) => s.isoCode === value,
+                                  );
                                   if (st) {
                                     handleInputChange("state", st.name);
                                     if (selectedCountry) {
-                                      handleInputChange("country", selectedCountry.name);
+                                      handleInputChange(
+                                        "country",
+                                        selectedCountry.name,
+                                      );
                                     }
                                     handleInputChange("city", "");
                                   }
                                 }}
                               >
-                                <Check className={cn("mr-2 h-4 w-4", vcData.state === state.name ? "opacity-100" : "opacity-0")} />
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    vcData.state === state.name
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
                                 {state.name}
                               </CommandItem>
                             ))}
@@ -1812,12 +1881,20 @@ export default function CreateVC() {
                   <Label htmlFor="city">City</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={false}
+                        className="w-full justify-between"
+                      >
                         {vcData.city || "Select city"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <PopoverContent
+                      className="w-[--radix-popover-trigger-width] p-0"
+                      align="start"
+                    >
                       <Command>
                         <CommandInput placeholder="Search city..." />
                         <CommandEmpty>No city found.</CommandEmpty>
@@ -1830,17 +1907,37 @@ export default function CreateVC() {
                                   key={value}
                                   value={value}
                                   onSelect={(val) => {
-                                    const [name, stateCode, countryCode] = val.split("|");
+                                    const [name, stateCode, countryCode] =
+                                      val.split("|");
                                     handleInputChange("city", name);
-                                    const countryObj = Country.getAllCountries().find((c: any) => c.isoCode === countryCode);
-                                    if (countryObj) handleInputChange("country", countryObj.name);
+                                    const countryObj =
+                                      Country.getAllCountries().find(
+                                        (c: any) => c.isoCode === countryCode,
+                                      );
+                                    if (countryObj)
+                                      handleInputChange(
+                                        "country",
+                                        countryObj.name,
+                                      );
                                     if (stateCode) {
-                                      const stObj = State.getStateByCodeAndCountry(stateCode, countryCode);
-                                      if (stObj) handleInputChange("state", stObj.name);
+                                      const stObj =
+                                        State.getStateByCodeAndCountry(
+                                          stateCode,
+                                          countryCode,
+                                        );
+                                      if (stObj)
+                                        handleInputChange("state", stObj.name);
                                     }
                                   }}
                                 >
-                                  <Check className={cn("mr-2 h-4 w-4", vcData.city === city.name ? "opacity-100" : "opacity-0")} />
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      vcData.city === city.name
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
                                   {city.name}
                                 </CommandItem>
                               );
@@ -1853,12 +1950,17 @@ export default function CreateVC() {
                 </div>
               </div>
 
-
               {/* Multiple Contacts Section */}
               <div className="border-t pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
-                  <Button type="button" variant="outline" size="sm" onClick={addContact} disabled={vcData.contacts.length >= 3}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addContact}
+                    disabled={vcData.contacts.length >= 3}
+                  >
                     <Plus className="w-4 h-4 mr-2" /> Add Contact
                   </Button>
                 </div>
@@ -1870,11 +1972,19 @@ export default function CreateVC() {
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">Contact {index + 1}</h4>
                           {index === 0 && (
-                            <span className="text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded">Primary</span>
+                            <span className="text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                              Primary
+                            </span>
                           )}
                         </div>
                         {index > 0 && (
-                          <Button type="button" variant="ghost" size="icon" onClick={() => removeContact(index)} aria-label="Remove contact">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeContact(index)}
+                            aria-label="Remove contact"
+                          >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         )}
@@ -1882,13 +1992,21 @@ export default function CreateVC() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor={`contact_name_${index}`}>Contact Name {index + 1}</Label>
+                          <Label htmlFor={`contact_name_${index}`}>
+                            Contact Name {index + 1}
+                          </Label>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
                               id={`contact_name_${index}`}
                               value={contact.contact_name}
-                              onChange={(e) => updateContact(index, "contact_name", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(
+                                  index,
+                                  "contact_name",
+                                  e.target.value,
+                                )
+                              }
                               placeholder="Contact person's name"
                               className="pl-10"
                             />
@@ -1896,24 +2014,36 @@ export default function CreateVC() {
                         </div>
 
                         <div>
-                          <Label htmlFor={`designation_${index}`}>Contact Designation {index + 1}</Label>
+                          <Label htmlFor={`designation_${index}`}>
+                            Contact Designation {index + 1}
+                          </Label>
                           <Input
                             id={`designation_${index}`}
                             value={contact.designation}
-                            onChange={(e) => updateContact(index, "designation", e.target.value)}
+                            onChange={(e) =>
+                              updateContact(
+                                index,
+                                "designation",
+                                e.target.value,
+                              )
+                            }
                             placeholder="Partner, Associate, etc."
                           />
                         </div>
 
                         <div>
-                          <Label htmlFor={`contact_email_${index}`}>Contact {index + 1} - Email</Label>
+                          <Label htmlFor={`contact_email_${index}`}>
+                            Contact {index + 1} - Email
+                          </Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
                               id={`contact_email_${index}`}
                               type="email"
                               value={contact.email}
-                              onChange={(e) => updateContact(index, "email", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(index, "email", e.target.value)
+                              }
                               placeholder="contact@investor.com"
                               className="pl-10"
                             />
@@ -1921,25 +2051,33 @@ export default function CreateVC() {
                         </div>
 
                         <div>
-                          <Label htmlFor={`contact_phone_${index}`}>Contact {index + 1} - Phone</Label>
+                          <Label htmlFor={`contact_phone_${index}`}>
+                            Contact {index + 1} - Phone
+                          </Label>
                           <div className="flex gap-2">
                             <Select
                               value={contact.phone_prefix || "+1"}
-                              onValueChange={(value) => updateContact(index, "phone_prefix", value)}
+                              onValueChange={(value) =>
+                                updateContact(index, "phone_prefix", value)
+                              }
                             >
                               <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 {PHONE_PREFIXES.map((p) => (
-                                  <SelectItem key={p.code} value={p.code}>{p.label}</SelectItem>
+                                  <SelectItem key={p.code} value={p.code}>
+                                    {p.label}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                             <Input
                               id={`contact_phone_${index}`}
                               value={contact.phone}
-                              onChange={(e) => updateContact(index, "phone", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(index, "phone", e.target.value)
+                              }
                               placeholder="(555) 123-4567"
                             />
                           </div>
@@ -1982,7 +2120,9 @@ export default function CreateVC() {
                   <Label htmlFor="fund_raise_status">Status</Label>
                   <Select
                     value={(vcData as any).fund_raise_status || ""}
-                    onValueChange={(value) => handleInputChange("fund_raise_status" as any, value)}
+                    onValueChange={(value) =>
+                      handleInputChange("fund_raise_status" as any, value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
