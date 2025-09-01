@@ -696,7 +696,7 @@ export default function CreateVC() {
   useEffect(() => {
     if (user?.email && !vcData.lead_created_by) {
       console.log(
-        "��� DEBUG - Setting lead_created_by to user email:",
+        "🐛 DEBUG - Setting lead_created_by to user email:",
         user.email,
       );
       handleInputChange("lead_created_by", user.email);
@@ -801,7 +801,7 @@ export default function CreateVC() {
               // If user has already set custom country, preserve it
               if (prevData.custom_country && prevData.custom_country.trim()) {
                 console.log(
-                  "🐛 DEBUG - Preserving current custom_country:",
+                  "�� DEBUG - Preserving current custom_country:",
                   prevData.custom_country,
                 );
                 return prevData.custom_country;
@@ -1300,6 +1300,8 @@ export default function CreateVC() {
         status: vcData.status,
         investor_category: (vcData as any).investor_category || null,
         investor_name: vcData.investor_name || "PARTIAL_SAVE_IN_PROGRESS",
+        industry: (vcData as any).industry || null,
+        investor_last_feedback: (vcData as any).investor_last_feedback || null,
         phone: vcData.phone,
         address: vcData.address,
         city: vcData.city,
