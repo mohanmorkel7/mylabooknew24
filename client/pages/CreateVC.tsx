@@ -830,7 +830,7 @@ export default function CreateVC() {
         console.log("🐛 DEBUG - Fetching draft data for ID:", currentDraftId);
         try {
           const response = await apiClient.request(`/vc/${currentDraftId}`);
-          console.log("🐛 DEBUG - Fetched draft data:", response);
+          console.log("���� DEBUG - Fetched draft data:", response);
           console.log("🐛 DEBUG - Date fields from API:", {
             start_date: response.start_date,
             targeted_end_date: response.targeted_end_date,
@@ -1284,13 +1284,13 @@ export default function CreateVC() {
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
         minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
+          ? parseFloat(vcData.minimum_size)
           : null,
         maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
+          ? parseFloat(vcData.maximum_size)
           : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
-          ? parseInt(vcData.minimum_arr_requirement)
+          ? parseFloat(vcData.minimum_arr_requirement)
           : null,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
@@ -1387,13 +1387,13 @@ export default function CreateVC() {
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
         minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
+          ? parseFloat(vcData.minimum_size)
           : null,
         maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
+          ? parseFloat(vcData.maximum_size)
           : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
-          ? parseInt(vcData.minimum_arr_requirement)
+          ? parseFloat(vcData.minimum_arr_requirement)
           : null,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
