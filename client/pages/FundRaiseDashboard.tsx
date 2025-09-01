@@ -219,10 +219,10 @@ export default function FundRaiseDashboard() {
     });
 
   const { data: vcProgressData = [], isLoading: progressLoading } = useQuery({
-    queryKey: ["vc-progress"],
+    queryKey: ["fund-raises-progress"],
     queryFn: async () => {
       try {
-        const result = await apiClient.request("/vc/progress");
+        const result = await apiClient.request("/fund-raises/progress");
         return result || [];
       } catch {
         return [];
