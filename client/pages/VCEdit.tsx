@@ -142,7 +142,7 @@ const PHONE_PREFIXES = [
 const CURRENCIES = [
   { value: "INR", label: "INR (₹)", symbol: "₹" },
   { value: "USD", label: "USD ($)", symbol: "$" },
-  { value: "AED", label: "AED (��.إ)", symbol: "د.إ" },
+  { value: "AED", label: "AED (د.إ)", symbol: "د.إ" },
 ];
 
 const TABS = [
@@ -1144,25 +1144,43 @@ export default function VCEdit() {
 
               <div>
                 <Label htmlFor="country">Country</Label>
-                <Select
-                  value={vcData.country || undefined}
-                  onValueChange={(value) => {
-                    handleInputChange("country", value);
-                    handleInputChange("state", "");
-                    handleInputChange("city", "");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COUNTRIES.map((country) => (
-                      <SelectItem key={country} value={country}>
-                        {country}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                      {vcData.country || "Select country"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search country..." />
+                      <CommandEmpty>No country found.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {COUNTRIES.map((country) => (
+                            <CommandItem
+                              key={country}
+                              value={country}
+                              onSelect={(val) => {
+                                handleInputChange("country", val);
+                                handleInputChange("state", "");
+                                handleInputChange("city", "");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  vcData.country === country ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {country}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>
