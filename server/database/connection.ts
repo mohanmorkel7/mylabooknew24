@@ -329,6 +329,24 @@ export async function initializeDatabase() {
       );
     }
 
+    // Extend fund_raises with all fields
+    try {
+      const fundRaisesAlterPath = path.join(
+        __dirname,
+        "alter-fund-raises-extend.sql",
+      );
+      if (fs.existsSync(fundRaisesAlterPath)) {
+        const alterSql = fs.readFileSync(fundRaisesAlterPath, "utf8");
+        await client.query(alterSql);
+        console.log("Fund Raises table extended successfully");
+      }
+    } catch (fundRaisesAlterError) {
+      console.log(
+        "Fund Raises table extend already applied or error:",
+        (fundRaisesAlterError as any).message,
+      );
+    }
+
     // await client.query(schema);
     console.log("Database initialized successfully");
     client.release();
