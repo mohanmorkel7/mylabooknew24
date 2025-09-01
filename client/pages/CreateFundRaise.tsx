@@ -9,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Plus, Calendar, DollarSign, Building } from "lucide-react";
 
 const STATUS_OPTIONS = [
+  { value: "Dropped", label: "Dropped" },
   { value: "WIP", label: "WIP" },
   { value: "Closed", label: "Closed" },
-  { value: "Dropped", label: "Dropped" },
 ];
 
 const ROUND_STAGES = [
@@ -34,6 +35,14 @@ const STATUS_MAP: Record<string, string> = {
   Dropped: "lost",
 };
 
+const INVESTOR_STATUS_OPTIONS = [
+  { value: "Pass", label: "Pass" },
+  { value: "WIP", label: "WIP" },
+  { value: "Closed", label: "Closed" },
+  { value: "Yet to Connect", label: "Yet to Connect" },
+  { value: "Future Potential", label: "Future Potential" },
+];
+
 export default function CreateFundRaise() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -49,6 +58,7 @@ export default function CreateFundRaise() {
     total_raise_mn: "",
     valuation_mn: "",
     template_id: 1,
+    investor_status: "",
   });
 
   const { data: vcList = [] } = useQuery({
@@ -116,6 +126,7 @@ export default function CreateFundRaise() {
       start_date: form.start_date || null,
       targeted_end_date: form.end_date || null,
       notes: form.reason,
+      investor_last_feedback: form.investor_status || null,
       template_id: form.template_id,
       created_by: parseInt(user?.id || "1"),
     };
@@ -152,98 +163,158 @@ export default function CreateFundRaise() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Fund Raise Details</CardTitle>
-          <CardDescription>Fill in the required information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>VC</Label>
-              <Select value={form.vc_investor} onValueChange={(v) => handleChange("vc_investor", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select VC" />
-                </SelectTrigger>
-                <SelectContent>
-                  {investorOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      <div className="flex items-center gap-2">
-                        <Building className="w-4 h-4" /> {opt.label}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      <Tabs defaultValue="fundraise">
+        <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsTrigger value="fundraise">Fund Raise</TabsTrigger>
+          <TabsTrigger value="queue">Investor Status Queue</TabsTrigger>
+        </TabsList>
 
-            <div>
-              <Label>Status</Label>
-              <Select value={form.status} onValueChange={(v) => handleChange("status", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        <TabsContent value="fundraise" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Fund Raise Details</CardTitle>
+              <CardDescription>Fill in the required information</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>VC</Label>
+                  <Select value={form.vc_investor} onValueChange={(v) => handleChange("vc_investor", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select VC" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {investorOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <div className="flex items-center gap-2">
+                            <Building className="w-4 h-4" /> {opt.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Investment Stage</Label>
-              <Select value={form.round_stage} onValueChange={(v) => handleChange("round_stage", v)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  {ROUND_STAGES.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={form.status} onValueChange={(v) => handleChange("status", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div>
-              <Label>Start Date</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input type="date" className="pl-10" value={form.start_date} onChange={(e) => handleChange("start_date", e.target.value)} />
+                <div>
+                  <Label>Investor Status</Label>
+                  <Select value={form.investor_status} onValueChange={(v) => handleChange("investor_status", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Investor Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {INVESTOR_STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Investment Stage</Label>
+                  <Select value={form.round_stage} onValueChange={(v) => handleChange("round_stage", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROUND_STAGES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Start Date</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input type="date" className="pl-10" value={form.start_date} onChange={(e) => handleChange("start_date", e.target.value)} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>End Date</Label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input type="date" className="pl-10" value={form.end_date} onChange={(e) => handleChange("end_date", e.target.value)} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Total Fund Raise $ Mn</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input placeholder="e.g. 10" className="pl-10" value={form.total_raise_mn} onChange={(e) => handleChange("total_raise_mn", e.target.value)} />
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Valuation $ Mn</Label>
+                  <div className="relative">
+                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                    <Input placeholder="e.g. 100" className="pl-10" value={form.valuation_mn} onChange={(e) => handleChange("valuation_mn", e.target.value)} />
+                  </div>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <Label>End Date</Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input type="date" className="pl-10" value={form.end_date} onChange={(e) => handleChange("end_date", e.target.value)} />
+              <div>
+                <Label>Reason</Label>
+                <Textarea placeholder="Add details/reason" value={form.reason} onChange={(e) => handleChange("reason", e.target.value)} />
               </div>
-            </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            <div>
-              <Label>Total Fund Raise $ Mn</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input placeholder="e.g. 10" className="pl-10" value={form.total_raise_mn} onChange={(e) => handleChange("total_raise_mn", e.target.value)} />
+        <TabsContent value="queue">
+          <Card>
+            <CardHeader>
+              <CardTitle>Investor Status Queue</CardTitle>
+              <CardDescription>Quickly update status fields</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label>Status</Label>
+                <Select value={form.status} onValueChange={(v) => handleChange("status", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            <div>
-              <Label>Valuation $ Mn</Label>
-              <div className="relative">
-                <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input placeholder="e.g. 100" className="pl-10" value={form.valuation_mn} onChange={(e) => handleChange("valuation_mn", e.target.value)} />
+              <div>
+                <Label>Investor Status</Label>
+                <Select value={form.investor_status} onValueChange={(v) => handleChange("investor_status", v)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Investor Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {INVESTOR_STATUS_OPTIONS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-          </div>
-
-          <div>
-            <Label>Reason</Label>
-            <Textarea placeholder="Add details/reason" value={form.reason} onChange={(e) => handleChange("reason", e.target.value)} />
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
