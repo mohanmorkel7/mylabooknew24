@@ -1683,34 +1683,6 @@ export default function CreateVC() {
 
 
 
-                <div>
-                  <Label htmlFor="company_size">Company/Fund Size</Label>
-                  <Select
-                    value={vcData.company_size}
-                    onValueChange={(value) =>
-                      handleInputChange("company_size", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select fund/company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="startup">
-                        Startup Fund ($1M-$10M)
-                      </SelectItem>
-                      <SelectItem value="small">
-                        Small Fund ($10M-$50M)
-                      </SelectItem>
-                      <SelectItem value="medium">
-                        Medium Fund ($50M-$200M)
-                      </SelectItem>
-                      <SelectItem value="large">
-                        Large Fund ($200M-$1B)
-                      </SelectItem>
-                      <SelectItem value="mega">Mega Fund ($1B+)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
 
                 <div className="md:col-span-2">
                   <Label htmlFor="address">Address</Label>
