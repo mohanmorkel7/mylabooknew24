@@ -1081,111 +1081,84 @@ export default function VCEdit() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Country and City first */}
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Select
+                  value={vcData.country || undefined}
+                  onValueChange={(value) => {
+                    handleInputChange("country", value);
+                    handleInputChange("city", "");
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {COUNTRIES.map((country) => (
+                      <SelectItem key={country} value={country}>
+                        {country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Select
+                  value={vcData.city || undefined}
+                  onValueChange={(value) => handleInputChange("city", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {([...(vcData.country ? City.getCitiesOfCountry((Country.getAllCountries().find((c:any)=>c.name===vcData.country)?.isoCode||"")) : [])] as any[])
+                      .slice(0, 100)
+                      .map((c: any) => (
+                        <SelectItem key={c.name} value={c.name}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Primary Contact in requested order */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="investor_category">VC Type *</Label>
-                  <Select
-                    value={vcData.investor_category}
-                    onValueChange={(value) =>
-                      handleInputChange("investor_category", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select VC Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {VC_TYPES.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.investor_category && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.investor_category}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="investor_name">Investor Name *</Label>
+                  <Label>Contact Name 1</Label>
                   <Input
-                    id="investor_name"
-                    placeholder="Name of the investor/firm"
-                    value={vcData.investor_name}
-                    onChange={(e) =>
-                      handleInputChange("investor_name", e.target.value)
-                    }
-                    className={errors.investor_name ? "border-red-500" : ""}
-                  />
-                  {errors.investor_name && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.investor_name}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="sector_focus">Sector Focus</Label>
-                  <Select
-                    value={vcData.sector_focus}
-                    onValueChange={(value) =>
-                      handleInputChange("sector_focus", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Sector Focus" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SECTOR_FOCUS.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    placeholder="https://investor.com"
-                    value={vcData.website}
-                    onChange={(e) =>
-                      handleInputChange("website", e.target.value)
-                    }
+                    value={vcData.contacts[0]?.contact_name || ""}
+                    onChange={(e) => updateContact(0, "contact_name", e.target.value)}
+                    placeholder="Contact name"
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="company_size">Company/Fund Size</Label>
-                  <Select
-                    value={vcData.company_size}
-                    onValueChange={(value) =>
-                      handleInputChange("company_size", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select fund/company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="startup">
-                        Startup Fund ($1M-$10M)
-                      </SelectItem>
-                      <SelectItem value="small">
-                        Small Fund ($10M-$50M)
-                      </SelectItem>
-                      <SelectItem value="medium">
-                        Medium Fund ($50M-$200M)
-                      </SelectItem>
-                      <SelectItem value="large">
-                        Large Fund ($200M-$1B)
-                      </SelectItem>
-                      <SelectItem value="mega">Mega Fund ($1B+)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Contact Designation 1</Label>
+                  <Input
+                    value={vcData.contacts[0]?.designation || ""}
+                    onChange={(e) => updateContact(0, "designation", e.target.value)}
+                    placeholder="Job title"
+                  />
+                </div>
+                <div>
+                  <Label>Contact 1 - Email</Label>
+                  <Input
+                    type="email"
+                    value={vcData.contacts[0]?.email || ""}
+                    onChange={(e) => updateContact(0, "email", e.target.value)}
+                    placeholder="email@company.com"
+                  />
+                </div>
+                <div>
+                  <Label>Contact 1 - Phone</Label>
+                  <Input
+                    value={vcData.contacts[0]?.phone || ""}
+                    onChange={(e) => updateContact(0, "phone", e.target.value)}
+                    placeholder="+1 (555) 000-0000"
+                  />
                 </div>
               </div>
 
