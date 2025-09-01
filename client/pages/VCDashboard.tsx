@@ -1617,12 +1617,32 @@ export default function VCDashboard() {
                             </div>
 
                             <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
-                              <span>Investor: <span className="font-medium">{vc.investor_name || "N/A"}</span></span>
+                              <span>
+                                Investor:{" "}
+                                <span className="font-medium">
+                                  {vc.investor_name || "N/A"}
+                                </span>
+                              </span>
                               {vc.round_stage && (
-                                <span>Stage: <span className="font-medium">{vc.round_stage.replace("_", " ").toUpperCase()}</span></span>
+                                <span>
+                                  Stage:{" "}
+                                  <span className="font-medium">
+                                    {vc.round_stage
+                                      .replace("_", " ")
+                                      .toUpperCase()}
+                                  </span>
+                                </span>
                               )}
                               {(vc.round_size || vc.billing_currency) && (
-                                <span>Size: <span className="font-medium">{formatCurrency(vc.round_size, vc.billing_currency)}</span></span>
+                                <span>
+                                  Size:{" "}
+                                  <span className="font-medium">
+                                    {formatCurrency(
+                                      vc.round_size,
+                                      vc.billing_currency,
+                                    )}
+                                  </span>
+                                </span>
                               )}
                             </div>
                           </div>
