@@ -617,11 +617,7 @@ export function EnhancedStepItem({
                         ? "bg-blue-500"
                         : "bg-gray-300";
                   const contribution =
-                    step.status === "completed"
-                      ? Math.round(weight)
-                      : step.status === "in_progress"
-                        ? Math.round(weight / 2)
-                        : 0;
+                    step.status === "completed" ? Math.round(weight) : 0;
                   return (
                     <>
                       <div className="w-32 bg-gray-200 rounded h-1.5">
