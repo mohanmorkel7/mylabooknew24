@@ -189,7 +189,7 @@ export class ApiClient {
             console.log("Trying XMLHttpRequest fallback for network error");
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.error("XMLHttpRequest fallback failed:", xhrError);
+            console.warn("XMLHttpRequest fallback failed:", xhrError);
             return this.getEmptyFallbackResponse(endpoint);
           }
         } else if (fetchError.message === "Request timeout") {
@@ -205,7 +205,7 @@ export class ApiClient {
             console.log("Using XMLHttpRequest fallback for other fetch error");
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.error("XMLHttpRequest fallback failed:", xhrError);
+            console.warn("XMLHttpRequest fallback failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
