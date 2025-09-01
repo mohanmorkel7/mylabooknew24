@@ -73,15 +73,14 @@ import { Country, State, City } from "country-state-city";
 
 
 const ROUND_STAGES = [
-  { value: "pre_seed", label: "Pre-Seed" },
-  { value: "pre_series_a", label: "Pre-Series A" },
+  { value: "pre_seed", label: "Pre seed" },
   { value: "seed", label: "Seed" },
+  { value: "bridge_1", label: "Bridge 1" },
+  { value: "bridge_2", label: "Bridge 2" },
+  { value: "pre_series_a", label: "Pre Series A" },
   { value: "series_a", label: "Series A" },
   { value: "series_b", label: "Series B" },
   { value: "series_c", label: "Series C" },
-  { value: "bridge", label: "Bridge" },
-  { value: "growth", label: "Growth" },
-  { value: "ipo", label: "IPO" },
 ];
 
 const VC_TYPES = [
@@ -1082,7 +1081,7 @@ export default function CreateVC() {
       // Debug country specific updates
       if (field === "country") {
         console.log(
-          "���� DEBUG - Functional update - setting country to:",
+          "🐛 DEBUG - Functional update - setting country to:",
           value,
         );
         console.log("🐛 DEBUG - Previous data country:", prevData.country);
