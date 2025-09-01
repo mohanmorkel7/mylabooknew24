@@ -1380,7 +1380,7 @@ export default function CreateVC() {
                         "Social Media Profile/Link"}
                       {vcData.lead_source === "website" && "Website URL"}
                       {vcData.lead_source === "referral" &&
-                        "Referral Source/Contact"}
+                        "Referred by"}
                       {vcData.lead_source === "cold-call" &&
                         "Phone Number Called"}
                       {vcData.lead_source === "event" && "Event Name/Details"}
