@@ -1083,7 +1083,7 @@ export default function VCEdit() {
             <CardHeader>
               <CardTitle>Investors Contact Info</CardTitle>
               <CardDescription>
-                Country, city and primary contact details
+                Details about the investor and contact information
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
