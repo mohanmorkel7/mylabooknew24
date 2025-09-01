@@ -101,6 +101,8 @@ import VCDashboard from "@/pages/VCDashboard";
 import CreateVC from "@/pages/CreateVC";
 import VCDetails from "@/pages/VCDetails";
 import VCEdit from "@/pages/VCEdit";
+import FundRaiseDashboard from "@/pages/FundRaiseDashboard";
+import CreateFundRaise from "@/pages/CreateFundRaise";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
