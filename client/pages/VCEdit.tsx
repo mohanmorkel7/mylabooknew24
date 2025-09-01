@@ -66,6 +66,8 @@ import {
   PhoneCall,
   Presentation,
   HelpCircle,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 
 const VC_TYPES = [
