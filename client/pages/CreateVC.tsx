@@ -955,7 +955,7 @@ export default function CreateVC() {
           "🐛 DEBUG - Functional update - setting country to:",
           value,
         );
-        console.log("�� DEBUG - Previous data country:", prevData.country);
+        console.log("🐛 DEBUG - Previous data country:", prevData.country);
         console.log("🐛 DEBUG - New data country:", newData.country);
       }
 
@@ -1605,23 +1605,6 @@ export default function CreateVC() {
                   )}
                 </div>
 
-                <div>
-                  <Label htmlFor="investor_name">Investor Name *</Label>
-                  <Input
-                    id="investor_name"
-                    placeholder="Name of the investor/firm"
-                    value={vcData.investor_name}
-                    onChange={(e) =>
-                      handleInputChange("investor_name", e.target.value)
-                    }
-                    className={errors.investor_name ? "border-red-500" : ""}
-                  />
-                  {errors.investor_name && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.investor_name}
-                    </p>
-                  )}
-                </div>
 
                 <div>
                   <Label htmlFor="website">Website</Label>
