@@ -366,16 +366,15 @@ export default function CreateVC() {
           sector_focus: "",
           investor_last_feedback: "",
 
-          // Additional contacts (similar to CreateLead)
-          contacts: [
-            {
-              contact_name: "",
-              designation: "",
-              phone: "",
-              email: "",
-              linkedin: "",
-            },
-          ] as Array<{
+          // Additional contacts (3 max)
+          contacts: Array.from({ length: 3 }, () => ({
+            contact_name: "",
+            designation: "",
+            phone_prefix: "+1",
+            phone: "",
+            email: "",
+            linkedin: "",
+          })) as Array<{
             contact_name: string;
             designation: string;
             phone_prefix?: string;
@@ -1212,7 +1211,7 @@ export default function CreateVC() {
           ? vcData.custom_country.trim()
           : vcData.country || null;
 
-      console.log("🐛 DEBUG - Partial Save Country:", {
+      console.log("��� DEBUG - Partial Save Country:", {
         dropdown: vcData.country,
         custom: vcData.custom_country,
         finalValue: countryValue,
