@@ -22,6 +22,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ArrowLeft, Plus, Calendar, DollarSign, Building } from "lucide-react";
 
 const STATUS_OPTIONS = [
@@ -54,10 +67,32 @@ const INVESTOR_STATUS_OPTIONS = [
   { value: "Future Potential", label: "Future Potential" },
 ];
 
+function generateStepOptions(
+  start: number,
+  end: number,
+  step: number,
+): string[] {
+  const result: string[] = [];
+  const scale = 100; // to avoid floating-point errors
+  const startScaled = Math.round(start * scale);
+  const endScaled = Math.round(end * scale);
+  const stepScaled = Math.round(step * scale);
+  for (let v = startScaled; v <= endScaled; v += stepScaled) {
+    result.push((v / scale).toFixed(2));
+  }
+  return result;
+}
+
+const FUND_MN_OPTIONS = generateStepOptions(0.05, 10, 0.05);
+const VALUATION_MN_OPTIONS = ["0.50", ...generateStepOptions(1, 100, 1)];
+
 export default function CreateFundRaise() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [fundMnOpen, setFundMnOpen] = useState(false);
+  const [fundMnOpenMain, setFundMnOpenMain] = useState(false);
+  const [valuationOpen, setValuationOpen] = useState(false);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -150,40 +185,45 @@ export default function CreateFundRaise() {
       created_by: parseInt(user?.id || "1"),
     };
 
+    let newId: number | undefined;
     try {
       const result = await createMutation.mutateAsync(payload);
-      const newId = result?.data?.id || result?.id;
-
-      // Also persist full fund raise record in dedicated table
-      if (newId) {
-        try {
-          await apiClient.request("/fund-raises", {
-            method: "POST",
-            body: JSON.stringify({
-              vc_id: newId,
-              investor_name: form.vc_investor,
-              ui_status: form.status,
-              investor_status: form.investor_status,
-              round_stage: form.round_stage,
-              start_date: form.start_date || null,
-              end_date: form.end_date || null,
-              total_raise_mn: form.total_raise_mn || null,
-              valuation_mn: form.valuation_mn || null,
-              reason: form.reason || null,
-              template_id: form.template_id,
-              created_by: parseInt(user?.id || "1"),
-              updated_by: parseInt(user?.id || "1"),
-            }),
-          });
-        } catch (e) {
-          console.warn("Fund raise record creation failed:", e);
-        }
-        navigate(`/fundraise/${newId}`);
-      } else {
-        navigate("/fundraise");
-      }
+      newId = result?.data?.id || result?.id;
     } catch (e) {
-      alert("Failed to create Fund Raise. Please try again.");
+      console.warn(
+        "VC creation failed, proceeding with fund_raises insert only:",
+        e,
+      );
+    }
+
+    try {
+      await apiClient.request("/fund-raises", {
+        method: "POST",
+        body: JSON.stringify({
+          vc_id: newId ?? null,
+          investor_name: form.vc_investor,
+          ui_status: form.status,
+          investor_status: form.investor_status,
+          round_stage: form.round_stage,
+          start_date: form.start_date || null,
+          end_date: form.end_date || null,
+          total_raise_mn: form.total_raise_mn || null,
+          valuation_mn: form.valuation_mn || null,
+          reason: form.reason || null,
+          template_id: form.template_id,
+          created_by: parseInt(user?.id || "1"),
+          updated_by: parseInt(user?.id || "1"),
+        }),
+      });
+    } catch (e) {
+      alert("Failed to insert into fund_raises. Please try again.");
+      return;
+    }
+
+    if (newId) {
+      navigate(`/fundraise/${newId}`);
+    } else {
+      navigate("/fundraise");
     }
   };
 
@@ -336,32 +376,89 @@ export default function CreateFundRaise() {
 
                 <div>
                   <Label>Total Fund Raise $ Mn</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="e.g. 10"
-                      className="pl-10"
-                      value={form.total_raise_mn}
-                      onChange={(e) =>
-                        handleChange("total_raise_mn", e.target.value)
-                      }
-                    />
-                  </div>
+                  <Popover
+                    open={fundMnOpenMain}
+                    onOpenChange={setFundMnOpenMain}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
+                        {form.total_raise_mn || "Select amount"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={true}
+                      collisionPadding={8}
+                      className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Search amount..." />
+                        <CommandList>
+                          <CommandEmpty>No amounts found.</CommandEmpty>
+                          <CommandGroup>
+                            {FUND_MN_OPTIONS.map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(val) => {
+                                  handleChange("total_raise_mn", val);
+                                  setFundMnOpenMain(false);
+                                }}
+                              >
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
 
                 <div>
                   <Label>Valuation $ Mn</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="e.g. 100"
-                      className="pl-10"
-                      value={form.valuation_mn}
-                      onChange={(e) =>
-                        handleChange("valuation_mn", e.target.value)
-                      }
-                    />
-                  </div>
+                  <Popover open={valuationOpen} onOpenChange={setValuationOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
+                        {form.valuation_mn || "Select valuation"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={true}
+                      collisionPadding={8}
+                      className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                    >
+                      <Command>
+                        <CommandInput placeholder="Search valuation..." />
+                        <CommandList>
+                          <CommandEmpty>No valuations found.</CommandEmpty>
+                          <CommandGroup>
+                            {VALUATION_MN_OPTIONS.map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(val) => {
+                                  handleChange("valuation_mn", val);
+                                  setValuationOpen(false);
+                                }}
+                              >
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
@@ -385,22 +482,45 @@ export default function CreateFundRaise() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Status</Label>
-                <Select
-                  value={form.status}
-                  onValueChange={(v) => handleChange("status", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Fund $ Mn</Label>
+                <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      {form.total_raise_mn || "Select amount"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    align="start"
+                    avoidCollisions={true}
+                    collisionPadding={8}
+                    className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search amount..." />
+                      <CommandList>
+                        <CommandEmpty>No amounts found.</CommandEmpty>
+                        <CommandGroup>
+                          {FUND_MN_OPTIONS.map((v) => (
+                            <CommandItem
+                              key={v}
+                              value={v}
+                              onSelect={(val) => {
+                                handleChange("total_raise_mn", val);
+                                setFundMnOpen(false);
+                              }}
+                            >
+                              {v}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>Investor Status</Label>

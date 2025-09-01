@@ -156,6 +156,79 @@ const CURRENCIES = [
   { value: "AED", label: "AED (د.إ)", symbol: "د.إ" },
 ];
 
+const MIN_CHQ_SIZE_OPTIONS = [
+  "0.05",
+  "0.10",
+  "0.25",
+  "0.50",
+  "1.00",
+  "2.00",
+  "3.00",
+  "4.00",
+  "5.00",
+  "6.00",
+  "7.00",
+  "8.00",
+  "9.00",
+  "10.00",
+];
+
+const MAX_CHQ_SIZE_OPTIONS = [
+  "0.10",
+  "0.25",
+  "0.50",
+  "1.00",
+  "2.00",
+  "3.00",
+  "4.00",
+  "5.00",
+  "6.00",
+  "7.00",
+  "8.00",
+  "9.00",
+  "10.00",
+  "11.00",
+  "12.00",
+  "13.00",
+  "14.00",
+  "15.00",
+  "16.00",
+  "17.00",
+  "18.00",
+  "19.00",
+  "20.00",
+  "21.00",
+  "22.00",
+  "23.00",
+  "24.00",
+  "25.00",
+  "26.00",
+  "27.00",
+  "28.00",
+  "29.00",
+  "30.00",
+  "31.00",
+  "32.00",
+  "33.00",
+  "34.00",
+  "35.00",
+  "36.00",
+  "37.00",
+  "38.00",
+  "39.00",
+  "40.00",
+  "41.00",
+  "42.00",
+  "43.00",
+  "44.00",
+  "45.00",
+  "46.00",
+  "47.00",
+  "48.00",
+  "49.00",
+  "50.00",
+];
+
 const TABS = [
   { value: "lead-info", label: "Lead Information", icon: "📋" },
   { value: "investor-contact", label: "Investor Information", icon: "🏢" },
@@ -1103,26 +1176,104 @@ export default function VCEdit() {
 
                   <div>
                     <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
-                    <Input
-                      id="minimum_size"
-                      placeholder="e.g., 1"
-                      value={vcData.minimum_size}
-                      onChange={(e) =>
-                        handleInputChange("minimum_size", e.target.value)
-                      }
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={false}
+                          className="w-full justify-between"
+                        >
+                          {vcData.minimum_size || "Select amount"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="bottom"
+                        align="start"
+                        avoidCollisions={false}
+                        className="w-[--radix-popover-trigger-width] p-0"
+                      >
+                        <Command>
+                          <CommandInput placeholder="Search amount..." />
+                          <CommandList>
+                            <CommandEmpty>No amounts found.</CommandEmpty>
+                            <CommandGroup>
+                              {MIN_CHQ_SIZE_OPTIONS.map((v) => (
+                                <CommandItem
+                                  key={v}
+                                  value={v}
+                                  onSelect={(val) => {
+                                    handleInputChange("minimum_size", val);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      vcData.minimum_size === v
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  {v}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div>
                     <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
-                    <Input
-                      id="maximum_size"
-                      placeholder="e.g., 10"
-                      value={vcData.maximum_size}
-                      onChange={(e) =>
-                        handleInputChange("maximum_size", e.target.value)
-                      }
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={false}
+                          className="w-full justify-between"
+                        >
+                          {vcData.maximum_size || "Select amount"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="bottom"
+                        align="start"
+                        avoidCollisions={false}
+                        className="w-[--radix-popover-trigger-width] p-0"
+                      >
+                        <Command>
+                          <CommandInput placeholder="Search amount..." />
+                          <CommandList>
+                            <CommandEmpty>No amounts found.</CommandEmpty>
+                            <CommandGroup>
+                              {MAX_CHQ_SIZE_OPTIONS.map((v) => (
+                                <CommandItem
+                                  key={v}
+                                  value={v}
+                                  onSelect={(val) => {
+                                    handleInputChange("maximum_size", val);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      vcData.maximum_size === v
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  {v}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div className="md:col-span-2">

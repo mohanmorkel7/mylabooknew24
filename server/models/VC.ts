@@ -286,13 +286,12 @@ export class VCRepository {
 
   static async create(vcData: CreateVCData): Promise<VC> {
     // Generate VC ID
-    const vcIdQuery = `
-      SELECT COUNT(*) + 1 as next_id FROM vcs
-    `;
-    const vcIdResult = await pool.query(vcIdQuery);
-    const vcId = `#VC${vcIdResult.rows[0].next_id.toString().padStart(3, "0")}`;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const tempVcId = `#VC-TEMP-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 
-    const query = `
+      const query = `
       INSERT INTO vcs (
         vc_id, lead_source, lead_source_value, lead_created_by, status,
         round_title, round_description, round_stage, round_size, valuation,
@@ -311,70 +310,84 @@ export class VCRepository {
       RETURNING *
     `;
 
-    const countryValue = vcData.country || null;
+      const countryValue = vcData.country || null;
 
-    // Handle date fields to prevent timezone conversion
-    const startDateValue = vcData.start_date
-      ? vcData.start_date.includes("T")
-        ? vcData.start_date.split("T")[0]
-        : vcData.start_date
-      : null;
-    const targetedEndDateValue = vcData.targeted_end_date
-      ? vcData.targeted_end_date.includes("T")
-        ? vcData.targeted_end_date.split("T")[0]
-        : vcData.targeted_end_date
-      : null;
+      // Handle date fields to prevent timezone conversion
+      const startDateValue = vcData.start_date
+        ? vcData.start_date.includes("T")
+          ? vcData.start_date.split("T")[0]
+          : vcData.start_date
+        : null;
+      const targetedEndDateValue = vcData.targeted_end_date
+        ? vcData.targeted_end_date.includes("T")
+          ? vcData.targeted_end_date.split("T")[0]
+          : vcData.targeted_end_date
+        : null;
 
-    console.log("🐛 DEBUG - Server date processing:", {
-      original_start_date: vcData.start_date,
-      processed_start_date: startDateValue,
-      original_targeted_end_date: vcData.targeted_end_date,
-      processed_targeted_end_date: targetedEndDateValue,
-    });
+      console.log("🐛 DEBUG - Server date processing:", {
+        original_start_date: vcData.start_date,
+        processed_start_date: startDateValue,
+        original_targeted_end_date: vcData.targeted_end_date,
+        processed_targeted_end_date: targetedEndDateValue,
+      });
 
-    const values = [
-      vcId,
-      vcData.lead_source || "email",
-      vcData.lead_source_value || null,
-      vcData.lead_created_by || null,
-      vcData.status,
-      vcData.round_title || null,
-      vcData.round_description || null,
-      vcData.round_stage || null,
-      vcData.round_size || null,
-      vcData.valuation || null,
-      vcData.investor_category || null,
-      vcData.investor_name || null,
-      vcData.contact_person || null,
-      vcData.email || null,
-      vcData.phone || null,
-      vcData.address || null,
-      vcData.city || null,
-      vcData.state || null,
-      countryValue,
-      vcData.website || null,
-      vcData.company_size || null,
-      vcData.industry || null,
-      vcData.investor_last_feedback || null,
-      vcData.potential_lead_investor || false,
-      vcData.minimum_size || null,
-      vcData.maximum_size || null,
-      vcData.minimum_arr_requirement || null,
-      vcData.priority_level || "medium",
-      startDateValue,
-      targetedEndDateValue,
-      vcData.spoc || null,
-      vcData.billing_currency || "INR",
-      vcData.template_id || null,
-      vcData.contacts || null,
-      vcData.created_by,
-      vcData.assigned_to || null,
-      vcData.notes || null,
-      vcData.is_partial || false,
-    ];
+      const values = [
+        tempVcId,
+        vcData.lead_source || "email",
+        vcData.lead_source_value || null,
+        vcData.lead_created_by || null,
+        vcData.status,
+        vcData.round_title || null,
+        vcData.round_description || null,
+        vcData.round_stage || null,
+        vcData.round_size || null,
+        vcData.valuation || null,
+        vcData.investor_category || null,
+        vcData.investor_name || null,
+        vcData.contact_person || null,
+        vcData.email || null,
+        vcData.phone || null,
+        vcData.address || null,
+        vcData.city || null,
+        vcData.state || null,
+        countryValue,
+        vcData.website || null,
+        vcData.company_size || null,
+        vcData.investor_last_feedback || null,
+        vcData.potential_lead_investor || false,
+        vcData.minimum_size || null,
+        vcData.maximum_size || null,
+        vcData.minimum_arr_requirement || null,
+        vcData.priority_level || "medium",
+        startDateValue,
+        targetedEndDateValue,
+        vcData.spoc || null,
+        vcData.billing_currency || "INR",
+        vcData.template_id || null,
+        vcData.contacts || null,
+        vcData.created_by,
+        vcData.assigned_to || null,
+        vcData.notes || null,
+        vcData.is_partial || false,
+      ];
 
-    const result = await pool.query(query, values);
-    return result.rows[0];
+      const insertResult = await client.query(query, values);
+      const inserted = insertResult.rows[0];
+      const newVcId = `#VC${String(inserted.id).padStart(3, "0")}`;
+      const updateResult = await client.query(
+        `UPDATE vcs SET vc_id = $1 WHERE id = $2 RETURNING *`,
+        [newVcId, inserted.id],
+      );
+      await client.query("COMMIT");
+      return updateResult.rows[0];
+    } catch (error) {
+      try {
+        await client.query("ROLLBACK");
+      } catch {}
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   static async update(id: number, vcData: UpdateVCData): Promise<VC | null> {

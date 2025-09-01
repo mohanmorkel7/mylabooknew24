@@ -51,6 +51,12 @@ const statusColors: Record<string, string> = {
   completed: "bg-purple-100 text-purple-700",
 };
 
+const UI_STATUS_TO_INTERNAL: Record<string, string> = {
+  WIP: "in-progress",
+  Closed: "completed",
+  Dropped: "lost",
+};
+
 export default function FundRaiseDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -119,6 +125,47 @@ export default function FundRaiseDashboard() {
     retry: false,
     staleTime: 60000,
   });
+
+  // Fetch Fund Raises list from dedicated table
+  const {
+    data: fundRaises = [],
+    isLoading: fundRaisesLoading,
+    error: fundRaisesError,
+  } = useQuery({
+    queryKey: ["fund-raises"],
+    queryFn: async () => {
+      try {
+        const result = await apiClient.request("/fund-raises");
+        return Array.isArray(result) ? result : [];
+      } catch {
+        return [];
+      }
+    },
+    retry: false,
+    staleTime: 30000,
+  });
+
+  const filteredFundRaises = (fundRaises || [])
+    .filter((fr: any) => {
+      if (!searchTerm) return true;
+      const s = searchTerm.toLowerCase();
+      return (
+        (fr.investor_name || "").toLowerCase().includes(s) ||
+        (fr.reason || "").toLowerCase().includes(s) ||
+        (fr.round_stage || "").toLowerCase().includes(s)
+      );
+    })
+    .sort((a: any, b: any) => {
+      const aValue = a[sortBy] || "";
+      const bValue = b[sortBy] || "";
+      return sortOrder === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+          ? 1
+          : -1;
+    });
 
   const { data: vcProgressData = [], isLoading: progressLoading } = useQuery({
     queryKey: ["vc-progress"],
@@ -1181,28 +1228,46 @@ export default function FundRaiseDashboard() {
             <CardDescription>Recent entries</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
-            {filteredVCs.map((vc: any) => (
-              <div
-                key={vc.id || vc.vc_id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                onClick={() => vc?.id && navigate(`/fundraise/${vc.id}`)}
-                title="Open Fund Raise Overview"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="font-medium text-gray-900">
-                    {vc.round_title || "Fund Raise"}
+            {fundRaisesError ? (
+              <div className="p-3 text-red-600">Failed to load fund raises</div>
+            ) : fundRaisesLoading ? (
+              <div className="p-3 text-gray-500">Loading...</div>
+            ) : (
+              filteredFundRaises.map((fr: any) => {
+                const internalStatus =
+                  fr.status ||
+                  UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
+                  "in-progress";
+                return (
+                  <div
+                    key={fr.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                    onClick={() =>
+                      fr.vc_id && navigate(`/fundraise/${fr.vc_id}`)
+                    }
+                    title={
+                      fr.vc_id ? "Open Fund Raise Overview" : "VC not linked"
+                    }
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="font-medium text-gray-900">
+                        {fr.investor_name || "Fund Raise"}
+                      </div>
+                      <Badge className={statusColors[internalStatus] || ""}>
+                        {(fr.ui_status || internalStatus)
+                          .toString()
+                          .replace("-", " ")}
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-gray-700">
+                        {fr.total_raise_mn ? `$${fr.total_raise_mn} Mn` : ""}
+                      </div>
+                    </div>
                   </div>
-                  <Badge className={statusColors[vc.status] || ""}>
-                    {(vc.status || "").replace("-", " ")}
-                  </Badge>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-gray-700">
-                    {vc.investor_name || "N/A"}
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              })
+            )}
           </CardContent>
         </Card>
       </div>

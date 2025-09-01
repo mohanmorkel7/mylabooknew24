@@ -509,97 +509,59 @@ export default function FundRaiseDetails() {
                 </div>
                 <div>
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Contact Person:
-                      </span>
-                      <span className="text-gray-900">
-                        {getPrimaryContact(vcData)?.contact_name ||
-                          "Not provided"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Email:</span>
-                      {getPrimaryContact(vcData)?.email ? (
-                        <a
-                          href={`mailto:${getPrimaryContact(vcData)?.email}`}
-                          className="text-blue-600 hover:underline"
+                    <h4 className="font-medium text-gray-900">
+                      Funding Information
+                    </h4>
+                    <div className="space-y-2">
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Round Stage:{" "}
+                        </span>
+                        <Badge
+                          className={
+                            roundStageColors[
+                              vcData.round_stage as keyof typeof roundStageColors
+                            ]
+                          }
                         >
-                          {getPrimaryContact(vcData)?.email}
-                        </a>
-                      ) : (
-                        <span className="text-gray-900">Not provided</span>
-                      )}
+                          {getRoundStageDisplay(vcData.round_stage)}
+                        </Badge>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Round Size:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {formatCurrency(
+                            vcData.round_size,
+                            vcData.billing_currency,
+                          ) || "TBD"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-600">
+                          Valuation:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {formatCurrency(
+                            vcData.valuation,
+                            vcData.billing_currency,
+                          ) || "TBD"}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Phone:</span>
-                      <span className="text-gray-900">
-                        {getPrimaryContact(vcData)?.phone || "Not provided"}
-                      </span>
-                    </div>
+                    {vcData.round_description && (
+                      <div className="mt-1">
+                        <span className="font-medium text-gray-600">
+                          Description:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {vcData.round_description}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-
-              <Separator />
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2">
-                  Funding Information
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        Round Stage:{" "}
-                      </span>
-                      <Badge
-                        className={
-                          roundStageColors[
-                            vcData.round_stage as keyof typeof roundStageColors
-                          ]
-                        }
-                      >
-                        {getRoundStageDisplay(vcData.round_stage)}
-                      </Badge>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        Round Size:{" "}
-                      </span>
-                      <span className="text-gray-900">
-                        {formatCurrency(
-                          vcData.round_size,
-                          vcData.billing_currency,
-                        ) || "TBD"}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-600">
-                        Valuation:{" "}
-                      </span>
-                      <span className="text-gray-900">
-                        {formatCurrency(
-                          vcData.valuation,
-                          vcData.billing_currency,
-                        ) || "TBD"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {vcData.round_description && (
-                  <div className="mt-3">
-                    <span className="font-medium text-gray-600">
-                      Description:{" "}
-                    </span>
-                    <span className="text-gray-900">
-                      {vcData.round_description}
-                    </span>
-                  </div>
-                )}
               </div>
 
               {vcData.notes && (
