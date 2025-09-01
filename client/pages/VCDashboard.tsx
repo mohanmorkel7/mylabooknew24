@@ -107,6 +107,8 @@ const investorCategoryColors = {
   private_equity: "bg-purple-100 text-purple-700",
   family_office: "bg-orange-100 text-orange-700",
   merchant_banker: "bg-indigo-100 text-indigo-700",
+  accelerator: "bg-yellow-100 text-yellow-700",
+  individual: "bg-gray-100 text-gray-700",
 };
 
 export default function VCDashboard() {
@@ -1611,6 +1613,36 @@ export default function VCDashboard() {
                                 >
                                   {vc.priority_level.toUpperCase()}
                                 </Badge>
+                              )}
+                            </div>
+
+                            <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
+                              <span>
+                                Investor:{" "}
+                                <span className="font-medium">
+                                  {vc.investor_name || "N/A"}
+                                </span>
+                              </span>
+                              {vc.round_stage && (
+                                <span>
+                                  Stage:{" "}
+                                  <span className="font-medium">
+                                    {vc.round_stage
+                                      .replace("_", " ")
+                                      .toUpperCase()}
+                                  </span>
+                                </span>
+                              )}
+                              {(vc.round_size || vc.billing_currency) && (
+                                <span>
+                                  Size:{" "}
+                                  <span className="font-medium">
+                                    {formatCurrency(
+                                      vc.round_size,
+                                      vc.billing_currency,
+                                    )}
+                                  </span>
+                                </span>
                               )}
                             </div>
                           </div>
