@@ -104,6 +104,7 @@ import VCEdit from "@/pages/VCEdit";
 import FundRaiseDashboard from "@/pages/FundRaiseDashboard";
 import CreateFundRaise from "@/pages/CreateFundRaise";
 import FundRaiseDetails from "@/pages/FundRaiseDetails";
+import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
