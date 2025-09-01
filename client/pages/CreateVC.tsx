@@ -310,7 +310,8 @@ export default function CreateVC() {
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
           investor_category: (resumeData as any).investor_category || "",
           sector_focus: (resumeData as any).sector_focus || "",
-          investor_last_feedback: (resumeData as any).investor_last_feedback || "",
+          investor_last_feedback:
+            (resumeData as any).investor_last_feedback || "",
           contacts: resumeData.contacts
             ? typeof resumeData.contacts === "string"
               ? JSON.parse(resumeData.contacts)
@@ -1164,7 +1165,7 @@ export default function CreateVC() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-        if (!vcData.investor_name.trim()) {
+    if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
     if (!(vcData as any).investor_category) {
@@ -1204,8 +1205,12 @@ export default function CreateVC() {
         website: vcData.website,
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
-        minimum_size: vcData.minimum_size ? parseInt(vcData.minimum_size) : null,
-        maximum_size: vcData.maximum_size ? parseInt(vcData.maximum_size) : null,
+        minimum_size: vcData.minimum_size
+          ? parseInt(vcData.minimum_size)
+          : null,
+        maximum_size: vcData.maximum_size
+          ? parseInt(vcData.maximum_size)
+          : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
@@ -1301,8 +1306,12 @@ export default function CreateVC() {
         website: vcData.website,
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
-        minimum_size: vcData.minimum_size ? parseInt(vcData.minimum_size) : null,
-        maximum_size: vcData.maximum_size ? parseInt(vcData.maximum_size) : null,
+        minimum_size: vcData.minimum_size
+          ? parseInt(vcData.minimum_size)
+          : null,
+        maximum_size: vcData.maximum_size
+          ? parseInt(vcData.maximum_size)
+          : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
@@ -1642,11 +1651,16 @@ export default function CreateVC() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
+                    <Label htmlFor="investor_last_feedback">
+                      Investor Last Feedback
+                    </Label>
                     <Select
                       value={(vcData as any).investor_last_feedback}
                       onValueChange={(value) =>
-                        handleInputChange("investor_last_feedback" as any, value)
+                        handleInputChange(
+                          "investor_last_feedback" as any,
+                          value,
+                        )
                       }
                     >
                       <SelectTrigger>
@@ -1661,8 +1675,7 @@ export default function CreateVC() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  </div>
+                </div>
 
                 {isEditMode && (
                   <div>

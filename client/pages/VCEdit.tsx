@@ -23,8 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -238,7 +249,10 @@ export default function VCEdit() {
     [allCountries, vcData.country],
   );
   const availableStates = useMemo(
-    () => (selectedCountry ? State.getStatesOfCountry((selectedCountry as any).isoCode) : []),
+    () =>
+      selectedCountry
+        ? State.getStatesOfCountry((selectedCountry as any).isoCode)
+        : [],
     [selectedCountry?.isoCode],
   );
   const selectedStateObj = useMemo(
@@ -504,7 +518,8 @@ export default function VCEdit() {
         status: vcDataFromAPI.status || "in-progress",
         investor_category: vcDataFromAPI.investor_category || "",
         sector_focus: (vcDataFromAPI as any).sector_focus || "",
-        investor_last_feedback: (vcDataFromAPI as any).investor_last_feedback || "",
+        investor_last_feedback:
+          (vcDataFromAPI as any).investor_last_feedback || "",
         investor_name: vcDataFromAPI.investor_name || "",
         company_size: (() => {
           console.log(
@@ -701,7 +716,7 @@ export default function VCEdit() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-        if (!vcData.investor_name.trim()) {
+    if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
     if (!vcData.investor_category) {
@@ -746,8 +761,12 @@ export default function VCEdit() {
         website: vcData.website,
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
-        minimum_size: vcData.minimum_size ? parseInt(vcData.minimum_size) : null,
-        maximum_size: vcData.maximum_size ? parseInt(vcData.maximum_size) : null,
+        minimum_size: vcData.minimum_size
+          ? parseInt(vcData.minimum_size)
+          : null,
+        maximum_size: vcData.maximum_size
+          ? parseInt(vcData.maximum_size)
+          : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
@@ -848,7 +867,9 @@ export default function VCEdit() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="lead-info">Investors Info</TabsTrigger>
-          <TabsTrigger value="investor-contact">Investors Contact Info</TabsTrigger>
+          <TabsTrigger value="investor-contact">
+            Investors Contact Info
+          </TabsTrigger>
         </TabsList>
 
         {/* Lead Info Tab */}
@@ -1000,16 +1021,22 @@ export default function VCEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                   <div>
-                    <Label htmlFor="investor_name">Venture Capital Name *</Label>
+                    <Label htmlFor="investor_name">
+                      Venture Capital Name *
+                    </Label>
                     <Input
                       id="investor_name"
                       placeholder="Name of the VC firm"
                       value={vcData.investor_name}
-                      onChange={(e) => handleInputChange("investor_name", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("investor_name", e.target.value)
+                      }
                       className={errors.investor_name ? "border-red-500" : ""}
                     />
                     {errors.investor_name && (
-                      <p className="text-sm text-red-600 mt-1">{errors.investor_name}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_name}
+                      </p>
                     )}
                   </div>
 
@@ -1017,7 +1044,9 @@ export default function VCEdit() {
                     <Label htmlFor="investor_category">VC Type *</Label>
                     <Select
                       value={vcData.investor_category}
-                      onValueChange={(value) => handleInputChange("investor_category", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("investor_category", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select VC Type" />
@@ -1031,7 +1060,9 @@ export default function VCEdit() {
                       </SelectContent>
                     </Select>
                     {errors.investor_category && (
-                      <p className="text-sm text-red-600 mt-1">{errors.investor_category}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_category}
+                      </p>
                     )}
                   </div>
 
@@ -1039,7 +1070,9 @@ export default function VCEdit() {
                     <Label htmlFor="sector_focus">Sector Focus</Label>
                     <Select
                       value={vcData.sector_focus}
-                      onValueChange={(value) => handleInputChange("sector_focus", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("sector_focus", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select Sector Focus" />
@@ -1060,7 +1093,9 @@ export default function VCEdit() {
                       id="website"
                       placeholder="https://investor.com"
                       value={vcData.website}
-                      onChange={(e) => handleInputChange("website", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("website", e.target.value)
+                      }
                     />
                   </div>
 
@@ -1070,7 +1105,9 @@ export default function VCEdit() {
                       id="minimum_size"
                       placeholder="e.g., 1"
                       value={vcData.minimum_size}
-                      onChange={(e) => handleInputChange("minimum_size", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("minimum_size", e.target.value)
+                      }
                     />
                   </div>
 
@@ -1080,15 +1117,21 @@ export default function VCEdit() {
                       id="maximum_size"
                       placeholder="e.g., 10"
                       value={vcData.maximum_size}
-                      onChange={(e) => handleInputChange("maximum_size", e.target.value)}
+                      onChange={(e) =>
+                        handleInputChange("maximum_size", e.target.value)
+                      }
                     />
                   </div>
 
                   <div className="md:col-span-2">
-                    <Label htmlFor="investor_last_feedback">Investor Last Feedback</Label>
+                    <Label htmlFor="investor_last_feedback">
+                      Investor Last Feedback
+                    </Label>
                     <Select
                       value={vcData.investor_last_feedback}
-                      onValueChange={(value) => handleInputChange("investor_last_feedback", value)}
+                      onValueChange={(value) =>
+                        handleInputChange("investor_last_feedback", value)
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select last feedback" />
@@ -1147,12 +1190,19 @@ export default function VCEdit() {
                 <Label htmlFor="country">Country</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
                       {vcData.country || "Select country"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="Search country..." />
                       <CommandEmpty>No country found.</CommandEmpty>
@@ -1171,7 +1221,9 @@ export default function VCEdit() {
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
-                                  vcData.country === country ? "opacity-100" : "opacity-0",
+                                  vcData.country === country
+                                    ? "opacity-100"
+                                    : "opacity-0",
                                 )}
                               />
                               {country}
@@ -1188,12 +1240,19 @@ export default function VCEdit() {
                 <Label htmlFor="state">State/Province</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
                       {vcData.state || "Select state/province"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="Search state..." />
                       <CommandEmpty>No state found.</CommandEmpty>
@@ -1211,7 +1270,9 @@ export default function VCEdit() {
                               <Check
                                 className={cn(
                                   "mr-2 h-4 w-4",
-                                  vcData.state === state.name ? "opacity-100" : "opacity-0",
+                                  vcData.state === state.name
+                                    ? "opacity-100"
+                                    : "opacity-0",
                                 )}
                               />
                               {state.name}
@@ -1228,12 +1289,19 @@ export default function VCEdit() {
                 <Label htmlFor="city">City</Label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
                       {vcData.city || "Select city"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
                     <Command>
                       <CommandInput placeholder="Search city..." />
                       <CommandEmpty>No city found.</CommandEmpty>
@@ -1246,25 +1314,34 @@ export default function VCEdit() {
                                 key={value}
                                 value={value}
                                 onSelect={(val) => {
-                                  const [name, stateCode, countryCode] = val.split("|");
+                                  const [name, stateCode, countryCode] =
+                                    val.split("|");
                                   handleInputChange("city", name);
                                   const countryObj = allCountries.find(
                                     (c: any) => c.isoCode === countryCode,
                                   );
-                                  if (countryObj) handleInputChange("country", countryObj.name);
-                                  if (stateCode) {
-                                    const stObj = State.getStateByCodeAndCountry(
-                                      stateCode,
-                                      countryCode,
+                                  if (countryObj)
+                                    handleInputChange(
+                                      "country",
+                                      countryObj.name,
                                     );
-                                    if (stObj) handleInputChange("state", stObj.name);
+                                  if (stateCode) {
+                                    const stObj =
+                                      State.getStateByCodeAndCountry(
+                                        stateCode,
+                                        countryCode,
+                                      );
+                                    if (stObj)
+                                      handleInputChange("state", stObj.name);
                                   }
                                 }}
                               >
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    vcData.city === city.name ? "opacity-100" : "opacity-0",
+                                    vcData.city === city.name
+                                      ? "opacity-100"
+                                      : "opacity-0",
                                   )}
                                 />
                                 {city.name}
@@ -1320,14 +1397,20 @@ export default function VCEdit() {
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor={`contact_name_${index}`}>Contact Name {index + 1}</Label>
+                          <Label htmlFor={`contact_name_${index}`}>
+                            Contact Name {index + 1}
+                          </Label>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
                               id={`contact_name_${index}`}
                               value={contact.contact_name}
                               onChange={(e) =>
-                                updateContact(index, "contact_name", e.target.value)
+                                updateContact(
+                                  index,
+                                  "contact_name",
+                                  e.target.value,
+                                )
                               }
                               placeholder="Contact person's name"
                               className="pl-10"
@@ -1336,26 +1419,36 @@ export default function VCEdit() {
                         </div>
 
                         <div>
-                          <Label htmlFor={`designation_${index}`}>Contact Designation {index + 1}</Label>
+                          <Label htmlFor={`designation_${index}`}>
+                            Contact Designation {index + 1}
+                          </Label>
                           <Input
                             id={`designation_${index}`}
                             value={contact.designation}
                             onChange={(e) =>
-                              updateContact(index, "designation", e.target.value)
+                              updateContact(
+                                index,
+                                "designation",
+                                e.target.value,
+                              )
                             }
                             placeholder="Partner, Associate, etc."
                           />
                         </div>
 
                         <div>
-                          <Label htmlFor={`contact_email_${index}`}>Contact {index + 1} - Email</Label>
+                          <Label htmlFor={`contact_email_${index}`}>
+                            Contact {index + 1} - Email
+                          </Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
                               id={`contact_email_${index}`}
                               type="email"
                               value={contact.email}
-                              onChange={(e) => updateContact(index, "email", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(index, "email", e.target.value)
+                              }
                               placeholder="contact@investor.com"
                               className="pl-10"
                             />
@@ -1363,11 +1456,15 @@ export default function VCEdit() {
                         </div>
 
                         <div>
-                          <Label htmlFor={`contact_phone_${index}`}>Contact {index + 1} - Phone</Label>
+                          <Label htmlFor={`contact_phone_${index}`}>
+                            Contact {index + 1} - Phone
+                          </Label>
                           <div className="flex gap-2">
                             <Select
                               value={contact.phone_prefix || "+1"}
-                              onValueChange={(value) => updateContact(index, "phone_prefix", value)}
+                              onValueChange={(value) =>
+                                updateContact(index, "phone_prefix", value)
+                              }
                             >
                               <SelectTrigger className="w-40">
                                 <SelectValue />
@@ -1383,7 +1480,9 @@ export default function VCEdit() {
                             <Input
                               id={`contact_phone_${index}`}
                               value={contact.phone}
-                              onChange={(e) => updateContact(index, "phone", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(index, "phone", e.target.value)
+                              }
                               placeholder="(555) 123-4567"
                             />
                           </div>
@@ -1393,7 +1492,6 @@ export default function VCEdit() {
                   ))}
                 </div>
               </div>
-
             </CardContent>
           </Card>
 

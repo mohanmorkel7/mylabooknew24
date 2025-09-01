@@ -517,9 +517,7 @@ export class ApiClient {
 
     // Templates production fallbacks
     if (endpoint.includes("/templates-production/categories")) {
-      return [
-        { id: 6, name: "VC", color: "#6366F1", icon: "Megaphone" },
-      ];
+      return [{ id: 6, name: "VC", color: "#6366F1", icon: "Megaphone" }];
     }
     if (endpoint.includes("/templates-production/category/")) {
       return [];
