@@ -556,20 +556,51 @@ export default function VCDetails() {
                 {[
                   { label: "ID", value: vcData.id },
                   { label: "VC ID", value: vcData.vc_id },
-                  { label: "Lead Source", value: vcData.lead_source?.replace("-", " ") },
-                  { label: "Lead Source Value", value: vcData.lead_source_value },
+                  {
+                    label: "Lead Source",
+                    value: vcData.lead_source?.replace("-", " "),
+                  },
+                  {
+                    label: "Lead Source Value",
+                    value: vcData.lead_source_value,
+                  },
                   { label: "Lead Created By", value: vcData.lead_created_by },
                   { label: "Status", value: vcData.status?.replace("-", " ") },
                   { label: "Round Title", value: vcData.round_title },
-                  { label: "Round Description", value: vcData.round_description },
-                  { label: "Round Stage", value: vcData.round_stage?.replace("_", " ").toUpperCase() },
+                  {
+                    label: "Round Description",
+                    value: vcData.round_description,
+                  },
+                  {
+                    label: "Round Stage",
+                    value: vcData.round_stage?.replace("_", " ").toUpperCase(),
+                  },
                   { label: "Round Size", value: vcData.round_size },
                   { label: "Valuation", value: vcData.valuation },
-                  { label: "Investor Category", value: vcData.investor_category?.replace("_", " ").toUpperCase() },
-                  { label: "Venture Capital Name", value: vcData.investor_name },
-                  { label: "Contact Person", value: vcData.contact_person || getPrimaryContact(vcData)?.contact_name },
-                  { label: "Email", value: vcData.email || getPrimaryContact(vcData)?.email },
-                  { label: "Phone", value: vcData.phone || getPrimaryContact(vcData)?.phone },
+                  {
+                    label: "Investor Category",
+                    value: vcData.investor_category
+                      ?.replace("_", " ")
+                      .toUpperCase(),
+                  },
+                  {
+                    label: "Venture Capital Name",
+                    value: vcData.investor_name,
+                  },
+                  {
+                    label: "Contact Person",
+                    value:
+                      vcData.contact_person ||
+                      getPrimaryContact(vcData)?.contact_name,
+                  },
+                  {
+                    label: "Email",
+                    value: vcData.email || getPrimaryContact(vcData)?.email,
+                  },
+                  {
+                    label: "Phone",
+                    value: vcData.phone || getPrimaryContact(vcData)?.phone,
+                  },
                   { label: "Address", value: vcData.address },
                   { label: "City", value: vcData.city },
                   { label: "State", value: vcData.state },
@@ -577,13 +608,27 @@ export default function VCDetails() {
                   { label: "Website", value: vcData.website },
                   { label: "Company Size", value: vcData.company_size },
                   { label: "Sector Focus", value: vcData.industry },
-                  { label: "Potential Lead Investor", value: typeof vcData.potential_lead_investor === 'boolean' ? (vcData.potential_lead_investor ? "Yes" : "No") : null },
+                  {
+                    label: "Potential Lead Investor",
+                    value:
+                      typeof vcData.potential_lead_investor === "boolean"
+                        ? vcData.potential_lead_investor
+                          ? "Yes"
+                          : "No"
+                        : null,
+                  },
                   { label: "Minimum Size", value: vcData.minimum_size },
                   { label: "Maximum Size", value: vcData.maximum_size },
-                  { label: "Minimum ARR Requirement", value: vcData.minimum_arr_requirement },
+                  {
+                    label: "Minimum ARR Requirement",
+                    value: vcData.minimum_arr_requirement,
+                  },
                   { label: "Priority Level", value: vcData.priority_level },
                   { label: "Start Date", value: vcData.start_date },
-                  { label: "Targeted End Date", value: vcData.targeted_end_date },
+                  {
+                    label: "Targeted End Date",
+                    value: vcData.targeted_end_date,
+                  },
                   { label: "SPOC", value: vcData.spoc },
                   { label: "Billing Currency", value: vcData.billing_currency },
                   { label: "Contacts", value: vcData.contacts },
@@ -592,18 +637,38 @@ export default function VCDetails() {
                   { label: "Notes", value: vcData.notes },
                   { label: "Created At", value: vcData.created_at },
                   { label: "Updated At", value: vcData.updated_at },
-                  { label: "Is Partial", value: typeof vcData.is_partial === 'boolean' ? (vcData.is_partial ? "Yes" : "No") : null },
+                  {
+                    label: "Is Partial",
+                    value:
+                      typeof vcData.is_partial === "boolean"
+                        ? vcData.is_partial
+                          ? "Yes"
+                          : "No"
+                        : null,
+                  },
                   { label: "Template ID", value: vcData.template_id },
-                  { label: "Investor Last Feedback", value: vcData.investor_last_feedback },
+                  {
+                    label: "Investor Last Feedback",
+                    value: vcData.investor_last_feedback,
+                  },
                 ]
-                  .filter((item) => item.value !== null && item.value !== undefined && item.value !== "")
+                  .filter(
+                    (item) =>
+                      item.value !== null &&
+                      item.value !== undefined &&
+                      item.value !== "",
+                  )
                   .map((item) => (
                     <div key={item.label} className="space-y-1">
                       <div className="text-sm text-gray-600">{item.label}</div>
                       <div className="text-gray-900 break-words">
                         {item.label === "Website" ? (
                           <a
-                            href={String(item.value).startsWith("http") ? String(item.value) : `https://${item.value}`}
+                            href={
+                              String(item.value).startsWith("http")
+                                ? String(item.value)
+                                : `https://${item.value}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:underline"
