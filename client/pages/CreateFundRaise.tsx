@@ -105,6 +105,7 @@ export default function CreateFundRaise() {
     valuation_mn: "",
     template_id: 1,
     investor_status: "",
+    queue_total_raise_mn: "",
   });
 
   const { data: vcList = [] } = useQuery({
@@ -489,7 +490,7 @@ export default function CreateFundRaise() {
                       variant="outline"
                       className="w-full justify-between"
                     >
-                      {form.total_raise_mn || "Select amount"}
+                      {form.queue_total_raise_mn || "Select amount"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -509,7 +510,7 @@ export default function CreateFundRaise() {
                               key={v}
                               value={v}
                               onSelect={(val) => {
-                                handleChange("total_raise_mn", val);
+                                handleChange("queue_total_raise_mn", val);
                                 setFundMnOpen(false);
                               }}
                             >

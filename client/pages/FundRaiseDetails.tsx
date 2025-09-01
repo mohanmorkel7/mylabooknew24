@@ -46,7 +46,7 @@ import {
   Award,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -136,7 +136,7 @@ export default function FundRaiseDetails() {
     isLoading: stepsLoading,
     refetch: refetchSteps,
   } = useQuery({
-    queryKey: ["fundraise-steps", id],
+    queryKey: ["vc-steps", id],
     queryFn: async () =>
       apiClient.request(`/vc/${id}/steps`, {
         headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
@@ -166,6 +166,46 @@ export default function FundRaiseDetails() {
       });
     },
   });
+
+  // Seed VC steps from template 1 when no steps exist
+  const seededRef = useRef(false);
+  useEffect(() => {
+    const seedFromTemplate = async () => {
+      if (seededRef.current || !id) return;
+      if (Array.isArray(vcSteps) && vcSteps.length > 0) return;
+      try {
+        const template = await apiClient.request(`/templates-production/1`);
+        const steps = template?.steps || [];
+        if (!Array.isArray(steps) || steps.length === 0) return;
+        for (const [index, tStep] of steps.entries()) {
+          try {
+            await apiClient.request(`/vc/${id}/steps`, {
+              method: "POST",
+              body: JSON.stringify({
+                name: tStep.name,
+                description: tStep.description || tStep.name,
+                due_date: "",
+                priority: "medium",
+                status: "pending",
+                estimated_days:
+                  tStep.default_eta_days || tStep.estimated_days || 1,
+                probability_percent: tStep.probability_percent || 0,
+                order_index: tStep.step_order || index + 1,
+                created_by: parseInt(user?.id || "1"),
+              }),
+            });
+          } catch (e) {
+            // continue
+          }
+        }
+        seededRef.current = true;
+        setTimeout(() => refetchSteps(), 300);
+      } catch (e) {
+        // ignore
+      }
+    };
+    if (!stepsLoading) seedFromTemplate();
+  }, [id, stepsLoading, vcSteps, user?.id, refetchSteps]);
 
   const handleAddStep = async () => {
     if (!newStep.name.trim() || !newStep.description.trim()) return;
@@ -280,22 +320,31 @@ export default function FundRaiseDetails() {
 
   const completionPercentage = (() => {
     if (vcSteps && vcSteps.length > 0) {
-      const completedProbability = vcSteps
-        .filter((s: any) => s.status === "completed")
-        .reduce(
-          (sum: number, s: any) =>
-            sum + (parseFloat(s.probability_percent) || 0),
-          0,
-        );
-      const inProgressProbability = vcSteps
-        .filter((s: any) => s.status === "in_progress")
-        .reduce(
-          (sum: number, s: any) =>
-            sum + (parseFloat(s.probability_percent) || 0) * 0.5,
-          0,
-        );
-      const total = completedProbability + inProgressProbability;
-      return isNaN(total) ? 0 : Math.round(total);
+      let totalCompletedProbability = 0;
+      let totalStepProbability = 0;
+
+      vcSteps.forEach((s: any) => {
+        const prob = parseFloat(s.probability_percent) || 0;
+        totalStepProbability += prob;
+        if (s.status === "completed") totalCompletedProbability += prob;
+      });
+
+      if (totalStepProbability > 0) {
+        return Math.min(100, Math.round(totalCompletedProbability));
+      }
+
+      const completedCount = vcSteps.filter(
+        (s: any) => s.status === "completed",
+      ).length;
+      const inProgressCount = vcSteps.filter(
+        (s: any) => s.status === "in_progress",
+      ).length;
+      const totalSteps = vcSteps.length;
+      return totalSteps > 0
+        ? Math.round(
+            ((completedCount + inProgressCount * 0.5) / totalSteps) * 100,
+          )
+        : 0;
     }
     return vcData?.probability || 0;
   })();

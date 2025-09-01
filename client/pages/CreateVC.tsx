@@ -1284,13 +1284,13 @@ export default function CreateVC() {
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
         minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
+          ? parseFloat(vcData.minimum_size)
           : null,
         maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
+          ? parseFloat(vcData.maximum_size)
           : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
-          ? parseInt(vcData.minimum_arr_requirement)
+          ? parseFloat(vcData.minimum_arr_requirement)
           : null,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
@@ -1350,7 +1350,7 @@ export default function CreateVC() {
         ?.textContent?.trim();
       const customCountryInput =
         document.querySelector("#custom_country")?.value;
-      console.log("🐛 DEBUG - DOM vs State comparison:", {
+      console.log("���� DEBUG - DOM vs State comparison:", {
         domCountryDropdown: countryDropdown,
         stateCountry: vcData.country,
         domCustomCountry: customCountryInput,
@@ -1387,13 +1387,13 @@ export default function CreateVC() {
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
         minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
+          ? parseFloat(vcData.minimum_size)
           : null,
         maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
+          ? parseFloat(vcData.maximum_size)
           : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
-          ? parseInt(vcData.minimum_arr_requirement)
+          ? parseFloat(vcData.minimum_arr_requirement)
           : null,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
@@ -1723,8 +1723,9 @@ export default function CreateVC() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
@@ -1774,8 +1775,9 @@ export default function CreateVC() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />

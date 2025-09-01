@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
@@ -315,12 +315,35 @@ export default function VCEdit() {
     vcData.billing_currency || "INR",
   );
 
-  // Location helpers to match Create VC behavior
+  // Location helpers with alias mapping to ensure state/city lists populate correctly
   const allCountries = useMemo(() => Country.getAllCountries(), []);
-  const selectedCountry = useMemo(
-    () => allCountries.find((c: any) => c.name === vcData.country),
-    [allCountries, vcData.country],
+  const COUNTRY_ALIASES: Record<string, string> = useMemo(
+    () => ({
+      uae: "United Arab Emirates",
+      usa: "United States",
+      us: "United States",
+      uk: "United Kingdom",
+      ksa: "Saudi Arabia",
+    }),
+    [],
   );
+  const findCountry = useCallback(
+    (input?: string) => {
+      if (!input) return undefined;
+      const s = input.trim();
+      const alias = COUNTRY_ALIASES[s.toLowerCase()];
+      const target = alias || s;
+      return allCountries.find(
+        (c: any) =>
+          c.name.toLowerCase() === target.toLowerCase() ||
+          c.isoCode.toLowerCase() === target.toLowerCase(),
+      );
+    },
+    [allCountries, COUNTRY_ALIASES],
+  );
+  const selectedCountryName =
+    vcData.country === "Other" ? vcData.custom_country : vcData.country;
+  const selectedCountry = findCountry(selectedCountryName);
   const availableStates = useMemo(
     () =>
       selectedCountry
@@ -837,13 +860,13 @@ export default function VCEdit() {
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
         minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
+          ? parseFloat(vcData.minimum_size)
           : null,
         maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
+          ? parseFloat(vcData.maximum_size)
           : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
-          ? parseInt(vcData.minimum_arr_requirement)
+          ? parseFloat(vcData.minimum_arr_requirement)
           : null,
         billing_currency: vcData.billing_currency,
         contacts: JSON.stringify(vcData.contacts),
@@ -1191,8 +1214,9 @@ export default function VCEdit() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
@@ -1242,8 +1266,9 @@ export default function VCEdit() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
