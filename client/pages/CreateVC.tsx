@@ -421,6 +421,7 @@ export default function CreateVC() {
           // Billing and Commercials
           billing_currency: "INR" as const,
           flat_fee_config: [] as any[],
+          fund_raise_status: "",
 
           // Additional fields
           probability: "0",
