@@ -458,7 +458,10 @@ export default function VCDetails() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
                   { label: "VC ID", value: vcData.vc_id },
-                  { label: "Venture Capital Name", value: vcData.investor_name },
+                  {
+                    label: "Venture Capital Name",
+                    value: vcData.investor_name,
+                  },
                   {
                     label: "VC Type",
                     value: vcData.investor_category
@@ -540,7 +543,6 @@ export default function VCDetails() {
               )}
             </CardContent>
           </Card>
-
         </div>
 
         {/* Right Column - Quick Actions & Info */}

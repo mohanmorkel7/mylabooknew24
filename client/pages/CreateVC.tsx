@@ -309,7 +309,10 @@ export default function CreateVC() {
           maximum_size: resumeData.maximum_size || "",
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
           investor_category: (resumeData as any).investor_category || "",
-          industry: (resumeData as any).industry || (resumeData as any).sector_focus || "",
+          industry:
+            (resumeData as any).industry ||
+            (resumeData as any).sector_focus ||
+            "",
           investor_last_feedback:
             (resumeData as any).investor_last_feedback || "",
           contacts: resumeData.contacts
