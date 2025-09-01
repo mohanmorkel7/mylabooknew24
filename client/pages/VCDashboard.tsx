@@ -199,44 +199,6 @@ export default function VCDashboard() {
     staleTime: 60000, // 1 minute
   });
 
-  // Fetch VC follow-ups from database
-  const {
-    data: vcFollowUps = [],
-    isLoading: followUpsLoading,
-    refetch: refetchFollowUps,
-  } = useQuery({
-    queryKey: ["vc-follow-ups"],
-    queryFn: async () => {
-      try {
-        const result = await apiClient.request("/vc/follow-ups");
-        return result || [];
-      } catch (error) {
-        console.error("Failed to fetch VC follow-ups:", error);
-        // Always return empty array when any error occurs
-        return [];
-      }
-    },
-    retry: false, // Don't retry on errors, return fallback data instead
-    staleTime: 30000,
-    refetchOnMount: true,
-  });
-
-  // Fetch VC progress data from database
-  const { data: vcProgressData = [], isLoading: progressLoading } = useQuery({
-    queryKey: ["vc-progress"],
-    queryFn: async () => {
-      try {
-        const result = await apiClient.request("/vc/progress");
-        return result || [];
-      } catch (error) {
-        console.error("Failed to fetch VC progress:", error);
-        // Always return empty array when any error occurs
-        return [];
-      }
-    },
-    retry: false, // Don't retry on errors, return fallback data instead
-    staleTime: 30000, // 30 seconds
-  });
 
   // Fetch VC templates for quick insights
   const { data: vcTemplates = [], isLoading: templatesLoading } = useQuery({
