@@ -796,8 +796,8 @@ export default function VCEdit() {
       {/* Form Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lead-info">Lead Information</TabsTrigger>
-          <TabsTrigger value="investor-contact">Investor Information</TabsTrigger>
+          <TabsTrigger value="lead-info">Investors Info</TabsTrigger>
+          <TabsTrigger value="investor-contact">Investors Contact Info</TabsTrigger>
         </TabsList>
 
         {/* Lead Info Tab */}
