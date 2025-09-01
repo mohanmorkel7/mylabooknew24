@@ -142,7 +142,7 @@ const PHONE_PREFIXES = [
 const CURRENCIES = [
   { value: "INR", label: "INR (₹)", symbol: "₹" },
   { value: "USD", label: "USD ($)", symbol: "$" },
-  { value: "AED", label: "AED (د.إ)", symbol: "د.إ" },
+  { value: "AED", label: "AED (��.إ)", symbol: "د.إ" },
 ];
 
 const TABS = [
@@ -230,6 +230,33 @@ export default function VCEdit() {
   const [selectedCurrency, setSelectedCurrency] = useState(
     vcData.billing_currency || "INR",
   );
+
+  // Location helpers to match Create VC behavior
+  const allCountries = useMemo(() => Country.getAllCountries(), []);
+  const selectedCountry = useMemo(
+    () => allCountries.find((c: any) => c.name === vcData.country),
+    [allCountries, vcData.country],
+  );
+  const availableStates = useMemo(
+    () => (selectedCountry ? State.getStatesOfCountry((selectedCountry as any).isoCode) : []),
+    [selectedCountry?.isoCode],
+  );
+  const selectedStateObj = useMemo(
+    () =>
+      vcData.state
+        ? (availableStates.find((s: any) => s.name === vcData.state) as any)
+        : undefined,
+    [vcData.state, availableStates],
+  );
+  const availableCities = useMemo(() => {
+    if (!selectedCountry) return [] as any[];
+    if (selectedStateObj)
+      return City.getCitiesOfState(
+        (selectedCountry as any).isoCode,
+        (selectedStateObj as any).isoCode,
+      );
+    return City.getCitiesOfCountry((selectedCountry as any).isoCode);
+  }, [selectedCountry?.isoCode, selectedStateObj?.isoCode]);
 
   // Get currency symbol
   const getCurrencySymbol = (currency: string) => {
