@@ -1019,8 +1019,8 @@ export default function CreateVC() {
     if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
-    if (!vcData.investor_category) {
-      newErrors.investor_category = "Investor category is required";
+    if (!vcData.vc_type) {
+      newErrors.vc_type = "VC Type is required";
     }
     if (!vcData.lead_source) {
       newErrors.lead_source = "Lead source is required";
