@@ -102,7 +102,8 @@ export default function FundRaiseDetails() {
   const vcId = parseInt(id || "0");
 
   const deleteMutation = useMutation({
-    mutationFn: async () => apiClient.request(`/vc/${id}`, { method: "DELETE" }),
+    mutationFn: async () =>
+      apiClient.request(`/vc/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vcs"] });
       queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
@@ -392,7 +393,8 @@ export default function FundRaiseDetails() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete this Fund Raise?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This action cannot be undone. All related steps and comments will be removed.
+                  This action cannot be undone. All related steps and comments
+                  will be removed.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
