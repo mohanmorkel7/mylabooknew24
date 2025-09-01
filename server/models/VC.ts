@@ -286,11 +286,10 @@ export class VCRepository {
 
   static async create(vcData: CreateVCData): Promise<VC> {
     // Generate VC ID
-    const vcIdQuery = `
-      SELECT COUNT(*) + 1 as next_id FROM vcs
-    `;
-    const vcIdResult = await pool.query(vcIdQuery);
-    const vcId = `#VC${vcIdResult.rows[0].next_id.toString().padStart(3, "0")}`;
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const tempVcId = `#VC-TEMP-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 
     const query = `
       INSERT INTO vcs (
@@ -333,7 +332,7 @@ export class VCRepository {
     });
 
     const values = [
-      vcId,
+      tempVcId,
       vcData.lead_source || "email",
       vcData.lead_source_value || null,
       vcData.lead_created_by || null,
@@ -372,8 +371,21 @@ export class VCRepository {
       vcData.is_partial || false,
     ];
 
-    const result = await pool.query(query, values);
-    return result.rows[0];
+    const insertResult = await client.query(query, values);
+    const inserted = insertResult.rows[0];
+    const newVcId = `#VC${String(inserted.id).padStart(3, "0")}`;
+    const updateResult = await client.query(
+      `UPDATE vcs SET vc_id = $1 WHERE id = $2 RETURNING *`,
+      [newVcId, inserted.id],
+    );
+    await client.query("COMMIT");
+    return updateResult.rows[0];
+    } catch (error) {
+      try { await client.query("ROLLBACK"); } catch {}
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   static async update(id: number, vcData: UpdateVCData): Promise<VC | null> {
