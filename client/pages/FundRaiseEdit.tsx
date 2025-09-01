@@ -33,8 +33,7 @@ const STATUS_OPTIONS = [
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
   { value: "seed", label: "Seed" },
-  { value: "bridge_1", label: "Bridge 1" },
-  { value: "bridge_2", label: "Bridge 2" },
+  { value: "bridge", label: "Bridge" },
   { value: "pre_series_a", label: "Pre Series A" },
   { value: "series_a", label: "Series A" },
   { value: "series_b", label: "Series B" },
