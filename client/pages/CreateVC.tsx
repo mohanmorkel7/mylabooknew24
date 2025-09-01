@@ -748,11 +748,22 @@ export default function CreateVC() {
             minimum_arr_requirement:
               response.minimum_arr_requirement ||
               prevData.minimum_arr_requirement,
-            contacts: response.contacts
-              ? typeof response.contacts === "string"
-                ? JSON.parse(response.contacts)
-                : response.contacts
-              : prevData.contacts,
+            contacts: (() => {
+              let contacts = response.contacts
+                ? typeof response.contacts === "string"
+                  ? JSON.parse(response.contacts)
+                  : response.contacts
+                : prevData.contacts;
+              contacts = Array.from({ length: 3 }, (_, i) => ({
+                contact_name: contacts?.[i]?.contact_name || "",
+                designation: contacts?.[i]?.designation || "",
+                phone_prefix: contacts?.[i]?.phone_prefix || "+1",
+                phone: contacts?.[i]?.phone || "",
+                email: contacts?.[i]?.email || "",
+                linkedin: contacts?.[i]?.linkedin || "",
+              }));
+              return contacts;
+            })(),
             round_title:
               response.round_title === "Draft VC - In Progress"
                 ? ""
@@ -1211,7 +1222,7 @@ export default function CreateVC() {
           ? vcData.custom_country.trim()
           : vcData.country || null;
 
-      console.log("��� DEBUG - Partial Save Country:", {
+      console.log("🐛 DEBUG - Partial Save Country:", {
         dropdown: vcData.country,
         custom: vcData.custom_country,
         finalValue: countryValue,
