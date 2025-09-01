@@ -1082,7 +1082,7 @@ export default function CreateVC() {
       // Debug country specific updates
       if (field === "country") {
         console.log(
-          "🐛 DEBUG - Functional update - setting country to:",
+          "���� DEBUG - Functional update - setting country to:",
           value,
         );
         console.log("🐛 DEBUG - Previous data country:", prevData.country);
@@ -1968,7 +1968,7 @@ export default function CreateVC() {
         <TabsContent value="round" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Round Information</CardTitle>
+              <CardTitle>Fund Raise</CardTitle>
               <CardDescription>
                 Details about the funding round and investment terms
               </CardDescription>
@@ -1994,7 +1994,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="round_stage">Round Stage</Label>
+                  <Label htmlFor="round_stage">Investment Stage</Label>
                   <Select
                     value={vcData.round_stage}
                     onValueChange={(value) =>
@@ -2002,7 +2002,7 @@ export default function CreateVC() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select round stage" />
+                      <SelectValue placeholder="Select investment stage" />
                     </SelectTrigger>
                     <SelectContent>
                       {ROUND_STAGES.map((stage) => (
@@ -2015,12 +2015,10 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="round_size">
-                    Round Size ({getCurrencySymbol(selectedCurrency)})
-                  </Label>
+                  <Label htmlFor="round_size">Total Fund Raise $ Mn</Label>
                   <Input
                     id="round_size"
-                    placeholder={`e.g., ${getCurrencySymbol(selectedCurrency)}10M`}
+                    placeholder={`e.g., $10M`}
                     value={vcData.round_size}
                     onChange={(e) =>
                       handleInputChange("round_size", e.target.value)
@@ -2029,12 +2027,10 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="valuation">
-                    Valuation ({getCurrencySymbol(selectedCurrency)})
-                  </Label>
+                  <Label htmlFor="valuation">Valuation $ Mn</Label>
                   <Input
                     id="valuation"
-                    placeholder={`e.g., ${getCurrencySymbol(selectedCurrency)}100M`}
+                    placeholder={`e.g., $100M`}
                     value={vcData.valuation}
                     onChange={(e) =>
                       handleInputChange("valuation", e.target.value)
@@ -2084,7 +2080,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="targeted_end_date">Target Close Date</Label>
+                  <Label htmlFor="targeted_end_date">End Date</Label>
                   <Input
                     id="targeted_end_date"
                     type="date"
@@ -2097,7 +2093,7 @@ export default function CreateVC() {
               </div>
 
               <div>
-                <Label htmlFor="project_description">Round Description</Label>
+                <Label htmlFor="project_description">Reason</Label>
                 <Textarea
                   id="project_description"
                   placeholder="Describe the funding round, use of funds, and key details..."
