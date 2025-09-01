@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
+import { Country, State, City } from "country-state-city";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -62,15 +77,18 @@ import {
   PhoneCall,
   Presentation,
   HelpCircle,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
 
-const INVESTOR_CATEGORIES = [
+const VC_TYPES = [
+  { value: "early_stage", label: "Early Stage" },
+  { value: "accelerator", label: "Accelerator" },
+  { value: "growth", label: "Growth" },
+  { value: "strategic_bank", label: "Strategic - Bank" },
+  { value: "strategic_fintech", label: "Strategic - Fintech" },
+  { value: "strategic_individual", label: "Strategic - Individual" },
   { value: "angel", label: "Angel" },
-  { value: "vc", label: "VC" },
-  { value: "private_equity", label: "Private Equity" },
-  { value: "family_office", label: "Family Office" },
-  { value: "merchant_banker", label: "Merchant Banker" },
-  { value: "individual", label: "Individual" },
 ];
 
 const ROUND_STAGES = [
@@ -83,6 +101,22 @@ const ROUND_STAGES = [
   { value: "bridge", label: "Bridge" },
   { value: "growth", label: "Growth" },
   { value: "ipo", label: "IPO" },
+];
+
+const SECTOR_FOCUS = [
+  { value: "fintech", label: "Fintech" },
+  { value: "fintech_b2b", label: "Fintech -B2B" },
+  { value: "fintech_saas", label: "Fintech - SaaS" },
+  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
+  { value: "sector_agnostic", label: "Sector Agnostic" },
+];
+
+const INVESTOR_FEEDBACK = [
+  { value: "existing_investor", label: "Existing Investor" },
+  { value: "general", label: "General" },
+  { value: "pass", label: "Pass" },
+  { value: "ghosting", label: "Ghosting" },
+  { value: "potential_future", label: "Potential Future" },
 ];
 
 const COUNTRIES = [
@@ -99,6 +133,23 @@ const COUNTRIES = [
   "Other",
 ];
 
+const PHONE_PREFIXES = [
+  { code: "+1", label: "+1 (US)" },
+  { code: "+91", label: "+91 (IN)" },
+  { code: "+44", label: "+44 (UK)" },
+  { code: "+65", label: "+65 (SG)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+966", label: "+966 (SA)" },
+  { code: "+974", label: "+974 (QA)" },
+  { code: "+965", label: "+965 (KW)" },
+  { code: "+973", label: "+973 (BH)" },
+  { code: "+968", label: "+968 (OM)" },
+  { code: "+61", label: "+61 (AU)" },
+  { code: "+49", label: "+49 (DE)" },
+  { code: "+33", label: "+33 (FR)" },
+  { code: "+81", label: "+81 (JP)" },
+];
+
 const CURRENCIES = [
   { value: "INR", label: "INR (₹)", symbol: "₹" },
   { value: "USD", label: "USD ($)", symbol: "$" },
@@ -107,9 +158,7 @@ const CURRENCIES = [
 
 const TABS = [
   { value: "lead-info", label: "Lead Information", icon: "📋" },
-  { value: "investor-contact", label: "Investor Information", icon: "����" },
-  { value: "deal-details", label: "Round Information", icon: "💰" },
-  { value: "additional", label: "Additional Information", icon: "📝" },
+  { value: "investor-contact", label: "Investor Information", icon: "🏢" },
 ];
 
 export default function VCEdit() {
@@ -128,6 +177,8 @@ export default function VCEdit() {
 
     // Investor and Contact Info
     investor_category: "",
+    sector_focus: "",
+    investor_last_feedback: "",
     investor_name: "",
     company_size: "",
     phone: "",
@@ -190,6 +241,36 @@ export default function VCEdit() {
   const [selectedCurrency, setSelectedCurrency] = useState(
     vcData.billing_currency || "INR",
   );
+
+  // Location helpers to match Create VC behavior
+  const allCountries = useMemo(() => Country.getAllCountries(), []);
+  const selectedCountry = useMemo(
+    () => allCountries.find((c: any) => c.name === vcData.country),
+    [allCountries, vcData.country],
+  );
+  const availableStates = useMemo(
+    () =>
+      selectedCountry
+        ? State.getStatesOfCountry((selectedCountry as any).isoCode)
+        : [],
+    [selectedCountry?.isoCode],
+  );
+  const selectedStateObj = useMemo(
+    () =>
+      vcData.state
+        ? (availableStates.find((s: any) => s.name === vcData.state) as any)
+        : undefined,
+    [vcData.state, availableStates],
+  );
+  const availableCities = useMemo(() => {
+    if (!selectedCountry) return [] as any[];
+    if (selectedStateObj)
+      return City.getCitiesOfState(
+        (selectedCountry as any).isoCode,
+        (selectedStateObj as any).isoCode,
+      );
+    return City.getCitiesOfCountry((selectedCountry as any).isoCode);
+  }, [selectedCountry?.isoCode, selectedStateObj?.isoCode]);
 
   // Get currency symbol
   const getCurrencySymbol = (currency: string) => {
@@ -436,6 +517,9 @@ export default function VCEdit() {
         lead_created_by: vcDataFromAPI.lead_created_by || user?.email || "",
         status: vcDataFromAPI.status || "in-progress",
         investor_category: vcDataFromAPI.investor_category || "",
+        sector_focus: (vcDataFromAPI as any).sector_focus || "",
+        investor_last_feedback:
+          (vcDataFromAPI as any).investor_last_feedback || "",
         investor_name: vcDataFromAPI.investor_name || "",
         company_size: (() => {
           console.log(
@@ -612,6 +696,7 @@ export default function VCEdit() {
         {
           contact_name: "",
           designation: "",
+          phone_prefix: "+1",
           phone: "",
           email: "",
           linkedin: "",
@@ -631,14 +716,11 @@ export default function VCEdit() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-    if (!vcData.round_title.trim()) {
-      newErrors.round_title = "Round title is required";
-    }
     if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
     if (!vcData.investor_category) {
-      newErrors.investor_category = "Investor category is required";
+      newErrors.investor_category = "VC Type is required";
     }
     if (!vcData.lead_source) {
       newErrors.lead_source = "Lead source is required";
@@ -661,11 +743,6 @@ export default function VCEdit() {
         lead_source_value: vcData.lead_source_value,
         lead_created_by: vcData.lead_created_by,
         status: vcData.status,
-        round_title: vcData.round_title,
-        round_description: vcData.project_description,
-        round_stage: vcData.round_stage || null,
-        round_size: vcData.round_size,
-        valuation: vcData.valuation,
         investor_category: vcData.investor_category,
         investor_name: vcData.investor_name,
         phone: vcData.phone,
@@ -693,22 +770,7 @@ export default function VCEdit() {
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
-        priority_level: vcData.priority_level,
-        start_date: (() => {
-          console.log("🐛 DEBUG - Saving start_date:", vcData.start_date);
-          return vcData.start_date || null;
-        })(),
-        targeted_end_date: (() => {
-          console.log(
-            "🐛 DEBUG - Saving targeted_end_date:",
-            vcData.targeted_end_date,
-          );
-          return vcData.targeted_end_date || null;
-        })(),
-        spoc: vcData.spoc,
-        template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
-        notes: vcData.notes,
         contacts: JSON.stringify(vcData.contacts),
       };
 
@@ -803,20 +865,18 @@ export default function VCEdit() {
 
       {/* Form Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="lead-info">Lead Information</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="lead-info">Investors Info</TabsTrigger>
           <TabsTrigger value="investor-contact">
-            Investor Information
+            Investors Contact Info
           </TabsTrigger>
-          <TabsTrigger value="deal-details">Round Information</TabsTrigger>
-          <TabsTrigger value="additional">Additional Information</TabsTrigger>
         </TabsList>
 
         {/* Lead Info Tab */}
         <TabsContent value="lead-info" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Lead Information</CardTitle>
+              <CardTitle>Investors Info</CardTitle>
               <CardDescription>
                 Basic information about this VC opportunity lead
               </CardDescription>
@@ -959,24 +1019,132 @@ export default function VCEdit() {
                   </div>
                 )}
 
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={vcData.status}
-                    onValueChange={(value) =>
-                      handleInputChange("status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="in-progress">In Progress</SelectItem>
-                      <SelectItem value="won">Won</SelectItem>
-                      <SelectItem value="lost">Lost</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <Label htmlFor="investor_name">
+                      Venture Capital Name *
+                    </Label>
+                    <Input
+                      id="investor_name"
+                      placeholder="Name of the VC firm"
+                      value={vcData.investor_name}
+                      onChange={(e) =>
+                        handleInputChange("investor_name", e.target.value)
+                      }
+                      className={errors.investor_name ? "border-red-500" : ""}
+                    />
+                    {errors.investor_name && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_name}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="investor_category">VC Type *</Label>
+                    <Select
+                      value={vcData.investor_category}
+                      onValueChange={(value) =>
+                        handleInputChange("investor_category", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select VC Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {VC_TYPES.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.investor_category && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_category}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sector_focus">Sector Focus</Label>
+                    <Select
+                      value={vcData.sector_focus}
+                      onValueChange={(value) =>
+                        handleInputChange("sector_focus", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Sector Focus" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SECTOR_FOCUS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="website">Website</Label>
+                    <Input
+                      id="website"
+                      placeholder="https://investor.com"
+                      value={vcData.website}
+                      onChange={(e) =>
+                        handleInputChange("website", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
+                    <Input
+                      id="minimum_size"
+                      placeholder="e.g., 1"
+                      value={vcData.minimum_size}
+                      onChange={(e) =>
+                        handleInputChange("minimum_size", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
+                    <Input
+                      id="maximum_size"
+                      placeholder="e.g., 10"
+                      value={vcData.maximum_size}
+                      onChange={(e) =>
+                        handleInputChange("maximum_size", e.target.value)
+                      }
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <Label htmlFor="investor_last_feedback">
+                      Investor Last Feedback
+                    </Label>
+                    <Select
+                      value={vcData.investor_last_feedback}
+                      onValueChange={(value) =>
+                        handleInputChange("investor_last_feedback", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select last feedback" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVESTOR_FEEDBACK.map((f) => (
+                          <SelectItem key={f.value} value={f.value}>
+                            {f.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -1001,331 +1169,328 @@ export default function VCEdit() {
         <TabsContent value="investor-contact" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Investor Information</CardTitle>
+              <CardTitle>Investors Contact Info</CardTitle>
               <CardDescription>
                 Details about the investor and contact information
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="investor_category">Investor Category *</Label>
-                  <Select
-                    value={vcData.investor_category}
-                    onValueChange={(value) =>
-                      handleInputChange("investor_category", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select investor category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INVESTOR_CATEGORIES.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.investor_category && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.investor_category}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="investor_name">Investor Name *</Label>
-                  <Input
-                    id="investor_name"
-                    placeholder="Name of the investor/firm"
-                    value={vcData.investor_name}
-                    onChange={(e) =>
-                      handleInputChange("investor_name", e.target.value)
-                    }
-                    className={errors.investor_name ? "border-red-500" : ""}
-                  />
-                  {errors.investor_name && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.investor_name}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    placeholder="https://investor.com"
-                    value={vcData.website}
-                    onChange={(e) =>
-                      handleInputChange("website", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="company_size">Company/Fund Size</Label>
-                  <Select
-                    value={vcData.company_size}
-                    onValueChange={(value) =>
-                      handleInputChange("company_size", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select fund/company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="startup">
-                        Startup Fund ($1M-$10M)
-                      </SelectItem>
-                      <SelectItem value="small">
-                        Small Fund ($10M-$50M)
-                      </SelectItem>
-                      <SelectItem value="medium">
-                        Medium Fund ($50M-$200M)
-                      </SelectItem>
-                      <SelectItem value="large">
-                        Large Fund ($200M-$1B)
-                      </SelectItem>
-                      <SelectItem value="mega">Mega Fund ($1B+)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              {/* Address, Country, State/Province, City */}
+              <div className="md:col-span-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  placeholder="Street address"
+                  value={vcData.address}
+                  onChange={(e) => handleInputChange("address", e.target.value)}
+                />
               </div>
 
-              {/* Address Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Address</h3>
-                <div>
-                  <Label htmlFor="address">Street Address</Label>
-                  <Input
-                    id="address"
-                    placeholder="Street address"
-                    value={vcData.address}
-                    onChange={(e) =>
-                      handleInputChange("address", e.target.value)
-                    }
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    placeholder="City"
-                    value={vcData.city}
-                    onChange={(e) => handleInputChange("city", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="state">State/Province</Label>
-                  <Input
-                    id="state"
-                    placeholder="State or Province"
-                    value={vcData.state}
-                    onChange={(e) => handleInputChange("state", e.target.value)}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="country">Country *</Label>
-                  <Select
-                    value={
-                      vcData.country && vcData.country.trim()
-                        ? vcData.country
-                        : undefined
-                    }
-                    onValueChange={(value) => {
-                      handleInputChange("country", value);
-                      if (value !== "Other") {
-                        handleInputChange("custom_country", "");
-                      }
-                    }}
+              <div>
+                <Label htmlFor="country">Country</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {vcData.country || "Select country"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {COUNTRIES.map((country) => (
-                        <SelectItem key={country} value={country}>
-                          {country}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {vcData.country === "Other" && (
-                  <div>
-                    <Label htmlFor="custom_country">Custom Country</Label>
-                    <Input
-                      id="custom_country"
-                      placeholder="Enter country name"
-                      value={vcData.custom_country}
-                      onChange={(e) =>
-                        handleInputChange("custom_country", e.target.value)
-                      }
-                    />
-                  </div>
-                )}
+                    <Command>
+                      <CommandInput placeholder="Search country..." />
+                      <CommandEmpty>No country found.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {COUNTRIES.map((country) => (
+                            <CommandItem
+                              key={country}
+                              value={country}
+                              onSelect={(val) => {
+                                handleInputChange("country", val);
+                                handleInputChange("state", "");
+                                handleInputChange("city", "");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  vcData.country === country
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              {country}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
-              {/* Investment Details */}
+              <div>
+                <Label htmlFor="state">State/Province</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {vcData.state || "Select state/province"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search state..." />
+                      <CommandEmpty>No state found.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {availableStates.map((state: any) => (
+                            <CommandItem
+                              key={state.isoCode}
+                              value={state.name}
+                              onSelect={(val) => {
+                                handleInputChange("state", val);
+                                handleInputChange("city", "");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  vcData.state === state.name
+                                    ? "opacity-100"
+                                    : "opacity-0",
+                                )}
+                              />
+                              {state.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <div>
+                <Label htmlFor="city">City</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between"
+                    >
+                      {vcData.city || "Select city"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    className="w-[--radix-popover-trigger-width] p-0"
+                    align="start"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search city..." />
+                      <CommandEmpty>No city found.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {availableCities.map((city: any) => {
+                            const value = `${city.name}|${city.stateCode || ""}|${city.countryCode}`;
+                            return (
+                              <CommandItem
+                                key={value}
+                                value={value}
+                                onSelect={(val) => {
+                                  const [name, stateCode, countryCode] =
+                                    val.split("|");
+                                  handleInputChange("city", name);
+                                  const countryObj = allCountries.find(
+                                    (c: any) => c.isoCode === countryCode,
+                                  );
+                                  if (countryObj)
+                                    handleInputChange(
+                                      "country",
+                                      countryObj.name,
+                                    );
+                                  if (stateCode) {
+                                    const stObj =
+                                      State.getStateByCodeAndCountry(
+                                        stateCode,
+                                        countryCode,
+                                      );
+                                    if (stObj)
+                                      handleInputChange("state", stObj.name);
+                                  }
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    vcData.city === city.name
+                                      ? "opacity-100"
+                                      : "opacity-0",
+                                  )}
+                                />
+                                {city.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Contact Information section (match Create VC) */}
               <div className="border-t pt-6 mt-6">
-                <h3 className="text-lg font-semibold mb-4">
-                  Investment Details
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="potential_lead_investor"
-                      checked={vcData.potential_lead_investor}
-                      onCheckedChange={(checked) =>
-                        handleInputChange("potential_lead_investor", checked)
-                      }
-                    />
-                    <Label htmlFor="potential_lead_investor">
-                      Potential Lead Investor
-                    </Label>
-                  </div>
-
-                  <div></div>
-
-                  <div>
-                    <Label htmlFor="minimum_size">
-                      Minimum Size ({getCurrencySymbol(selectedCurrency)})
-                    </Label>
-                    <Input
-                      id="minimum_size"
-                      placeholder={`e.g., ${getCurrencySymbol(selectedCurrency) === "$" ? "10M" : getCurrencySymbol(selectedCurrency) === "د.إ" ? "37M" : "10Cr"}`}
-                      value={vcData.minimum_size}
-                      onChange={(e) =>
-                        handleInputChange("minimum_size", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="maximum_size">
-                      Maximum Size ({getCurrencySymbol(selectedCurrency)})
-                    </Label>
-                    <Input
-                      id="maximum_size"
-                      placeholder={`e.g., ${getCurrencySymbol(selectedCurrency) === "$" ? "100M" : getCurrencySymbol(selectedCurrency) === "د.إ" ? "367M" : "100Cr"}`}
-                      value={vcData.maximum_size}
-                      onChange={(e) =>
-                        handleInputChange("maximum_size", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="minimum_arr_requirement">
-                      Minimum ARR Requirement (
-                      {getCurrencySymbol(selectedCurrency)})
-                    </Label>
-                    <Input
-                      id="minimum_arr_requirement"
-                      placeholder={`e.g., ${getCurrencySymbol(selectedCurrency) === "$" ? "5M" : getCurrencySymbol(selectedCurrency) === "د.إ" ? "18M" : "5Cr"}`}
-                      value={vcData.minimum_arr_requirement}
-                      onChange={(e) =>
-                        handleInputChange(
-                          "minimum_arr_requirement",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Additional Contacts */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    Additional Contacts
-                  </h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Contact Information</h3>
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={addContact}
                     size="sm"
+                    onClick={addContact}
+                    disabled={vcData.contacts.length >= 3}
                   >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Contact
+                    <Plus className="w-4 h-4 mr-2" /> Add Contact
                   </Button>
                 </div>
-                {vcData.contacts.map((contact, index) => (
-                  <Card key={index} className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium">Contact {index + 1}</h4>
-                      {vcData.contacts.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeContact(index)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <Label>Name</Label>
-                        <Input
-                          value={contact.contact_name}
-                          onChange={(e) =>
-                            updateContact(index, "contact_name", e.target.value)
-                          }
-                          placeholder="Contact name"
-                        />
+
+                <div className="space-y-4">
+                  {vcData.contacts.map((contact, index) => (
+                    <Card key={index} className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">Contact {index + 1}</h4>
+                          {index === 0 && (
+                            <span className="text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                              Primary
+                            </span>
+                          )}
+                        </div>
+                        {index > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeContact(index)}
+                            aria-label="Remove contact"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
-                      <div>
-                        <Label>Designation</Label>
-                        <Input
-                          value={contact.designation}
-                          onChange={(e) =>
-                            updateContact(index, "designation", e.target.value)
-                          }
-                          placeholder="Job title"
-                        />
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`contact_name_${index}`}>
+                            Contact Name {index + 1}
+                          </Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              id={`contact_name_${index}`}
+                              value={contact.contact_name}
+                              onChange={(e) =>
+                                updateContact(
+                                  index,
+                                  "contact_name",
+                                  e.target.value,
+                                )
+                              }
+                              placeholder="Contact person's name"
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`designation_${index}`}>
+                            Contact Designation {index + 1}
+                          </Label>
+                          <Input
+                            id={`designation_${index}`}
+                            value={contact.designation}
+                            onChange={(e) =>
+                              updateContact(
+                                index,
+                                "designation",
+                                e.target.value,
+                              )
+                            }
+                            placeholder="Partner, Associate, etc."
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`contact_email_${index}`}>
+                            Contact {index + 1} - Email
+                          </Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              id={`contact_email_${index}`}
+                              type="email"
+                              value={contact.email}
+                              onChange={(e) =>
+                                updateContact(index, "email", e.target.value)
+                              }
+                              placeholder="contact@investor.com"
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`contact_phone_${index}`}>
+                            Contact {index + 1} - Phone
+                          </Label>
+                          <div className="flex gap-2">
+                            <Select
+                              value={contact.phone_prefix || "+1"}
+                              onValueChange={(value) =>
+                                updateContact(index, "phone_prefix", value)
+                              }
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PHONE_PREFIXES.map((p) => (
+                                  <SelectItem key={p.code} value={p.code}>
+                                    {p.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              id={`contact_phone_${index}`}
+                              value={contact.phone}
+                              onChange={(e) =>
+                                updateContact(index, "phone", e.target.value)
+                              }
+                              placeholder="(555) 123-4567"
+                            />
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <Label>Email</Label>
-                        <Input
-                          type="email"
-                          value={contact.email}
-                          onChange={(e) =>
-                            updateContact(index, "email", e.target.value)
-                          }
-                          placeholder="email@company.com"
-                        />
-                      </div>
-                      <div>
-                        <Label>Phone</Label>
-                        <Input
-                          value={contact.phone}
-                          onChange={(e) =>
-                            updateContact(index, "phone", e.target.value)
-                          }
-                          placeholder="+1 (555) 000-0000"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <Label>LinkedIn</Label>
-                        <Input
-                          value={contact.linkedin}
-                          onChange={(e) =>
-                            updateContact(index, "linkedin", e.target.value)
-                          }
-                          placeholder="https://linkedin.com/in/username"
-                        />
-                      </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  ))}
+                </div>
               </div>
             </CardContent>
           </Card>
