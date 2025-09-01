@@ -1975,6 +1975,22 @@ export default function CreateVC() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
+                  <Label htmlFor="fund_raise_status">Status</Label>
+                  <Select
+                    value={(vcData as any).fund_raise_status || ""}
+                    onValueChange={(value) => handleInputChange("fund_raise_status" as any, value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="dropped">Dropped</SelectItem>
+                      <SelectItem value="wip">WIP</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
                   <Label htmlFor="round_title">Round Title *</Label>
                   <Input
                     id="round_title"
