@@ -1600,11 +1600,6 @@ export default function VCDashboard() {
                                 <span className="capitalize">
                                   {vc.lead_source?.replace("-", " ")}
                                 </span>
-                                {vc.lead_source_value && (
-                                  <span className="ml-2 text-gray-600 truncate max-w-[200px]" title={vc.lead_source_value}>
-                                    {vc.lead_source_value}
-                                  </span>
-                                )}
                               </div>
                               <div className="flex items-center gap-1">
                                 <Calendar className="w-4 h-4" />
@@ -1621,38 +1616,14 @@ export default function VCDashboard() {
                               )}
                             </div>
 
-                            {/* Basic details grid */}
-                            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                              <div className="space-y-1">
-                                <p className="text-gray-600">IDs & Status</p>
-                                <p className="text-gray-800">VC ID: <span className="font-medium">{vc.vc_id}</span></p>
-                                {vc.status && (
-                                  <p className="text-gray-800">Status: <span className="font-medium capitalize">{vc.status.replace("-", " ")}</span></p>
-                                )}
-                                {vc.investor_last_feedback && (
-                                  <p className="text-gray-800">Investor Status: <span className="font-medium">{vc.investor_last_feedback}</span></p>
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-gray-600">Contact & Address</p>
-                                <p className="text-gray-800 truncate" title={vc.email}>Email: <span className="font-medium">{vc.email || "N/A"}</span></p>
-                                <p className="text-gray-800">Phone: <span className="font-medium">{vc.phone || "N/A"}</span></p>
-                                {(vc.address || vc.city || vc.state || vc.country) && (
-                                  <p className="text-gray-800 truncate" title={`${vc.address || ""} ${vc.city || ""} ${vc.state || ""} ${vc.country || ""}`}>Addr: <span className="font-medium">{[vc.address, vc.city, vc.state, vc.country].filter(Boolean).join(", ")}</span></p>
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                <p className="text-gray-600">Round & Billing</p>
-                                <p className="text-gray-800">Valuation: <span className="font-medium">{formatCurrency(vc.valuation, vc.billing_currency)}</span></p>
-                                <p className="text-gray-800">Size: <span className="font-medium">{formatCurrency(vc.round_size, vc.billing_currency)}</span></p>
-                                <p className="text-gray-800">Currency: <span className="font-medium">{vc.billing_currency || "INR"}</span></p>
-                              </div>
-                            </div>
-
-                            <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-500">
-                              <p>Created By: <span className="font-medium text-gray-700">{vc.created_by ?? "-"}</span></p>
-                              <p>Assigned To: <span className="font-medium text-gray-700">{vc.assigned_to ?? "-"}</span></p>
-                              <p>Updated: <span className="font-medium text-gray-700">{formatToIST(vc.updated_at)}</span></p>
+                            <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
+                              <span>Investor: <span className="font-medium">{vc.investor_name || "N/A"}</span></span>
+                              {vc.round_stage && (
+                                <span>Stage: <span className="font-medium">{vc.round_stage.replace("_", " ").toUpperCase()}</span></span>
+                              )}
+                              {(vc.round_size || vc.billing_currency) && (
+                                <span>Size: <span className="font-medium">{formatCurrency(vc.round_size, vc.billing_currency)}</span></span>
+                              )}
                             </div>
                           </div>
                         </div>
