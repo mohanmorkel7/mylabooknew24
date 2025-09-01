@@ -1606,17 +1606,6 @@ export default function CreateVC() {
                 </div>
 
 
-                <div>
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    placeholder="https://investor.com"
-                    value={vcData.website}
-                    onChange={(e) =>
-                      handleInputChange("website", e.target.value)
-                    }
-                  />
-                </div>
 
                 <div>
                   <Label htmlFor="company_size">Company/Fund Size</Label>
