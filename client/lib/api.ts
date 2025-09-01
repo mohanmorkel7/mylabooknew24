@@ -164,7 +164,7 @@ export class ApiClient {
             fetchError.message.includes("Failed to fetch"));
 
         if (isFullStoryError) {
-          console.error(
+          console.warn(
             "🚨 FullStory interference detected - using XMLHttpRequest fallback",
           );
           try {
