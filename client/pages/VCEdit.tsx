@@ -156,6 +156,23 @@ const CURRENCIES = [
   { value: "AED", label: "AED (د.إ)", symbol: "د.إ" },
 ];
 
+const MIN_CHQ_SIZE_OPTIONS = [
+  "0.05",
+  "0.10",
+  "0.25",
+  "0.50",
+  "1.00",
+  "2.00",
+  "3.00",
+  "4.00",
+  "5.00",
+  "6.00",
+  "7.00",
+  "8.00",
+  "9.00",
+  "10.00",
+];
+
 const TABS = [
   { value: "lead-info", label: "Lead Information", icon: "📋" },
   { value: "investor-contact", label: "Investor Information", icon: "🏢" },
@@ -1103,14 +1120,53 @@ export default function VCEdit() {
 
                   <div>
                     <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
-                    <Input
-                      id="minimum_size"
-                      placeholder="e.g., 1"
-                      value={vcData.minimum_size}
-                      onChange={(e) =>
-                        handleInputChange("minimum_size", e.target.value)
-                      }
-                    />
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={false}
+                          className="w-full justify-between"
+                        >
+                          {vcData.minimum_size || "Select amount"}
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent
+                        side="bottom"
+                        align="start"
+                        avoidCollisions={false}
+                        className="w-[--radix-popover-trigger-width] p-0"
+                      >
+                        <Command>
+                          <CommandInput placeholder="Search amount..." />
+                          <CommandList>
+                            <CommandEmpty>No amounts found.</CommandEmpty>
+                            <CommandGroup>
+                              {MIN_CHQ_SIZE_OPTIONS.map((v) => (
+                                <CommandItem
+                                  key={v}
+                                  value={v}
+                                  onSelect={(val) => {
+                                    handleInputChange("minimum_size", val);
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      vcData.minimum_size === v
+                                        ? "opacity-100"
+                                        : "opacity-0",
+                                    )}
+                                  />
+                                  {v}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                   </div>
 
                   <div>
