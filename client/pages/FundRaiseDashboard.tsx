@@ -1255,12 +1255,9 @@ export default function FundRaiseDashboard() {
                   (p: any) => p.vc_id === fr.vc_id,
                 );
                 const completedProb = pd?.total_completed_probability || 0;
-                const inProgressProb = pd?.current_step?.probability
-                  ? Math.round((pd.current_step.probability as number) * 0.5)
-                  : 0;
                 const progressPercent = Math.max(
                   0,
-                  Math.min(100, completedProb + inProgressProb),
+                  Math.min(100, completedProb),
                 );
 
                 return (
