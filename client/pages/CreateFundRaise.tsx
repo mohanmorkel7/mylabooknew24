@@ -22,8 +22,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ArrowLeft, Plus, Calendar, DollarSign, Building } from "lucide-react";
 
 const STATUS_OPTIONS = [
@@ -56,7 +67,11 @@ const INVESTOR_STATUS_OPTIONS = [
   { value: "Future Potential", label: "Future Potential" },
 ];
 
-function generateStepOptions(start: number, end: number, step: number): string[] {
+function generateStepOptions(
+  start: number,
+  end: number,
+  step: number,
+): string[] {
   const result: string[] = [];
   const scale = 100; // to avoid floating-point errors
   const startScaled = Math.round(start * scale);
@@ -361,13 +376,25 @@ export default function CreateFundRaise() {
 
                 <div>
                   <Label>Total Fund Raise $ Mn</Label>
-                  <Popover open={fundMnOpenMain} onOpenChange={setFundMnOpenMain}>
+                  <Popover
+                    open={fundMnOpenMain}
+                    onOpenChange={setFundMnOpenMain}
+                  >
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         {form.total_raise_mn || "Select amount"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="bottom" align="start" avoidCollisions={true} collisionPadding={8} className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto">
+                    <PopoverContent
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={true}
+                      collisionPadding={8}
+                      className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                    >
                       <Command>
                         <CommandInput placeholder="Search amount..." />
                         <CommandList>
@@ -396,11 +423,20 @@ export default function CreateFundRaise() {
                   <Label>Valuation $ Mn</Label>
                   <Popover open={valuationOpen} onOpenChange={setValuationOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                      >
                         {form.valuation_mn || "Select valuation"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent side="bottom" align="start" avoidCollisions={true} collisionPadding={8} className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto">
+                    <PopoverContent
+                      side="bottom"
+                      align="start"
+                      avoidCollisions={true}
+                      collisionPadding={8}
+                      className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                    >
                       <Command>
                         <CommandInput placeholder="Search valuation..." />
                         <CommandList>
@@ -449,11 +485,20 @@ export default function CreateFundRaise() {
                 <Label>Fund $ Mn</Label>
                 <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
                   <PopoverTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
                       {form.total_raise_mn || "Select amount"}
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent side="bottom" align="start" avoidCollisions={true} collisionPadding={8} className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto">
+                  <PopoverContent
+                    side="bottom"
+                    align="start"
+                    avoidCollisions={true}
+                    collisionPadding={8}
+                    className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                  >
                     <Command>
                       <CommandInput placeholder="Search amount..." />
                       <CommandList>
