@@ -1530,119 +1530,47 @@ export default function VCDashboard() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-semibold text-lg">
-                                {vc.round_title || "Untitled Round"}
+                                {vc.investor_name || "Unknown VC"}
                               </h3>
-                              <Badge variant="secondary">{vc.vc_id}</Badge>
-                              {vc.status && (
-                                <Badge
-                                  className={`${statusColors[vc.status as keyof typeof statusColors]} border-0`}
-                                >
-                                  {getStatusIcon(vc.status)}
-                                  <span className="ml-1 capitalize">
-                                    {vc.status.replace("-", " ")}
-                                  </span>
-                                </Badge>
-                              )}
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                              <div>
-                                <p className="text-sm text-gray-600">
-                                  Investor
-                                </p>
-                                <p className="font-medium">
-                                  {vc.investor_name || "N/A"}
-                                </p>
-                                {vc.investor_category && (
-                                  <Badge
-                                    className={`${investorCategoryColors[vc.investor_category as keyof typeof investorCategoryColors]} border-0 text-xs`}
-                                  >
-                                    {vc.investor_category
-                                      .replace("_", " ")
-                                      .toUpperCase()}
-                                  </Badge>
-                                )}
-                              </div>
-
-                              <div>
-                                <p className="text-sm text-gray-600">
-                                  Round Details
-                                </p>
-                                <p className="font-medium">
-                                  {vc.round_stage
-                                    ? vc.round_stage
-                                        .replace("_", " ")
-                                        .toUpperCase()
-                                    : "N/A"}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {formatCurrency(
-                                    vc.round_size,
-                                    vc.billing_currency,
-                                  )}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="text-sm text-gray-600">Contact</p>
-                                <p className="font-medium">
-                                  {vc.contact_person || "N/A"}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {vc.email || "N/A"}
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                {getSourceIcon(vc.lead_source)}
-                                <span className="capitalize">
-                                  {vc.lead_source?.replace("-", " ")}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>
-                                  Created {formatToIST(vc.created_at)}
-                                </span>
-                              </div>
-                              {vc.priority_level && (
-                                <Badge
-                                  className={`${priorityColors[vc.priority_level as keyof typeof priorityColors]} border-0 text-xs`}
-                                >
-                                  {vc.priority_level.toUpperCase()}
-                                </Badge>
-                              )}
-                            </div>
-
-                            <div className="mt-2 text-sm text-gray-600 flex flex-wrap gap-4">
+                            <div className="mt-1 text-sm text-gray-700 flex flex-wrap gap-4">
                               <span>
-                                Investor:{" "}
+                                Venture Capital Name:{" "}
                                 <span className="font-medium">
                                   {vc.investor_name || "N/A"}
                                 </span>
                               </span>
-                              {vc.round_stage && (
-                                <span>
-                                  Stage:{" "}
-                                  <span className="font-medium">
-                                    {vc.round_stage
-                                      .replace("_", " ")
-                                      .toUpperCase()}
-                                  </span>
+                              <span>
+                                VC Type:{" "}
+                                <span className="font-medium capitalize">
+                                  {(vc.investor_category || "N/A").replace(
+                                    "_",
+                                    " ",
+                                  )}
                                 </span>
-                              )}
-                              {(vc.round_size || vc.billing_currency) && (
-                                <span>
-                                  Size:{" "}
-                                  <span className="font-medium">
-                                    {formatCurrency(
-                                      vc.round_size,
-                                      vc.billing_currency,
-                                    )}
-                                  </span>
+                              </span>
+                              <span>
+                                Sector Focus:{" "}
+                                <span className="font-medium">
+                                  {vc.industry || "N/A"}
                                 </span>
+                              </span>
+                              <span>
+                                Source:{" "}
+                                <span className="font-medium capitalize">
+                                  {vc.lead_source?.replace("-", " ") || "N/A"}
+                                </span>
+                              </span>
+                              {vc.website && (
+                                <a
+                                  href={vc.website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline font-medium"
+                                >
+                                  Website
+                                </a>
                               )}
                             </div>
                           </div>
