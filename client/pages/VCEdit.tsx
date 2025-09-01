@@ -107,9 +107,7 @@ const CURRENCIES = [
 
 const TABS = [
   { value: "lead-info", label: "Lead Information", icon: "📋" },
-  { value: "investor-contact", label: "Investor Information", icon: "����" },
-  { value: "deal-details", label: "Round Information", icon: "💰" },
-  { value: "additional", label: "Additional Information", icon: "📝" },
+  { value: "investor-contact", label: "Investor Information", icon: "🏢" },
 ];
 
 export default function VCEdit() {
@@ -631,10 +629,7 @@ export default function VCEdit() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
-    if (!vcData.round_title.trim()) {
-      newErrors.round_title = "Round title is required";
-    }
-    if (!vcData.investor_name.trim()) {
+        if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Investor name is required";
     }
     if (!vcData.investor_category) {
@@ -661,11 +656,6 @@ export default function VCEdit() {
         lead_source_value: vcData.lead_source_value,
         lead_created_by: vcData.lead_created_by,
         status: vcData.status,
-        round_title: vcData.round_title,
-        round_description: vcData.project_description,
-        round_stage: vcData.round_stage || null,
-        round_size: vcData.round_size,
-        valuation: vcData.valuation,
         investor_category: vcData.investor_category,
         investor_name: vcData.investor_name,
         phone: vcData.phone,
@@ -684,31 +674,12 @@ export default function VCEdit() {
         website: vcData.website,
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
-        minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
-          : null,
-        maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
-          : null,
+        minimum_size: vcData.minimum_size ? parseInt(vcData.minimum_size) : null,
+        maximum_size: vcData.maximum_size ? parseInt(vcData.maximum_size) : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
           ? parseInt(vcData.minimum_arr_requirement)
           : null,
-        priority_level: vcData.priority_level,
-        start_date: (() => {
-          console.log("🐛 DEBUG - Saving start_date:", vcData.start_date);
-          return vcData.start_date || null;
-        })(),
-        targeted_end_date: (() => {
-          console.log(
-            "🐛 DEBUG - Saving targeted_end_date:",
-            vcData.targeted_end_date,
-          );
-          return vcData.targeted_end_date || null;
-        })(),
-        spoc: vcData.spoc,
-        template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
-        notes: vcData.notes,
         contacts: JSON.stringify(vcData.contacts),
       };
 
@@ -803,13 +774,9 @@ export default function VCEdit() {
 
       {/* Form Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="lead-info">Lead Information</TabsTrigger>
-          <TabsTrigger value="investor-contact">
-            Investor Information
-          </TabsTrigger>
-          <TabsTrigger value="deal-details">Round Information</TabsTrigger>
-          <TabsTrigger value="additional">Additional Information</TabsTrigger>
+          <TabsTrigger value="investor-contact">Investor Information</TabsTrigger>
         </TabsList>
 
         {/* Lead Info Tab */}
