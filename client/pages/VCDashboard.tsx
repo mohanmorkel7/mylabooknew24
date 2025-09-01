@@ -1530,19 +1530,8 @@ export default function VCDashboard() {
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-semibold text-lg">
-                                {vc.round_title || "Untitled Round"}
+                                {vc.investor_name || "Unknown VC"}
                               </h3>
-                              <Badge variant="secondary">{vc.vc_id}</Badge>
-                              {vc.status && (
-                                <Badge
-                                  className={`${statusColors[vc.status as keyof typeof statusColors]} border-0`}
-                                >
-                                  {getStatusIcon(vc.status)}
-                                  <span className="ml-1 capitalize">
-                                    {vc.status.replace("-", " ")}
-                                  </span>
-                                </Badge>
-                              )}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
