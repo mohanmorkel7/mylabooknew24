@@ -830,7 +830,7 @@ export default function CreateVC() {
         console.log("🐛 DEBUG - Fetching draft data for ID:", currentDraftId);
         try {
           const response = await apiClient.request(`/vc/${currentDraftId}`);
-          console.log("���� DEBUG - Fetched draft data:", response);
+          console.log("🐛 DEBUG - Fetched draft data:", response);
           console.log("🐛 DEBUG - Date fields from API:", {
             start_date: response.start_date,
             targeted_end_date: response.targeted_end_date,
@@ -1350,7 +1350,7 @@ export default function CreateVC() {
         ?.textContent?.trim();
       const customCountryInput =
         document.querySelector("#custom_country")?.value;
-      console.log("🐛 DEBUG - DOM vs State comparison:", {
+      console.log("���� DEBUG - DOM vs State comparison:", {
         domCountryDropdown: countryDropdown,
         stateCountry: vcData.country,
         domCustomCountry: customCountryInput,
@@ -1723,8 +1723,9 @@ export default function CreateVC() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
@@ -1774,8 +1775,9 @@ export default function CreateVC() {
                       <PopoverContent
                         side="bottom"
                         align="start"
-                        avoidCollisions={false}
-                        className="w-[--radix-popover-trigger-width] p-0"
+                        avoidCollisions={true}
+                        collisionPadding={8}
+                        className="w-[--radix-popover-trigger-width] p-0 max-h-[min(50vh,320px)] overflow-auto z-50"
                       >
                         <Command>
                           <CommandInput placeholder="Search amount..." />
