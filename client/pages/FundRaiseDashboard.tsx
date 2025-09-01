@@ -272,7 +272,12 @@ export default function FundRaiseDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             {filteredVCs.map((vc: any) => (
-              <div key={vc.vc_id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+              <div
+                key={vc.id || vc.vc_id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                onClick={() => vc?.id && navigate(`/fundraise/${vc.id}`)}
+                title="Open Fund Raise Overview"
+              >
                 <div className="flex items-center gap-3">
                   <div className="font-medium text-gray-900">{vc.round_title || "Fund Raise"}</div>
                   <Badge className={statusColors[vc.status] || ""}>{(vc.status || "").replace("-", " ")}</Badge>
