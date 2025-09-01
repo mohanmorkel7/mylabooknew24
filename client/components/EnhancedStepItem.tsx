@@ -605,6 +605,35 @@ export function EnhancedStepItem({
                   step.due_date &&
                   `Due: ${new Date(step.due_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}`}
               </div>
+              <div className="mt-2 flex items-center gap-3">
+                {(() => {
+                  const weight = parseFloat(step.probability_percent) || 0;
+                  const pct =
+                    step.status === "completed" ? 100 : step.status === "in_progress" ? 50 : 0;
+                  const color =
+                    step.status === "completed"
+                      ? "bg-green-500"
+                      : step.status === "in_progress"
+                        ? "bg-blue-500"
+                        : "bg-gray-300";
+                  const contribution =
+                    step.status === "completed"
+                      ? Math.round(weight)
+                      : step.status === "in_progress"
+                        ? Math.round(weight / 2)
+                        : 0;
+                  return (
+                    <>
+                      <div className="w-32 bg-gray-200 rounded h-1.5">
+                        <div className={`${color} h-1.5 rounded`} style={{ width: `${pct}%` }} />
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        Weight: {weight}% · Contribution: {contribution}%
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
             {isExpanded ? (
               <ChevronDown className="w-4 h-4" />
