@@ -239,22 +239,35 @@ export default function CreateVC() {
 
   // Dynamic location data via country-state-city
   const allCountries = useMemo(() => Country.getAllCountries(), []);
-  const nameToCountry = useMemo(() => {
-    const m = new Map<string, any>();
-    allCountries.forEach((c: any) => m.set(c.name, c));
-    return m;
-  }, [allCountries]);
+  const COUNTRY_ALIASES: Record<string, string> = {
+    uae: "United Arab Emirates",
+    usa: "United States",
+    us: "United States",
+    uk: "United Kingdom",
+    ksa: "Saudi Arabia",
+  };
+  const findCountry = (input?: string) => {
+    if (!input) return undefined;
+    const s = input.trim();
+    const alias = COUNTRY_ALIASES[s.toLowerCase()];
+    const target = alias || s;
+    return allCountries.find(
+      (c: any) =>
+        c.name.toLowerCase() === target.toLowerCase() ||
+        c.isoCode.toLowerCase() === target.toLowerCase(),
+    );
+  };
   const selectedCountryName = vcData.country === "Other" ? vcData.custom_country : vcData.country;
-  const selectedCountry = selectedCountryName ? nameToCountry.get(selectedCountryName) : undefined;
+  const selectedCountry = findCountry(selectedCountryName);
   const availableStates = useMemo(() => {
     return selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
-  }, [selectedCountry && selectedCountry.isoCode]);
+  }, [selectedCountry?.isoCode]);
   const selectedStateObj = vcData.state ? availableStates.find((s: any) => s.name === vcData.state) : undefined;
   const availableCities = useMemo(() => {
     if (!selectedCountry) return [] as any[];
     if (selectedStateObj) return City.getCitiesOfState(selectedCountry.isoCode, selectedStateObj.isoCode);
     return City.getCitiesOfCountry(selectedCountry.isoCode);
-  }, [selectedCountry && selectedCountry.isoCode, selectedStateObj && selectedStateObj.isoCode]);
+  }, [selectedCountry?.isoCode, selectedStateObj?.isoCode]);
 
   // Check if we're in edit mode or resuming from draft
   const isEditMode = !!id;
