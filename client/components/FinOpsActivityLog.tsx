@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -87,7 +87,7 @@ export default function FinOpsActivityLog() {
   const [currentTime, setCurrentTime] = useState(new Date());
 
   // Real-time timer for live time updates
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000); // Update every minute
@@ -110,35 +110,37 @@ export default function FinOpsActivityLog() {
     data: activityData,
     isLoading,
     refetch,
+    error: queryError,
+    isError,
   } = useQuery({
     queryKey: ["activity-logs", filters],
     queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters.entity_type !== "all")
+        params.append("entity_type", filters.entity_type);
+      if (filters.action !== "all") params.append("action", filters.action);
+      params.append("limit", "50");
+
+      // Use IST date for filtering
+      if (filters.date_filter) {
+        // Convert selected date to IST and use for filtering
+        const selectedDate = new Date(filters.date_filter);
+        const startOfDayIST = formatDateForAPI(startOfDay(selectedDate));
+        const endOfDayIST = formatDateForAPI(endOfDay(selectedDate));
+        params.append("start_date", startOfDayIST);
+        params.append("end_date", endOfDayIST);
+      } else {
+        // Fallback to days filter
+        const startDate = new Date(
+          Date.now() - filters.days * 24 * 60 * 60 * 1000,
+        );
+        params.append("start_date", formatDateForAPI(startDate));
+      }
+
+      const url = `/activity-production?${params.toString()}`;
+      console.log("Activity API request URL (IST):", url);
+
       try {
-        const params = new URLSearchParams();
-        if (filters.entity_type !== "all")
-          params.append("entity_type", filters.entity_type);
-        if (filters.action !== "all") params.append("action", filters.action);
-        params.append("limit", "50");
-
-        // Use IST date for filtering
-        if (filters.date_filter) {
-          // Convert selected date to IST and use for filtering
-          const selectedDate = new Date(filters.date_filter);
-          const startOfDayIST = formatDateForAPI(startOfDay(selectedDate));
-          const endOfDayIST = formatDateForAPI(endOfDay(selectedDate));
-          params.append("start_date", startOfDayIST);
-          params.append("end_date", endOfDayIST);
-        } else {
-          // Fallback to days filter
-          const startDate = new Date(
-            Date.now() - filters.days * 24 * 60 * 60 * 1000,
-          );
-          params.append("start_date", formatDateForAPI(startDate));
-        }
-
-        const url = `/activity-production?${params.toString()}`;
-        console.log("Activity API request URL (IST):", url);
-
         return await apiClient.request(url);
       } catch (error) {
         console.error("Activity API request failed:", error);
@@ -161,6 +163,7 @@ export default function FinOpsActivityLog() {
   });
 
   const activityLogs = activityData?.activity_logs || [];
+  const activityError = isError ? queryError : null;
 
   // Filter logs based on search term
   const filteredLogs = activityLogs.filter((log: ActivityLogEntry) => {
