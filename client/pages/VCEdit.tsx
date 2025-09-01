@@ -122,6 +122,23 @@ const COUNTRIES = [
   "Other",
 ];
 
+const PHONE_PREFIXES = [
+  { code: "+1", label: "+1 (US)" },
+  { code: "+91", label: "+91 (IN)" },
+  { code: "+44", label: "+44 (UK)" },
+  { code: "+65", label: "+65 (SG)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+966", label: "+966 (SA)" },
+  { code: "+974", label: "+974 (QA)" },
+  { code: "+965", label: "+965 (KW)" },
+  { code: "+973", label: "+973 (BH)" },
+  { code: "+968", label: "+968 (OM)" },
+  { code: "+61", label: "+61 (AU)" },
+  { code: "+49", label: "+49 (DE)" },
+  { code: "+33", label: "+33 (FR)" },
+  { code: "+81", label: "+81 (JP)" },
+];
+
 const CURRENCIES = [
   { value: "INR", label: "INR (₹)", symbol: "₹" },
   { value: "USD", label: "USD ($)", symbol: "$" },
