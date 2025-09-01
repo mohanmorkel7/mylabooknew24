@@ -1560,7 +1560,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="investor_category">Investor Category</Label>
+                    <Label htmlFor="investor_category">VC Type</Label>
                     <Select
                       value={(vcData as any).investor_category}
                       onValueChange={(value) =>
@@ -1568,10 +1568,10 @@ export default function CreateVC() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select investor category" />
+                        <SelectValue placeholder="Select VC Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        {INVESTOR_CATEGORIES.map((t) => (
+                        {VC_TYPES.map((t) => (
                           <SelectItem key={t.value} value={t.value}>
                             {t.label}
                           </SelectItem>
