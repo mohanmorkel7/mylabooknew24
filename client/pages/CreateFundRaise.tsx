@@ -155,7 +155,10 @@ export default function CreateFundRaise() {
       const result = await createMutation.mutateAsync(payload);
       newId = result?.data?.id || result?.id;
     } catch (e) {
-      console.warn("VC creation failed, proceeding with fund_raises insert only:", e);
+      console.warn(
+        "VC creation failed, proceeding with fund_raises insert only:",
+        e,
+      );
     }
 
     try {

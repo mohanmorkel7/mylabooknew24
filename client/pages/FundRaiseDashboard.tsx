@@ -127,7 +127,11 @@ export default function FundRaiseDashboard() {
   });
 
   // Fetch Fund Raises list from dedicated table
-  const { data: fundRaises = [], isLoading: fundRaisesLoading, error: fundRaisesError } = useQuery({
+  const {
+    data: fundRaises = [],
+    isLoading: fundRaisesLoading,
+    error: fundRaisesError,
+  } = useQuery({
     queryKey: ["fund-raises"],
     queryFn: async () => {
       try {
@@ -154,7 +158,13 @@ export default function FundRaiseDashboard() {
     .sort((a: any, b: any) => {
       const aValue = a[sortBy] || "";
       const bValue = b[sortBy] || "";
-      return sortOrder === "asc" ? (aValue > bValue ? 1 : -1) : aValue < bValue ? 1 : -1;
+      return sortOrder === "asc"
+        ? aValue > bValue
+          ? 1
+          : -1
+        : aValue < bValue
+          ? 1
+          : -1;
     });
 
   const { data: vcProgressData = [], isLoading: progressLoading } = useQuery({
@@ -1224,20 +1234,29 @@ export default function FundRaiseDashboard() {
               <div className="p-3 text-gray-500">Loading...</div>
             ) : (
               filteredFundRaises.map((fr: any) => {
-                const internalStatus = fr.status || UI_STATUS_TO_INTERNAL[fr.ui_status || ""] || "in-progress";
+                const internalStatus =
+                  fr.status ||
+                  UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
+                  "in-progress";
                 return (
                   <div
                     key={fr.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                    onClick={() => fr.vc_id && navigate(`/fundraise/${fr.vc_id}`)}
-                    title={fr.vc_id ? "Open Fund Raise Overview" : "VC not linked"}
+                    onClick={() =>
+                      fr.vc_id && navigate(`/fundraise/${fr.vc_id}`)
+                    }
+                    title={
+                      fr.vc_id ? "Open Fund Raise Overview" : "VC not linked"
+                    }
                   >
                     <div className="flex items-center gap-3">
                       <div className="font-medium text-gray-900">
                         {fr.investor_name || "Fund Raise"}
                       </div>
                       <Badge className={statusColors[internalStatus] || ""}>
-                        {(fr.ui_status || internalStatus).toString().replace("-", " ")}
+                        {(fr.ui_status || internalStatus)
+                          .toString()
+                          .replace("-", " ")}
                       </Badge>
                     </div>
                     <div className="text-right">
