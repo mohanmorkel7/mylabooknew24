@@ -398,15 +398,17 @@ export default function CreateVC() {
           sector_focus: "",
           investor_last_feedback: "",
 
-          // Additional contacts (3 max)
-          contacts: Array.from({ length: 3 }, () => ({
-            contact_name: "",
-            designation: "",
-            phone_prefix: "+1",
-            phone: "",
-            email: "",
-            linkedin: "",
-          })) as Array<{
+          // Contacts (start with one primary contact)
+          contacts: [
+            {
+              contact_name: "",
+              designation: "",
+              phone_prefix: "+1",
+              phone: "",
+              email: "",
+              linkedin: "",
+            },
+          ] as Array<{
             contact_name: string;
             designation: string;
             phone_prefix?: string;
@@ -1127,19 +1129,23 @@ export default function CreateVC() {
   };
 
   const addContact = () => {
-    setVcData((prev) => ({
-      ...prev,
-      contacts: [
-        ...prev.contacts,
-        {
-          contact_name: "",
-          designation: "",
-          phone: "",
-          email: "",
-          linkedin: "",
-        },
-      ],
-    }));
+    setVcData((prev) => {
+      if (prev.contacts.length >= 3) return prev;
+      return {
+        ...prev,
+        contacts: [
+          ...prev.contacts,
+          {
+            contact_name: "",
+            designation: "",
+            phone_prefix: "+1",
+            phone: "",
+            email: "",
+            linkedin: "",
+          },
+        ],
+      };
+    });
   };
 
   const removeContact = (index: number) => {
@@ -1888,13 +1894,26 @@ export default function CreateVC() {
               <div className="border-t pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
+                  <Button type="button" variant="outline" size="sm" onClick={addContact} disabled={vcData.contacts.length >= 3}>
+                    <Plus className="w-4 h-4 mr-2" /> Add Contact
+                  </Button>
                 </div>
 
                 <div className="space-y-4">
                   {vcData.contacts.map((contact, index) => (
                     <Card key={index} className="p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium">Contact {index + 1}</h4>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">Contact {index + 1}</h4>
+                          {index === 0 && (
+                            <span className="text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded">Primary</span>
+                          )}
+                        </div>
+                        {index > 0 && (
+                          <Button type="button" variant="ghost" size="icon" onClick={() => removeContact(index)} aria-label="Remove contact">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
