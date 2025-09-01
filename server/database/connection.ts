@@ -219,7 +219,9 @@ export async function initializeDatabase() {
           "utf8",
         );
         await client.query(vcInvestorCategoryMigration);
-        console.log("VC investor_category options migration applied successfully");
+        console.log(
+          "VC investor_category options migration applied successfully",
+        );
       }
     } catch (vcInvestorCategoryMigrationError) {
       console.log(

@@ -63,7 +63,8 @@ router.post("/", async (req: Request, res: Response) => {
           ]);
           if (check.rowCount === 0) {
             return res.status(202).json({
-              warning: "VC not found in database; fund raise record not created",
+              warning:
+                "VC not found in database; fund raise record not created",
               vc_id: body.vc_id,
             });
           }
