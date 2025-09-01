@@ -101,6 +101,10 @@ import VCDashboard from "@/pages/VCDashboard";
 import CreateVC from "@/pages/CreateVC";
 import VCDetails from "@/pages/VCDetails";
 import VCEdit from "@/pages/VCEdit";
+import FundRaiseDashboard from "@/pages/FundRaiseDashboard";
+import CreateFundRaise from "@/pages/CreateFundRaise";
+import FundRaiseDetails from "@/pages/FundRaiseDetails";
+import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
@@ -622,6 +626,50 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={["admin", "sales"]}>
             <DashboardLayout>
               <VCEdit />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fundraise"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <FundRaiseDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fundraise/create"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales"]}>
+            <DashboardLayout>
+              <CreateFundRaise />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fundraise/:id"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <FundRaiseDetails />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fundraise/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales"]}>
+            <DashboardLayout>
+              <FundRaiseEdit />
             </DashboardLayout>
           </ProtectedRoute>
         }

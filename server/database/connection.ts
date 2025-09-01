@@ -5,7 +5,7 @@ import path from "path";
 // Use environment variables or fallback values for local development
 const dbConfig = {
   user: process.env.PG_USER || "crmuser",
-  host: process.env.PG_HOST || "localhost",
+  host: process.env.PG_HOST || "10.30.11.95",
   database: process.env.PG_DB || "crm_test",
   password: process.env.PG_PASSWORD || "myl@p@y-crm$102019",
   port: Number(process.env.PG_PORT) || 2019,
@@ -86,6 +86,26 @@ export async function initializeDatabase() {
         console.log("Database schema initialized");
       }
 
+      // Also ensure VC schema is created if not present
+      try {
+        const vcTableCheck = await client.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'vcs'
+          );
+        `);
+        if (!vcTableCheck.rows[0].exists) {
+          const vcSchemaPath = path.join(__dirname, "vc-schema.sql");
+          if (fs.existsSync(vcSchemaPath)) {
+            const vcSchema = fs.readFileSync(vcSchemaPath, "utf8");
+            await client.query(vcSchema);
+            console.log("VC schema initialized");
+          }
+        }
+      } catch (e) {
+        console.log("VC schema init skipped or failed:", e.message);
+      }
+
       // Run migration for notifications and activity logs
       try {
         const migrationPath = path.join(
@@ -144,6 +164,26 @@ export async function initializeDatabase() {
       }
     } else {
       console.log("Database schema already exists");
+
+      // Ensure VC schema exists even if main schema is present
+      try {
+        const vcTableCheck = await client.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables
+            WHERE table_schema = 'public' AND table_name = 'vcs'
+          );
+        `);
+        if (!vcTableCheck.rows[0].exists) {
+          const vcSchemaPath = path.join(__dirname, "vc-schema.sql");
+          if (fs.existsSync(vcSchemaPath)) {
+            const vcSchema = fs.readFileSync(vcSchemaPath, "utf8");
+            await client.query(vcSchema);
+            console.log("VC schema initialized");
+          }
+        }
+      } catch (e) {
+        console.log("VC schema init skipped or failed:", e.message);
+      }
     }
 
     // Always try to apply VC schema options migration (even if tables exist)
@@ -164,6 +204,50 @@ export async function initializeDatabase() {
       console.log(
         "VC schema options migration already applied or error:",
         vcOptionsMigrationError.message,
+      );
+    }
+
+    // Update investor_category allowed values (add accelerator, individual)
+    try {
+      const vcInvestorCategoryMigrationPath = path.join(
+        __dirname,
+        "update-vc-investor-category-options.sql",
+      );
+      if (fs.existsSync(vcInvestorCategoryMigrationPath)) {
+        const vcInvestorCategoryMigration = fs.readFileSync(
+          vcInvestorCategoryMigrationPath,
+          "utf8",
+        );
+        await client.query(vcInvestorCategoryMigration);
+        console.log(
+          "VC investor_category options migration applied successfully",
+        );
+      }
+    } catch (vcInvestorCategoryMigrationError) {
+      console.log(
+        "VC investor_category options migration already applied or error:",
+        vcInvestorCategoryMigrationError.message,
+      );
+    }
+
+    // Always try to add investor_last_feedback column
+    try {
+      const investorFeedbackMigrationPath = path.join(
+        __dirname,
+        "add-investor-last-feedback.sql",
+      );
+      if (fs.existsSync(investorFeedbackMigrationPath)) {
+        const investorFeedbackMigration = fs.readFileSync(
+          investorFeedbackMigrationPath,
+          "utf8",
+        );
+        await client.query(investorFeedbackMigration);
+        console.log("VC investor_last_feedback migration applied successfully");
+      }
+    } catch (investorFeedbackError) {
+      console.log(
+        "VC investor_last_feedback migration already applied or error:",
+        investorFeedbackError.message,
       );
     }
 
@@ -244,6 +328,45 @@ export async function initializeDatabase() {
       console.log(
         "IST FinOps SLA notifications migration already applied or error:",
         finopsIstMigrationError.message,
+      );
+    }
+
+    // Always try to apply Fund Raises table migration
+    try {
+      const fundRaisesMigrationPath = path.join(
+        __dirname,
+        "create-fund-raises-table.sql",
+      );
+      if (fs.existsSync(fundRaisesMigrationPath)) {
+        const fundRaisesMigration = fs.readFileSync(
+          fundRaisesMigrationPath,
+          "utf8",
+        );
+        await client.query(fundRaisesMigration);
+        console.log("Fund Raises table migration applied successfully");
+      }
+    } catch (fundRaisesMigrationError) {
+      console.log(
+        "Fund Raises table migration already applied or error:",
+        (fundRaisesMigrationError as any).message,
+      );
+    }
+
+    // Extend fund_raises with all fields
+    try {
+      const fundRaisesAlterPath = path.join(
+        __dirname,
+        "alter-fund-raises-extend.sql",
+      );
+      if (fs.existsSync(fundRaisesAlterPath)) {
+        const alterSql = fs.readFileSync(fundRaisesAlterPath, "utf8");
+        await client.query(alterSql);
+        console.log("Fund Raises table extended successfully");
+      }
+    } catch (fundRaisesAlterError) {
+      console.log(
+        "Fund Raises table extend already applied or error:",
+        (fundRaisesAlterError as any).message,
       );
     }
 

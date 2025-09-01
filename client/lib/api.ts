@@ -149,7 +149,7 @@ export class ApiClient {
           response = await Promise.race([fetchPromise, timeoutPromise]);
         }
       } catch (fetchError) {
-        console.error(
+        console.warn(
           "Primary fetch failed for URL:",
           url,
           "Error:",
@@ -164,13 +164,13 @@ export class ApiClient {
             fetchError.message.includes("Failed to fetch"));
 
         if (isFullStoryError) {
-          console.error(
+          console.warn(
             "🚨 FullStory interference detected - using XMLHttpRequest fallback",
           );
           try {
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.error("XMLHttpRequest fallback also failed:", xhrError);
+            console.warn("XMLHttpRequest fallback also failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
@@ -180,7 +180,7 @@ export class ApiClient {
           fetchError instanceof TypeError &&
           fetchError.message.includes("Failed to fetch")
         ) {
-          console.error("Network connectivity issue detected");
+          console.warn("Network connectivity issue detected");
           this.failureCount++;
           this.lastFailureTime = Date.now();
           this.checkOfflineMode();
@@ -189,11 +189,11 @@ export class ApiClient {
             console.log("Trying XMLHttpRequest fallback for network error");
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.error("XMLHttpRequest fallback failed:", xhrError);
+            console.warn("XMLHttpRequest fallback failed:", xhrError);
             return this.getEmptyFallbackResponse(endpoint);
           }
         } else if (fetchError.message === "Request timeout") {
-          console.error("Request timed out - server may be unresponsive");
+          console.warn("Request timed out - server may be unresponsive");
           // For timeouts, increment failure count for circuit breaker
           this.failureCount++;
           this.lastFailureTime = Date.now();
@@ -205,7 +205,7 @@ export class ApiClient {
             console.log("Using XMLHttpRequest fallback for other fetch error");
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.error("XMLHttpRequest fallback failed:", xhrError);
+            console.warn("XMLHttpRequest fallback failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
@@ -553,6 +553,20 @@ export class ApiClient {
         activity_logs: [],
         pagination: { total: 0, limit: 50, offset: 0, has_more: false },
       };
+    }
+
+    // VC endpoints fallbacks
+    if (endpoint.includes("/vc/stats")) {
+      return { total: 0, in_progress: 0, won: 0, lost: 0 };
+    }
+    if (
+      endpoint.includes("/vc/progress") ||
+      endpoint.includes("/vc/follow-ups")
+    ) {
+      return [];
+    }
+    if (endpoint.endsWith("/vc") || endpoint.includes("/vc?")) {
+      return [];
     }
 
     // Default empty response
