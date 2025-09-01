@@ -652,6 +652,28 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/fundraise/:id"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <FundRaiseDetails />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/fundraise/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales"]}>
+            <DashboardLayout>
+              <VCEdit />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
 
       <Route
         path="/leads/:id/follow-up"
