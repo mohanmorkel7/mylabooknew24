@@ -696,7 +696,7 @@ export default function CreateVC() {
   useEffect(() => {
     if (user?.email && !vcData.lead_created_by) {
       console.log(
-        "🐛 DEBUG - Setting lead_created_by to user email:",
+        "��� DEBUG - Setting lead_created_by to user email:",
         user.email,
       );
       handleInputChange("lead_created_by", user.email);
@@ -1596,11 +1596,11 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="sector_focus">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus</Label>
                     <Select
-                      value={(vcData as any).sector_focus}
+                      value={(vcData as any).industry}
                       onValueChange={(value) =>
-                        handleInputChange("sector_focus" as any, value)
+                        handleInputChange("industry" as any, value)
                       }
                     >
                       <SelectTrigger>
