@@ -150,40 +150,42 @@ export default function CreateFundRaise() {
       created_by: parseInt(user?.id || "1"),
     };
 
+    let newId: number | undefined;
     try {
       const result = await createMutation.mutateAsync(payload);
-      const newId = result?.data?.id || result?.id;
-
-      // Also persist full fund raise record in dedicated table
-      if (newId) {
-        try {
-          await apiClient.request("/fund-raises", {
-            method: "POST",
-            body: JSON.stringify({
-              vc_id: newId,
-              investor_name: form.vc_investor,
-              ui_status: form.status,
-              investor_status: form.investor_status,
-              round_stage: form.round_stage,
-              start_date: form.start_date || null,
-              end_date: form.end_date || null,
-              total_raise_mn: form.total_raise_mn || null,
-              valuation_mn: form.valuation_mn || null,
-              reason: form.reason || null,
-              template_id: form.template_id,
-              created_by: parseInt(user?.id || "1"),
-              updated_by: parseInt(user?.id || "1"),
-            }),
-          });
-        } catch (e) {
-          console.warn("Fund raise record creation failed:", e);
-        }
-        navigate(`/fundraise/${newId}`);
-      } else {
-        navigate("/fundraise");
-      }
+      newId = result?.data?.id || result?.id;
     } catch (e) {
-      alert("Failed to create Fund Raise. Please try again.");
+      console.warn("VC creation failed, proceeding with fund_raises insert only:", e);
+    }
+
+    try {
+      await apiClient.request("/fund-raises", {
+        method: "POST",
+        body: JSON.stringify({
+          vc_id: newId ?? null,
+          investor_name: form.vc_investor,
+          ui_status: form.status,
+          investor_status: form.investor_status,
+          round_stage: form.round_stage,
+          start_date: form.start_date || null,
+          end_date: form.end_date || null,
+          total_raise_mn: form.total_raise_mn || null,
+          valuation_mn: form.valuation_mn || null,
+          reason: form.reason || null,
+          template_id: form.template_id,
+          created_by: parseInt(user?.id || "1"),
+          updated_by: parseInt(user?.id || "1"),
+        }),
+      });
+    } catch (e) {
+      alert("Failed to insert into fund_raises. Please try again.");
+      return;
+    }
+
+    if (newId) {
+      navigate(`/fundraise/${newId}`);
+    } else {
+      navigate("/fundraise");
     }
   };
 
