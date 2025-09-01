@@ -545,6 +545,26 @@ router.post("/", async (req: Request, res: Response) => {
       console.log("🔍 Database available for VC creation:", dbAvailable);
       console.log("🔍 VC data being created:", JSON.stringify(vcData, null, 2));
 
+      // Normalize/validate investor_category to avoid DB constraint errors
+      const allowedInvestorCategories = new Set([
+        "angel",
+        "vc",
+        "private_equity",
+        "family_office",
+        "merchant_banker",
+        "accelerator",
+        "individual",
+      ]);
+      if (
+        (vcData as any).investor_category &&
+        !allowedInvestorCategories.has((vcData as any).investor_category as any)
+      ) {
+        console.log(
+          `⚠️ Invalid investor_category: ${(vcData as any).investor_category} - defaulting to 'vc'`,
+        );
+        (vcData as any).investor_category = "vc";
+      }
+
       if (dbAvailable) {
         vc = await VCRepository.create(vcData);
         console.log("✅ VC created successfully:", vc);
