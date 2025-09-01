@@ -297,6 +297,7 @@ export class VCRepository {
         round_title, round_description, round_stage, round_size, valuation,
         investor_category, investor_name, contact_person, email, phone,
         address, city, state, country, website, company_size,
+        investor_last_feedback,
         potential_lead_investor, minimum_size, maximum_size, minimum_arr_requirement,
         priority_level, start_date, targeted_end_date, spoc,
         billing_currency, template_id, contacts, created_by, assigned_to, notes, is_partial
