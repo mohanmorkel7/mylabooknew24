@@ -93,13 +93,14 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-const INVESTOR_CATEGORIES = [
+const VC_TYPES = [
+  { value: "early_stage", label: "Early Stage" },
+  { value: "accelerator", label: "Accelerator" },
+  { value: "growth", label: "Growth" },
+  { value: "strategic_bank", label: "Strategic - Bank" },
+  { value: "strategic_fintech", label: "Strategic - Fintech" },
+  { value: "strategic_individual", label: "Strategic - Individual" },
   { value: "angel", label: "Angel" },
-  { value: "vc", label: "VC" },
-  { value: "private_equity", label: "Private Equity" },
-  { value: "family_office", label: "Family Office" },
-  { value: "merchant_banker", label: "Merchant Banker" },
-  { value: "individual", label: "Individual" },
 ];
 
 const SECTOR_FOCUS: any[] = [];
