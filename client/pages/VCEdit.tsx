@@ -1225,44 +1225,172 @@ export default function VCEdit() {
 
               <div>
                 <Label htmlFor="city">City</Label>
-                <Select
-                  value={vcData.city || undefined}
-                  onValueChange={(value) => handleInputChange("city", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select city" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(() => {
-                      const selectedCountry = Country.getAllCountries().find(
-                        (c: any) => c.name === vcData.country,
-                      );
-                      const selectedState = (() => {
-                        if (!selectedCountry || !vcData.state) return null;
-                        const ss = State.getStatesOfCountry(selectedCountry.isoCode).find(
-                          (s: any) => s.name === vcData.state,
-                        );
-                        return ss || null;
-                      })();
-                      const cities = selectedCountry
-                        ? selectedState
-                          ? City.getCitiesOfState(
-                              selectedCountry.isoCode,
-                              (selectedState as any).isoCode,
-                            )
-                          : City.getCitiesOfCountry(selectedCountry.isoCode)
-                        : [];
-                      return (cities as any[]).slice(0, 100).map((c: any) => (
-                        <SelectItem
-                          key={`${c.name}-${c.stateCode || ""}-${c.countryCode || ""}-${c.latitude || ""}-${c.longitude || ""}`}
-                          value={c.name}
-                        >
-                          {c.name}
-                        </SelectItem>
-                      ));
-                    })()}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                      {vcData.city || "Select city"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search city..." />
+                      <CommandEmpty>No city found.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {availableCities.map((city: any) => {
+                            const value = `${city.name}|${city.stateCode || ""}|${city.countryCode}`;
+                            return (
+                              <CommandItem
+                                key={value}
+                                value={value}
+                                onSelect={(val) => {
+                                  const [name, stateCode, countryCode] = val.split("|");
+                                  handleInputChange("city", name);
+                                  const countryObj = allCountries.find(
+                                    (c: any) => c.isoCode === countryCode,
+                                  );
+                                  if (countryObj) handleInputChange("country", countryObj.name);
+                                  if (stateCode) {
+                                    const stObj = State.getStateByCodeAndCountry(
+                                      stateCode,
+                                      countryCode,
+                                    );
+                                    if (stObj) handleInputChange("state", stObj.name);
+                                  }
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    vcData.city === city.name ? "opacity-100" : "opacity-0",
+                                  )}
+                                />
+                                {city.name}
+                              </CommandItem>
+                            );
+                          })}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Contact Information section (match Create VC) */}
+              <div className="border-t pt-6 mt-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold">Contact Information</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addContact}
+                    disabled={vcData.contacts.length >= 3}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Contact
+                  </Button>
+                </div>
+
+                <div className="space-y-4">
+                  {vcData.contacts.map((contact, index) => (
+                    <Card key={index} className="p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">Contact {index + 1}</h4>
+                          {index === 0 && (
+                            <span className="text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded">
+                              Primary
+                            </span>
+                          )}
+                        </div>
+                        {index > 0 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeContact(index)}
+                            aria-label="Remove contact"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`contact_name_${index}`}>Contact Name {index + 1}</Label>
+                          <div className="relative">
+                            <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              id={`contact_name_${index}`}
+                              value={contact.contact_name}
+                              onChange={(e) =>
+                                updateContact(index, "contact_name", e.target.value)
+                              }
+                              placeholder="Contact person's name"
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`designation_${index}`}>Contact Designation {index + 1}</Label>
+                          <Input
+                            id={`designation_${index}`}
+                            value={contact.designation}
+                            onChange={(e) =>
+                              updateContact(index, "designation", e.target.value)
+                            }
+                            placeholder="Partner, Associate, etc."
+                          />
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`contact_email_${index}`}>Contact {index + 1} - Email</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              id={`contact_email_${index}`}
+                              type="email"
+                              value={contact.email}
+                              onChange={(e) => updateContact(index, "email", e.target.value)}
+                              placeholder="contact@investor.com"
+                              className="pl-10"
+                            />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor={`contact_phone_${index}`}>Contact {index + 1} - Phone</Label>
+                          <div className="flex gap-2">
+                            <Select
+                              value={contact.phone_prefix || "+1"}
+                              onValueChange={(value) => updateContact(index, "phone_prefix", value)}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PHONE_PREFIXES.map((p) => (
+                                  <SelectItem key={p.code} value={p.code}>
+                                    {p.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Input
+                              id={`contact_phone_${index}`}
+                              value={contact.phone}
+                              onChange={(e) => updateContact(index, "phone", e.target.value)}
+                              placeholder="(555) 123-4567"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
               </div>
 
             </CardContent>
