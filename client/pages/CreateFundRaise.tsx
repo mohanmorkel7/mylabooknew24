@@ -134,13 +134,8 @@ export default function CreateFundRaise() {
     };
 
     try {
-      const result = await createMutation.mutateAsync(payload);
-      const newId = result?.data?.id || result?.id;
-      if (newId) {
-        navigate(`/vc/${newId}`);
-      } else {
-        navigate("/fundraise");
-      }
+      await createMutation.mutateAsync(payload);
+      navigate("/fundraise");
     } catch (e) {
       alert("Failed to create Fund Raise. Please try again.");
     }
