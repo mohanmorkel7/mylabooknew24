@@ -170,7 +170,7 @@ export class ApiClient {
           try {
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.error("XMLHttpRequest fallback also failed:", xhrError);
+            console.warn("XMLHttpRequest fallback also failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
