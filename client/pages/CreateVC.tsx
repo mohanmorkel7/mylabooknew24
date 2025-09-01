@@ -2115,7 +2115,7 @@ export default function CreateVC() {
                 <Label htmlFor="project_description">Reason</Label>
                 <Textarea
                   id="project_description"
-                  placeholder="Describe the funding round, use of funds, and key details..."
+                  placeholder="Enter reason"
                   value={vcData.project_description}
                   onChange={(e) =>
                     handleInputChange("project_description", e.target.value)
