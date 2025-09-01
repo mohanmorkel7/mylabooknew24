@@ -1118,7 +1118,10 @@ export default function VCEdit() {
                     {([...(vcData.country ? City.getCitiesOfCountry((Country.getAllCountries().find((c:any)=>c.name===vcData.country)?.isoCode||"")) : [])] as any[])
                       .slice(0, 100)
                       .map((c: any) => (
-                        <SelectItem key={c.name} value={c.name}>
+                        <SelectItem
+                          key={`${c.name}-${c.stateCode || ""}-${c.countryCode || ""}-${c.latitude || ""}-${c.longitude || ""}`}
+                          value={c.name}
+                        >
                           {c.name}
                         </SelectItem>
                       ))}
