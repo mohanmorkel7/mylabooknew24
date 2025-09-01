@@ -687,7 +687,7 @@ export default function VCEdit() {
               dateStr = dateStr.split("T")[0];
             }
 
-            console.log("�� DEBUG - start_date conversion:", {
+            console.log("🐛 DEBUG - start_date conversion:", {
               original: vcDataFromAPI.start_date,
               extracted: dateStr,
             });
@@ -857,13 +857,13 @@ export default function VCEdit() {
         company_size: vcData.company_size,
         potential_lead_investor: vcData.potential_lead_investor,
         minimum_size: vcData.minimum_size
-          ? parseInt(vcData.minimum_size)
+          ? parseFloat(vcData.minimum_size)
           : null,
         maximum_size: vcData.maximum_size
-          ? parseInt(vcData.maximum_size)
+          ? parseFloat(vcData.maximum_size)
           : null,
         minimum_arr_requirement: vcData.minimum_arr_requirement
-          ? parseInt(vcData.minimum_arr_requirement)
+          ? parseFloat(vcData.minimum_arr_requirement)
           : null,
         billing_currency: vcData.billing_currency,
         contacts: JSON.stringify(vcData.contacts),
