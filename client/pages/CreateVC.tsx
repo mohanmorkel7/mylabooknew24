@@ -1210,6 +1210,7 @@ export default function CreateVC() {
         spoc: vcData.spoc,
         template_id: vcData.template_id || null,
         billing_currency: vcData.billing_currency,
+        fund_raise_status: (vcData as any).fund_raise_status || null,
         notes: vcData.notes,
         contacts: JSON.stringify(vcData.contacts),
         created_by: parseInt(user.id),
