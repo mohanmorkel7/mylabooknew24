@@ -1251,12 +1251,10 @@ export default function CreateVC() {
       {/* Form Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="lead">📋 Lead Information</TabsTrigger>
-          <TabsTrigger value="investor">🏢 Investor Information</TabsTrigger>
-          <TabsTrigger value="round">💰 Round Information</TabsTrigger>
-          <TabsTrigger value="additional">
-            📝 Additional Information
-          </TabsTrigger>
+          <TabsTrigger value="lead">Investors Info</TabsTrigger>
+          <TabsTrigger value="investor">Investors Contact Info</TabsTrigger>
+          <TabsTrigger value="round">Fund Raise</TabsTrigger>
+          <TabsTrigger value="additional">Investor Status Queue</TabsTrigger>
         </TabsList>
 
         {/* Lead Info Tab */}
