@@ -1185,32 +1185,42 @@ export default function VCEdit() {
 
               <div>
                 <Label htmlFor="state">State/Province</Label>
-                <Select
-                  value={vcData.state || undefined}
-                  onValueChange={(value) => {
-                    handleInputChange("state", value);
-                    handleInputChange("city", "");
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select state/province" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(() => {
-                      const selectedCountry = Country.getAllCountries().find(
-                        (c: any) => c.name === vcData.country,
-                      );
-                      const states = selectedCountry
-                        ? State.getStatesOfCountry(selectedCountry.isoCode)
-                        : [];
-                      return states.map((s: any) => (
-                        <SelectItem key={`${s.isoCode}-${s.name}`} value={s.name}>
-                          {s.name}
-                        </SelectItem>
-                      ));
-                    })()}
-                  </SelectContent>
-                </Select>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" role="combobox" className="w-full justify-between">
+                      {vcData.state || "Select state/province"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search state..." />
+                      <CommandEmpty>No state found.</CommandEmpty>
+                      <CommandList>
+                        <CommandGroup>
+                          {availableStates.map((state: any) => (
+                            <CommandItem
+                              key={state.isoCode}
+                              value={state.name}
+                              onSelect={(val) => {
+                                handleInputChange("state", val);
+                                handleInputChange("city", "");
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  vcData.state === state.name ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {state.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>
