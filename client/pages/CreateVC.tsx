@@ -309,6 +309,8 @@ export default function CreateVC() {
           maximum_size: resumeData.maximum_size || "",
           minimum_arr_requirement: resumeData.minimum_arr_requirement || "",
           investor_category: (resumeData as any).investor_category || "",
+          sector_focus: (resumeData as any).sector_focus || "",
+          investor_last_feedback: (resumeData as any).investor_last_feedback || "",
           contacts: resumeData.contacts
             ? typeof resumeData.contacts === "string"
               ? JSON.parse(resumeData.contacts)
