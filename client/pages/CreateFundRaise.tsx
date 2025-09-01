@@ -69,6 +69,7 @@ function generateStepOptions(start: number, end: number, step: number): string[]
 }
 
 const FUND_MN_OPTIONS = generateStepOptions(0.05, 10, 0.05);
+const VALUATION_MN_OPTIONS = ["0.50", ...generateStepOptions(1, 100, 1)];
 
 export default function CreateFundRaise() {
   const navigate = useNavigate();
@@ -76,6 +77,7 @@ export default function CreateFundRaise() {
   const queryClient = useQueryClient();
   const [fundMnOpen, setFundMnOpen] = useState(false);
   const [fundMnOpenMain, setFundMnOpenMain] = useState(false);
+  const [valuationOpen, setValuationOpen] = useState(false);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -392,17 +394,35 @@ export default function CreateFundRaise() {
 
                 <div>
                   <Label>Valuation $ Mn</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="e.g. 100"
-                      className="pl-10"
-                      value={form.valuation_mn}
-                      onChange={(e) =>
-                        handleChange("valuation_mn", e.target.value)
-                      }
-                    />
-                  </div>
+                  <Popover open={valuationOpen} onOpenChange={setValuationOpen}>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        {form.valuation_mn || "Select valuation"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent side="bottom" align="start" avoidCollisions={false} className="p-0 w-[200px]">
+                      <Command>
+                        <CommandInput placeholder="Search valuation..." />
+                        <CommandList>
+                          <CommandEmpty>No valuations found.</CommandEmpty>
+                          <CommandGroup>
+                            {VALUATION_MN_OPTIONS.map((v) => (
+                              <CommandItem
+                                key={v}
+                                value={v}
+                                onSelect={(val) => {
+                                  handleChange("valuation_mn", val);
+                                  setValuationOpen(false);
+                                }}
+                              >
+                                {v}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
 
