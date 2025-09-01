@@ -1841,55 +1841,24 @@ export default function CreateVC() {
               <div className="border-t pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addContact}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Contact
-                  </Button>
                 </div>
 
                 <div className="space-y-4">
                   {vcData.contacts.map((contact, index) => (
                     <Card key={index} className="p-4">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium">
-                          Contact {index + 1}
-                          {index === 0 && " (Primary)"}
-                        </h4>
-                        {vcData.contacts.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeContact(index)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <h4 className="font-medium">Contact {index + 1}</h4>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <Label htmlFor={`contact_name_${index}`}>
-                            Full Name
-                          </Label>
+                          <Label htmlFor={`contact_name_${index}`}>Contact Name {index + 1}</Label>
                           <div className="relative">
                             <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
                               id={`contact_name_${index}`}
                               value={contact.contact_name}
-                              onChange={(e) =>
-                                updateContact(
-                                  index,
-                                  "contact_name",
-                                  e.target.value,
-                                )
-                              }
+                              onChange={(e) => updateContact(index, "contact_name", e.target.value)}
                               placeholder="Contact person's name"
                               className="pl-10"
                             />
@@ -1897,36 +1866,24 @@ export default function CreateVC() {
                         </div>
 
                         <div>
-                          <Label htmlFor={`designation_${index}`}>
-                            Designation
-                          </Label>
+                          <Label htmlFor={`designation_${index}`}>Contact Designation {index + 1}</Label>
                           <Input
                             id={`designation_${index}`}
                             value={contact.designation}
-                            onChange={(e) =>
-                              updateContact(
-                                index,
-                                "designation",
-                                e.target.value,
-                              )
-                            }
+                            onChange={(e) => updateContact(index, "designation", e.target.value)}
                             placeholder="Partner, Associate, etc."
                           />
                         </div>
 
                         <div>
-                          <Label htmlFor={`contact_email_${index}`}>
-                            Email
-                          </Label>
+                          <Label htmlFor={`contact_email_${index}`}>Contact {index + 1} - Email</Label>
                           <div className="relative">
                             <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                             <Input
                               id={`contact_email_${index}`}
                               type="email"
                               value={contact.email}
-                              onChange={(e) =>
-                                updateContact(index, "email", e.target.value)
-                              }
+                              onChange={(e) => updateContact(index, "email", e.target.value)}
                               placeholder="contact@investor.com"
                               className="pl-10"
                             />
@@ -1934,35 +1891,28 @@ export default function CreateVC() {
                         </div>
 
                         <div>
-                          <Label htmlFor={`contact_phone_${index}`}>
-                            Phone
-                          </Label>
-                          <div className="relative">
-                            <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Label htmlFor={`contact_phone_${index}`}>Contact {index + 1} - Phone</Label>
+                          <div className="flex gap-2">
+                            <Select
+                              value={contact.phone_prefix || "+1"}
+                              onValueChange={(value) => updateContact(index, "phone_prefix", value)}
+                            >
+                              <SelectTrigger className="w-40">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {PHONE_PREFIXES.map((p) => (
+                                  <SelectItem key={p.code} value={p.code}>{p.label}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                             <Input
                               id={`contact_phone_${index}`}
                               value={contact.phone}
-                              onChange={(e) =>
-                                updateContact(index, "phone", e.target.value)
-                              }
-                              placeholder="+1 (555) 123-4567"
-                              className="pl-10"
+                              onChange={(e) => updateContact(index, "phone", e.target.value)}
+                              placeholder="(555) 123-4567"
                             />
                           </div>
-                        </div>
-
-                        <div className="md:col-span-2">
-                          <Label htmlFor={`linkedin_${index}`}>
-                            LinkedIn Profile
-                          </Label>
-                          <Input
-                            id={`linkedin_${index}`}
-                            value={contact.linkedin}
-                            onChange={(e) =>
-                              updateContact(index, "linkedin", e.target.value)
-                            }
-                            placeholder="https://linkedin.com/in/username"
-                          />
                         </div>
                       </div>
                     </Card>
