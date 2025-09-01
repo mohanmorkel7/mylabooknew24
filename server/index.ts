@@ -27,6 +27,7 @@ import workflowRouter from "./routes/workflow";
 import databaseStatusRouter from "./routes/database-status";
 import ssoAuthRouter from "./routes/sso-auth";
 import azureSyncRouter from "./routes/azure-sync";
+import fundRaisesRouter from "./routes/fund-raises";
 
 // Production routes (database-only, no mock fallback)
 import templatesProductionRouter from "./routes/templates-production";
@@ -246,6 +247,13 @@ export function createServer() {
     console.log("Follow-ups router loaded successfully");
   } catch (error) {
     console.error("Error loading follow-ups router:", error);
+  }
+
+  try {
+    app.use("/api/fund-raises", fundRaisesRouter);
+    console.log("Fund Raises router loaded successfully");
+  } catch (error) {
+    console.error("Error loading Fund Raises router:", error);
   }
 
   try {
