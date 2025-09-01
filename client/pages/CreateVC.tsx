@@ -378,6 +378,7 @@ export default function CreateVC() {
           ] as Array<{
             contact_name: string;
             designation: string;
+            phone_prefix?: string;
             phone: string;
             email: string;
             linkedin: string;
