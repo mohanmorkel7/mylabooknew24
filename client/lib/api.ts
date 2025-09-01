@@ -149,7 +149,7 @@ export class ApiClient {
           response = await Promise.race([fetchPromise, timeoutPromise]);
         }
       } catch (fetchError) {
-        console.error(
+        console.warn(
           "Primary fetch failed for URL:",
           url,
           "Error:",
