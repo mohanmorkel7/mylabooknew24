@@ -651,16 +651,6 @@ function AppRoutes() {
         }
       />
 
-      <Route
-        path="/fundraise/:id"
-        element={
-          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
-            <DashboardLayout>
-              <VCDetails />
-            </DashboardLayout>
-          </ProtectedRoute>
-        }
-      />
 
       <Route
         path="/leads/:id/follow-up"
