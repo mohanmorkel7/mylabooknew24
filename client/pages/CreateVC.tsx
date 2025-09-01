@@ -71,14 +71,6 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from "@/lib/utils";
 import { Country, State, City } from "country-state-city";
 
-const INVESTOR_CATEGORIES = [
-  { value: "angel", label: "Angel" },
-  { value: "vc", label: "VC" },
-  { value: "private_equity", label: "Private Equity" },
-  { value: "family_office", label: "Family Office" },
-  { value: "merchant_banker", label: "Merchant Banker" },
-  { value: "individual", label: "Individual" },
-];
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre-Seed" },
@@ -279,7 +271,6 @@ export default function CreateVC() {
           lead_source_value: resumeData.lead_source_value || "",
           lead_created_by: resumeData.lead_created_by || "",
           status: resumeData.status || "in-progress",
-          investor_category: resumeData.investor_category || "",
           investor_name:
             resumeData.investor_name === "PARTIAL_SAVE_IN_PROGRESS"
               ? ""
@@ -380,7 +371,6 @@ export default function CreateVC() {
           status: "in-progress" as const,
 
           // Investor and Contact Info
-          investor_category: "",
           investor_name: "",
           company_size: "",
           phone: "",
@@ -763,8 +753,6 @@ export default function CreateVC() {
             lead_created_by:
               response.lead_created_by || prevData.lead_created_by,
             status: response.status || prevData.status,
-            investor_category:
-              response.investor_category || prevData.investor_category,
             investor_name:
               response.investor_name === "PARTIAL_SAVE_IN_PROGRESS"
                 ? ""
@@ -1194,7 +1182,6 @@ export default function CreateVC() {
         round_stage: vcData.round_stage || null,
         round_size: vcData.round_size,
         valuation: vcData.valuation,
-        investor_category: vcData.investor_category,
         investor_name: vcData.investor_name,
         phone: vcData.phone,
         address: vcData.address,
@@ -1308,7 +1295,6 @@ export default function CreateVC() {
         round_stage: vcData.round_stage || null,
         round_size: vcData.round_size,
         valuation: vcData.valuation,
-        investor_category: vcData.investor_category,
         investor_name: vcData.investor_name || "PARTIAL_SAVE_IN_PROGRESS",
         phone: vcData.phone,
         address: vcData.address,
@@ -1725,31 +1711,6 @@ export default function CreateVC() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="investor_category">Investor Category *</Label>
-                  <Select
-                    value={vcData.investor_category}
-                    onValueChange={(value) =>
-                      handleInputChange("investor_category", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select investor category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INVESTOR_CATEGORIES.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
-                          {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.investor_category && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.investor_category}
-                    </p>
-                  )}
-                </div>
 
 
 
