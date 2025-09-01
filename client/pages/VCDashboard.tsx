@@ -1535,28 +1535,6 @@ export default function VCDashboard() {
                             </div>
 
 
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <div className="flex items-center gap-1">
-                                {getSourceIcon(vc.lead_source)}
-                                <span className="capitalize">
-                                  {vc.lead_source?.replace("-", " ")}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="w-4 h-4" />
-                                <span>
-                                  Created {formatToIST(vc.created_at)}
-                                </span>
-                              </div>
-                              {vc.priority_level && (
-                                <Badge
-                                  className={`${priorityColors[vc.priority_level as keyof typeof priorityColors]} border-0 text-xs`}
-                                >
-                                  {vc.priority_level.toUpperCase()}
-                                </Badge>
-                              )}
-                            </div>
-
                             <div className="mt-1 text-sm text-gray-700 flex flex-wrap gap-4">
                               <span>Venture Capital Name: <span className="font-medium">{vc.investor_name || "N/A"}</span></span>
                               <span>VC Type: <span className="font-medium capitalize">{(vc.investor_category || "N/A").replace("_", " ")}</span></span>
