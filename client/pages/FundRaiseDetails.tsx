@@ -47,6 +47,17 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -89,6 +100,15 @@ export default function FundRaiseDetails() {
   const queryClient = useQueryClient();
 
   const vcId = parseInt(id || "0");
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => apiClient.request(`/vc/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vcs"] });
+      queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
+      navigate("/fundraise");
+    },
+  });
 
   const [newStepDialog, setNewStepDialog] = useState(false);
   const [expandedSteps, setExpandedSteps] = useState(new Set<number>());
@@ -364,6 +384,25 @@ export default function FundRaiseDetails() {
             <Edit className="w-4 h-4 mr-2" />
             Edit Fund Raise
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">Delete</Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this Fund Raise?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. All related steps and comments will be removed.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => deleteMutation.mutate()}>
+                  Confirm Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
