@@ -307,14 +307,14 @@ export default function FundRaiseDetails() {
   ) => {
     if (!amount) return "N/A";
     const amountStr = typeof amount === "number" ? amount.toString() : amount;
-    if (
-      amountStr.includes("$") ||
-      amountStr.includes("₹") ||
-      amountStr.includes("د.إ")
-    )
-      return `${amountStr}Mn`;
-    const symbol = currency === "USD" ? "$" : currency === "AED" ? "د.إ" : "₹";
-    return `${symbol}${amountStr}Mn`;
+
+    // Strip any existing currency symbols to get the numeric value
+    const numericValue = amountStr.replace(/[$₹د\.إ]/g, '').trim();
+
+    if (!numericValue) return "N/A";
+
+    // Always format as USD with Mn suffix
+    return `$${numericValue}Mn`;
   };
 
   const getRoundStageDisplay = (stage: string) => {
