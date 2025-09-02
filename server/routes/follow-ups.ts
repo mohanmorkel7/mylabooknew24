@@ -87,10 +87,7 @@ router.post("/", async (req: Request, res: Response) => {
                 }
               }
             } catch (error) {
-              console.log(
-                "Could not resolve step type:",
-                error.message,
-              );
+              console.log("Could not resolve step type:", error.message);
             }
           }
 
