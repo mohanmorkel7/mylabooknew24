@@ -425,6 +425,45 @@ export default function FollowUpTracker() {
           notificationData,
         });
 
+        // Validate stepId before proceeding
+        if (!stepIdValue) {
+          console.error("❌ Critical error: stepId is null/undefined", {
+            followUpId,
+            followUp,
+            notificationData,
+          });
+
+          // Still update the status, but skip notification
+          const response = await fetch(`/api/follow-ups/${followUpId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: newStatus,
+              completed_at: completedAt,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update status");
+          }
+
+          alert(
+            "Follow-up status updated, but team chat notification could not be sent due to missing step information.",
+          );
+
+          // Update local state and return early
+          setFollowUps((prevFollowUps) =>
+            prevFollowUps.map((f) =>
+              f.id === followUpId
+                ? { ...f, status: newStatus as any, completed_at: completedAt }
+                : f,
+            ),
+          );
+          return;
+        }
+
         // Use the utility function that includes chat notification
         await updateFollowUpStatusWithNotification(
           followUpId,
