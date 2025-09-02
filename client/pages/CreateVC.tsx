@@ -94,7 +94,6 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-
 const SECTOR_FOCUS = [
   { value: "fintech", label: "Fintech" },
   { value: "fintech_b2b", label: "Fintech -B2B" },

@@ -82,7 +82,6 @@ import {
   Check,
 } from "lucide-react";
 
-
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre-Seed" },
   { value: "pre_series_a", label: "Pre-Series A" },
