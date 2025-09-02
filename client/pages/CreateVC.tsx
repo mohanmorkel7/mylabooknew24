@@ -2259,7 +2259,10 @@ export default function CreateVC() {
             >
               Previous
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting || createVCMutation.isPending}>
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || createVCMutation.isPending}
+            >
               {isSubmitting ? "Creating..." : "Create VC"}
             </Button>
           </div>
