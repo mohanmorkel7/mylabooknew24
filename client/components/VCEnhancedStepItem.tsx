@@ -368,11 +368,18 @@ export function VCEnhancedStepItem({
         );
 
         // Verify the response is valid (not an error response)
-        if (systemMessageResponse && typeof systemMessageResponse === 'object' && systemMessageResponse.id) {
+        if (
+          systemMessageResponse &&
+          typeof systemMessageResponse === "object" &&
+          systemMessageResponse.id
+        ) {
           // Add to local state if API call successful and response is valid
           setChatMessages((prev) => [...prev, systemMessageResponse]);
         } else {
-          console.warn("⚠️ System message response is invalid:", systemMessageResponse);
+          console.warn(
+            "⚠️ System message response is invalid:",
+            systemMessageResponse,
+          );
           throw new Error("Invalid system message response");
         }
       } catch (messageError: any) {
@@ -390,7 +397,10 @@ export function VCEnhancedStepItem({
         });
 
         // Check if it's a database availability issue
-        if (messageError?.status === 503 || messageError?.message?.includes('Database unavailable')) {
+        if (
+          messageError?.status === 503 ||
+          messageError?.message?.includes("Database unavailable")
+        ) {
           alert(
             "Follow-up created successfully, but the database is currently unavailable. The team chat notification could not be sent. Please refresh the page and check the chat manually.",
           );
