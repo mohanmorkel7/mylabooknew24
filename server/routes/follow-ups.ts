@@ -108,6 +108,13 @@ router.post("/", async (req: Request, res: Response) => {
               .toISOString()
               .split("T")[0];
 
+          // For fund raise steps, store the fund_raise_step_id in message_id field for reference
+          let finalMessageId = message_id;
+          if (!resolvedVcStepId && vc_step_id) {
+            // This is a fund raise step, store it in message_id for reference
+            finalMessageId = vc_step_id;
+          }
+
           values = [
             client_id || null,
             lead_id || null,
@@ -120,7 +127,7 @@ router.post("/", async (req: Request, res: Response) => {
             follow_up_type,
             assigned_to || null,
             created_by,
-            message_id || null,
+            finalMessageId,
           ];
         } else {
           // Legacy query without VC support
