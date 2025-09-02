@@ -93,6 +93,7 @@ export default function CreateFundRaise() {
   const [fundMnOpen, setFundMnOpen] = useState(false);
   const [fundMnOpenMain, setFundMnOpenMain] = useState(false);
   const [valuationOpen, setValuationOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("fundraise");
 
   const [form, setForm] = useState({
     vc_investor: "",
