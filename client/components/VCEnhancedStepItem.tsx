@@ -367,9 +367,15 @@ export function VCEnhancedStepItem({
           systemMessageResponse,
         );
 
-        // Add to local state if API call successful
-        setChatMessages((prev) => [...prev, systemMessageResponse]);
-      } catch (messageError) {
+        // Verify the response is valid (not an error response)
+        if (systemMessageResponse && typeof systemMessageResponse === 'object' && systemMessageResponse.id) {
+          // Add to local state if API call successful and response is valid
+          setChatMessages((prev) => [...prev, systemMessageResponse]);
+        } else {
+          console.warn("⚠️ System message response is invalid:", systemMessageResponse);
+          throw new Error("Invalid system message response");
+        }
+      } catch (messageError: any) {
         console.error(
           "❌ Failed to save follow-up creation message to team chat:",
           messageError,
@@ -379,10 +385,21 @@ export function VCEnhancedStepItem({
           stepApiBase,
           stepId: step.id,
           error: messageError,
+          status: messageError?.status,
+          statusText: messageError?.statusText,
         });
-        alert(
-          "Follow-up created successfully, but failed to notify team chat. Please check the chat manually.",
-        );
+
+        // Check if it's a database availability issue
+        if (messageError?.status === 503 || messageError?.message?.includes('Database unavailable')) {
+          alert(
+            "Follow-up created successfully, but the database is currently unavailable. The team chat notification could not be sent. Please refresh the page and check the chat manually.",
+          );
+        } else {
+          alert(
+            "Follow-up created successfully, but failed to notify team chat. Please check the chat manually.",
+          );
+        }
+
         // Fallback: add to local state only
         const systemMessage = {
           id: Date.now(),
