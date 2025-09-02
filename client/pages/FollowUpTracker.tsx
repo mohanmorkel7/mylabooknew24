@@ -285,6 +285,22 @@ export default function FollowUpTracker() {
               (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
           }));
 
+          // Debug VC follow-ups to check stepId fields
+          const vcFollowUps = formattedFollowUps.filter((f: any) =>
+            f.type === 'vc' || f.vc_id || f.vc_round_title || f.investor_name
+          );
+          if (vcFollowUps.length > 0) {
+            console.log('🔍 VC Follow-ups fetched:', vcFollowUps.map((f: any) => ({
+              id: f.id,
+              title: f.title,
+              vc_step_id: f.vc_step_id,
+              message_id: f.message_id,
+              step_id: f.step_id,
+              vc_id: f.vc_id,
+              type: f.type
+            })));
+          }
+
           setFollowUps(formattedFollowUps);
         }
       } catch (error) {
