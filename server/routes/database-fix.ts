@@ -24,9 +24,9 @@ router.post(
       }
 
       // Add the corrected constraint that allows general follow-ups (both null)
-    // but prevents both lead_id and vc_id from being set simultaneously
-    console.log("Adding corrected constraint...");
-    await client.query(`
+      // but prevents both lead_id and vc_id from being set simultaneously
+      console.log("Adding corrected constraint...");
+      await client.query(`
       ALTER TABLE follow_ups
       ADD CONSTRAINT chk_follow_up_context
       CHECK (

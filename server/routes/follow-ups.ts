@@ -52,19 +52,27 @@ router.post("/", async (req: Request, res: Response) => {
           let resolvedVcId = vc_id;
           if (vc_step_id && !vc_id) {
             try {
-              const stepResult = await pool.query(`
+              const stepResult = await pool.query(
+                `
                 SELECT fr.vc_id
                 FROM fund_raise_steps frs
                 JOIN fund_raises fr ON frs.fund_raise_id = fr.id
                 WHERE frs.id = $1
-              `, [vc_step_id]);
+              `,
+                [vc_step_id],
+              );
 
               if (stepResult.rows.length > 0) {
                 resolvedVcId = stepResult.rows[0].vc_id;
-                console.log(`Resolved vc_id ${resolvedVcId} for vc_step_id ${vc_step_id}`);
+                console.log(
+                  `Resolved vc_id ${resolvedVcId} for vc_step_id ${vc_step_id}`,
+                );
               }
             } catch (error) {
-              console.log("Could not resolve vc_id from fund_raise_steps:", error.message);
+              console.log(
+                "Could not resolve vc_id from fund_raise_steps:",
+                error.message,
+              );
             }
           }
 
