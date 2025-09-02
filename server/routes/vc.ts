@@ -588,6 +588,11 @@ router.post("/", async (req: Request, res: Response) => {
         "merchant_banker",
         "accelerator",
         "individual",
+        "early_stage",
+        "growth",
+        "strategic_bank",
+        "strategic_fintech",
+        "strategic_individual",
       ]);
       if (
         (vcData as any).investor_category &&
