@@ -290,7 +290,7 @@ export default function FundRaiseEdit() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label>VC</Label>
+                  <Label>VC *</Label>
                   <Select
                     value={form.vc_investor}
                     onValueChange={(v) => handleChange("vc_investor", v)}
@@ -311,7 +311,7 @@ export default function FundRaiseEdit() {
                 </div>
 
                 <div>
-                  <Label>Status</Label>
+                  <Label>Status *</Label>
                   <Select
                     value={form.status}
                     onValueChange={(v) => handleChange("status", v)}
@@ -330,26 +330,7 @@ export default function FundRaiseEdit() {
                 </div>
 
                 <div>
-                  <Label>Investor Status</Label>
-                  <Select
-                    value={form.investor_status}
-                    onValueChange={(v) => handleChange("investor_status", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Investor Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INVESTOR_STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Investment Stage</Label>
+                  <Label>Investment Stage *</Label>
                   <Select
                     value={form.round_stage}
                     onValueChange={(v) => handleChange("round_stage", v)}
@@ -500,7 +481,7 @@ export default function FundRaiseEdit() {
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Fund $ Mn</Label>
+                <Label>Fund $ Mn *</Label>
                 <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -541,7 +522,7 @@ export default function FundRaiseEdit() {
                 </Popover>
               </div>
               <div>
-                <Label>Investor Status</Label>
+                <Label>Investor Status *</Label>
                 <Select
                   value={form.investor_status}
                   onValueChange={(v) => handleChange("investor_status", v)}
