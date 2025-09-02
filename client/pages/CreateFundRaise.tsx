@@ -182,12 +182,7 @@ export default function CreateFundRaise() {
       // Refresh fund raise lists
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
 
-      const frId = created?.id || created?.data?.id;
-      if (frId) {
-        navigate(`/fundraise/${frId}`);
-      } else {
-        navigate("/fundraise");
-      }
+      navigate("/fundraise");
     } catch (e) {
       alert("Failed to create fund raise. Please try again.");
     } finally {
