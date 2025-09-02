@@ -359,9 +359,21 @@ export default function FollowUpTracker() {
             ? "vc"
             : "lead");
 
+        // Derive the correct stepId and API base for notifications
+        let stepApiBase: "vc" | "fund-raises" | "leads" = "leads";
+        let stepIdValue: number | undefined = followUp.step_id;
+
+        if (followUpType === "vc") {
+          // VC-related follow-up; prefer explicit vc_step_id if present
+          // For fund-raise steps, the backend stores the step id in message_id
+          stepIdValue = (followUp as any).vc_step_id || followUp.step_id || followUp.message_id;
+          stepApiBase = (followUp as any).vc_step_id ? "vc" : "fund-raises";
+        } else {
+          stepApiBase = "leads";
+        }
+
         const notificationData = {
-          stepId:
-            followUpType === "vc" ? followUp.vc_step_id : followUp.step_id,
+          stepId: stepIdValue,
           userId: parseInt(user.id),
           userName: user.name,
           followUpTitle:
@@ -369,7 +381,8 @@ export default function FollowUpTracker() {
             followUp.description?.substring(0, 50) + "..." ||
             `Follow-up #${followUpId}`,
           isVC: followUpType === "vc",
-        };
+          stepApiBase,
+        } as const;
 
         console.log("Updating follow-up status with notification:", {
           followUpId,
