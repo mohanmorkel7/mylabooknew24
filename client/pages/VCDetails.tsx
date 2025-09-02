@@ -629,7 +629,7 @@ export default function VCDetails() {
                   variant="outline"
                   onClick={() =>
                     window.open(
-                      `tel:${getPrimaryContact(vcData)?.phone}`,
+                      `tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`,
                       "_self",
                     )
                   }
