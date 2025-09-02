@@ -533,6 +533,19 @@ export default function CreateFundRaise() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {Object.keys(errors).length > 0 && (
+        <Alert className="mt-6">
+          <AlertDescription>
+            Please fix the following errors:
+            <ul className="list-disc list-inside mt-2">
+              {Object.values(errors).map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }
