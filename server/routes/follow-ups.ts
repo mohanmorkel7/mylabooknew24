@@ -101,6 +101,9 @@ router.post("/", async (req: Request, res: Response) => {
             RETURNING *
           `;
 
+          // Set default due date to 3 days from now if not provided
+          const defaultDueDate = due_date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
           values = [
             client_id || null,
             lead_id || null,
@@ -109,7 +112,7 @@ router.post("/", async (req: Request, res: Response) => {
             resolvedVcStepId || null, // This will be null for fund raise steps
             title,
             description || null,
-            due_date || null,
+            defaultDueDate,
             follow_up_type,
             assigned_to || null,
             created_by,
