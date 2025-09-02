@@ -639,7 +639,7 @@ export default function VCDashboard() {
                               <span>
                                 Sector Focus:{" "}
                                 <span className="font-medium">
-                                  {vc.industry || "N/A"}
+                                  {getSectorLabel(vc.industry) || "N/A"}
                                 </span>
                               </span>
                               <span>
