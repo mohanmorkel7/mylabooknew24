@@ -62,7 +62,10 @@ function digitsOnly(s?: string | null): string {
   return String(s).replace(/\D+/g, "");
 }
 
-export function formatPhoneDisplay(phone?: string | null, country?: string | null): string {
+export function formatPhoneDisplay(
+  phone?: string | null,
+  country?: string | null,
+): string {
   if (!phone) return "";
   const trimmed = String(phone).trim();
   if (/^(\+|00)/.test(trimmed)) return trimmed;
@@ -70,7 +73,10 @@ export function formatPhoneDisplay(phone?: string | null, country?: string | nul
   return code ? `${code} ${trimmed}` : trimmed;
 }
 
-export function formatPhoneHref(phone?: string | null, country?: string | null): string {
+export function formatPhoneHref(
+  phone?: string | null,
+  country?: string | null,
+): string {
   if (!phone) return "";
   const raw = String(phone).trim();
   if (raw.startsWith("+")) return `+${digitsOnly(raw)}`;

@@ -59,7 +59,11 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { formatToISTDateTime } from "@/lib/dateUtils";
-import { getSectorLabel, formatPhoneDisplay, formatPhoneHref } from "@/lib/constants";
+import {
+  getSectorLabel,
+  formatPhoneDisplay,
+  formatPhoneHref,
+} from "@/lib/constants";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -521,7 +525,10 @@ export default function VCDetails() {
                             href={`tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`}
                             className="text-blue-600 hover:underline"
                           >
-                            {formatPhoneDisplay(getPrimaryContact(vcData)?.phone, vcData.country)}
+                            {formatPhoneDisplay(
+                              getPrimaryContact(vcData)?.phone,
+                              vcData.country,
+                            )}
                           </a>
                         ) : (
                           String(item.value)
