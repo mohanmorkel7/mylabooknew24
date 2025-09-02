@@ -518,10 +518,10 @@ export default function VCDetails() {
                           </a>
                         ) : item.label === "Phone" ? (
                           <a
-                            href={`tel:${item.value}`}
+                            href={`tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`}
                             className="text-blue-600 hover:underline"
                           >
-                            {String(item.value)}
+                            {formatPhoneDisplay(getPrimaryContact(vcData)?.phone, vcData.country)}
                           </a>
                         ) : (
                           String(item.value)
