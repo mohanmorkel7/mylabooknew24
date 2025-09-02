@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
 import { Country, State, City } from "country-state-city";
-import { VC_TYPES } from "@/lib/constants";
+import { VC_TYPES, SECTOR_FOCUS } from "@/lib/constants";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -94,13 +94,6 @@ const ROUND_STAGES = [
   { value: "ipo", label: "IPO" },
 ];
 
-const SECTOR_FOCUS = [
-  { value: "fintech", label: "Fintech" },
-  { value: "fintech_b2b", label: "Fintech -B2B" },
-  { value: "fintech_saas", label: "Fintech - SaaS" },
-  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
-  { value: "sector_agnostic", label: "Sector Agnostic" },
-];
 
 const INVESTOR_FEEDBACK = [
   { value: "existing_investor", label: "Existing Investor" },
