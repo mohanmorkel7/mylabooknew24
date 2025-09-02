@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -136,18 +136,7 @@ export default function CreateFundRaise() {
     return opts.sort((a, b) => a.label.localeCompare(b.label));
   }, [vcList]);
 
-  const createMutation = useMutation({
-    mutationFn: async (payload: any) => {
-      return apiClient.request("/vc", {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vcs"] });
-      queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
-    },
-  });
+  const [submitting, setSubmitting] = useState(false);
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -163,45 +152,18 @@ export default function CreateFundRaise() {
       return;
     }
 
-    const stageLabel =
-      ROUND_STAGES.find((s) => s.value === form.round_stage)?.label ||
-      "Fund Raise";
+    // Try to link to an existing VC by name; do not create new VC records
+    const matched = (vcList || []).find(
+      (vc: any) => (vc.investor_name || "").trim() === form.vc_investor.trim(),
+    );
+    const linkedVcId: number | null = matched?.id ?? null;
 
-    const payload: any = {
-      lead_source: "email",
-      lead_source_value: (user as any)?.email || "fundraise-form",
-      lead_created_by: (user as any)?.email || "fundraise-form",
-      investor_category: "vc",
-      investor_name: form.vc_investor,
-      status: STATUS_MAP[form.status] || "in-progress",
-      round_stage: form.round_stage,
-      round_title: `${stageLabel} Fund Raise`,
-      round_size: form.total_raise_mn,
-      valuation: form.valuation_mn,
-      start_date: form.start_date || null,
-      targeted_end_date: form.end_date || null,
-      notes: form.reason,
-      investor_last_feedback: form.investor_status || null,
-      template_id: form.template_id,
-      created_by: parseInt(user?.id || "1"),
-    };
-
-    let newId: number | undefined;
+    setSubmitting(true);
     try {
-      const result = await createMutation.mutateAsync(payload);
-      newId = result?.data?.id || result?.id;
-    } catch (e) {
-      console.warn(
-        "VC creation failed, proceeding with fund_raises insert only:",
-        e,
-      );
-    }
-
-    try {
-      await apiClient.request("/fund-raises", {
+      const created = await apiClient.request("/fund-raises", {
         method: "POST",
         body: JSON.stringify({
-          vc_id: newId ?? null,
+          vc_id: linkedVcId,
           investor_name: form.vc_investor,
           ui_status: form.status,
           investor_status: form.investor_status,
@@ -216,15 +178,15 @@ export default function CreateFundRaise() {
           updated_by: parseInt(user?.id || "1"),
         }),
       });
-    } catch (e) {
-      alert("Failed to insert into fund_raises. Please try again.");
-      return;
-    }
 
-    if (newId) {
-      navigate(`/fundraise/${newId}`);
-    } else {
+      // Refresh fund raise lists
+      queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
+
       navigate("/fundraise");
+    } catch (e) {
+      alert("Failed to create fund raise. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -247,7 +209,7 @@ export default function CreateFundRaise() {
             <p className="text-gray-600">Set up a new fund raise entry</p>
           </div>
         </div>
-        <Button onClick={handleSubmit} disabled={createMutation.isPending}>
+        <Button onClick={handleSubmit} disabled={submitting}>
           <Plus className="w-4 h-4 mr-2" />
           Create Fund Raise
         </Button>
