@@ -258,6 +258,11 @@ export default function FollowUpTracker() {
         });
 
         const response = await fetch(`/api/follow-ups?${params.toString()}`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
         // Convert to expected format and ensure IST timestamps
