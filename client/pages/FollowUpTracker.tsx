@@ -762,10 +762,10 @@ export default function FollowUpTracker() {
                                     variant="secondary"
                                     className="mr-2 bg-purple-100 text-purple-700"
                                   >
-                                    VC
+                                    Fund Raise
                                   </Badge>
                                   {followUp.vc_round_title ||
-                                    "Unknown VC Round"}{" "}
+                                    "Unknown Fund Raise"}{" "}
                                   •{" "}
                                   {followUp.investor_name || "Unknown Investor"}
                                 </>
