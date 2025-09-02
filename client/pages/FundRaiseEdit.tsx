@@ -352,6 +352,9 @@ export default function FundRaiseEdit() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.round_stage && (
+                    <p className="text-sm text-red-600 mt-1">{errors.round_stage}</p>
+                  )}
                 </div>
 
                 <div>
