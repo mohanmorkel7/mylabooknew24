@@ -31,3 +31,51 @@ export function getSectorLabel(value?: string | null): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
   return prettified;
 }
+
+const COUNTRY_DIAL_CODES = new Map<string, string>([
+  ["india", "+91"],
+  ["united states", "+1"],
+  ["usa", "+1"],
+  ["united arab emirates", "+971"],
+  ["uae", "+971"],
+  ["saudi arabia", "+966"],
+  ["ksa", "+966"],
+  ["qatar", "+974"],
+  ["kuwait", "+965"],
+  ["bahrain", "+973"],
+  ["singapore", "+65"],
+  ["united kingdom", "+44"],
+  ["uk", "+44"],
+  ["canada", "+1"],
+  ["australia", "+61"],
+]);
+
+function normalizeCountry(country?: string | null): string | null {
+  if (!country) return null;
+  const c = country.trim().toLowerCase();
+  if (!c) return null;
+  return c;
+}
+
+function digitsOnly(s?: string | null): string {
+  if (!s) return "";
+  return String(s).replace(/\D+/g, "");
+}
+
+export function formatPhoneDisplay(phone?: string | null, country?: string | null): string {
+  if (!phone) return "";
+  const trimmed = String(phone).trim();
+  if (/^(\+|00)/.test(trimmed)) return trimmed;
+  const code = COUNTRY_DIAL_CODES.get(normalizeCountry(country) || "");
+  return code ? `${code} ${trimmed}` : trimmed;
+}
+
+export function formatPhoneHref(phone?: string | null, country?: string | null): string {
+  if (!phone) return "";
+  const raw = String(phone).trim();
+  if (raw.startsWith("+")) return `+${digitsOnly(raw)}`;
+  if (raw.startsWith("00")) return `+${digitsOnly(raw.slice(2))}`;
+  const code = COUNTRY_DIAL_CODES.get(normalizeCountry(country) || "");
+  const number = digitsOnly(raw);
+  return code ? `${code}${number}`.replace(/^\+\+/, "+") : number;
+}
