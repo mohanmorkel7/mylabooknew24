@@ -407,6 +407,18 @@ export default function FollowUpTracker() {
           stepApiBase,
         } as const;
 
+        console.log("✅ Successfully derived notification data:", {
+          stepIdValue,
+          stepApiBase,
+          followUpType,
+          followUpFields: {
+            vc_step_id: (followUp as any).vc_step_id,
+            message_id: followUp.message_id,
+            step_id: followUp.step_id,
+            vc_id: (followUp as any).vc_id
+          }
+        });
+
         console.log("Updating follow-up status with notification:", {
           followUpId,
           newStatus,
