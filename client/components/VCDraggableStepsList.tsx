@@ -94,7 +94,7 @@ export function VCDraggableStepsList({
     setItems(uniqueSteps);
   }, [steps]);
 
-  const handleUpdateStatus = (stepId: number, status: string) => {
+  const handleUpdateStatus = async (stepId: number, status: string) => {
     const step = items.find((item) => item.id === stepId);
     if (!step) {
       console.error("Step not found:", stepId);
@@ -112,6 +112,8 @@ export function VCDraggableStepsList({
 
     console.log(`Updating VC step ${stepId} status to ${status}`);
 
+    const oldStatus = step.status;
+
     // Optimistically update local state
     setItems((prevItems) =>
       prevItems.map((item) =>
@@ -126,13 +128,56 @@ export function VCDraggableStepsList({
       ),
     );
 
+    // Function to add status change message to team chat
+    const addStatusChangeMessage = async () => {
+      if (!user || oldStatus === status) return;
+
+      const statusDisplayMap: Record<string, string> = {
+        pending: "Pending",
+        in_progress: "In Progress",
+        completed: "Completed",
+        cancelled: "Cancelled"
+      };
+
+      const oldStatusDisplay = statusDisplayMap[oldStatus] || oldStatus;
+      const newStatusDisplay = statusDisplayMap[status] || status;
+
+      const systemMessage = `📝 Step status changed from "${oldStatusDisplay}" to "${newStatusDisplay}" by ${user.name}`;
+
+      try {
+        const apiBase = stepApiBase ?? (typeof (updateStepStatus as any) === "function" ? "fund-raises" : "vc");
+        await apiClient.request(
+          `/${apiBase}/steps/${stepId}/chats`,
+          {
+            method: "POST",
+            body: JSON.stringify({
+              user_id: parseInt(user.id || "0"),
+              user_name: "System",
+              message: systemMessage,
+              message_type: "system",
+              is_rich_text: false,
+              attachments: [],
+            }),
+          },
+        );
+      } catch (error) {
+        console.error("Failed to add status change message to chat:", error);
+      }
+    };
+
     // Update via API
     if (typeof (updateStepStatus as any) === "function") {
-      (updateStepStatus as any)(stepId, {
-        status,
-        completed_date:
-          status === "completed" ? new Date().toISOString() : null,
-      });
+      try {
+        await (updateStepStatus as any)(stepId, {
+          status,
+          completed_date:
+            status === "completed" ? new Date().toISOString() : null,
+        });
+        // Add status change message to chat after successful update
+        await addStatusChangeMessage();
+      } catch (error) {
+        console.error("Failed to update step status:", error);
+      }
     } else {
       updateStepMutation.mutate({
         stepId,
@@ -141,6 +186,14 @@ export function VCDraggableStepsList({
           completed_date:
             status === "completed" ? new Date().toISOString() : null,
         },
+      }, {
+        onSuccess: async () => {
+          // Add status change message to chat after successful update
+          await addStatusChangeMessage();
+        },
+        onError: (error) => {
+          console.error("Failed to update step status:", error);
+        }
       });
     }
   };
