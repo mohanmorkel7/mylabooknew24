@@ -585,17 +585,12 @@ export default function FundRaiseDashboard() {
                                 >
                                   {(vcProgressData || []).map(
                                     (vcProgress: any) => {
-                                      const vcWidth =
-                                        100 /
-                                        Math.max(
-                                          (vcProgressData || []).length,
-                                          1,
-                                        );
+                                      const colWidth = 120;
                                       return (
                                         <div
                                           key={vcProgress.vc_id}
                                           className="relative"
-                                          style={{ width: `${vcWidth}%` }}
+                                          style={{ width: `${colWidth}px` }}
                                         >
                                           {(
                                             vcProgress.completed_steps || []
@@ -685,17 +680,12 @@ export default function FundRaiseDashboard() {
                               >
                                 {(vcProgressData || []).map(
                                   (vcProgress: any) => {
-                                    const vcWidth =
-                                      100 /
-                                      Math.max(
-                                        (vcProgressData || []).length,
-                                        1,
-                                      );
+                                    const colWidth = 120;
                                     return (
                                       <div
                                         key={vcProgress.vc_id}
                                         className="text-center"
-                                        style={{ width: `${vcWidth}%` }}
+                                        style={{ width: `${colWidth}px` }}
                                       >
                                         <div className="text-xs font-medium text-gray-700 mb-1">
                                           {vcProgress.round_title}
