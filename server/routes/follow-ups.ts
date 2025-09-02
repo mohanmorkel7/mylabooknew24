@@ -48,11 +48,15 @@ router.post("/", async (req: Request, res: Response) => {
         let query, values;
 
         if (hasVCColumns) {
-          // If vc_step_id is provided but vc_id is null, try to get vc_id from fund_raise_steps table
+          // Handle fund raise steps vs VC steps differently
           let resolvedVcId = vc_id;
+          let resolvedVcStepId = vc_step_id;
+
+          // If vc_step_id is provided, check if it's a fund_raise_step or actual vc_step
           if (vc_step_id && !vc_id) {
             try {
-              const stepResult = await pool.query(
+              // First check if it's a fund_raise_step
+              const fundRaiseStepResult = await pool.query(
                 `
                 SELECT fr.vc_id
                 FROM fund_raise_steps frs
@@ -62,15 +66,29 @@ router.post("/", async (req: Request, res: Response) => {
                 [vc_step_id],
               );
 
-              if (stepResult.rows.length > 0) {
-                resolvedVcId = stepResult.rows[0].vc_id;
+              if (fundRaiseStepResult.rows.length > 0) {
+                // This is a fund_raise_step, so get vc_id but don't use vc_step_id
+                resolvedVcId = fundRaiseStepResult.rows[0].vc_id;
+                resolvedVcStepId = null; // Don't use vc_step_id for fund raise steps
                 console.log(
-                  `Resolved vc_id ${resolvedVcId} for vc_step_id ${vc_step_id}`,
+                  `Resolved vc_id ${resolvedVcId} for fund_raise_step ${vc_step_id}, setting vc_step_id to null`,
                 );
+              } else {
+                // Check if it's a real vc_step
+                const vcStepResult = await pool.query(
+                  `SELECT vc_id FROM vc_steps WHERE id = $1`,
+                  [vc_step_id],
+                );
+                if (vcStepResult.rows.length > 0) {
+                  resolvedVcId = vcStepResult.rows[0].vc_id;
+                  console.log(
+                    `Found real vc_step ${vc_step_id} with vc_id ${resolvedVcId}`,
+                  );
+                }
               }
             } catch (error) {
               console.log(
-                "Could not resolve vc_id from fund_raise_steps:",
+                "Could not resolve step type:",
                 error.message,
               );
             }
@@ -91,7 +109,7 @@ router.post("/", async (req: Request, res: Response) => {
             lead_id || null,
             step_id || null,
             resolvedVcId || null,
-            vc_step_id || null,
+            resolvedVcStepId || null, // This will be null for fund raise steps
             title,
             description || null,
             due_date || null,
