@@ -1090,17 +1090,17 @@ export default function VCEdit() {
                 {vcData.lead_source && (
                   <div>
                     <Label htmlFor="lead_source_value">
-                      {vcData.lead_source === "email" && "Email Address"}
-                      {vcData.lead_source === "phone" && "Phone Number"}
+                      {vcData.lead_source === "email" && "Email Address *"}
+                      {vcData.lead_source === "phone" && "Phone Number *"}
                       {vcData.lead_source === "social-media" &&
-                        "Social Media Profile/Link"}
-                      {vcData.lead_source === "website" && "Website URL"}
+                        "Social Media Profile/Link *"}
+                      {vcData.lead_source === "website" && "Website URL *"}
                       {vcData.lead_source === "referral" &&
-                        "Referral Source/Contact"}
+                        "Referral Source/Contact *"}
                       {vcData.lead_source === "cold-call" &&
-                        "Phone Number Called"}
-                      {vcData.lead_source === "event" && "Event Name/Details"}
-                      {vcData.lead_source === "other" && "Source Details"}
+                        "Phone Number Called *"}
+                      {vcData.lead_source === "event" && "Event Name/Details *"}
+                      {vcData.lead_source === "other" && "Source Details *"}
                     </Label>
                     <div className="relative mt-1">
                       {vcData.lead_source === "email" && (
@@ -1189,7 +1189,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="industry">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus *</Label>
                     <Select
                       value={vcData.industry}
                       onValueChange={(value) =>
@@ -1222,7 +1222,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1274,7 +1274,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1379,7 +1379,7 @@ export default function VCEdit() {
             <CardContent className="space-y-4">
               {/* Address, Country, State/Province, City */}
               <div className="md:col-span-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">Address *</Label>
                 <Input
                   id="address"
                   placeholder="Street address"
@@ -1389,7 +1389,7 @@ export default function VCEdit() {
               </div>
 
               <div>
-                <Label htmlFor="country">Country</Label>
+                <Label htmlFor="country">Country *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1439,7 +1439,7 @@ export default function VCEdit() {
               </div>
 
               <div>
-                <Label htmlFor="state">State/Province</Label>
+                <Label htmlFor="state">State/Province *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1488,7 +1488,7 @@ export default function VCEdit() {
               </div>
 
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">City *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
