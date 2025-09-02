@@ -23,11 +23,12 @@ router.post(
         console.log("⚠️ No existing constraint to drop");
       }
 
-      // Add the corrected constraint
-      console.log("Adding corrected constraint...");
-      await client.query(`
-      ALTER TABLE follow_ups 
-      ADD CONSTRAINT chk_follow_up_context 
+      // Add the corrected constraint that allows general follow-ups (both null)
+    // but prevents both lead_id and vc_id from being set simultaneously
+    console.log("Adding corrected constraint...");
+    await client.query(`
+      ALTER TABLE follow_ups
+      ADD CONSTRAINT chk_follow_up_context
       CHECK (
         NOT (lead_id IS NOT NULL AND vc_id IS NOT NULL)
       )
