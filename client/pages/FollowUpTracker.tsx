@@ -249,6 +249,10 @@ export default function FollowUpTracker() {
 
   // Fetch follow-ups data from API
   useEffect(() => {
+    if (!user) return;
+
+    const controller = new AbortController();
+
     const fetchFollowUps = async () => {
       try {
         setLoading(true);
@@ -257,7 +261,9 @@ export default function FollowUpTracker() {
           userRole: user?.role || "",
         });
 
-        const response = await fetch(`/api/follow-ups?${params.toString()}`);
+        const response = await fetch(`/api/follow-ups?${params.toString()}`, {
+          signal: controller.signal,
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -265,41 +271,52 @@ export default function FollowUpTracker() {
 
         const data = await response.json();
 
-        // Convert to expected format and ensure IST timestamps
-        const formattedFollowUps = data.map((f: any) => ({
-          ...f,
-          created_at: new Date(f.created_at).toISOString(),
-          updated_at: new Date(f.updated_at).toISOString(),
-          due_date: f.due_date || new Date().toISOString().split("T")[0],
-          // Determine type based on available fields if not explicitly set
-          type:
-            f.type ||
-            (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
-        }));
+        // Only update state if the request wasn't aborted
+        if (!controller.signal.aborted) {
+          // Convert to expected format and ensure IST timestamps
+          const formattedFollowUps = data.map((f: any) => ({
+            ...f,
+            created_at: new Date(f.created_at).toISOString(),
+            updated_at: new Date(f.updated_at).toISOString(),
+            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            // Determine type based on available fields if not explicitly set
+            type:
+              f.type ||
+              (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
+          }));
 
-        setFollowUps(formattedFollowUps);
+          setFollowUps(formattedFollowUps);
+        }
       } catch (error) {
-        console.error("Failed to fetch follow-ups:", error);
-        // Fallback to mock data when API fails
-        const formattedMockFollowUps = mockFollowUps.map((f: any) => ({
-          ...f,
-          created_at: new Date(f.created_at).toISOString(),
-          updated_at: new Date(f.updated_at || f.created_at).toISOString(),
-          due_date: f.due_date || new Date().toISOString().split("T")[0],
-          // Determine type based on available fields if not explicitly set
-          type:
-            f.type ||
-            (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
-        }));
-        setFollowUps(formattedMockFollowUps);
+        // Only handle non-abort errors
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error("Failed to fetch follow-ups:", error);
+          // Fallback to mock data when API fails
+          const formattedMockFollowUps = mockFollowUps.map((f: any) => ({
+            ...f,
+            created_at: new Date(f.created_at).toISOString(),
+            updated_at: new Date(f.updated_at || f.created_at).toISOString(),
+            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            // Determine type based on available fields if not explicitly set
+            type:
+              f.type ||
+              (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
+          }));
+          setFollowUps(formattedMockFollowUps);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (user) {
-      fetchFollowUps();
-    }
+    fetchFollowUps();
+
+    // Cleanup function to abort the request if component unmounts or dependencies change
+    return () => {
+      controller.abort();
+    };
   }, [user]);
 
   // Check if we came here to view a specific follow-up ID
