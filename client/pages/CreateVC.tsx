@@ -81,7 +81,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Country, State, City } from "country-state-city";
-import { VC_TYPES, SECTOR_FOCUS } from "@/lib/constants";
+import { VC_TYPES, SECTOR_FOCUS, INVESTOR_FEEDBACK } from "@/lib/constants";
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
@@ -94,13 +94,6 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-const INVESTOR_FEEDBACK = [
-  { value: "existing_investor", label: "Existing Investor" },
-  { value: "general", label: "General" },
-  { value: "pass", label: "Pass" },
-  { value: "ghosting", label: "Ghosting" },
-  { value: "potential_future", label: "Potential Future" },
-];
 
 const COUNTRIES = [
   "India",
