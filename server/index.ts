@@ -292,6 +292,13 @@ export function createServer() {
     console.error("Error loading Database status router:", error);
   }
 
+  try {
+    app.use("/api/database-fix", databaseFixRouter);
+    console.log("Database fix router loaded successfully");
+  } catch (error) {
+    console.error("Error loading Database fix router:", error);
+  }
+
   // SSO Authentication router
   try {
     app.use("/api/auth", ssoAuthRouter);
