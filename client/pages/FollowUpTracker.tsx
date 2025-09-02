@@ -1028,7 +1028,8 @@ export default function FollowUpTracker() {
                               const isFundRaise =
                                 followUp.message_id &&
                                 (followUp as any).fund_raise_stage;
-                              const fundRaiseId = (followUp as any).fund_raise_id;
+                              const fundRaiseId = (followUp as any)
+                                .fund_raise_id;
                               return (
                                 <Button
                                   variant="outline"
@@ -1091,7 +1092,8 @@ export default function FollowUpTracker() {
                               const isFundRaise =
                                 followUp.message_id &&
                                 (followUp as any).fund_raise_stage;
-                              const fundRaiseId = (followUp as any).fund_raise_id;
+                              const fundRaiseId = (followUp as any)
+                                .fund_raise_id;
                               return (
                                 <Button
                                   variant="ghost"
