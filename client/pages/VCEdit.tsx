@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
 import { Country, State, City } from "country-state-city";
+import { VC_TYPES } from "@/lib/constants";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,15 +82,6 @@ import {
   Check,
 } from "lucide-react";
 
-const VC_TYPES = [
-  { value: "angel", label: "Angel" },
-  { value: "vc", label: "VC" },
-  { value: "private_equity", label: "Private Equity" },
-  { value: "family_office", label: "Family Office" },
-  { value: "merchant_banker", label: "Merchant Banker" },
-  { value: "accelerator", label: "Accelerator" },
-  { value: "individual", label: "Individual" },
-];
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre-Seed" },
@@ -679,7 +671,7 @@ export default function VCEdit() {
             // If it's already a YYYY-MM-DD string, use it directly
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
               console.log(
-                "🐛 DEBUG - start_date already in correct format:",
+                "�� DEBUG - start_date already in correct format:",
                 dateStr,
               );
               return dateStr;
