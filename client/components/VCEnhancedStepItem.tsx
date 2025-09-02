@@ -362,7 +362,10 @@ export function VCEnhancedStepItem({
           }),
         });
 
-        console.log("✅ System message sent successfully:", systemMessageResponse);
+        console.log(
+          "✅ System message sent successfully:",
+          systemMessageResponse,
+        );
 
         // Add to local state if API call successful
         setChatMessages((prev) => [...prev, systemMessageResponse]);
@@ -377,7 +380,9 @@ export function VCEnhancedStepItem({
           stepId: step.id,
           error: messageError,
         });
-        alert("Follow-up created successfully, but failed to notify team chat. Please check the chat manually.");
+        alert(
+          "Follow-up created successfully, but failed to notify team chat. Please check the chat manually.",
+        );
         // Fallback: add to local state only
         const systemMessage = {
           id: Date.now(),
@@ -389,7 +394,10 @@ export function VCEnhancedStepItem({
           created_at: new Date().toISOString(),
         };
         setChatMessages((prev) => [...prev, systemMessage]);
-        console.log("📝 Added fallback system message to local state:", systemMessage);
+        console.log(
+          "📝 Added fallback system message to local state:",
+          systemMessage,
+        );
       }
 
       setCreateFollowUp(false);
