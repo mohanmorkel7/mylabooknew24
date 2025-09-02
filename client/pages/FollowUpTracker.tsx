@@ -893,10 +893,14 @@ export default function FollowUpTracker() {
                                   >
                                     Fund Raise
                                   </Badge>
-                                  {followUp.vc_round_title ||
-                                    "Unknown Fund Raise"}{" "}
-                                  •{" "}
-                                  {followUp.investor_name || "Unknown Investor"}
+                                  {(() => {
+                                    // For fund raise follow-ups, create a meaningful title
+                                    const investorName = followUp.investor_name || "Unknown Investor";
+                                    const stage = (followUp as any).fund_raise_stage
+                                      ? `${(followUp as any).fund_raise_stage.replace('_', ' ')} Round`
+                                      : followUp.vc_round_title || "Fund Raise";
+                                    return `${stage} • ${investorName}`;
+                                  })()}
                                 </>
                               ) : (
                                 <>
