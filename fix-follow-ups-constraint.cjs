@@ -12,11 +12,11 @@ const pool = new Pool({
 
 async function fixFollowUpsConstraint() {
   console.log("🔧 Fixing follow-ups constraint...");
-  
+
   try {
     const client = await pool.connect();
     console.log("✅ Database connection successful!");
-    
+
     // Drop the existing constraint
     console.log("Dropping existing constraint...");
     try {
@@ -28,7 +28,7 @@ async function fixFollowUpsConstraint() {
     } catch (error) {
       console.log("⚠️ No existing constraint to drop");
     }
-    
+
     // Add the corrected constraint
     console.log("Adding corrected constraint...");
     await client.query(`
@@ -39,10 +39,9 @@ async function fixFollowUpsConstraint() {
       )
     `);
     console.log("✅ Added corrected constraint");
-    
+
     client.release();
     console.log("\n✅ Follow-ups constraint fix completed!");
-    
   } catch (error) {
     console.error("❌ Fix failed:", error);
   } finally {
