@@ -236,6 +236,19 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
         const result = await withTimeout(pool.query(query), 5000);
         followUps = result.rows;
         console.log(`📊 Found ${followUps.length} VC follow-ups for dashboard`);
+
+        // Debug: log first few follow-ups to see the data
+        if (followUps.length > 0) {
+          console.log(`📊 Sample follow-up data:`, followUps.slice(0, 2).map(f => ({
+            id: f.id,
+            title: f.title,
+            round_title: f.round_title,
+            step_name: f.step_name,
+            vc_id: f.vc_id,
+            vc_step_id: f.vc_step_id,
+            message_id: f.message_id
+          })));
+        }
       } else {
         // Return mock follow-ups when database is unavailable
         followUps = [
