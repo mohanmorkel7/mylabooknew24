@@ -211,8 +211,7 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
           LEFT JOIN users u ON f.assigned_to = u.id
           WHERE f.vc_id IS NOT NULL
             AND f.status IN ('pending', 'in_progress', 'completed')
-            AND f.due_date IS NOT NULL
-          ORDER BY f.due_date ASC
+          ORDER BY COALESCE(f.due_date, f.created_at) ASC
           LIMIT 50
         `;
         const result = await withTimeout(pool.query(query), 5000);
