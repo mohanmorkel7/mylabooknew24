@@ -95,6 +95,7 @@ export default function FundRaiseEdit() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [fundMnOpen, setFundMnOpen] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     vc_investor: "",
