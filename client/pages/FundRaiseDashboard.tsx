@@ -680,7 +680,7 @@ export default function FundRaiseDashboard() {
                               <div
                                 className="flex flex-1"
                                 style={{
-                                  minWidth: `${Math.min((vcProgressData || []).length * 80, 800)}px`,
+                                  minWidth: `${Math.max((vcProgressData || []).length * 120, 800)}px`,
                                 }}
                               >
                                 {(vcProgressData || []).map(
