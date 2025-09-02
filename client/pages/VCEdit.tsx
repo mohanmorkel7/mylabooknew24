@@ -812,14 +812,38 @@ export default function VCEdit() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
+    if (!vcData.lead_source) {
+      newErrors.lead_source = "Source is required";
+    }
+    if (!vcData.lead_source_value?.trim()) {
+      newErrors.lead_source_value = "Source information is required";
+    }
     if (!vcData.investor_name.trim()) {
-      newErrors.investor_name = "Investor name is required";
+      newErrors.investor_name = "Venture Capital Name is required";
     }
     if (!vcData.investor_category) {
       newErrors.investor_category = "VC Type is required";
     }
-    if (!vcData.lead_source) {
-      newErrors.lead_source = "Lead source is required";
+    if (!vcData.industry) {
+      newErrors.industry = "Sector Focus is required";
+    }
+    if (!vcData.minimum_size) {
+      newErrors.minimum_size = "Min.Chq Size is required";
+    }
+    if (!vcData.maximum_size) {
+      newErrors.maximum_size = "Max.Chq Size is required";
+    }
+    if (!vcData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+    if (!vcData.country) {
+      newErrors.country = "Country is required";
+    }
+    if (!vcData.state) {
+      newErrors.state = "State is required";
+    }
+    if (!vcData.city) {
+      newErrors.city = "City is required";
     }
 
     setErrors(newErrors);
@@ -2003,6 +2027,19 @@ export default function VCEdit() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {Object.keys(errors).length > 0 && (
+        <Alert className="mt-6">
+          <AlertDescription>
+            Please fix the following errors:
+            <ul className="list-disc list-inside mt-2">
+              {Object.values(errors).map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Template Preview Modal */}
       <TemplatePreviewModal
