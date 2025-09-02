@@ -48,6 +48,26 @@ router.post("/", async (req: Request, res: Response) => {
         let query, values;
 
         if (hasVCColumns) {
+          // If vc_step_id is provided but vc_id is null, try to get vc_id from fund_raise_steps table
+          let resolvedVcId = vc_id;
+          if (vc_step_id && !vc_id) {
+            try {
+              const stepResult = await pool.query(`
+                SELECT fr.vc_id
+                FROM fund_raise_steps frs
+                JOIN fund_raises fr ON frs.fund_raise_id = fr.id
+                WHERE frs.id = $1
+              `, [vc_step_id]);
+
+              if (stepResult.rows.length > 0) {
+                resolvedVcId = stepResult.rows[0].vc_id;
+                console.log(`Resolved vc_id ${resolvedVcId} for vc_step_id ${vc_step_id}`);
+              }
+            } catch (error) {
+              console.log("Could not resolve vc_id from fund_raise_steps:", error.message);
+            }
+          }
+
           // Full query with VC support
           query = `
             INSERT INTO follow_ups (
@@ -62,7 +82,7 @@ router.post("/", async (req: Request, res: Response) => {
             client_id || null,
             lead_id || null,
             step_id || null,
-            vc_id || null,
+            resolvedVcId || null,
             vc_step_id || null,
             title,
             description || null,
