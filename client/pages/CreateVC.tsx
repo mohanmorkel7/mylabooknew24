@@ -94,7 +94,6 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-
 const INVESTOR_FEEDBACK = [
   { value: "existing_investor", label: "Existing Investor" },
   { value: "general", label: "General" },
