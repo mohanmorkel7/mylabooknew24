@@ -188,8 +188,16 @@ export default function FundRaiseEdit() {
     },
   });
 
-  const handleChange = (field: string, value: any) =>
+  const handleChange = (field: string, value: any) => {
     setForm((p) => ({ ...p, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const n = { ...prev };
+        delete n[field];
+        return n;
+      });
+    }
+  };
 
   const handleSubmit = async () => {
     const payload: any = {
