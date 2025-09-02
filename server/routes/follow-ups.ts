@@ -644,6 +644,7 @@ router.get("/", async (req: Request, res: Response) => {
             vc_round_title: "Series A Funding",
             investor_name: "Accel Partners",
             step_name: "Due Diligence Review",
+            fund_raise_stage: "series_a",
             type: "vc",
           },
           {
@@ -665,6 +666,7 @@ router.get("/", async (req: Request, res: Response) => {
             vc_round_title: "Seed Round",
             investor_name: "Sequoia Capital",
             step_name: "Financial Review",
+            fund_raise_stage: "seed",
             type: "vc",
           },
           {
@@ -686,6 +688,7 @@ router.get("/", async (req: Request, res: Response) => {
             vc_round_title: "Pre-Series A",
             investor_name: "Lightspeed Venture",
             step_name: "Technical Due Diligence",
+            fund_raise_stage: "pre_series_a",
             type: "vc",
           },
         );
