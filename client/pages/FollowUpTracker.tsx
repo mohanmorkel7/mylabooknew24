@@ -286,19 +286,23 @@ export default function FollowUpTracker() {
           }));
 
           // Debug VC follow-ups to check stepId fields
-          const vcFollowUps = formattedFollowUps.filter((f: any) =>
-            f.type === 'vc' || f.vc_id || f.vc_round_title || f.investor_name
+          const vcFollowUps = formattedFollowUps.filter(
+            (f: any) =>
+              f.type === "vc" || f.vc_id || f.vc_round_title || f.investor_name,
           );
           if (vcFollowUps.length > 0) {
-            console.log('🔍 VC Follow-ups fetched:', vcFollowUps.map((f: any) => ({
-              id: f.id,
-              title: f.title,
-              vc_step_id: f.vc_step_id,
-              message_id: f.message_id,
-              step_id: f.step_id,
-              vc_id: f.vc_id,
-              type: f.type
-            })));
+            console.log(
+              "🔍 VC Follow-ups fetched:",
+              vcFollowUps.map((f: any) => ({
+                id: f.id,
+                title: f.title,
+                vc_step_id: f.vc_step_id,
+                message_id: f.message_id,
+                step_id: f.step_id,
+                vc_id: f.vc_id,
+                type: f.type,
+              })),
+            );
           }
 
           setFollowUps(formattedFollowUps);
@@ -388,7 +392,7 @@ export default function FollowUpTracker() {
             vc_step_id: vcStepId,
             message_id: messageId,
             step_id: followUp.step_id,
-            vc_id: (followUp as any).vc_id
+            vc_id: (followUp as any).vc_id,
           });
 
           if (vcStepId) {
@@ -431,8 +435,8 @@ export default function FollowUpTracker() {
             vc_step_id: (followUp as any).vc_step_id,
             message_id: followUp.message_id,
             step_id: followUp.step_id,
-            vc_id: (followUp as any).vc_id
-          }
+            vc_id: (followUp as any).vc_id,
+          },
         });
 
         console.log("Updating follow-up status with notification:", {
