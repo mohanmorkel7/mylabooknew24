@@ -550,6 +550,9 @@ export default function FundRaiseEdit() {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.investor_status && (
+                  <p className="text-sm text-red-600 mt-1">{errors.investor_status}</p>
+                )}
               </div>
             </CardContent>
           </Card>
