@@ -375,6 +375,7 @@ export function VCEnhancedStepItem({
       setFollowUpDueDate("");
     } catch (error) {
       console.error("Failed to create follow-up:", error);
+      alert("Failed to create follow-up. Please try again.");
     }
   };
 
