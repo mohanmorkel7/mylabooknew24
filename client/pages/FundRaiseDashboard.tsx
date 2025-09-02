@@ -1013,7 +1013,9 @@ export default function FundRaiseDashboard() {
                     <div className="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
                       {currentDueFollowUps.map(
                         (followUp: any, index: number) => {
-                          const dueDate = new Date(followUp.due_date);
+                          const dueDate = followUp.due_date
+                            ? new Date(followUp.due_date)
+                            : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
                           const diffDays = Math.ceil(
                             (dueDate.getTime() - now.getTime()) /
                               (1000 * 60 * 60 * 24),
