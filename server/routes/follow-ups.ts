@@ -113,14 +113,16 @@ router.post("/", async (req: Request, res: Response) => {
           if (!resolvedVcStepId && vc_step_id) {
             // This is a fund raise step, store it in message_id for reference
             finalMessageId = vc_step_id;
-            console.log(`📋 Storing fund_raise_step_id ${vc_step_id} in message_id for follow-up`);
+            console.log(
+              `📋 Storing fund_raise_step_id ${vc_step_id} in message_id for follow-up`,
+            );
           }
 
           console.log(`📋 Creating follow-up with:`, {
             vc_id: resolvedVcId,
             vc_step_id: resolvedVcStepId,
             fund_raise_step_id: finalMessageId,
-            title
+            title,
           });
 
           values = [
