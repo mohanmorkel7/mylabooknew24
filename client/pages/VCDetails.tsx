@@ -59,7 +59,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { formatToISTDateTime } from "@/lib/dateUtils";
-import { getSectorLabel } from "@/lib/constants";
+import { getSectorLabel, formatPhoneDisplay, formatPhoneHref } from "@/lib/constants";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
