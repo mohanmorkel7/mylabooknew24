@@ -4,10 +4,17 @@ import { normalizeUserId } from "../services/mockData";
 
 const router = Router();
 
-// Enhanced helper function with better error handling
+// Enhanced helper function with better error handling and timeout
 async function isDatabaseAvailable() {
   try {
-    await pool.query("SELECT 1");
+    // Add a 5-second timeout to prevent long waits
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Database query timeout")), 5000),
+    );
+
+    const queryPromise = pool.query("SELECT 1");
+
+    await Promise.race([queryPromise, timeoutPromise]);
     return true;
   } catch (error) {
     console.log("Database not available:", error.message);
@@ -445,7 +452,7 @@ router.get("/", async (req: Request, res: Response) => {
 
       let query;
       if (hasVCColumns) {
-        // Full query with VC support
+        // Full query with VC and Fund Raise support
         query = `
           SELECT f.*,
                  CONCAT(u.first_name, ' ', u.last_name) as assigned_user_name,
@@ -453,15 +460,18 @@ router.get("/", async (req: Request, res: Response) => {
                  cl.client_name,
                  l.client_name as lead_client_name,
                  l.project_title as lead_project_title,
-                 v.round_title as vc_round_title,
-                 v.investor_name as investor_name,
-                 vs.name as vc_step_name
+                 COALESCE(fr.investor_name, v.round_title) as vc_round_title,
+                 COALESCE(fr.investor_name, v.investor_name) as investor_name,
+                 vs.name as vc_step_name,
+                 fr.round_stage as fund_raise_stage,
+                 fr.id as fund_raise_id
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
           LEFT JOIN clients cl ON f.client_id = cl.id
           LEFT JOIN leads l ON f.lead_id = l.id
-          LEFT JOIN vcs v ON f.vc_id = v.id
+          LEFT JOIN vcs v ON f.vc_id = v.id AND f.vc_step_id IS NOT NULL
+          LEFT JOIN fund_raises fr ON f.vc_id = fr.vc_id AND f.message_id IS NOT NULL
           LEFT JOIN vc_steps vs ON f.vc_step_id = vs.id
           ${whereClause}
           ORDER BY f.created_at DESC
@@ -478,7 +488,9 @@ router.get("/", async (req: Request, res: Response) => {
                  NULL as step_name,
                  NULL as vc_round_title,
                  NULL as investor_name,
-                 NULL as vc_step_name
+                 NULL as vc_step_name,
+                 NULL as fund_raise_stage,
+                 NULL as fund_raise_id
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
@@ -493,7 +505,7 @@ router.get("/", async (req: Request, res: Response) => {
       }
 
       console.log("📊 Follow-ups query:", query);
-      console.log("📊 Query params:", queryParams);
+      console.log("��� Query params:", queryParams);
 
       const result = await pool.query(query, queryParams);
 
@@ -634,6 +646,8 @@ router.get("/", async (req: Request, res: Response) => {
             vc_round_title: "Series A Funding",
             investor_name: "Accel Partners",
             step_name: "Due Diligence Review",
+            fund_raise_stage: "series_a",
+            fund_raise_id: 1,
             type: "vc",
           },
           {
@@ -655,6 +669,8 @@ router.get("/", async (req: Request, res: Response) => {
             vc_round_title: "Seed Round",
             investor_name: "Sequoia Capital",
             step_name: "Financial Review",
+            fund_raise_stage: "seed",
+            fund_raise_id: 2,
             type: "vc",
           },
           {
@@ -676,6 +692,8 @@ router.get("/", async (req: Request, res: Response) => {
             vc_round_title: "Pre-Series A",
             investor_name: "Lightspeed Venture",
             step_name: "Technical Due Diligence",
+            fund_raise_stage: "pre_series_a",
+            fund_raise_id: 3,
             type: "vc",
           },
         );

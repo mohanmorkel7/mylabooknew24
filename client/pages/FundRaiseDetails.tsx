@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
+import { useUpdateFundRaiseStep } from "@/hooks/useApi";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
 import { Button } from "@/components/ui/button";
 import {
@@ -98,6 +99,7 @@ export default function FundRaiseDetails() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const updateStepMutation = useUpdateFundRaiseStep();
 
   const frId = parseInt(id || "0");
 
@@ -256,13 +258,17 @@ export default function FundRaiseDetails() {
   };
 
   const updateFundRaiseStepStatus = (stepId: number, payload: any) => {
-    apiClient
-      .request(`/fund-raises/steps/${stepId}`, {
-        method: "PUT",
-        body: JSON.stringify(payload),
-      })
-      .then(() => refetchSteps())
-      .catch(() => {});
+    updateStepMutation.mutate(
+      { stepId, stepData: payload },
+      {
+        onSuccess: () => {
+          refetchSteps();
+        },
+        onError: (error) => {
+          console.error("Failed to update step status:", error);
+        },
+      },
+    );
   };
 
   const handleReorderSteps = async (reorderedSteps: any[]) => {
@@ -297,18 +303,21 @@ export default function FundRaiseDetails() {
 
   const formatCurrency = (
     amount: string | number,
-    currency: string = "INR",
+    currency: string = "USD",
   ) => {
     if (!amount) return "N/A";
     const amountStr = typeof amount === "number" ? amount.toString() : amount;
-    if (
-      amountStr.includes("$") ||
-      amountStr.includes("₹") ||
-      amountStr.includes("د.إ")
-    )
-      return amountStr;
-    const symbol = currency === "USD" ? "$" : currency === "AED" ? "د.إ" : "₹";
-    return `${symbol}${amountStr}`;
+
+    // Strip any existing currency symbols to get the numeric value (preserve decimal points)
+    const numericValue = amountStr
+      .replace(/[$₹د]/g, "")
+      .replace(/[إ]/g, "")
+      .trim();
+
+    if (!numericValue) return "N/A";
+
+    // Always format as USD with Mn suffix
+    return `$${numericValue}Mn`;
   };
 
   const getRoundStageDisplay = (stage: string) => {

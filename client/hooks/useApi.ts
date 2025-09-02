@@ -1762,6 +1762,10 @@ export function useUpdateFundRaiseStep() {
       if (frId) {
         queryClient.invalidateQueries({ queryKey: ["fund-raise-steps", frId] });
       }
+      // Invalidate dashboard queries to update progress percentages
+      queryClient.invalidateQueries({ queryKey: ["fund-raises-progress"] });
+      queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
+      queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
     },
   });
 }

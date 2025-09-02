@@ -177,10 +177,12 @@ export default function FundRaiseEdit() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
       await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
+      await queryClient.invalidateQueries({ queryKey: ["fundraise-edit", id] });
       await queryClient.invalidateQueries({
         queryKey: ["fund-raise-steps", id],
       });
       await queryClient.refetchQueries({ queryKey: ["fundraise", id] });
+      await queryClient.refetchQueries({ queryKey: ["fundraise-edit", id] });
       await queryClient.refetchQueries({ queryKey: ["fund-raise-steps", id] });
     },
   });
@@ -206,10 +208,12 @@ export default function FundRaiseEdit() {
     try {
       await updateMutation.mutateAsync(payload);
       await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
+      await queryClient.invalidateQueries({ queryKey: ["fundraise-edit", id] });
       await queryClient.invalidateQueries({
         queryKey: ["fund-raise-steps", id],
       });
       await queryClient.refetchQueries({ queryKey: ["fundraise", id] });
+      await queryClient.refetchQueries({ queryKey: ["fundraise-edit", id] });
       await queryClient.refetchQueries({ queryKey: ["fund-raise-steps", id] });
       navigate(`/fundraise/${id}`);
     } catch (e) {

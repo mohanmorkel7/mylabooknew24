@@ -249,6 +249,10 @@ export default function FollowUpTracker() {
 
   // Fetch follow-ups data from API
   useEffect(() => {
+    if (!user) return;
+
+    const controller = new AbortController();
+
     const fetchFollowUps = async () => {
       try {
         setLoading(true);
@@ -257,44 +261,82 @@ export default function FollowUpTracker() {
           userRole: user?.role || "",
         });
 
-        const response = await fetch(`/api/follow-ups?${params.toString()}`);
+        const response = await fetch(`/api/follow-ups?${params.toString()}`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
 
-        // Convert to expected format and ensure IST timestamps
-        const formattedFollowUps = data.map((f: any) => ({
-          ...f,
-          created_at: new Date(f.created_at).toISOString(),
-          updated_at: new Date(f.updated_at).toISOString(),
-          due_date: f.due_date || new Date().toISOString().split("T")[0],
-          // Determine type based on available fields if not explicitly set
-          type:
-            f.type ||
-            (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
-        }));
+        // Only update state if the request wasn't aborted
+        if (!controller.signal.aborted) {
+          // Convert to expected format and ensure IST timestamps
+          const formattedFollowUps = data.map((f: any) => ({
+            ...f,
+            created_at: new Date(f.created_at).toISOString(),
+            updated_at: new Date(f.updated_at).toISOString(),
+            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            // Determine type based on available fields if not explicitly set
+            type:
+              f.type ||
+              (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
+          }));
 
-        setFollowUps(formattedFollowUps);
+          // Debug VC follow-ups to check stepId fields
+          const vcFollowUps = formattedFollowUps.filter(
+            (f: any) =>
+              f.type === "vc" || f.vc_id || f.vc_round_title || f.investor_name,
+          );
+          if (vcFollowUps.length > 0) {
+            console.log(
+              "🔍 VC Follow-ups fetched:",
+              vcFollowUps.map((f: any) => ({
+                id: f.id,
+                title: f.title,
+                vc_step_id: f.vc_step_id,
+                message_id: f.message_id,
+                step_id: f.step_id,
+                vc_id: f.vc_id,
+                type: f.type,
+              })),
+            );
+          }
+
+          setFollowUps(formattedFollowUps);
+        }
       } catch (error) {
-        console.error("Failed to fetch follow-ups:", error);
-        // Fallback to mock data when API fails
-        const formattedMockFollowUps = mockFollowUps.map((f: any) => ({
-          ...f,
-          created_at: new Date(f.created_at).toISOString(),
-          updated_at: new Date(f.updated_at || f.created_at).toISOString(),
-          due_date: f.due_date || new Date().toISOString().split("T")[0],
-          // Determine type based on available fields if not explicitly set
-          type:
-            f.type ||
-            (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
-        }));
-        setFollowUps(formattedMockFollowUps);
+        // Only handle non-abort errors
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Failed to fetch follow-ups:", error);
+          // Fallback to mock data when API fails
+          const formattedMockFollowUps = mockFollowUps.map((f: any) => ({
+            ...f,
+            created_at: new Date(f.created_at).toISOString(),
+            updated_at: new Date(f.updated_at || f.created_at).toISOString(),
+            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            // Determine type based on available fields if not explicitly set
+            type:
+              f.type ||
+              (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
+          }));
+          setFollowUps(formattedMockFollowUps);
+        }
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (user) {
-      fetchFollowUps();
-    }
+    fetchFollowUps();
+
+    // Cleanup function to abort the request if component unmounts or dependencies change
+    return () => {
+      controller.abort();
+    };
   }, [user]);
 
   // Check if we came here to view a specific follow-up ID
@@ -337,9 +379,44 @@ export default function FollowUpTracker() {
             ? "vc"
             : "lead");
 
+        // Derive the correct stepId and API base for notifications
+        let stepApiBase: "vc" | "fund-raises" | "leads" = "leads";
+        let stepIdValue: number | undefined = followUp.step_id;
+
+        if (followUpType === "vc") {
+          // VC-related follow-up handling
+          const vcStepId = (followUp as any).vc_step_id;
+          const messageId = followUp.message_id;
+
+          console.log("Analyzing VC follow-up step data:", {
+            vc_step_id: vcStepId,
+            message_id: messageId,
+            step_id: followUp.step_id,
+            vc_id: (followUp as any).vc_id,
+          });
+
+          if (vcStepId) {
+            // This is a real VC step
+            stepIdValue = vcStepId;
+            stepApiBase = "vc";
+            console.log("Using vc_step_id for real VC step:", stepIdValue);
+          } else if (messageId) {
+            // This is a fund-raise step (backend stores fund_raise_step_id in message_id)
+            stepIdValue = messageId;
+            stepApiBase = "fund-raises";
+            console.log("Using message_id for fund-raise step:", stepIdValue);
+          } else {
+            // Fallback to step_id
+            stepIdValue = followUp.step_id;
+            stepApiBase = "fund-raises"; // Default to fund-raises for VC type
+            console.log("Fallback to step_id for VC follow-up:", stepIdValue);
+          }
+        } else {
+          stepApiBase = "leads";
+        }
+
         const notificationData = {
-          stepId:
-            followUpType === "vc" ? followUp.vc_step_id : followUp.step_id,
+          stepId: stepIdValue,
           userId: parseInt(user.id),
           userName: user.name,
           followUpTitle:
@@ -347,13 +424,65 @@ export default function FollowUpTracker() {
             followUp.description?.substring(0, 50) + "..." ||
             `Follow-up #${followUpId}`,
           isVC: followUpType === "vc",
-        };
+          stepApiBase,
+        } as const;
+
+        console.log("✅ Successfully derived notification data:", {
+          stepIdValue,
+          stepApiBase,
+          followUpType,
+          followUpFields: {
+            vc_step_id: (followUp as any).vc_step_id,
+            message_id: followUp.message_id,
+            step_id: followUp.step_id,
+            vc_id: (followUp as any).vc_id,
+          },
+        });
 
         console.log("Updating follow-up status with notification:", {
           followUpId,
           newStatus,
           notificationData,
         });
+
+        // Validate stepId before proceeding
+        if (!stepIdValue) {
+          console.error("❌ Critical error: stepId is null/undefined", {
+            followUpId,
+            followUp,
+            notificationData,
+          });
+
+          // Still update the status, but skip notification
+          const response = await fetch(`/api/follow-ups/${followUpId}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              status: newStatus,
+              completed_at: completedAt,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to update status");
+          }
+
+          alert(
+            "Follow-up status updated, but team chat notification could not be sent due to missing step information.",
+          );
+
+          // Update local state and return early
+          setFollowUps((prevFollowUps) =>
+            prevFollowUps.map((f) =>
+              f.id === followUpId
+                ? { ...f, status: newStatus as any, completed_at: completedAt }
+                : f,
+            ),
+          );
+          return;
+        }
 
         // Use the utility function that includes chat notification
         await updateFollowUpStatusWithNotification(
@@ -762,12 +891,26 @@ export default function FollowUpTracker() {
                                     variant="secondary"
                                     className="mr-2 bg-purple-100 text-purple-700"
                                   >
-                                    VC
+                                    Fund Raise
                                   </Badge>
-                                  {followUp.vc_round_title ||
-                                    "Unknown VC Round"}{" "}
-                                  •{" "}
-                                  {followUp.investor_name || "Unknown Investor"}
+                                  {(() => {
+                                    // For fund raise follow-ups, create a meaningful title
+                                    const investorName =
+                                      followUp.investor_name ||
+                                      "Unknown Investor";
+                                    const stage = (followUp as any)
+                                      .fund_raise_stage
+                                      ? (followUp as any).fund_raise_stage
+                                          .split("_")
+                                          .map(
+                                            (word: string) =>
+                                              word.charAt(0).toUpperCase() +
+                                              word.slice(1),
+                                          )
+                                          .join(" ") + " Round"
+                                      : followUp.vc_round_title || "Fund Raise";
+                                    return `${stage} • ${investorName}`;
+                                  })()}
                                 </>
                               ) : (
                                 <>
@@ -880,15 +1023,35 @@ export default function FollowUpTracker() {
                               View Message
                             </Button>
                           ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/vc/${followUp.vc_id}`)}
-                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                            >
-                              <ExternalLink className="w-3 h-3 mr-1" />
-                              View VC Round
-                            </Button>
+                            (() => {
+                              // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
+                              const isFundRaise =
+                                followUp.message_id &&
+                                (followUp as any).fund_raise_stage;
+                              const fundRaiseId = (followUp as any)
+                                .fund_raise_id;
+                              return (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (isFundRaise && fundRaiseId) {
+                                      // Navigate to fund raise details using the actual fund raise ID
+                                      navigate(`/fundraise/${fundRaiseId}`);
+                                    } else {
+                                      // Navigate to VC round
+                                      navigate(`/vc/${followUp.vc_id}`);
+                                    }
+                                  }}
+                                  className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                  {isFundRaise
+                                    ? "View Fund Raise"
+                                    : "View VC Round"}
+                                </Button>
+                              );
+                            })()
                           )}
 
                           <Select
@@ -924,15 +1087,35 @@ export default function FollowUpTracker() {
                               Go to Lead
                             </Button>
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/vc/${followUp.vc_id}`)}
-                              className="text-gray-600 hover:text-gray-700"
-                            >
-                              <Target className="w-3 h-3 mr-1" />
-                              Go to VC
-                            </Button>
+                            (() => {
+                              // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
+                              const isFundRaise =
+                                followUp.message_id &&
+                                (followUp as any).fund_raise_stage;
+                              const fundRaiseId = (followUp as any)
+                                .fund_raise_id;
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (isFundRaise && fundRaiseId) {
+                                      // Navigate to fund raise details using the actual fund raise ID
+                                      navigate(`/fundraise/${fundRaiseId}`);
+                                    } else {
+                                      // Navigate to VC round
+                                      navigate(`/vc/${followUp.vc_id}`);
+                                    }
+                                  }}
+                                  className="text-gray-600 hover:text-gray-700"
+                                >
+                                  <Target className="w-3 h-3 mr-1" />
+                                  {isFundRaise
+                                    ? "Go to Fund Raise"
+                                    : "Go to VC"}
+                                </Button>
+                              );
+                            })()
                           )}
                         </div>
                       </div>

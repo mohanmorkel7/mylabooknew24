@@ -305,8 +305,15 @@ export function VCEnhancedStepItem({
       return;
     }
 
+    console.log("🚀 Starting follow-up creation process...", {
+      step: { id: step.id, name: step.name, vc_id: step.vc_id },
+      stepApiBase,
+      user: { id: user?.id, name: user?.name },
+    });
+
     try {
       // Create the follow-up task
+      console.log("📝 Creating follow-up with mutation...");
       const created = await createFollowUpMutation.mutateAsync({
         title: `Fund Raise Follow-up: ${step.name}`,
         description: followUpNotes,
@@ -317,6 +324,8 @@ export function VCEnhancedStepItem({
         vc_step_id: step.id,
         created_by: parseInt(user?.id || "1"),
       });
+
+      console.log("✅ Follow-up created successfully:", created);
 
       const assignee = teamMembers.find(
         (m) => m.id === parseInt(followUpAssignTo),
@@ -330,42 +339,92 @@ export function VCEnhancedStepItem({
         .join(" | ");
 
       const systemMessageText = `📋 Follow-up created: "${followUpNotes}" — ${details}`;
+      const chatApiUrl = `/${stepApiBase}/steps/${step.id}/chats`;
+
+      console.log("💬 Preparing to send system message to team chat:", {
+        url: chatApiUrl,
+        message: systemMessageText,
+        stepApiBase,
+        stepId: step.id,
+      });
 
       try {
         // Use the correct steps chat API endpoint
-        const systemMessageResponse = await apiClient.request(
-          `/${stepApiBase}/steps/${step.id}/chats`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              user_id: parseInt(user?.id || "1"),
-              user_name: "System",
-              message: systemMessageText,
-              message_type: "system",
-              is_rich_text: false,
-              attachments: [],
-            }),
-          },
+        const systemMessageResponse = await apiClient.request(chatApiUrl, {
+          method: "POST",
+          body: JSON.stringify({
+            user_id: parseInt(user?.id || "0"),
+            user_name: "System",
+            message: systemMessageText,
+            message_type: "system",
+            is_rich_text: false,
+            attachments: [],
+          }),
+        });
+
+        console.log(
+          "✅ System message sent successfully:",
+          systemMessageResponse,
         );
 
-        // Add to local state if API call successful
-        setChatMessages((prev) => [...prev, systemMessageResponse]);
-      } catch (messageError) {
+        // Verify the response is valid (not an error response)
+        if (
+          systemMessageResponse &&
+          typeof systemMessageResponse === "object" &&
+          systemMessageResponse.id
+        ) {
+          // Add to local state if API call successful and response is valid
+          setChatMessages((prev) => [...prev, systemMessageResponse]);
+        } else {
+          console.warn(
+            "⚠️ System message response is invalid:",
+            systemMessageResponse,
+          );
+          throw new Error("Invalid system message response");
+        }
+      } catch (messageError: any) {
         console.error(
-          "Failed to save system message to VC chat:",
+          "❌ Failed to save follow-up creation message to team chat:",
           messageError,
         );
+        console.error("❌ Error details:", {
+          url: chatApiUrl,
+          stepApiBase,
+          stepId: step.id,
+          error: messageError,
+          status: messageError?.status,
+          statusText: messageError?.statusText,
+        });
+
+        // Check if it's a database availability issue
+        if (
+          messageError?.status === 503 ||
+          messageError?.message?.includes("Database unavailable")
+        ) {
+          alert(
+            "Follow-up created successfully, but the database is currently unavailable. The team chat notification could not be sent. Please refresh the page and check the chat manually.",
+          );
+        } else {
+          alert(
+            "Follow-up created successfully, but failed to notify team chat. Please check the chat manually.",
+          );
+        }
+
         // Fallback: add to local state only
         const systemMessage = {
           id: Date.now(),
           message: systemMessageText,
           message_type: "system" as const,
-          user_id: parseInt(user?.id || "1"),
+          user_id: parseInt(user?.id || "0"),
           user_name: "System",
           is_rich_text: false,
           created_at: new Date().toISOString(),
         };
         setChatMessages((prev) => [...prev, systemMessage]);
+        console.log(
+          "📝 Added fallback system message to local state:",
+          systemMessage,
+        );
       }
 
       setCreateFollowUp(false);
@@ -373,7 +432,8 @@ export function VCEnhancedStepItem({
       setFollowUpAssignTo("");
       setFollowUpDueDate("");
     } catch (error) {
-      console.error("Failed to create follow-up:", error);
+      console.error("❌ Failed to create follow-up:", error);
+      alert("Failed to create follow-up. Please try again.");
     }
   };
 

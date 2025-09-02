@@ -502,12 +502,87 @@ router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
 
 router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
   try {
-    if (!(await isDatabaseAvailable()))
-      return res.status(503).json({ error: "Database unavailable" });
     const stepId = parseInt(req.params.stepId);
-    if (isNaN(stepId))
+    console.log(`💬 Fund raise chat creation request for step ${stepId}:`, {
+      body: req.body,
+      stepId,
+      method: req.method,
+      url: req.originalUrl,
+    });
+
+    if (isNaN(stepId)) {
+      console.log(`❌ Invalid step ID provided: ${req.params.stepId}`);
       return res.status(400).json({ error: "Invalid step id" });
+    }
+
+    const dbAvailable = await isDatabaseAvailable();
+    console.log(`🔍 Database available for fund raise chat: ${dbAvailable}`);
+
+    if (!dbAvailable) {
+      console.log(`❌ Database unavailable for fund raise step ${stepId} chat`);
+      return res.status(503).json({ error: "Database unavailable" });
+    }
+
     const b = req.body || {};
+    console.log(`📝 Creating fund raise step chat with data:`, {
+      stepId,
+      user_id: b.user_id,
+      user_name: b.user_name,
+      message: b.message?.substring(0, 100) + "...",
+      message_type: b.message_type,
+      is_rich_text: b.is_rich_text,
+      attachments_count: (b.attachments || []).length,
+    });
+
+    // Check if the fund raise step exists first
+    const stepExists = await pool.query(
+      `SELECT fund_raise_id FROM fund_raise_steps WHERE id = $1`,
+      [stepId],
+    );
+
+    if (stepExists.rows.length === 0) {
+      console.log(`❌ Fund raise step ${stepId} not found in database`);
+      return res.status(404).json({ error: "Fund raise step not found" });
+    }
+
+    console.log(
+      `✅ Fund raise step ${stepId} exists, fund_raise_id: ${stepExists.rows[0].fund_raise_id}`,
+    );
+
+    // Check if fund_raise_step_chats table exists
+    const tableExists = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name = 'fund_raise_step_chats'
+      );
+    `);
+
+    if (!tableExists.rows[0].exists) {
+      console.log(`❌ fund_raise_step_chats table does not exist!`);
+
+      // Try to create the table
+      console.log(`🔧 Attempting to create fund_raise_step_chats table...`);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS fund_raise_step_chats (
+          id SERIAL PRIMARY KEY,
+          step_id INTEGER NOT NULL,
+          user_id INTEGER,
+          user_name VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          message_type VARCHAR(20) DEFAULT 'text' CHECK (message_type IN ('text','image','file','system')),
+          is_rich_text BOOLEAN DEFAULT false,
+          attachments JSONB DEFAULT '[]'::jsonb,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE INDEX IF NOT EXISTS idx_frs_chats_step_id ON fund_raise_step_chats(step_id);
+      `);
+      console.log(`✅ fund_raise_step_chats table created successfully`);
+    } else {
+      console.log(`✅ fund_raise_step_chats table exists`);
+    }
+
     const r = await pool.query(
       `INSERT INTO fund_raise_step_chats (step_id, user_id, user_name, message, message_type, is_rich_text, attachments)
        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
@@ -521,10 +596,29 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
         JSON.stringify(b.attachments || []),
       ],
     );
+
+    console.log(`✅ Fund raise step chat created successfully:`, {
+      id: r.rows[0].id,
+      step_id: r.rows[0].step_id,
+      message_type: r.rows[0].message_type,
+      user_name: r.rows[0].user_name,
+    });
+
     res.status(201).json(r.rows[0]);
   } catch (error: any) {
-    console.error("Error creating fund raise step chat:", error.message);
-    res.status(500).json({ error: "Failed" });
+    console.error("❌ Error creating fund raise step chat:", error);
+    console.error("❌ Error details:", {
+      message: error.message,
+      code: error.code,
+      detail: error.detail,
+      constraint: error.constraint,
+      stepId: req.params.stepId,
+      body: req.body,
+    });
+    res.status(500).json({
+      error: "Failed to create fund raise step chat",
+      details: error.message,
+    });
   }
 });
 
