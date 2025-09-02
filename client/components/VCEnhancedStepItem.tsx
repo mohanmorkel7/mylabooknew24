@@ -174,7 +174,12 @@ export function VCEnhancedStepItem({
   const [createFollowUp, setCreateFollowUp] = useState(false);
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [followUpAssignTo, setFollowUpAssignTo] = useState("");
-  const [followUpDueDate, setFollowUpDueDate] = useState("");
+  const [followUpDueDate, setFollowUpDueDate] = useState(() => {
+    // Default to 3 days from now
+    const defaultDate = new Date();
+    defaultDate.setDate(defaultDate.getDate() + 3);
+    return defaultDate.toISOString().split('T')[0];
+  });
 
   // Edit message state
   const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
