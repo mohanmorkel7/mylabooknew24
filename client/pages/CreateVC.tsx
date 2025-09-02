@@ -2259,8 +2259,8 @@ export default function CreateVC() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
+            <Button onClick={handleSubmit} disabled={isSubmitting || createVCMutation.isPending}>
+              {isSubmitting ? "Creating..." : "Create VC"}
             </Button>
           </div>
         </TabsContent>
