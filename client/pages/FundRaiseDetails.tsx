@@ -91,6 +91,8 @@ const roundStageColors = {
   series_b: "bg-purple-100 text-purple-800",
   series_c: "bg-pink-100 text-pink-800",
   bridge: "bg-yellow-100 text-yellow-800",
+  bridge_1: "bg-yellow-100 text-yellow-800",
+  bridge_2: "bg-yellow-100 text-yellow-800",
   mezzanine: "bg-red-100 text-red-800",
 };
 

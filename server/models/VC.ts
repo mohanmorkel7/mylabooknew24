@@ -31,6 +31,8 @@ export interface VC {
     | "series_b"
     | "series_c"
     | "bridge"
+    | "bridge_1"
+    | "bridge_2"
     | "growth"
     | "ipo";
   round_size?: string;
