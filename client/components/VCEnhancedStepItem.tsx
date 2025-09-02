@@ -338,7 +338,7 @@ export function VCEnhancedStepItem({
           {
             method: "POST",
             body: JSON.stringify({
-              user_id: parseInt(user?.id || "1"),
+              user_id: parseInt(user?.id || "0"),
               user_name: "System",
               message: systemMessageText,
               message_type: "system",
@@ -352,15 +352,16 @@ export function VCEnhancedStepItem({
         setChatMessages((prev) => [...prev, systemMessageResponse]);
       } catch (messageError) {
         console.error(
-          "Failed to save system message to VC chat:",
+          "Failed to save follow-up creation message to team chat:",
           messageError,
         );
+        alert("Follow-up created successfully, but failed to notify team chat. Please check the chat manually.");
         // Fallback: add to local state only
         const systemMessage = {
           id: Date.now(),
           message: systemMessageText,
           message_type: "system" as const,
-          user_id: parseInt(user?.id || "1"),
+          user_id: parseInt(user?.id || "0"),
           user_name: "System",
           is_rich_text: false,
           created_at: new Date().toISOString(),
