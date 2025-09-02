@@ -303,7 +303,7 @@ export default function FundRaiseDetails() {
 
   const formatCurrency = (
     amount: string | number,
-    currency: string = "INR",
+    currency: string = "USD",
   ) => {
     if (!amount) return "N/A";
     const amountStr = typeof amount === "number" ? amount.toString() : amount;
@@ -312,9 +312,9 @@ export default function FundRaiseDetails() {
       amountStr.includes("₹") ||
       amountStr.includes("د.إ")
     )
-      return amountStr;
+      return `${amountStr}Mn`;
     const symbol = currency === "USD" ? "$" : currency === "AED" ? "د.إ" : "₹";
-    return `${symbol}${amountStr}`;
+    return `${symbol}${amountStr}Mn`;
   };
 
   const getRoundStageDisplay = (stage: string) => {
