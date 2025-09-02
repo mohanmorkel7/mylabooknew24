@@ -159,6 +159,14 @@ export default function CreateFundRaise() {
     if (!form.investor_status)
       n.investor_status = "Investor Status is required";
     setErrors(n);
+
+    const keys = Object.keys(n);
+    if (keys.length) {
+      const queueFields = new Set(["fund_mn", "investor_status"]);
+      const goQueue = keys.some((k) => queueFields.has(k));
+      setActiveTab(goQueue ? "queue" : "fundraise");
+    }
+
     return Object.keys(n).length === 0;
   };
 
