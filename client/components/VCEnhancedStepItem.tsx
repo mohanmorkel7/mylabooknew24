@@ -305,8 +305,15 @@ export function VCEnhancedStepItem({
       return;
     }
 
+    console.log("🚀 Starting follow-up creation process...", {
+      step: { id: step.id, name: step.name, vc_id: step.vc_id },
+      stepApiBase,
+      user: { id: user?.id, name: user?.name },
+    });
+
     try {
       // Create the follow-up task
+      console.log("📝 Creating follow-up with mutation...");
       const created = await createFollowUpMutation.mutateAsync({
         title: `Fund Raise Follow-up: ${step.name}`,
         description: followUpNotes,
@@ -317,6 +324,8 @@ export function VCEnhancedStepItem({
         vc_step_id: step.id,
         created_by: parseInt(user?.id || "1"),
       });
+
+      console.log("✅ Follow-up created successfully:", created);
 
       const assignee = teamMembers.find(
         (m) => m.id === parseInt(followUpAssignTo),
@@ -330,31 +339,44 @@ export function VCEnhancedStepItem({
         .join(" | ");
 
       const systemMessageText = `📋 Follow-up created: "${followUpNotes}" — ${details}`;
+      const chatApiUrl = `/${stepApiBase}/steps/${step.id}/chats`;
+
+      console.log("💬 Preparing to send system message to team chat:", {
+        url: chatApiUrl,
+        message: systemMessageText,
+        stepApiBase,
+        stepId: step.id,
+      });
 
       try {
         // Use the correct steps chat API endpoint
-        const systemMessageResponse = await apiClient.request(
-          `/${stepApiBase}/steps/${step.id}/chats`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              user_id: parseInt(user?.id || "0"),
-              user_name: "System",
-              message: systemMessageText,
-              message_type: "system",
-              is_rich_text: false,
-              attachments: [],
-            }),
-          },
-        );
+        const systemMessageResponse = await apiClient.request(chatApiUrl, {
+          method: "POST",
+          body: JSON.stringify({
+            user_id: parseInt(user?.id || "0"),
+            user_name: "System",
+            message: systemMessageText,
+            message_type: "system",
+            is_rich_text: false,
+            attachments: [],
+          }),
+        });
+
+        console.log("✅ System message sent successfully:", systemMessageResponse);
 
         // Add to local state if API call successful
         setChatMessages((prev) => [...prev, systemMessageResponse]);
       } catch (messageError) {
         console.error(
-          "Failed to save follow-up creation message to team chat:",
+          "❌ Failed to save follow-up creation message to team chat:",
           messageError,
         );
+        console.error("❌ Error details:", {
+          url: chatApiUrl,
+          stepApiBase,
+          stepId: step.id,
+          error: messageError,
+        });
         alert("Follow-up created successfully, but failed to notify team chat. Please check the chat manually.");
         // Fallback: add to local state only
         const systemMessage = {
@@ -367,6 +389,7 @@ export function VCEnhancedStepItem({
           created_at: new Date().toISOString(),
         };
         setChatMessages((prev) => [...prev, systemMessage]);
+        console.log("📝 Added fallback system message to local state:", systemMessage);
       }
 
       setCreateFollowUp(false);
@@ -374,7 +397,7 @@ export function VCEnhancedStepItem({
       setFollowUpAssignTo("");
       setFollowUpDueDate("");
     } catch (error) {
-      console.error("Failed to create follow-up:", error);
+      console.error("❌ Failed to create follow-up:", error);
       alert("Failed to create follow-up. Please try again.");
     }
   };
