@@ -31,7 +31,10 @@ async function ensureVCInvestorCategoryConstraint() {
     vcConstraintEnsured = true;
     console.log("VC investor_category constraint ensured/updated");
   } catch (e: any) {
-    console.log("VC investor_category constraint ensure failed or not needed:", e.message);
+    console.log(
+      "VC investor_category constraint ensure failed or not needed:",
+      e.message,
+    );
     // Even if it fails due to permissions/locks, avoid blocking the request
     vcConstraintEnsured = true; // prevent repeated attempts each request
   }
