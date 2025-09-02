@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +6,6 @@ import { RichTextEditor } from "./RichTextEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -74,6 +73,7 @@ interface VCEnhancedStepItemProps {
   onUpdateStatus: (stepId: number, status: string) => void;
   onDeleteStep: (stepId: number) => void;
   isDragOverlay?: boolean;
+  stepApiBase?: "vc" | "fund-raises";
 }
 
 interface ChatMessage {
@@ -94,6 +94,7 @@ export function VCEnhancedStepItem({
   onUpdateStatus,
   onDeleteStep,
   isDragOverlay = false,
+  stepApiBase = "vc",
 }: VCEnhancedStepItemProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -125,23 +126,33 @@ export function VCEnhancedStepItem({
       role: user.role,
     }));
 
-  // Mock chat data for VC steps (similar structure to leads)
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
-    {
-      id: 1,
-      user_name: "System",
-      message: `VC step "${step.name}" created for funding tracking`,
-      is_rich_text: false,
-      message_type: "system",
-      created_at: new Date().toISOString(),
-    },
-  ]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatLoading, setChatLoading] = useState<boolean>(false);
+  const [chatError, setChatError] = useState<any>(null);
 
-  const chatLoading = false;
-  const chatError = null;
+  // Load chats when expanded
+  useEffect(() => {
+    const loadChats = async () => {
+      if (!isExpanded || !step?.id) return;
+      try {
+        setChatLoading(true);
+        setChatError(null);
+        const rows = await apiClient.request(
+          `/${stepApiBase}/steps/${step.id}/chats`,
+        );
+        setChatMessages(Array.isArray(rows) ? rows : []);
+      } catch (e: any) {
+        setChatError(e);
+      } finally {
+        setChatLoading(false);
+      }
+    };
+    loadChats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded, step?.id, stepApiBase]);
 
   // Sort messages by created_at in ascending order (latest last for bottom scroll)
-  const sortedMessages = React.useMemo(() => {
+  const sortedMessages = useMemo(() => {
     return [...chatMessages].sort(
       (a, b) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
@@ -157,7 +168,6 @@ export function VCEnhancedStepItem({
   }, [sortedMessages]);
 
   const [newMessage, setNewMessage] = useState("");
-  const [isRichText, setIsRichText] = useState(false);
   const [stagedAttachments, setStagedAttachments] = useState<any[]>([]);
 
   // Follow-up related states
@@ -213,15 +223,24 @@ export function VCEnhancedStepItem({
     const files = event.target.files;
     if (!files || files.length === 0 || !user) return;
 
-    // Stage the attachments for sending
-    const newAttachments = Array.from(files).map((file) => ({
-      file_name: file.name,
-      file_size: file.size,
-      file_type: file.type,
-    }));
-
-    setStagedAttachments((prev) => [...prev, ...newAttachments]);
-    event.target.value = "";
+    try {
+      const result: any = await apiClient.uploadFiles(files);
+      const uploaded = Array.isArray(result?.files) ? result.files : [];
+      const newAttachments = uploaded.map((f: any) => ({
+        file_name: f.originalName || f.filename,
+        file_size: f.size,
+        file_type: f.mimetype,
+        file_path: f.path,
+        filename: f.filename,
+        download_url: `/api/files/download/${f.filename}`,
+      }));
+      setStagedAttachments((prev) => [...prev, ...newAttachments]);
+    } catch (e) {
+      console.error("File upload failed:", e);
+      alert("File upload failed. Please try again.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const removeAttachment = (index: number) => {
@@ -232,23 +251,42 @@ export function VCEnhancedStepItem({
     if (!newMessage.trim() && stagedAttachments.length === 0) return;
 
     try {
-      const messageData = {
-        id: Date.now(),
-        user_name: user?.name || "Anonymous",
+      const payload = {
         user_id: parseInt(user?.id || "0"),
+        user_name: user?.name || "Anonymous",
         message: newMessage.trim(),
-        is_rich_text: isRichText,
+        is_rich_text: true,
         message_type: "text" as const,
-        created_at: new Date().toISOString(),
-        attachments:
-          stagedAttachments.length > 0 ? stagedAttachments : undefined,
+        attachments: stagedAttachments,
       };
 
-      setChatMessages((prev) => [...prev, messageData]);
+      const saved = await apiClient.request(
+        `/${stepApiBase}/steps/${step.id}/chats`,
+        {
+          method: "POST",
+          body: JSON.stringify(payload),
+        },
+      );
+
+      setChatMessages((prev) => [...prev, saved]);
       setNewMessage("");
       setStagedAttachments([]);
     } catch (error) {
       console.error("Failed to send message:", error);
+      // Fallback to local state
+      const fallback: ChatMessage = {
+        id: Date.now(),
+        user_id: parseInt(user?.id || "0"),
+        user_name: user?.name || "Anonymous",
+        message: newMessage.trim(),
+        is_rich_text: true,
+        message_type: "text",
+        created_at: new Date().toISOString(),
+        attachments: stagedAttachments,
+      } as any;
+      setChatMessages((prev) => [...prev, fallback]);
+      setNewMessage("");
+      setStagedAttachments([]);
     }
   };
 
@@ -264,7 +302,7 @@ export function VCEnhancedStepItem({
 
     try {
       // Create the follow-up task
-      await createFollowUpMutation.mutateAsync({
+      const created = await createFollowUpMutation.mutateAsync({
         title: `VC Step Follow-up: ${step.name}`,
         description: followUpNotes,
         assigned_to: parseInt(followUpAssignTo),
@@ -275,13 +313,23 @@ export function VCEnhancedStepItem({
         created_by: parseInt(user?.id || "1"),
       });
 
-      // Send system message to VC chat API so it persists in database
-      const systemMessageText = `📋 Follow-up task created: "${followUpNotes}" - Due: ${new Date(followUpDueDate).toLocaleDateString()}`;
+      const assignee = teamMembers.find(
+        (m) => m.id === parseInt(followUpAssignTo),
+      );
+      const details = [
+        created?.id ? `ID: #${created.id}` : null,
+        assignee ? `Assignee: ${assignee.name}` : null,
+        `Due: ${new Date(followUpDueDate).toLocaleDateString()}`,
+      ]
+        .filter(Boolean)
+        .join(" | ");
+
+      const systemMessageText = `📋 Follow-up created: "${followUpNotes}" — ${details}`;
 
       try {
-        // Use the correct VC steps chat API endpoint
+        // Use the correct steps chat API endpoint
         const systemMessageResponse = await apiClient.request(
-          `/vc/steps/${step.id}/chats`,
+          `/${stepApiBase}/steps/${step.id}/chats`,
           {
             method: "POST",
             body: JSON.stringify({
@@ -338,17 +386,38 @@ export function VCEnhancedStepItem({
     originalIsRichText: boolean,
   ) => {
     try {
+      const saved = await apiClient.request(
+        `/${stepApiBase}/chats/${messageId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            message: editMessageText.trim(),
+            is_rich_text: true,
+          }),
+        },
+      );
+
       setChatMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === messageId
-            ? { ...msg, message: editMessageText.trim() }
-            : msg,
-        ),
+        prev.map((msg) => (msg.id === messageId ? { ...msg, ...saved } : msg)),
       );
       setEditingMessageId(null);
       setEditMessageText("");
     } catch (error) {
       console.error("Failed to edit message:", error);
+      // Fallback: update locally
+      setChatMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === messageId
+            ? {
+                ...msg,
+                message: editMessageText.trim(),
+                is_rich_text: true,
+              }
+            : msg,
+        ),
+      );
+      setEditingMessageId(null);
+      setEditMessageText("");
     }
   };
 
@@ -366,13 +435,17 @@ export function VCEnhancedStepItem({
     if (!messageToDelete) return;
 
     try {
+      await apiClient.request(`/${stepApiBase}/chats/${messageToDelete}`, {
+        method: "DELETE",
+      });
+    } catch (error) {
+      console.error("Failed to delete on server, removing locally:", error);
+    } finally {
       setChatMessages((prev) =>
         prev.filter((msg) => msg.id !== messageToDelete),
       );
       setDeleteConfirmOpen(false);
       setMessageToDelete(null);
-    } catch (error) {
-      console.error("Failed to delete message:", error);
     }
   };
 
@@ -415,12 +488,21 @@ export function VCEnhancedStepItem({
               <div className="flex items-center space-x-2">
                 <span className="font-medium text-gray-900">{step.name}</span>
                 <div className="flex items-center space-x-2">
+                  {typeof step.probability_percent !== "undefined" &&
+                    step.probability_percent !== null && (
+                      <Badge
+                        variant="outline"
+                        className="text-xs bg-blue-50 text-blue-700 border-blue-200"
+                      >
+                        {parseFloat(step.probability_percent) || 0}%
+                      </Badge>
+                    )}
                   {step.estimated_days && (
                     <Badge variant="outline" className="text-xs">
                       {step.estimated_days}d ETA
                     </Badge>
                   )}
-                  {step.priority && (
+                  {stepApiBase === "vc" && step.priority && (
                     <Badge
                       variant="outline"
                       className={`text-xs ${
@@ -434,12 +516,17 @@ export function VCEnhancedStepItem({
                       {step.priority} priority
                     </Badge>
                   )}
-                  {!chatLoading && sortedMessages.length > 0 && (
-                    <Badge variant="outline" className="text-xs">
-                      {sortedMessages.length} message
-                      {sortedMessages.length !== 1 ? "s" : ""}
-                    </Badge>
-                  )}
+                  {(() => {
+                    const count =
+                      !chatLoading && sortedMessages.length > 0
+                        ? sortedMessages.length
+                        : step.message_count || 0;
+                    return count > 0 ? (
+                      <Badge variant="outline" className="text-xs">
+                        {count} message{count !== 1 ? "s" : ""}
+                      </Badge>
+                    ) : null;
+                  })()}
                 </div>
               </div>
               <div className="text-sm text-gray-600 mt-1">
@@ -611,23 +698,12 @@ export function VCEnhancedStepItem({
                             <div className="text-sm text-gray-700">
                               {editingMessageId === message.id ? (
                                 <div className="space-y-2">
-                                  {message.is_rich_text ? (
-                                    <RichTextEditor
-                                      value={editMessageText}
-                                      onChange={setEditMessageText}
-                                      placeholder="Edit your message with rich formatting..."
-                                      className="min-h-[80px] border-gray-200"
-                                    />
-                                  ) : (
-                                    <Textarea
-                                      value={editMessageText}
-                                      onChange={(e) =>
-                                        setEditMessageText(e.target.value)
-                                      }
-                                      className="min-h-[60px]"
-                                      placeholder="Edit your message..."
-                                    />
-                                  )}
+                                  <RichTextEditor
+                                    value={editMessageText}
+                                    onChange={setEditMessageText}
+                                    placeholder="Edit your message with rich formatting..."
+                                    className="min-h-[80px] border-gray-200"
+                                  />
                                   <div className="flex space-x-2">
                                     <Button
                                       size="sm"
@@ -659,27 +735,102 @@ export function VCEnhancedStepItem({
                                   }}
                                 />
                               )}
-                              {/* Show attachments */}
                               {message.attachments &&
                                 message.attachments.length > 0 && (
                                   <div className="mt-2 space-y-1">
                                     {message.attachments.map(
-                                      (attachment, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="flex items-center space-x-2 text-xs bg-gray-100 px-2 py-1 rounded"
-                                        >
-                                          <FileText className="w-3 h-3" />
-                                          <span>{attachment.file_name}</span>
-                                          <span className="text-gray-500">
-                                            (
-                                            {(
-                                              attachment.file_size / 1024
-                                            ).toFixed(1)}{" "}
-                                            KB)
-                                          </span>
-                                        </div>
-                                      ),
+                                      (attachment, idx) => {
+                                        const fname =
+                                          attachment.filename ||
+                                          attachment.file_name ||
+                                          "file";
+                                        const directPath =
+                                          attachment.file_path ||
+                                          attachment.path ||
+                                          "";
+                                        const downloadUrl =
+                                          attachment.download_url ||
+                                          (attachment.filename
+                                            ? `/api/files/download/${attachment.filename}`
+                                            : directPath);
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="flex items-center space-x-2 text-xs bg-gray-100 px-2 py-1 rounded"
+                                          >
+                                            <FileText className="w-3 h-3" />
+                                            <a
+                                              href={downloadUrl || "#"}
+                                              onClick={async (e) => {
+                                                e.stopPropagation();
+                                                if (!downloadUrl) return;
+                                                try {
+                                                  if (attachment.filename) {
+                                                    const response =
+                                                      await fetch(
+                                                        `/api/files/download/${attachment.filename}`,
+                                                      );
+                                                    if (!response.ok)
+                                                      throw new Error(
+                                                        "Download failed",
+                                                      );
+                                                    const blob =
+                                                      await response.blob();
+                                                    const url =
+                                                      window.URL.createObjectURL(
+                                                        blob,
+                                                      );
+                                                    const link =
+                                                      document.createElement(
+                                                        "a",
+                                                      );
+                                                    link.href = url;
+                                                    link.download =
+                                                      attachment.file_name ||
+                                                      fname;
+                                                    document.body.appendChild(
+                                                      link,
+                                                    );
+                                                    link.click();
+                                                    document.body.removeChild(
+                                                      link,
+                                                    );
+                                                    window.URL.revokeObjectURL(
+                                                      url,
+                                                    );
+                                                  } else {
+                                                    window.open(
+                                                      downloadUrl,
+                                                      "_blank",
+                                                    );
+                                                  }
+                                                } catch (err) {
+                                                  console.error(
+                                                    "Download failed:",
+                                                    err,
+                                                  );
+                                                  alert(
+                                                    "Download failed. File may not be available.",
+                                                  );
+                                                }
+                                              }}
+                                              download={!!attachment.filename}
+                                              className="text-blue-600 hover:underline"
+                                            >
+                                              {fname}
+                                            </a>
+                                            {attachment.file_size ? (
+                                              <span className="text-gray-500">
+                                                (
+                                                {(
+                                                  attachment.file_size / 1024
+                                                ).toFixed(1)}{" "}
+                                                KB)
+                                              </span>
+                                            ) : null}
+                                          </div>
+                                        );
+                                      },
                                     )}
                                   </div>
                                 )}
@@ -783,38 +934,12 @@ export function VCEnhancedStepItem({
                   {/* Message Input Section */}
                   <div className="border-t pt-4">
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <Checkbox
-                          id="rich-text"
-                          checked={isRichText}
-                          onCheckedChange={setIsRichText}
-                        />
-                        <Label htmlFor="rich-text" className="text-sm">
-                          Rich text formatting
-                        </Label>
-                      </div>
-
-                      {isRichText ? (
-                        <RichTextEditor
-                          value={newMessage}
-                          onChange={setNewMessage}
-                          placeholder="Type your message with rich formatting..."
-                          className="min-h-[100px] border-gray-300"
-                        />
-                      ) : (
-                        <Textarea
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          placeholder="Type your message here... Use @username to mention team members"
-                          className="min-h-[60px] resize-none"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && !e.shiftKey) {
-                              e.preventDefault();
-                              handleSendMessage();
-                            }
-                          }}
-                        />
-                      )}
+                      <RichTextEditor
+                        value={newMessage}
+                        onChange={setNewMessage}
+                        placeholder="Type your message with rich formatting..."
+                        className="min-h-[100px] border-gray-300"
+                      />
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">

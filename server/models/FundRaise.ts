@@ -26,6 +26,7 @@ export interface FundRaise {
   end_date?: string | null;
   total_raise_mn?: string | null;
   valuation_mn?: string | null;
+  fund_mn?: string | null;
   reason?: string | null;
   template_id?: number | null;
   created_by?: number | null;
@@ -58,10 +59,46 @@ export class FundRaiseRepository {
     return result.rows;
   }
 
-  static async findById(id: number): Promise<FundRaise | null> {
-    const result = await pool.query(`SELECT * FROM fund_raises WHERE id = $1`, [
-      id,
-    ]);
+  static async findById(id: number): Promise<any | null> {
+    const query = `
+      SELECT
+        fr.id,
+        fr.vc_id,
+        COALESCE(fr.investor_name, v.investor_name) AS investor_name,
+        fr.ui_status,
+        fr.status,
+        fr.investor_status,
+        COALESCE(fr.round_stage, v.round_stage) AS round_stage,
+        -- Prefer FR dates; fallback to VC dates
+        COALESCE(fr.start_date::text, v.start_date::text) AS start_date,
+        COALESCE(fr.end_date::text, v.targeted_end_date::text) AS targeted_end_date,
+        -- Monetary fields (MN)
+        COALESCE(fr.total_raise_mn::text, v.round_size) AS round_size,
+        COALESCE(fr.valuation_mn::text, v.valuation) AS valuation,
+        -- Additional FR fields
+        fr.total_raise_mn,
+        fr.valuation_mn,
+        fr.fund_mn,
+        fr.reason,
+        fr.template_id,
+        fr.created_by,
+        fr.updated_by,
+        fr.created_at,
+        fr.updated_at,
+        -- VC context fields used by UI
+        v.lead_source,
+        v.lead_source_value,
+        v.priority_level,
+        v.round_title,
+        v.round_description,
+        v.billing_currency,
+        v.contacts,
+        v.notes
+      FROM fund_raises fr
+      LEFT JOIN vcs v ON v.id = fr.vc_id
+      WHERE fr.id = $1
+    `;
+    const result = await pool.query(query, [id]);
     return result.rows[0] || null;
   }
 
@@ -82,11 +119,13 @@ export class FundRaiseRepository {
       INSERT INTO fund_raises (
         vc_id, investor_name, ui_status, status, investor_status,
         round_stage, start_date, end_date, total_raise_mn, valuation_mn,
+        fund_mn,
         reason, template_id, created_by, updated_by
       ) VALUES (
         $1, $2, $3, $4, $5,
         $6, $7, $8, $9, $10,
-        $11, $12, $13, $14
+        $11,
+        $12, $13, $14, $15
       ) RETURNING *
     `;
     const values = [
@@ -100,6 +139,7 @@ export class FundRaiseRepository {
       data.end_date ?? null,
       data.total_raise_mn ?? null,
       data.valuation_mn ?? null,
+      data.fund_mn ?? null,
       data.reason ?? null,
       data.template_id ?? null,
       data.created_by ?? null,

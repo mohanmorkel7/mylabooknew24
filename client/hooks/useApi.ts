@@ -1734,3 +1734,69 @@ export function useDeleteVCStepChat() {
     },
   });
 }
+
+// Fund Raise Steps hooks
+export function useFundRaiseSteps(frId: number) {
+  return useQuery({
+    queryKey: ["fund-raise-steps", frId],
+    queryFn: async () => {
+      const res = await apiClient.request(`/fund-raises/${frId}/steps`);
+      return Array.isArray(res) ? res : [];
+    },
+    enabled: !!frId,
+    staleTime: 0,
+    cacheTime: 0,
+  });
+}
+
+export function useUpdateFundRaiseStep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ stepId, stepData }: { stepId: number; stepData: any }) =>
+      apiClient.request(`/fund-raises/steps/${stepId}`, {
+        method: "PUT",
+        body: JSON.stringify(stepData),
+      }),
+    onSuccess: (data: any) => {
+      const frId = data?.fund_raise_id || data?.data?.fund_raise_id;
+      if (frId) {
+        queryClient.invalidateQueries({ queryKey: ["fund-raise-steps", frId] });
+      }
+    },
+  });
+}
+
+export function useDeleteFundRaiseStep() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ stepId }: { stepId: number }) =>
+      apiClient.request(`/fund-raises/steps/${stepId}`, { method: "DELETE" }),
+    onSuccess: (_: any, vars: any) => {
+      queryClient.invalidateQueries({ queryKey: ["fund-raise-steps"] });
+    },
+  });
+}
+
+export function useCreateFundRaiseStep(frId: number) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (stepData: any) =>
+      apiClient.request(`/fund-raises/${frId}/steps`, {
+        method: "POST",
+        body: JSON.stringify(stepData),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fund-raise-steps", frId] });
+    },
+  });
+}
+
+export function useCreateFundRaiseStepChat() {
+  return useMutation({
+    mutationFn: ({ stepId, chat }: { stepId: number; chat: any }) =>
+      apiClient.request(`/fund-raises/steps/${stepId}/chats`, {
+        method: "POST",
+        body: JSON.stringify(chat),
+      }),
+  });
+}

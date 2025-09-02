@@ -108,6 +108,7 @@ export interface CreateVCData {
   country?: string;
   website?: string;
   company_size?: string;
+  industry?: string;
   investor_last_feedback?: string;
   potential_lead_investor?: boolean;
   minimum_size?: number;
@@ -147,6 +148,7 @@ export interface UpdateVCData {
   country?: string;
   website?: string;
   company_size?: string;
+  industry?: string;
   investor_last_feedback?: string;
   potential_lead_investor?: boolean;
   minimum_size?: number;
@@ -296,7 +298,7 @@ export class VCRepository {
         vc_id, lead_source, lead_source_value, lead_created_by, status,
         round_title, round_description, round_stage, round_size, valuation,
         investor_category, investor_name, contact_person, email, phone,
-        address, city, state, country, website, company_size,
+        address, city, state, country, website, company_size, industry,
         investor_last_feedback,
         potential_lead_investor, minimum_size, maximum_size, minimum_arr_requirement,
         priority_level, start_date, targeted_end_date, spoc,
@@ -304,8 +306,8 @@ export class VCRepository {
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21,
-        $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37
+        $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
+        $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33, $34, $35, $36, $37, $38
       )
       RETURNING *
     `;
@@ -331,6 +333,12 @@ export class VCRepository {
         processed_targeted_end_date: targetedEndDateValue,
       });
 
+      const parseNumber = (val: any) => {
+        if (val === undefined || val === null || val === "") return null;
+        const num = typeof val === "string" ? parseFloat(val) : Number(val);
+        return Number.isFinite(num) ? num : null;
+      };
+
       const values = [
         tempVcId,
         vcData.lead_source || "email",
@@ -353,11 +361,12 @@ export class VCRepository {
         countryValue,
         vcData.website || null,
         vcData.company_size || null,
+        vcData.industry || null,
         vcData.investor_last_feedback || null,
         vcData.potential_lead_investor || false,
-        vcData.minimum_size || null,
-        vcData.maximum_size || null,
-        vcData.minimum_arr_requirement || null,
+        parseNumber(vcData.minimum_size),
+        parseNumber(vcData.maximum_size),
+        parseNumber(vcData.minimum_arr_requirement),
         vcData.priority_level || "medium",
         startDateValue,
         targetedEndDateValue,
@@ -419,10 +428,24 @@ export class VCRepository {
     const values = [];
     let paramCount = 1;
 
+    const parseNumber = (val: any) => {
+      if (val === undefined || val === null || val === "") return null;
+      const num = typeof val === "string" ? parseFloat(val) : Number(val);
+      return Number.isFinite(num) ? num : null;
+    };
+
     Object.entries(processedVcData).forEach(([key, value]) => {
       if (value !== undefined) {
+        let v: any = value;
+        if (
+          key === "minimum_size" ||
+          key === "maximum_size" ||
+          key === "minimum_arr_requirement"
+        ) {
+          v = parseNumber(value);
+        }
         fields.push(`${key} = $${paramCount}`);
-        values.push(value);
+        values.push(v);
         paramCount++;
       }
     });
