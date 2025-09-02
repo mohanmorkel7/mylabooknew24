@@ -335,7 +335,13 @@ export default function FollowUpTracker() {
 
     // Cleanup function to abort the request if component unmounts or dependencies change
     return () => {
-      controller.abort();
+      try {
+        // Provide a reason to help debuggers and guard against environments that throw
+        // when aborting in StrictMode double-invocation.
+        (controller as any).abort?.("component-unmounted");
+      } catch {
+        // no-op: safely ignore abort errors
+      }
     };
   }, [user]);
 
