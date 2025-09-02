@@ -528,7 +528,7 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
       stepId,
       user_id: b.user_id,
       user_name: b.user_name,
-      message: b.message?.substring(0, 100) + '...',
+      message: b.message?.substring(0, 100) + "...",
       message_type: b.message_type,
       is_rich_text: b.is_rich_text,
       attachments_count: (b.attachments || []).length,
@@ -537,7 +537,7 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
     // Check if the fund raise step exists first
     const stepExists = await pool.query(
       `SELECT fund_raise_id FROM fund_raise_steps WHERE id = $1`,
-      [stepId]
+      [stepId],
     );
 
     if (stepExists.rows.length === 0) {
@@ -545,7 +545,9 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Fund raise step not found" });
     }
 
-    console.log(`✅ Fund raise step ${stepId} exists, fund_raise_id: ${stepExists.rows[0].fund_raise_id}`);
+    console.log(
+      `✅ Fund raise step ${stepId} exists, fund_raise_id: ${stepExists.rows[0].fund_raise_id}`,
+    );
 
     // Check if fund_raise_step_chats table exists
     const tableExists = await pool.query(`
@@ -615,7 +617,7 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
     });
     res.status(500).json({
       error: "Failed to create fund raise step chat",
-      details: error.message
+      details: error.message,
     });
   }
 });
