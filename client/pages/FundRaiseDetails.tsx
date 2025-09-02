@@ -308,8 +308,8 @@ export default function FundRaiseDetails() {
     if (!amount) return "N/A";
     const amountStr = typeof amount === "number" ? amount.toString() : amount;
 
-    // Strip any existing currency symbols to get the numeric value
-    const numericValue = amountStr.replace(/[$₹د\.إ]/g, "").trim();
+    // Strip any existing currency symbols to get the numeric value (preserve decimal points)
+    const numericValue = amountStr.replace(/[$₹د]/g, "").replace(/[إ]/g, "").trim();
 
     if (!numericValue) return "N/A";
 
