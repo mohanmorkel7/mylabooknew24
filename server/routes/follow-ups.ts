@@ -190,8 +190,28 @@ router.post("/", async (req: Request, res: Response) => {
             `);
 
             console.log("Migration completed, retrying insert...");
-            // Retry the insert
-            const retryResult = await pool.query(query, values);
+            // Retry the insert with fallback query (without VC columns)
+            const retryQuery = `
+              INSERT INTO follow_ups (
+                client_id, lead_id, step_id, title, description, due_date,
+                follow_up_type, assigned_to, created_by, message_id
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+              RETURNING *
+            `;
+            const retryValues = [
+              client_id || null,
+              lead_id || null,
+              step_id || null,
+              title,
+              description || null,
+              due_date || null,
+              follow_up_type,
+              assigned_to || null,
+              created_by,
+              message_id || null,
+            ];
+            const retryResult = await pool.query(retryQuery, retryValues);
             return res.status(201).json(retryResult.rows[0]);
           } catch (migrationError) {
             console.error("Migration failed:", migrationError.message);
