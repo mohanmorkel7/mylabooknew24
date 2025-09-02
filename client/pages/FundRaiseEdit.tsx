@@ -199,7 +199,19 @@ export default function FundRaiseEdit() {
     }
   };
 
+  const validateForm = () => {
+    const n: Record<string, string> = {};
+    if (!form.vc_investor) n.vc_investor = "VC is required";
+    if (!form.status) n.status = "Status is required";
+    if (!form.round_stage) n.round_stage = "Investment Stage is required";
+    if (!form.fund_mn) n.fund_mn = "Fund $ Mn is required";
+    if (!form.investor_status) n.investor_status = "Investor Status is required";
+    setErrors(n);
+    return Object.keys(n).length === 0;
+  };
+
   const handleSubmit = async () => {
+    if (!validateForm()) return;
     const payload: any = {
       investor_name: form.vc_investor,
       ui_status: form.status,
