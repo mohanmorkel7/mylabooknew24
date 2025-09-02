@@ -9,7 +9,7 @@ async function isDatabaseAvailable() {
   try {
     // Add a 5-second timeout to prevent long waits
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Database query timeout')), 5000)
+      setTimeout(() => reject(new Error("Database query timeout")), 5000),
     );
 
     const queryPromise = pool.query("SELECT 1");

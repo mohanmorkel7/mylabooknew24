@@ -136,7 +136,7 @@ export function VCDraggableStepsList({
         pending: "Pending",
         in_progress: "In Progress",
         completed: "Completed",
-        cancelled: "Cancelled"
+        cancelled: "Cancelled",
       };
 
       const oldStatusDisplay = statusDisplayMap[oldStatus] || oldStatus;
@@ -145,21 +145,22 @@ export function VCDraggableStepsList({
       const systemMessage = `📝 Step status changed from "${oldStatusDisplay}" to "${newStatusDisplay}" by ${user.name}`;
 
       try {
-        const apiBase = stepApiBase ?? (typeof (updateStepStatus as any) === "function" ? "fund-raises" : "vc");
-        await apiClient.request(
-          `/${apiBase}/steps/${stepId}/chats`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              user_id: parseInt(user.id || "0"),
-              user_name: "System",
-              message: systemMessage,
-              message_type: "system",
-              is_rich_text: false,
-              attachments: [],
-            }),
-          },
-        );
+        const apiBase =
+          stepApiBase ??
+          (typeof (updateStepStatus as any) === "function"
+            ? "fund-raises"
+            : "vc");
+        await apiClient.request(`/${apiBase}/steps/${stepId}/chats`, {
+          method: "POST",
+          body: JSON.stringify({
+            user_id: parseInt(user.id || "0"),
+            user_name: "System",
+            message: systemMessage,
+            message_type: "system",
+            is_rich_text: false,
+            attachments: [],
+          }),
+        });
       } catch (error) {
         console.error("Failed to add status change message to chat:", error);
       }
@@ -179,22 +180,25 @@ export function VCDraggableStepsList({
         console.error("Failed to update step status:", error);
       }
     } else {
-      updateStepMutation.mutate({
-        stepId,
-        stepData: {
-          status,
-          completed_date:
-            status === "completed" ? new Date().toISOString() : null,
+      updateStepMutation.mutate(
+        {
+          stepId,
+          stepData: {
+            status,
+            completed_date:
+              status === "completed" ? new Date().toISOString() : null,
+          },
         },
-      }, {
-        onSuccess: async () => {
-          // Add status change message to chat after successful update
-          await addStatusChangeMessage();
+        {
+          onSuccess: async () => {
+            // Add status change message to chat after successful update
+            await addStatusChangeMessage();
+          },
+          onError: (error) => {
+            console.error("Failed to update step status:", error);
+          },
         },
-        onError: (error) => {
-          console.error("Failed to update step status:", error);
-        }
-      });
+      );
     }
   };
 
