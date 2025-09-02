@@ -512,6 +512,8 @@ export default function FundRaiseDashboard() {
 
                 const chartHeight = 400;
 
+                const colWidth = 120;
+
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -580,8 +582,8 @@ export default function FundRaiseDashboard() {
                                 </div>
 
                                 <div
-                                  className="absolute inset-0 flex"
-                                  style={{ paddingTop: "0px" }}
+                                  className="absolute inset-0 grid"
+                                  style={{ paddingTop: "0px", gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)` }}
                                 >
                                   {(vcProgressData || []).map(
                                     (vcProgress: any) => {
@@ -673,9 +675,10 @@ export default function FundRaiseDashboard() {
                             <div className="flex">
                               <div className="w-48 pr-4"></div>
                               <div
-                                className="flex flex-1"
+                                className="grid flex-1"
                                 style={{
-                                  minWidth: `${Math.max((vcProgressData || []).length * 120, 800)}px`,
+                                  minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
+                                  gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
                                 }}
                               >
                                 {(vcProgressData || []).map(
