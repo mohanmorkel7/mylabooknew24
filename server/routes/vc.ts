@@ -225,7 +225,8 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
           LEFT JOIN fund_raise_steps frs ON (
             f.vc_step_id IS NULL
             AND f.message_id IS NOT NULL
-            AND frs.id = f.message_id::integer
+            AND f.message_id ~ '^[0-9]+$'
+            AND frs.id = CAST(f.message_id AS INTEGER)
           )
           WHERE f.vc_id IS NOT NULL
             AND f.status IN ('pending', 'in_progress', 'completed')
