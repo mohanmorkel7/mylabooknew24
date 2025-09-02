@@ -1028,14 +1028,15 @@ export default function FollowUpTracker() {
                               const isFundRaise =
                                 followUp.message_id &&
                                 (followUp as any).fund_raise_stage;
+                              const fundRaiseId = (followUp as any).fund_raise_id;
                               return (
                                 <Button
                                   variant="outline"
                                   size="sm"
                                   onClick={() => {
-                                    if (isFundRaise) {
-                                      // Navigate to fund raise details
-                                      navigate(`/fundraise/${followUp.vc_id}`);
+                                    if (isFundRaise && fundRaiseId) {
+                                      // Navigate to fund raise details using the actual fund raise ID
+                                      navigate(`/fundraise/${fundRaiseId}`);
                                     } else {
                                       // Navigate to VC round
                                       navigate(`/vc/${followUp.vc_id}`);
@@ -1090,14 +1091,15 @@ export default function FollowUpTracker() {
                               const isFundRaise =
                                 followUp.message_id &&
                                 (followUp as any).fund_raise_stage;
+                              const fundRaiseId = (followUp as any).fund_raise_id;
                               return (
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    if (isFundRaise) {
-                                      // Navigate to fund raise details
-                                      navigate(`/fundraise/${followUp.vc_id}`);
+                                    if (isFundRaise && fundRaiseId) {
+                                      // Navigate to fund raise details using the actual fund raise ID
+                                      navigate(`/fundraise/${fundRaiseId}`);
                                     } else {
                                       // Navigate to VC round
                                       navigate(`/vc/${followUp.vc_id}`);
