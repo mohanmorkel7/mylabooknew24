@@ -267,7 +267,7 @@ export default function FundRaiseDetails() {
         onError: (error) => {
           console.error("Failed to update step status:", error);
         },
-      }
+      },
     );
   };
 
