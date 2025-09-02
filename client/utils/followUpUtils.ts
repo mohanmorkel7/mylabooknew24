@@ -8,6 +8,7 @@ export interface FollowUpStatusChangeData {
   userName: string;
   followUpTitle?: string;
   isVC?: boolean;
+  stepApiBase?: "vc" | "fund-raises" | "leads";
 }
 
 /**
@@ -66,12 +67,18 @@ export async function notifyFollowUpStatusChange(
       "with data:",
       chatData,
     );
-    // Create the system message in the step's chat (VC or Lead)
-    const endpoint = isVC
-      ? `/api/vc/steps/${stepId}/chats`
-      : `/api/leads/steps/${stepId}/chats`;
-
-    console.log(`Using ${isVC ? "VC" : "Lead"} endpoint:`, endpoint);
+    // Create the system message in the step's chat (VC, Fund Raise, or Lead)
+    let endpoint: string;
+    if (data.stepApiBase === "fund-raises") {
+      endpoint = `/api/fund-raises/steps/${stepId}/chats`;
+      console.log("Using Fund Raise endpoint:", endpoint);
+    } else if (isVC || data.stepApiBase === "vc") {
+      endpoint = `/api/vc/steps/${stepId}/chats`;
+      console.log("Using VC endpoint:", endpoint);
+    } else {
+      endpoint = `/api/leads/steps/${stepId}/chats`;
+      console.log("Using Lead endpoint:", endpoint);
+    }
 
     const response = await fetch(endpoint, {
       method: "POST",
