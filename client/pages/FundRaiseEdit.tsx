@@ -529,6 +529,9 @@ export default function FundRaiseEdit() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {errors.fund_mn && (
+                  <p className="text-sm text-red-600 mt-1">{errors.fund_mn}</p>
+                )}
               </div>
               <div>
                 <Label>Investor Status *</Label>
