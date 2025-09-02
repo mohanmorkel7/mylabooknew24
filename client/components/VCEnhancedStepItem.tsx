@@ -308,7 +308,7 @@ export function VCEnhancedStepItem({
     try {
       // Create the follow-up task
       const created = await createFollowUpMutation.mutateAsync({
-        title: `VC Step Follow-up: ${step.name}`,
+        title: `Fund Raise Follow-up: ${step.name}`,
         description: followUpNotes,
         assigned_to: parseInt(followUpAssignTo),
         due_date: followUpDueDate,
