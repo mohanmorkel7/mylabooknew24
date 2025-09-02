@@ -61,6 +61,7 @@ import {
 import { formatToISTDateTime } from "@/lib/dateUtils";
 import {
   getSectorLabel,
+  getInvestorFeedbackLabel,
   formatPhoneDisplay,
   formatPhoneHref,
 } from "@/lib/constants";
