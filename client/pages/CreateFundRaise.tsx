@@ -150,15 +150,19 @@ export default function CreateFundRaise() {
     }
   };
 
+  const validateForm = () => {
+    const n: Record<string, string> = {};
+    if (!form.vc_investor) n.vc_investor = "VC is required";
+    if (!form.status) n.status = "Status is required";
+    if (!form.round_stage) n.round_stage = "Investment Stage is required";
+    if (!form.fund_mn) n.fund_mn = "Fund $ Mn is required";
+    if (!form.investor_status) n.investor_status = "Investor Status is required";
+    setErrors(n);
+    return Object.keys(n).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!form.vc_investor) {
-      alert("Please select a VC");
-      return;
-    }
-    if (!form.round_stage) {
-      alert("Please select Investment Stage");
-      return;
-    }
+    if (!validateForm()) return;
 
     // Try to link to an existing VC by name; do not create new VC records
     const matched = (vcList || []).find(
