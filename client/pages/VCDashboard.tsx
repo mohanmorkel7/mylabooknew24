@@ -64,6 +64,7 @@ import {
   Activity,
 } from "lucide-react";
 import { formatToIST } from "@/lib/dateUtils";
+import { getSectorLabel } from "@/lib/constants";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
