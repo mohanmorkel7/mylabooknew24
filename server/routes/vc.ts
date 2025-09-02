@@ -216,6 +216,7 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
         `;
         const result = await withTimeout(pool.query(query), 5000);
         followUps = result.rows;
+        console.log(`📊 Found ${followUps.length} VC follow-ups for dashboard`);
       } else {
         // Return mock follow-ups when database is unavailable
         followUps = [
