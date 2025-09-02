@@ -589,7 +589,7 @@ export default function FundRaiseDashboard() {
                                       return (
                                         <div
                                           key={vcProgress.vc_id}
-                                          className="relative"
+                                          className="relative flex-none"
                                           style={{ width: `${colWidth}px` }}
                                         >
                                           {(
@@ -684,7 +684,7 @@ export default function FundRaiseDashboard() {
                                     return (
                                       <div
                                         key={vcProgress.vc_id}
-                                        className="text-center"
+                                        className="text-center flex-none"
                                         style={{ width: `${colWidth}px` }}
                                       >
                                         <div className="text-xs font-medium text-gray-700 mb-1">
