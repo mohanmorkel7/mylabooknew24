@@ -1538,7 +1538,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="lead_source">Source</Label>
+                  <Label htmlFor="lead_source">Source *</Label>
                   <Select
                     value={vcData.lead_source}
                     onValueChange={(value) =>
@@ -1605,16 +1605,16 @@ export default function CreateVC() {
                 {vcData.lead_source && (
                   <div className="md:col-span-2">
                     <Label htmlFor="lead_source_value">
-                      {vcData.lead_source === "email" && "Email Address"}
-                      {vcData.lead_source === "phone" && "Phone Number"}
+                      {vcData.lead_source === "email" && "Email Address *"}
+                      {vcData.lead_source === "phone" && "Phone Number *"}
                       {vcData.lead_source === "social-media" &&
-                        "Social Media Profile/Link"}
-                      {vcData.lead_source === "website" && "Website URL"}
-                      {vcData.lead_source === "referral" && "Referred by"}
+                        "Social Media Profile/Link *"}
+                      {vcData.lead_source === "website" && "Website URL *"}
+                      {vcData.lead_source === "referral" && "Referred by *"}
                       {vcData.lead_source === "cold-call" &&
-                        "Phone Number Called"}
-                      {vcData.lead_source === "event" && "Event Name/Details"}
-                      {vcData.lead_source === "other" && "Source Details"}
+                        "Phone Number Called *"}
+                      {vcData.lead_source === "event" && "Event Name/Details *"}
+                      {vcData.lead_source === "other" && "Source Details *"}
                     </Label>
                     <div className="relative mt-1">
                       {vcData.lead_source === "email" && (
@@ -1677,7 +1677,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="investor_category">VC Type</Label>
+                    <Label htmlFor="investor_category">VC Type *</Label>
                     <Select
                       value={(vcData as any).investor_category}
                       onValueChange={(value) =>
@@ -1698,7 +1698,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="industry">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus *</Label>
                     <Select
                       value={(vcData as any).industry}
                       onValueChange={(value) =>
@@ -1731,7 +1731,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1783,7 +1783,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1913,7 +1913,7 @@ export default function CreateVC() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address *</Label>
                   <Input
                     id="address"
                     placeholder="Street address"
@@ -1926,7 +1926,7 @@ export default function CreateVC() {
 
                 {/* Searchable Location Fields */}
                 <div>
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country">Country *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -1977,7 +1977,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="state">State/Province</Label>
+                  <Label htmlFor="state">State/Province *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -2038,7 +2038,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
