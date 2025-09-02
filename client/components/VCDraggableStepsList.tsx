@@ -20,6 +20,8 @@ import {
 } from "@dnd-kit/modifiers";
 import { VCEnhancedStepItem } from "./VCEnhancedStepItem";
 import { useUpdateVCStep } from "@/hooks/useApi";
+import { useAuth } from "@/lib/auth-context";
+import { apiClient } from "@/lib/api";
 
 interface VCDraggableStepsListProps {
   vcId: number;
