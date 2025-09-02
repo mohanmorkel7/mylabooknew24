@@ -137,6 +137,7 @@ export default function CreateFundRaise() {
   }, [vcList]);
 
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
