@@ -1025,7 +1025,9 @@ export default function FollowUpTracker() {
                           ) : (
                             (() => {
                               // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
-                              const isFundRaise = followUp.message_id && (followUp as any).fund_raise_stage;
+                              const isFundRaise =
+                                followUp.message_id &&
+                                (followUp as any).fund_raise_stage;
                               return (
                                 <Button
                                   variant="outline"
@@ -1042,7 +1044,9 @@ export default function FollowUpTracker() {
                                   className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
                                 >
                                   <ExternalLink className="w-3 h-3 mr-1" />
-                                  {isFundRaise ? "View Fund Raise" : "View VC Round"}
+                                  {isFundRaise
+                                    ? "View Fund Raise"
+                                    : "View VC Round"}
                                 </Button>
                               );
                             })()
@@ -1083,7 +1087,9 @@ export default function FollowUpTracker() {
                           ) : (
                             (() => {
                               // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
-                              const isFundRaise = followUp.message_id && (followUp as any).fund_raise_stage;
+                              const isFundRaise =
+                                followUp.message_id &&
+                                (followUp as any).fund_raise_stage;
                               return (
                                 <Button
                                   variant="ghost"
@@ -1100,7 +1106,9 @@ export default function FollowUpTracker() {
                                   className="text-gray-600 hover:text-gray-700"
                                 >
                                   <Target className="w-3 h-3 mr-1" />
-                                  {isFundRaise ? "Go to Fund Raise" : "Go to VC"}
+                                  {isFundRaise
+                                    ? "Go to Fund Raise"
+                                    : "Go to VC"}
                                 </Button>
                               );
                             })()
