@@ -1023,15 +1023,29 @@ export default function FollowUpTracker() {
                               View Message
                             </Button>
                           ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/vc/${followUp.vc_id}`)}
-                              className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                            >
-                              <ExternalLink className="w-3 h-3 mr-1" />
-                              View VC Round
-                            </Button>
+                            (() => {
+                              // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
+                              const isFundRaise = followUp.message_id && (followUp as any).fund_raise_stage;
+                              return (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (isFundRaise) {
+                                      // Navigate to fund raise details
+                                      navigate(`/fundraise/${followUp.vc_id}`);
+                                    } else {
+                                      // Navigate to VC round
+                                      navigate(`/vc/${followUp.vc_id}`);
+                                    }
+                                  }}
+                                  className="text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                                >
+                                  <ExternalLink className="w-3 h-3 mr-1" />
+                                  {isFundRaise ? "View Fund Raise" : "View VC Round"}
+                                </Button>
+                              );
+                            })()
                           )}
 
                           <Select
@@ -1067,15 +1081,29 @@ export default function FollowUpTracker() {
                               Go to Lead
                             </Button>
                           ) : (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/vc/${followUp.vc_id}`)}
-                              className="text-gray-600 hover:text-gray-700"
-                            >
-                              <Target className="w-3 h-3 mr-1" />
-                              Go to VC
-                            </Button>
+                            (() => {
+                              // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
+                              const isFundRaise = followUp.message_id && (followUp as any).fund_raise_stage;
+                              return (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (isFundRaise) {
+                                      // Navigate to fund raise details
+                                      navigate(`/fundraise/${followUp.vc_id}`);
+                                    } else {
+                                      // Navigate to VC round
+                                      navigate(`/vc/${followUp.vc_id}`);
+                                    }
+                                  }}
+                                  className="text-gray-600 hover:text-gray-700"
+                                >
+                                  <Target className="w-3 h-3 mr-1" />
+                                  {isFundRaise ? "Go to Fund Raise" : "Go to VC"}
+                                </Button>
+                              );
+                            })()
                           )}
                         </div>
                       </div>
