@@ -4,10 +4,17 @@ import { normalizeUserId } from "../services/mockData";
 
 const router = Router();
 
-// Enhanced helper function with better error handling
+// Enhanced helper function with better error handling and timeout
 async function isDatabaseAvailable() {
   try {
-    await pool.query("SELECT 1");
+    // Add a 5-second timeout to prevent long waits
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database query timeout')), 5000)
+    );
+
+    const queryPromise = pool.query("SELECT 1");
+
+    await Promise.race([queryPromise, timeoutPromise]);
     return true;
   } catch (error) {
     console.log("Database not available:", error.message);
@@ -493,7 +500,7 @@ router.get("/", async (req: Request, res: Response) => {
       }
 
       console.log("📊 Follow-ups query:", query);
-      console.log("📊 Query params:", queryParams);
+      console.log("��� Query params:", queryParams);
 
       const result = await pool.query(query, queryParams);
 
