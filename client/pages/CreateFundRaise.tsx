@@ -263,6 +263,9 @@ export default function CreateFundRaise() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.vc_investor && (
+                    <p className="text-sm text-red-600 mt-1">{errors.vc_investor}</p>
+                  )}
                 </div>
 
                 <div>
@@ -282,6 +285,9 @@ export default function CreateFundRaise() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.status && (
+                    <p className="text-sm text-red-600 mt-1">{errors.status}</p>
+                  )}
                 </div>
 
                 <div>
@@ -301,6 +307,9 @@ export default function CreateFundRaise() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.round_stage && (
+                    <p className="text-sm text-red-600 mt-1">{errors.round_stage}</p>
+                  )}
                 </div>
 
                 <div>
@@ -478,6 +487,9 @@ export default function CreateFundRaise() {
                     </Command>
                   </PopoverContent>
                 </Popover>
+                {errors.fund_mn && (
+                  <p className="text-sm text-red-600 mt-1">{errors.fund_mn}</p>
+                )}
               </div>
               <div>
                 <Label>Investor Status *</Label>
@@ -496,6 +508,9 @@ export default function CreateFundRaise() {
                     ))}
                   </SelectContent>
                 </Select>
+                {errors.investor_status && (
+                  <p className="text-sm text-red-600 mt-1">{errors.investor_status}</p>
+                )}
               </div>
             </CardContent>
           </Card>
