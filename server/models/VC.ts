@@ -44,7 +44,12 @@ export interface VC {
     | "family_office"
     | "merchant_banker"
     | "accelerator"
-    | "individual";
+    | "individual"
+    | "early_stage"
+    | "growth"
+    | "strategic_bank"
+    | "strategic_fintech"
+    | "strategic_individual";
   investor_name?: string;
   contact_person?: string;
   email?: string;
