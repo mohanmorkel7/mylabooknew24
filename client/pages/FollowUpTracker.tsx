@@ -289,7 +289,7 @@ export default function FollowUpTracker() {
         }
       } catch (error) {
         // Only handle non-abort errors
-        if (error instanceof Error && error.name !== 'AbortError') {
+        if (error instanceof Error && error.name !== "AbortError") {
           console.error("Failed to fetch follow-ups:", error);
           // Fallback to mock data when API fails
           const formattedMockFollowUps = mockFollowUps.map((f: any) => ({
