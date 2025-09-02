@@ -468,7 +468,7 @@ export default function VCDetails() {
                       ?.replace("_", " ")
                       .toUpperCase(),
                   },
-                  { label: "Sector Focus", value: vcData.industry },
+                  { label: "Sector Focus", value: vcData.industry && getSectorLabel(vcData.industry) },
                   {
                     label: "Contact Person",
                     value: getPrimaryContact(vcData)?.contact_name,
