@@ -256,20 +256,10 @@ export default function FollowUpTracker() {
     const fetchFollowUps = async () => {
       try {
         setLoading(true);
-        const params = new URLSearchParams({
+        const data = await apiClient.getAllFollowUps({
           userId: user?.id || "",
           userRole: user?.role || "",
         });
-
-        const response = await fetch(`/api/follow-ups?${params.toString()}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
 
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
