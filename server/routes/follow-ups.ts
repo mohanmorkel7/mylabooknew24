@@ -102,7 +102,11 @@ router.post("/", async (req: Request, res: Response) => {
           `;
 
           // Set default due date to 3 days from now if not provided
-          const defaultDueDate = due_date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+          const defaultDueDate =
+            due_date ||
+            new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0];
 
           values = [
             client_id || null,

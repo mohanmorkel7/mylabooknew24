@@ -178,7 +178,7 @@ export function VCEnhancedStepItem({
     // Default to 3 days from now
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 3);
-    return defaultDate.toISOString().split('T')[0];
+    return defaultDate.toISOString().split("T")[0];
   });
 
   // Edit message state

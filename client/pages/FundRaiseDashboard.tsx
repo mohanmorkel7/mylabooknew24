@@ -946,7 +946,10 @@ export default function FundRaiseDashboard() {
               // If no due date, treat as due in 3 days from creation (default behavior)
               const dueDate = followUp.due_date
                 ? new Date(followUp.due_date)
-                : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
+                : new Date(
+                    new Date(followUp.created_at).getTime() +
+                      3 * 24 * 60 * 60 * 1000,
+                  );
 
               if (isNaN(dueDate.getTime())) return false;
               const timeDiff = dueDate.getTime() - now.getTime();
@@ -962,7 +965,10 @@ export default function FundRaiseDashboard() {
               // If no due date, treat as due in 3 days from creation (default behavior)
               const dueDate = followUp.due_date
                 ? new Date(followUp.due_date)
-                : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
+                : new Date(
+                    new Date(followUp.created_at).getTime() +
+                      3 * 24 * 60 * 60 * 1000,
+                  );
 
               if (isNaN(dueDate.getTime())) return false;
               return dueDate < now;
@@ -1015,7 +1021,10 @@ export default function FundRaiseDashboard() {
                         (followUp: any, index: number) => {
                           const dueDate = followUp.due_date
                             ? new Date(followUp.due_date)
-                            : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
+                            : new Date(
+                                new Date(followUp.created_at).getTime() +
+                                  3 * 24 * 60 * 60 * 1000,
+                              );
                           const diffDays = Math.ceil(
                             (dueDate.getTime() - now.getTime()) /
                               (1000 * 60 * 60 * 24),
