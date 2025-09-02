@@ -156,7 +156,8 @@ export default function CreateFundRaise() {
     if (!form.status) n.status = "Status is required";
     if (!form.round_stage) n.round_stage = "Investment Stage is required";
     if (!form.fund_mn) n.fund_mn = "Fund $ Mn is required";
-    if (!form.investor_status) n.investor_status = "Investor Status is required";
+    if (!form.investor_status)
+      n.investor_status = "Investor Status is required";
     setErrors(n);
     return Object.keys(n).length === 0;
   };
@@ -264,7 +265,9 @@ export default function CreateFundRaise() {
                     </SelectContent>
                   </Select>
                   {errors.vc_investor && (
-                    <p className="text-sm text-red-600 mt-1">{errors.vc_investor}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.vc_investor}
+                    </p>
                   )}
                 </div>
 
@@ -308,7 +311,9 @@ export default function CreateFundRaise() {
                     </SelectContent>
                   </Select>
                   {errors.round_stage && (
-                    <p className="text-sm text-red-600 mt-1">{errors.round_stage}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.round_stage}
+                    </p>
                   )}
                 </div>
 
@@ -509,7 +514,9 @@ export default function CreateFundRaise() {
                   </SelectContent>
                 </Select>
                 {errors.investor_status && (
-                  <p className="text-sm text-red-600 mt-1">{errors.investor_status}</p>
+                  <p className="text-sm text-red-600 mt-1">
+                    {errors.investor_status}
+                  </p>
                 )}
               </div>
             </CardContent>
