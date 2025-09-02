@@ -204,9 +204,16 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
             f.follow_up_type,
             f.created_at,
             -- Get step name from either vc_steps or fund_raise_steps
-            COALESCE(vs.name, frs.name) as step_name,
+            COALESCE(vs.name, frs.name, 'General') as step_name,
             -- Get round title from either vcs or fund_raises
-            COALESCE(v.round_title, v.investor_name, fr.investor_name, fr.round_stage) as round_title,
+            COALESCE(
+              v.round_title,
+              v.investor_name,
+              fr.investor_name,
+              fr.round_stage,
+              CONCAT(fr.round_stage, ' - ', fr.investor_name),
+              'Fund Raise'
+            ) as round_title,
             CONCAT(u.first_name, ' ', u.last_name) as assigned_user_name
           FROM follow_ups f
           LEFT JOIN vcs v ON f.vc_id = v.id
@@ -214,10 +221,11 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
           LEFT JOIN users u ON f.assigned_to = u.id
           -- Join with fund_raises to get fund raise information
           LEFT JOIN fund_raises fr ON f.vc_id = fr.vc_id
-          -- Try to find the related fund_raise_step from the follow-up title
+          -- Join with fund_raise_steps using message_id when vc_step_id is null
           LEFT JOIN fund_raise_steps frs ON (
-            frs.fund_raise_id = fr.id
-            AND f.title LIKE '%' || frs.name || '%'
+            f.vc_step_id IS NULL
+            AND f.message_id IS NOT NULL
+            AND frs.id = f.message_id::integer
           )
           WHERE f.vc_id IS NOT NULL
             AND f.status IN ('pending', 'in_progress', 'completed')
