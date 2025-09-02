@@ -237,7 +237,7 @@ export default function CreateFundRaise() {
         </Button>
       </div>
 
-      <Tabs defaultValue="fundraise">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="fundraise">Fund Raise</TabsTrigger>
           <TabsTrigger value="queue">Investor Status Queue</TabsTrigger>
