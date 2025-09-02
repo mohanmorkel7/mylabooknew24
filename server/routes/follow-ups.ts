@@ -463,7 +463,8 @@ router.get("/", async (req: Request, res: Response) => {
                  COALESCE(fr.investor_name, v.round_title) as vc_round_title,
                  COALESCE(fr.investor_name, v.investor_name) as investor_name,
                  vs.name as vc_step_name,
-                 fr.round_stage as fund_raise_stage
+                 fr.round_stage as fund_raise_stage,
+                 fr.id as fund_raise_id
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
@@ -488,7 +489,8 @@ router.get("/", async (req: Request, res: Response) => {
                  NULL as vc_round_title,
                  NULL as investor_name,
                  NULL as vc_step_name,
-                 NULL as fund_raise_stage
+                 NULL as fund_raise_stage,
+                 NULL as fund_raise_id
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
@@ -645,6 +647,7 @@ router.get("/", async (req: Request, res: Response) => {
             investor_name: "Accel Partners",
             step_name: "Due Diligence Review",
             fund_raise_stage: "series_a",
+            fund_raise_id: 1,
             type: "vc",
           },
           {
@@ -667,6 +670,7 @@ router.get("/", async (req: Request, res: Response) => {
             investor_name: "Sequoia Capital",
             step_name: "Financial Review",
             fund_raise_stage: "seed",
+            fund_raise_id: 2,
             type: "vc",
           },
           {
@@ -689,6 +693,7 @@ router.get("/", async (req: Request, res: Response) => {
             investor_name: "Lightspeed Venture",
             step_name: "Technical Due Diligence",
             fund_raise_stage: "pre_series_a",
+            fund_raise_id: 3,
             type: "vc",
           },
         );
