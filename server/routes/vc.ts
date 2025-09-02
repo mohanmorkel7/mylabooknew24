@@ -960,8 +960,46 @@ router.get("/:id/steps", async (req: Request, res: Response) => {
               vc_id: steps[0].vc_id,
             });
           } else {
-            console.log("⚠️ No steps found in database for VC", vcId);
-            throw new Error("No database steps found - fallback to mock");
+            console.log(
+              "⚠️ No vc_steps found; deriving from fund_raises.template_id",
+            );
+            // Try to derive steps from template assigned on fund_raises
+            const frRes = await pool.query(
+              `SELECT template_id FROM fund_raises WHERE vc_id = $1 ORDER BY created_at DESC LIMIT 1`,
+              [vcId],
+            );
+            const templateId = frRes.rows?.[0]?.template_id;
+            if (templateId) {
+              const tplRes = await pool.query(
+                `SELECT id, name, description, step_order, probability_percent, default_eta_days FROM template_steps WHERE template_id = $1 ORDER BY step_order ASC`,
+                [templateId],
+              );
+              steps = tplRes.rows.map((t: any, idx: number) => ({
+                id: t.id, // template step id (read-only context)
+                vc_id: vcId,
+                name: t.name,
+                description: t.description,
+                status: "pending",
+                priority: "medium",
+                assigned_to: null,
+                due_date: null,
+                completed_date: null,
+                order_index: t.step_order ?? idx + 1,
+                probability_percent: t.probability_percent ?? 0,
+                created_by: vcExists?.created_by || 1,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                isTemplate: true,
+              }));
+              console.log(
+                `🧩 Derived ${steps.length} steps from template ${templateId}`,
+              );
+            } else {
+              console.log(
+                "ℹ️ No template associated with fund_raises for this VC",
+              );
+              steps = [];
+            }
           }
         } catch (dbConnectionError) {
           console.log(
@@ -976,18 +1014,8 @@ router.get("/:id/steps", async (req: Request, res: Response) => {
         console.log(`📊 Found ${steps?.length || 0} mock steps`);
       }
     } catch (dbError) {
-      console.log("❌ Database error, using mock data:", dbError.message);
-      steps = await MockDataService.getVCSteps(vcId);
-      console.log(`📊 Fallback: Found ${steps?.length || 0} mock steps`);
-
-      if (steps && steps.length > 0) {
-        console.log("📝 Mock data first step preview:", {
-          id: steps[0].id,
-          name: steps[0].name,
-          status: steps[0].status,
-          vc_id: steps[0].vc_id,
-        });
-      }
+      console.log("❌ Database error while fetching steps:", dbError.message);
+      steps = [];
     }
 
     // Ensure we always return an array

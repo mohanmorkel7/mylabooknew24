@@ -94,6 +94,7 @@ export default function FundRaiseEdit() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [fundMnOpen, setFundMnOpen] = useState(false);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -105,6 +106,7 @@ export default function FundRaiseEdit() {
     end_date: "",
     total_raise_mn: "",
     valuation_mn: "",
+    fund_mn: "",
     template_id: 1,
   });
 
@@ -138,7 +140,7 @@ export default function FundRaiseEdit() {
 
   const { data: current, isLoading } = useQuery({
     queryKey: ["fundraise-edit", id],
-    queryFn: async () => apiClient.request(`/vc/${id}`),
+    queryFn: async () => apiClient.request(`/fund-raises/${id}`),
     enabled: !!id,
     refetchOnWindowFocus: false,
     retry: 0,
@@ -149,8 +151,8 @@ export default function FundRaiseEdit() {
     setForm({
       vc_investor: current.investor_name || "",
       status: SERVER_TO_STATUS[current.status] || "WIP",
-      investor_status: current.investor_last_feedback || "",
-      reason: current.notes || "",
+      investor_status: current.investor_status || "",
+      reason: current.reason || "",
       round_stage: current.round_stage || "",
       start_date: current.start_date
         ? new Date(current.start_date).toISOString().split("T")[0]
@@ -158,24 +160,28 @@ export default function FundRaiseEdit() {
       end_date: current.targeted_end_date
         ? new Date(current.targeted_end_date).toISOString().split("T")[0]
         : "",
-      total_raise_mn: current.round_size || "",
-      valuation_mn: current.valuation || "",
+      total_raise_mn: current.total_raise_mn || current.round_size || "",
+      valuation_mn: current.valuation_mn || current.valuation || "",
+      fund_mn: current.fund_mn || "",
       template_id: current.template_id || 1,
     });
   }, [current]);
 
   const updateMutation = useMutation({
     mutationFn: async (payload: any) => {
-      return apiClient.request(`/vc/${id}`, {
+      return apiClient.request(`/fund-raises/${id}`, {
         method: "PUT",
         body: JSON.stringify(payload),
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vcs"] });
-      queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
-      queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
-      queryClient.invalidateQueries({ queryKey: ["fundraise-steps", id] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
+      await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["fund-raise-steps", id],
+      });
+      await queryClient.refetchQueries({ queryKey: ["fundraise", id] });
+      await queryClient.refetchQueries({ queryKey: ["fund-raise-steps", id] });
     },
   });
 
@@ -185,20 +191,26 @@ export default function FundRaiseEdit() {
   const handleSubmit = async () => {
     const payload: any = {
       investor_name: form.vc_investor,
-      status: STATUS_TO_SERVER[form.status] || "in-progress",
+      ui_status: form.status,
       round_stage: form.round_stage,
-      round_title: `${ROUND_STAGES.find((s) => s.value === form.round_stage)?.label || "Fund Raise"} Fund Raise`,
-      round_size: form.total_raise_mn,
-      valuation: form.valuation_mn,
+      total_raise_mn: form.total_raise_mn,
+      valuation_mn: form.valuation_mn,
+      fund_mn: form.fund_mn,
       start_date: form.start_date || null,
-      targeted_end_date: form.end_date || null,
-      notes: form.reason,
-      investor_last_feedback: form.investor_status || null,
+      end_date: form.end_date || null,
+      reason: form.reason,
+      investor_status: form.investor_status || null,
       template_id: form.template_id || 1,
       updated_by: parseInt(user?.id || "1"),
     };
     try {
       await updateMutation.mutateAsync(payload);
+      await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
+      await queryClient.invalidateQueries({
+        queryKey: ["fund-raise-steps", id],
+      });
+      await queryClient.refetchQueries({ queryKey: ["fundraise", id] });
+      await queryClient.refetchQueries({ queryKey: ["fund-raise-steps", id] });
       navigate(`/fundraise/${id}`);
     } catch (e) {
       // ignore
@@ -459,26 +471,49 @@ export default function FundRaiseEdit() {
           <Card>
             <CardHeader>
               <CardTitle>Investor Status Queue</CardTitle>
-              <CardDescription>Quickly update status fields</CardDescription>
+              <CardDescription>Quickly update key fields</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label>Status</Label>
-                <Select
-                  value={form.status}
-                  onValueChange={(v) => handleChange("status", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>Fund $ Mn</Label>
+                <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-between"
+                    >
+                      {form.fund_mn || "Select amount"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="bottom"
+                    align="start"
+                    avoidCollisions={true}
+                    collisionPadding={8}
+                    className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
+                  >
+                    <Command>
+                      <CommandInput placeholder="Search amount..." />
+                      <CommandList>
+                        <CommandEmpty>No amounts found.</CommandEmpty>
+                        <CommandGroup>
+                          {FUND_MN_OPTIONS.map((v) => (
+                            <CommandItem
+                              key={v}
+                              value={v}
+                              onSelect={(val) => {
+                                handleChange("fund_mn", val);
+                                setFundMnOpen(false);
+                              }}
+                            >
+                              {v}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label>Investor Status</Label>

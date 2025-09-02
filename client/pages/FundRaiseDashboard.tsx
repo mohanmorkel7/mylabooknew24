@@ -136,60 +136,9 @@ export default function FundRaiseDashboard() {
     queryFn: async () => {
       try {
         const result = await apiClient.request("/fund-raises");
-        if (Array.isArray(result) && result.length > 0) return result;
-        const now = new Date();
-        const toISO = (d: Date) => d.toISOString();
-        const mock: any[] = [
-          {
-            id: 1,
-            vc_id: 1,
-            investor_name: "Alpha Ventures",
-            ui_status: "WIP",
-            status: "in-progress",
-            round_stage: "seed",
-            total_raise_mn: "2.50",
-            valuation_mn: "25.00",
-            created_at: toISO(new Date(now.getTime() - 86400000 * 1)),
-          },
-          {
-            id: 2,
-            vc_id: 2,
-            investor_name: "Beta Capital",
-            ui_status: "Closed",
-            status: "completed",
-            round_stage: "series_a",
-            total_raise_mn: "10.00",
-            valuation_mn: "80.00",
-            created_at: toISO(new Date(now.getTime() - 86400000 * 2)),
-          },
-          {
-            id: 3,
-            vc_id: 3,
-            investor_name: "Gamma Partners",
-            ui_status: "Dropped",
-            status: "lost",
-            round_stage: "bridge",
-            total_raise_mn: "1.00",
-            valuation_mn: "12.00",
-            created_at: toISO(new Date(now.getTime() - 86400000 * 3)),
-          },
-        ];
-        return mock;
+        return Array.isArray(result) ? result : [];
       } catch {
-        const now = new Date();
-        return [
-          {
-            id: 4,
-            vc_id: 104,
-            investor_name: "Delta Investments",
-            ui_status: "WIP",
-            status: "in-progress",
-            round_stage: "pre_seed",
-            total_raise_mn: "0.50",
-            valuation_mn: "5.00",
-            created_at: now.toISOString(),
-          },
-        ];
+        return [];
       }
     },
     retry: false,
@@ -219,10 +168,10 @@ export default function FundRaiseDashboard() {
     });
 
   const { data: vcProgressData = [], isLoading: progressLoading } = useQuery({
-    queryKey: ["vc-progress"],
+    queryKey: ["fund-raises-progress"],
     queryFn: async () => {
       try {
-        const result = await apiClient.request("/vc/progress");
+        const result = await apiClient.request("/fund-raises/progress");
         return result || [];
       } catch {
         return [];
@@ -1068,7 +1017,7 @@ export default function FundRaiseDashboard() {
                               key={followUp.id}
                               className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${index === currentDueFollowUps.length - 1 ? "border-b-0" : ""}`}
                               onClick={() =>
-                                navigate(`/fundraise/${followUp.vc_id}`)
+                                navigate(`/follow-ups?id=${followUp.id}`)
                               }
                               title={
                                 followUp.description ||
@@ -1178,7 +1127,7 @@ export default function FundRaiseDashboard() {
                           key={followUp.id}
                           className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
                           onClick={() =>
-                            navigate(`/fundraise/${followUp.vc_id}`)
+                            navigate(`/follow-ups?id=${followUp.id}`)
                           }
                           title={
                             followUp.description ||
@@ -1243,6 +1192,8 @@ export default function FundRaiseDashboard() {
               <div className="p-3 text-red-600">Failed to load fund raises</div>
             ) : fundRaisesLoading ? (
               <div className="p-3 text-gray-500">Loading...</div>
+            ) : filteredFundRaises.length === 0 ? (
+              <div className="p-3 text-gray-500">No entries</div>
             ) : (
               filteredFundRaises.map((fr: any) => {
                 const internalStatus =
@@ -1263,16 +1214,48 @@ export default function FundRaiseDashboard() {
                   <div
                     key={fr.id}
                     className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                    onClick={() =>
-                      fr.vc_id && navigate(`/fundraise/${fr.vc_id}`)
-                    }
+                    onClick={() => navigate(`/fundraise/${fr.id}`)}
                     title={
                       fr.vc_id ? "Open Fund Raise Overview" : "VC not linked"
                     }
                   >
                     <div className="flex items-center gap-3">
-                      <div className="font-medium text-gray-900">
-                        {fr.investor_name || "Fund Raise"}
+                      <div>
+                        <div className="font-medium text-gray-900 flex items-center gap-2">
+                          <span>{fr.investor_name || "Fund Raise"}</span>
+                          {fr.round_stage && (
+                            <Badge
+                              variant="outline"
+                              className="text-xs bg-purple-50 text-purple-700 border-purple-200"
+                            >
+                              {fr.round_stage}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-600 mt-1 flex flex-wrap gap-3">
+                          {fr.valuation_mn && (
+                            <span>Valuation: ${fr.valuation_mn} Mn</span>
+                          )}
+                          {fr.fund_mn && <span>Fund: ${fr.fund_mn} Mn</span>}
+                          {fr.start_date && (
+                            <span>
+                              Start:{" "}
+                              {new Date(fr.start_date).toLocaleDateString(
+                                "en-IN",
+                                { timeZone: "Asia/Kolkata" },
+                              )}
+                            </span>
+                          )}
+                          {fr.end_date && (
+                            <span>
+                              End:{" "}
+                              {new Date(fr.end_date).toLocaleDateString(
+                                "en-IN",
+                                { timeZone: "Asia/Kolkata" },
+                              )}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <Badge className={statusColors[internalStatus] || ""}>
                         {(fr.ui_status || internalStatus)
@@ -1294,8 +1277,15 @@ export default function FundRaiseDashboard() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm text-gray-700">
-                          {fr.total_raise_mn ? `$${fr.total_raise_mn} Mn` : ""}
+                          {fr.total_raise_mn
+                            ? `Total: $${fr.total_raise_mn} Mn`
+                            : ""}
                         </div>
+                        {fr.vc_id && (
+                          <div className="text-[10px] text-gray-500">
+                            VC #{fr.vc_id}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

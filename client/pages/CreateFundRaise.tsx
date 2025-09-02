@@ -105,7 +105,7 @@ export default function CreateFundRaise() {
     valuation_mn: "",
     template_id: 1,
     investor_status: "",
-    queue_total_raise_mn: "",
+    fund_mn: "",
   });
 
   const { data: vcList = [] } = useQuery({
@@ -171,6 +171,7 @@ export default function CreateFundRaise() {
           start_date: form.start_date || null,
           end_date: form.end_date || null,
           total_raise_mn: form.total_raise_mn || null,
+          fund_mn: form.fund_mn || null,
           valuation_mn: form.valuation_mn || null,
           reason: form.reason || null,
           template_id: form.template_id,
@@ -452,7 +453,7 @@ export default function CreateFundRaise() {
                       variant="outline"
                       className="w-full justify-between"
                     >
-                      {form.queue_total_raise_mn || "Select amount"}
+                      {form.fund_mn || "Select amount"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent
@@ -472,7 +473,7 @@ export default function CreateFundRaise() {
                               key={v}
                               value={v}
                               onSelect={(val) => {
-                                handleChange("queue_total_raise_mn", val);
+                                handleChange("fund_mn", val);
                                 setFundMnOpen(false);
                               }}
                             >

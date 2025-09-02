@@ -238,6 +238,7 @@ router.post("/", async (req: Request, res: Response) => {
         end_date: body.end_date ?? null,
         total_raise_mn: body.total_raise_mn ?? null,
         valuation_mn: body.valuation_mn ?? null,
+        fund_mn: body.fund_mn ?? null,
         reason: body.reason ?? null,
         template_id: body.template_id ?? null,
         created_by: body.created_by ?? null,
@@ -285,6 +286,326 @@ router.delete("/:id", async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error("Error deleting fund_raise:", error.message);
     return res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Fund raise steps endpoints
+router.get("/:id/steps", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable())) return res.json([]);
+    const frId = parseInt(req.params.id);
+    if (isNaN(frId)) return res.status(400).json({ error: "Invalid id" });
+    // Get existing steps
+    let stepsResult: any = await pool.query(
+      `SELECT s.*, COALESCE(c.cnt, 0) AS message_count
+       FROM fund_raise_steps s
+       LEFT JOIN (
+         SELECT step_id, COUNT(*) AS cnt
+         FROM fund_raise_step_chats
+         GROUP BY step_id
+       ) c ON c.step_id = s.id
+       WHERE s.fund_raise_id = $1
+       ORDER BY s.order_index ASC, s.created_at ASC`,
+      [frId],
+    );
+    let steps = stepsResult.rows;
+    if (!steps || steps.length === 0) {
+      // Seed from template if available
+      const fr = await pool.query(
+        `SELECT template_id, created_by FROM fund_raises WHERE id = $1`,
+        [frId],
+      );
+      const templateId = fr.rows?.[0]?.template_id;
+      const createdBy = fr.rows?.[0]?.created_by || 1;
+      if (templateId) {
+        const tpl = await pool.query(
+          `SELECT name, description, step_order, default_eta_days, probability_percent FROM template_steps WHERE template_id = $1 ORDER BY step_order ASC`,
+          [templateId],
+        );
+        for (const [idx, t] of tpl.rows.entries()) {
+          await pool.query(
+            `INSERT INTO fund_raise_steps (fund_raise_id, name, description, status, priority, assigned_to, due_date, completed_date, order_index, probability_percent, created_by)
+             VALUES ($1,$2,$3,'pending','medium',NULL,NULL,NULL,$4,$5,$6)`,
+            [
+              frId,
+              t.name,
+              t.description,
+              t.step_order ?? idx + 1,
+              t.probability_percent ?? 0,
+              createdBy,
+            ],
+          );
+        }
+        stepsResult = await pool.query(
+          `SELECT s.*, COALESCE(c.cnt, 0) AS message_count
+           FROM fund_raise_steps s
+           LEFT JOIN (
+             SELECT step_id, COUNT(*) AS cnt
+             FROM fund_raise_step_chats
+             GROUP BY step_id
+           ) c ON c.step_id = s.id
+           WHERE s.fund_raise_id = $1
+           ORDER BY s.order_index ASC, s.created_at ASC`,
+          [frId],
+        );
+        steps = stepsResult.rows;
+      }
+    }
+    res.json(steps);
+  } catch (error: any) {
+    console.error("Error fetching fund raise steps:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.post("/:id/steps", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const frId = parseInt(req.params.id);
+    if (isNaN(frId)) return res.status(400).json({ error: "Invalid id" });
+    const b = req.body || {};
+    const r = await pool.query(
+      `INSERT INTO fund_raise_steps (fund_raise_id, name, description, status, priority, assigned_to, due_date, order_index, probability_percent, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`,
+      [
+        frId,
+        b.name,
+        b.description || null,
+        b.status || "pending",
+        b.priority || "medium",
+        b.assigned_to || null,
+        b.due_date || null,
+        b.order_index || 0,
+        b.probability_percent || 0,
+        b.created_by || null,
+      ],
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (error: any) {
+    console.error("Error creating fund raise step:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.put("/steps/:stepId", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
+    const data = req.body || {};
+    const fields: string[] = [];
+    const values: any[] = [];
+    let i = 1;
+    for (const [k, v] of Object.entries(data)) {
+      if (v !== undefined) {
+        fields.push(`${k} = $${i}`);
+        values.push(v);
+        i++;
+      }
+    }
+    if (fields.length === 0) {
+      const cur = await pool.query(
+        `SELECT * FROM fund_raise_steps WHERE id = $1`,
+        [stepId],
+      );
+      return res.json(cur.rows[0] || null);
+    }
+    values.push(stepId);
+    const r = await pool.query(
+      `UPDATE fund_raise_steps SET ${fields.join(", ")}, updated_at = NOW() WHERE id = $${i} RETURNING *`,
+      values,
+    );
+    res.json(r.rows[0] || null);
+  } catch (error: any) {
+    console.error("Error updating fund raise step:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Reorder steps for a fund raise
+router.put("/:id/steps/reorder", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const frId = parseInt(req.params.id);
+    if (isNaN(frId)) return res.status(400).json({ error: "Invalid id" });
+    const body = req.body || {};
+    const stepOrders: Array<{
+      id: number;
+      order_index?: number;
+      order?: number;
+    }> = Array.isArray(body.stepOrders) ? body.stepOrders : [];
+    if (stepOrders.length === 0)
+      return res.status(400).json({ error: "No step orders provided" });
+
+    await pool.query("BEGIN");
+    for (let i = 0; i < stepOrders.length; i++) {
+      const s = stepOrders[i];
+      const newOrder = (s.order_index ?? s.order ?? i) + 1; // 1-based
+      await pool.query(
+        `UPDATE fund_raise_steps SET order_index = $1, updated_at = NOW() WHERE id = $2 AND fund_raise_id = $3`,
+        [newOrder, s.id, frId],
+      );
+    }
+    await pool.query("COMMIT");
+    res.json({ success: true });
+  } catch (error: any) {
+    try {
+      await pool.query("ROLLBACK");
+    } catch {}
+    console.error("Error reordering fund raise steps:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.delete("/steps/:stepId", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
+    const r = await pool.query(`DELETE FROM fund_raise_steps WHERE id = $1`, [
+      stepId,
+    ]);
+    res.json({ success: r.rowCount > 0 });
+  } catch (error: any) {
+    console.error("Error deleting fund raise step:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Get chats for a fund raise step
+router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
+    const r = await pool.query(
+      `SELECT id, step_id, user_id, user_name, message, message_type, is_rich_text, attachments, created_at
+       FROM fund_raise_step_chats
+       WHERE step_id = $1
+       ORDER BY created_at ASC`,
+      [stepId],
+    );
+    res.json(r.rows || []);
+  } catch (error: any) {
+    console.error("Error fetching fund raise step chats:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
+    const b = req.body || {};
+    const r = await pool.query(
+      `INSERT INTO fund_raise_step_chats (step_id, user_id, user_name, message, message_type, is_rich_text, attachments)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [
+        stepId,
+        b.user_id || null,
+        b.user_name || "User",
+        b.message || "",
+        b.message_type || "text",
+        b.is_rich_text || false,
+        JSON.stringify(b.attachments || []),
+      ],
+    );
+    res.status(201).json(r.rows[0]);
+  } catch (error: any) {
+    console.error("Error creating fund raise step chat:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Update fund raise chat
+router.put("/chats/:id", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid chat id" });
+    const { message, is_rich_text } = req.body || {};
+    if (!message || typeof message !== "string")
+      return res.status(400).json({ error: "Message is required" });
+
+    try {
+      const r = await pool.query(
+        `UPDATE fund_raise_step_chats
+         SET message = $1, is_rich_text = COALESCE($2,false), updated_at = NOW()
+         WHERE id = $3 RETURNING *`,
+        [message.trim(), !!is_rich_text, id],
+      );
+      if (r.rowCount === 0) return res.status(404).json({ error: "Not found" });
+      return res.json(r.rows[0]);
+    } catch (err: any) {
+      const msg = (err && err.message) || "";
+      if (err?.code === "42703" || msg.includes("updated_at")) {
+        try {
+          await pool.query(
+            `ALTER TABLE IF EXISTS fund_raise_step_chats
+             ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;`,
+          );
+          await pool.query(
+            `DO $$
+             BEGIN
+               IF NOT EXISTS (
+                 SELECT 1 FROM information_schema.triggers
+                 WHERE event_object_table = 'fund_raise_step_chats'
+                   AND trigger_name = 'update_fund_raise_step_chats_updated_at'
+               ) THEN
+                 CREATE TRIGGER update_fund_raise_step_chats_updated_at
+                 BEFORE UPDATE ON fund_raise_step_chats
+                 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+               END IF;
+             END $$;`,
+          );
+          const r2 = await pool.query(
+            `UPDATE fund_raise_step_chats
+             SET message = $1, is_rich_text = COALESCE($2,false), updated_at = NOW()
+             WHERE id = $3 RETURNING *`,
+            [message.trim(), !!is_rich_text, id],
+          );
+          if (r2.rowCount === 0)
+            return res.status(404).json({ error: "Not found" });
+          return res.json(r2.rows[0]);
+        } catch (e2: any) {
+          console.error("Fund raise chat auto-migration failed:", e2.message);
+        }
+      }
+      throw err;
+    }
+  } catch (error: any) {
+    console.error("Error updating fund raise step chat:", error.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Delete fund raise chat
+router.delete("/chats/:id", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid chat id" });
+    const r = await pool.query(
+      `DELETE FROM fund_raise_step_chats WHERE id = $1`,
+      [id],
+    );
+    res.json({ success: r.rowCount > 0 });
+  } catch (error: any) {
+    console.error("Error deleting fund raise step chat:", error.message);
+    res.status(500).json({ error: "Failed" });
   }
 });
 

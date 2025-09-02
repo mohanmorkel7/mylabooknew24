@@ -19,7 +19,7 @@ import {
   restrictToParentElement,
 } from "@dnd-kit/modifiers";
 import { VCEnhancedStepItem } from "./VCEnhancedStepItem";
-import { useReorderVCSteps, useUpdateVCStep } from "@/hooks/useApi";
+import { useUpdateVCStep } from "@/hooks/useApi";
 
 interface VCDraggableStepsListProps {
   vcId: number;
@@ -28,6 +28,8 @@ interface VCDraggableStepsListProps {
   onToggleExpansion: (stepId: number) => void;
   onDeleteStep: (stepId: number) => void;
   onReorderSteps: (steps: any[]) => void;
+  updateStepStatus?: (stepId: number, payload: any) => void;
+  stepApiBase?: "vc" | "fund-raises";
 }
 
 export function VCDraggableStepsList({
@@ -37,10 +39,11 @@ export function VCDraggableStepsList({
   onToggleExpansion,
   onDeleteStep,
   onReorderSteps,
+  updateStepStatus,
+  stepApiBase,
 }: VCDraggableStepsListProps) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [items, setItems] = useState(steps);
-  const reorderMutation = useReorderVCSteps();
   const updateStepMutation = useUpdateVCStep();
 
   const sensors = useSensors(
@@ -121,14 +124,22 @@ export function VCDraggableStepsList({
     );
 
     // Update via API
-    updateStepMutation.mutate({
-      stepId,
-      stepData: {
+    if (typeof (updateStepStatus as any) === "function") {
+      (updateStepStatus as any)(stepId, {
         status,
         completed_date:
           status === "completed" ? new Date().toISOString() : null,
-      },
-    });
+      });
+    } else {
+      updateStepMutation.mutate({
+        stepId,
+        stepData: {
+          status,
+          completed_date:
+            status === "completed" ? new Date().toISOString() : null,
+        },
+      });
+    }
   };
 
   const handleDragStart = (event: any) => {
@@ -150,13 +161,7 @@ export function VCDraggableStepsList({
 
         const newItems = arrayMove(items, oldIndex, newIndex);
 
-        // Update order via API
-        const stepOrders = newItems.map((item, index) => ({
-          id: item.id,
-          order_index: index,
-        }));
-
-        reorderMutation.mutate({ vcId, stepOrders });
+        // Let parent handle persisting order
         onReorderSteps(newItems);
 
         return newItems;
@@ -180,6 +185,10 @@ export function VCDraggableStepsList({
     );
   }
 
+  const apiBase =
+    stepApiBase ??
+    (typeof (updateStepStatus as any) === "function" ? "fund-raises" : "vc");
+
   return (
     <DndContext
       sensors={sensors}
@@ -201,8 +210,9 @@ export function VCDraggableStepsList({
               vcId={vcId}
               isExpanded={expandedSteps?.has(step.id) || false}
               onToggleExpansion={() => onToggleExpansion(step.id)}
-              onStatusChange={handleUpdateStatus}
-              onDelete={() => onDeleteStep(step.id)}
+              onUpdateStatus={handleUpdateStatus}
+              onDeleteStep={(id) => onDeleteStep(id)}
+              stepApiBase={apiBase}
             />
           ))}
         </div>
@@ -215,9 +225,10 @@ export function VCDraggableStepsList({
             vcId={vcId}
             isExpanded={false}
             onToggleExpansion={() => {}}
-            onStatusChange={() => {}}
-            onDelete={() => {}}
+            onUpdateStatus={() => {}}
+            onDeleteStep={() => {}}
             isDragOverlay
+            stepApiBase={apiBase}
           />
         ) : null}
       </DragOverlay>

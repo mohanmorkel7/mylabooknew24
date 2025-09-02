@@ -5,13 +5,13 @@ import path from "path";
 // Use environment variables or fallback values for local development
 const dbConfig = {
   user: process.env.PG_USER || "crmuser",
-  host: process.env.PG_HOST || "localhost",
+  host: process.env.PG_HOST || "10.30.11.95",
   database: process.env.PG_DB || "crm_test",
   password: process.env.PG_PASSWORD || "myl@p@y-crm$102019",
   port: Number(process.env.PG_PORT) || 2019,
   ssl: false,
 };
-
+ 
 // Log the actual connection parameters being used (hide password for security)
 console.log("🔗 Database connection config:", {
   user: dbConfig.user,
@@ -204,6 +204,39 @@ export async function initializeDatabase() {
       console.log(
         "VC schema options migration already applied or error:",
         vcOptionsMigrationError.message,
+      );
+    }
+
+    // Convert VC money columns to NUMERIC to store values as entered (in $ Mn)
+    try {
+      const moneyMigrationPath = path.join(
+        __dirname,
+        "migration-vc-money-to-numeric.sql",
+      );
+      if (fs.existsSync(moneyMigrationPath)) {
+        const sql = fs.readFileSync(moneyMigrationPath, "utf8");
+        await client.query(sql);
+        console.log("VC money columns migration applied successfully");
+      }
+    } catch (moneyMigrationError) {
+      console.log(
+        "VC money columns migration already applied or error:",
+        moneyMigrationError.message,
+      );
+    }
+
+    // Ensure Fund Raise steps and chats tables exist
+    try {
+      const frStepsPath = path.join(__dirname, "create-fund-raise-steps.sql");
+      if (fs.existsSync(frStepsPath)) {
+        const sql = fs.readFileSync(frStepsPath, "utf8");
+        await client.query(sql);
+        console.log("Fund Raise steps schema ensured successfully");
+      }
+    } catch (frStepsError) {
+      console.log(
+        "Fund Raise steps schema ensure skipped or error:",
+        frStepsError.message,
       );
     }
 

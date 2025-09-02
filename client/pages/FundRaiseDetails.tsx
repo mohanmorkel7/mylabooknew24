@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
-import { DraggableVCStepsList } from "@/components/DraggableVCStepsList";
+import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -99,14 +99,14 @@ export default function FundRaiseDetails() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const vcId = parseInt(id || "0");
+  const frId = parseInt(id || "0");
 
   const deleteMutation = useMutation({
     mutationFn: async () =>
-      apiClient.request(`/vc/${id}`, { method: "DELETE" }),
+      apiClient.request(`/fund-raises/${id}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["vcs"] });
-      queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
+      queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
       navigate("/fundraise");
     },
   });
@@ -127,8 +127,12 @@ export default function FundRaiseDetails() {
     error: vcError,
   } = useQuery({
     queryKey: ["fundraise", id],
-    queryFn: async () => apiClient.request(`/vc/${id}`),
+    queryFn: async () => apiClient.request(`/fund-raises/${id}`),
     enabled: !!id,
+    staleTime: 0,
+    cacheTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 
   const {
@@ -136,9 +140,9 @@ export default function FundRaiseDetails() {
     isLoading: stepsLoading,
     refetch: refetchSteps,
   } = useQuery({
-    queryKey: ["vc-steps", id],
+    queryKey: ["fund-raise-steps", id],
     queryFn: async () =>
-      apiClient.request(`/vc/${id}/steps`, {
+      apiClient.request(`/fund-raises/${id}/steps`, {
         headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
       }),
     enabled: !!id,
@@ -146,9 +150,11 @@ export default function FundRaiseDetails() {
     cacheTime: 0,
   });
 
+  const templateIdForVC = (vcData as any)?.template_id || null;
+
   const createStepMutation = useMutation({
     mutationFn: async (stepData: any) => {
-      const response = await apiClient.request(`/vc/${id}/steps`, {
+      const response = await apiClient.request(`/fund-raises/${id}/steps`, {
         method: "POST",
         body: JSON.stringify(stepData),
       });
@@ -174,12 +180,15 @@ export default function FundRaiseDetails() {
       if (seededRef.current || !id) return;
       if (Array.isArray(vcSteps) && vcSteps.length > 0) return;
       try {
-        const template = await apiClient.request(`/templates-production/1`);
+        if (!templateIdForVC) return; // no template assigned on fund raise
+        const template = await apiClient.request(
+          `/templates-production/${templateIdForVC}`,
+        );
         const steps = template?.steps || [];
         if (!Array.isArray(steps) || steps.length === 0) return;
         for (const [index, tStep] of steps.entries()) {
           try {
-            await apiClient.request(`/vc/${id}/steps`, {
+            await apiClient.request(`/fund-raises/${id}/steps`, {
               method: "POST",
               body: JSON.stringify({
                 name: tStep.name,
@@ -205,7 +214,7 @@ export default function FundRaiseDetails() {
       }
     };
     if (!stepsLoading) seedFromTemplate();
-  }, [id, stepsLoading, vcSteps, user?.id, refetchSteps]);
+  }, [id, stepsLoading, vcSteps, user?.id, refetchSteps, templateIdForVC]);
 
   const handleAddStep = async () => {
     if (!newStep.name.trim() || !newStep.description.trim()) return;
@@ -237,11 +246,23 @@ export default function FundRaiseDetails() {
   const handleDeleteStep = async (stepId: number) => {
     if (!window.confirm("Are you sure you want to delete this step?")) return;
     try {
-      await apiClient.request(`/vc/steps/${stepId}`, { method: "DELETE" });
+      await apiClient.request(`/fund-raises/steps/${stepId}`, {
+        method: "DELETE",
+      });
       refetchSteps();
     } catch (e) {
       // ignore
     }
+  };
+
+  const updateFundRaiseStepStatus = (stepId: number, payload: any) => {
+    apiClient
+      .request(`/fund-raises/steps/${stepId}`, {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      })
+      .then(() => refetchSteps())
+      .catch(() => {});
   };
 
   const handleReorderSteps = async (reorderedSteps: any[]) => {
@@ -250,7 +271,7 @@ export default function FundRaiseDetails() {
         id: step.id,
         order: index + 1,
       }));
-      await apiClient.request(`/vc/${id}/steps/reorder`, {
+      await apiClient.request(`/fund-raises/${id}/steps/reorder`, {
         method: "PUT",
         body: JSON.stringify({ stepOrders }),
       });
@@ -772,13 +793,15 @@ export default function FundRaiseDetails() {
                   </Button>
                 </div>
               ) : (
-                <DraggableVCStepsList
-                  vcId={vcId}
+                <VCDraggableStepsList
+                  vcId={frId}
                   steps={vcSteps}
                   expandedSteps={expandedSteps}
                   onToggleExpansion={handleToggleExpansion}
                   onDeleteStep={handleDeleteStep}
                   onReorderSteps={handleReorderSteps}
+                  updateStepStatus={updateFundRaiseStepStatus}
+                  stepApiBase="fund-raises"
                 />
               )}
             </CardContent>
