@@ -21,7 +21,10 @@ CREATE TABLE IF NOT EXISTS vcs (
     valuation VARCHAR(100),
     
     -- Investor Information
-    investor_category VARCHAR(50) CHECK (investor_category IN ('angel', 'vc', 'private_equity', 'family_office', 'merchant_banker')),
+    investor_category VARCHAR(50) CHECK (investor_category IN (
+      'angel', 'vc', 'private_equity', 'family_office', 'merchant_banker', 'accelerator', 'individual',
+      'early_stage', 'growth', 'strategic_bank', 'strategic_fintech', 'strategic_individual'
+    )),
     investor_name VARCHAR(255),
     contact_person VARCHAR(255),
     email VARCHAR(255),
