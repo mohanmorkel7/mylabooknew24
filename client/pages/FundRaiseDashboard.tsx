@@ -515,12 +515,12 @@ export default function FundRaiseDashboard() {
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div className="bg-gray-50 p-4 rounded-lg overflow-hidden">
+                      <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="text-sm font-medium text-gray-700 mb-4">
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
                         </div>
-                        <div className="w-full">
+                        <div className="w-full overflow-x-auto">
                           <div className="w-full">
                             <div
                               className="flex"
