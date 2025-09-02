@@ -48,6 +48,49 @@ router.post("/", async (req: Request, res: Response) => {
         let query, values;
 
         if (hasVCColumns) {
+          // Handle fund raise steps vs VC steps differently
+          let resolvedVcId = vc_id;
+          let resolvedVcStepId = vc_step_id;
+
+          // If vc_step_id is provided, check if it's a fund_raise_step or actual vc_step
+          if (vc_step_id && !vc_id) {
+            try {
+              // First check if it's a fund_raise_step
+              const fundRaiseStepResult = await pool.query(
+                `
+                SELECT fr.vc_id
+                FROM fund_raise_steps frs
+                JOIN fund_raises fr ON frs.fund_raise_id = fr.id
+                WHERE frs.id = $1
+              `,
+                [vc_step_id],
+              );
+
+              if (fundRaiseStepResult.rows.length > 0) {
+                // This is a fund_raise_step, so get vc_id but don't use vc_step_id
+                resolvedVcId = fundRaiseStepResult.rows[0].vc_id;
+                resolvedVcStepId = null; // Don't use vc_step_id for fund raise steps
+                console.log(
+                  `Resolved vc_id ${resolvedVcId} for fund_raise_step ${vc_step_id}, setting vc_step_id to null`,
+                );
+              } else {
+                // Check if it's a real vc_step
+                const vcStepResult = await pool.query(
+                  `SELECT vc_id FROM vc_steps WHERE id = $1`,
+                  [vc_step_id],
+                );
+                if (vcStepResult.rows.length > 0) {
+                  resolvedVcId = vcStepResult.rows[0].vc_id;
+                  console.log(
+                    `Found real vc_step ${vc_step_id} with vc_id ${resolvedVcId}`,
+                  );
+                }
+              }
+            } catch (error) {
+              console.log("Could not resolve step type:", error.message);
+            }
+          }
+
           // Full query with VC support
           query = `
             INSERT INTO follow_ups (
@@ -58,19 +101,43 @@ router.post("/", async (req: Request, res: Response) => {
             RETURNING *
           `;
 
+          // Set default due date to 3 days from now if not provided
+          const defaultDueDate =
+            due_date ||
+            new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+              .toISOString()
+              .split("T")[0];
+
+          // For fund raise steps, store the fund_raise_step_id in message_id field for reference
+          let finalMessageId = message_id;
+          if (!resolvedVcStepId && vc_step_id) {
+            // This is a fund raise step, store it in message_id for reference
+            finalMessageId = vc_step_id;
+            console.log(
+              `📋 Storing fund_raise_step_id ${vc_step_id} in message_id for follow-up`,
+            );
+          }
+
+          console.log(`📋 Creating follow-up with:`, {
+            vc_id: resolvedVcId,
+            vc_step_id: resolvedVcStepId,
+            fund_raise_step_id: finalMessageId,
+            title,
+          });
+
           values = [
             client_id || null,
             lead_id || null,
             step_id || null,
-            vc_id || null,
-            vc_step_id || null,
+            resolvedVcId || null,
+            resolvedVcStepId || null, // This will be null for fund raise steps
             title,
             description || null,
-            due_date || null,
+            defaultDueDate,
             follow_up_type,
             assigned_to || null,
             created_by,
-            message_id || null,
+            finalMessageId,
           ];
         } else {
           // Legacy query without VC support
@@ -144,8 +211,28 @@ router.post("/", async (req: Request, res: Response) => {
             `);
 
             console.log("Migration completed, retrying insert...");
-            // Retry the insert
-            const retryResult = await pool.query(query, values);
+            // Retry the insert with fallback query (without VC columns)
+            const retryQuery = `
+              INSERT INTO follow_ups (
+                client_id, lead_id, step_id, title, description, due_date,
+                follow_up_type, assigned_to, created_by, message_id
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+              RETURNING *
+            `;
+            const retryValues = [
+              client_id || null,
+              lead_id || null,
+              step_id || null,
+              title,
+              description || null,
+              due_date || null,
+              follow_up_type,
+              assigned_to || null,
+              created_by,
+              message_id || null,
+            ];
+            const retryResult = await pool.query(retryQuery, retryValues);
             return res.status(201).json(retryResult.rows[0]);
           } catch (migrationError) {
             console.error("Migration failed:", migrationError.message);

@@ -25,6 +25,7 @@ import ticketsRouter from "./routes/tickets";
 import finopsRouter from "./routes/finops";
 import workflowRouter from "./routes/workflow";
 import databaseStatusRouter from "./routes/database-status";
+import databaseFixRouter from "./routes/database-fix";
 import ssoAuthRouter from "./routes/sso-auth";
 import azureSyncRouter from "./routes/azure-sync";
 import fundRaisesRouter from "./routes/fund-raises";
@@ -289,6 +290,13 @@ export function createServer() {
     console.log("Database status router loaded successfully");
   } catch (error) {
     console.error("Error loading Database status router:", error);
+  }
+
+  try {
+    app.use("/api/database-fix", databaseFixRouter);
+    console.log("Database fix router loaded successfully");
+  } catch (error) {
+    console.error("Error loading Database fix router:", error);
   }
 
   // SSO Authentication router

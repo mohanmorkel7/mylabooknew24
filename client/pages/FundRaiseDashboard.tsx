@@ -941,9 +941,16 @@ export default function FundRaiseDashboard() {
           const now = new Date();
           const currentDueFollowUps = (vcFollowUps || []).filter(
             (followUp: any) => {
-              if (!followUp.due_date || followUp.status === "completed")
-                return false;
-              const dueDate = new Date(followUp.due_date);
+              if (followUp.status === "completed") return false;
+
+              // If no due date, treat as due in 3 days from creation (default behavior)
+              const dueDate = followUp.due_date
+                ? new Date(followUp.due_date)
+                : new Date(
+                    new Date(followUp.created_at).getTime() +
+                      3 * 24 * 60 * 60 * 1000,
+                  );
+
               if (isNaN(dueDate.getTime())) return false;
               const timeDiff = dueDate.getTime() - now.getTime();
               const diffDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
@@ -953,9 +960,16 @@ export default function FundRaiseDashboard() {
 
           const overdueFollowUps = (vcFollowUps || []).filter(
             (followUp: any) => {
-              if (!followUp.due_date || followUp.status === "completed")
-                return false;
-              const dueDate = new Date(followUp.due_date);
+              if (followUp.status === "completed") return false;
+
+              // If no due date, treat as due in 3 days from creation (default behavior)
+              const dueDate = followUp.due_date
+                ? new Date(followUp.due_date)
+                : new Date(
+                    new Date(followUp.created_at).getTime() +
+                      3 * 24 * 60 * 60 * 1000,
+                  );
+
               if (isNaN(dueDate.getTime())) return false;
               return dueDate < now;
             },
@@ -1005,7 +1019,12 @@ export default function FundRaiseDashboard() {
                     <div className="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
                       {currentDueFollowUps.map(
                         (followUp: any, index: number) => {
-                          const dueDate = new Date(followUp.due_date);
+                          const dueDate = followUp.due_date
+                            ? new Date(followUp.due_date)
+                            : new Date(
+                                new Date(followUp.created_at).getTime() +
+                                  3 * 24 * 60 * 60 * 1000,
+                              );
                           const diffDays = Math.ceil(
                             (dueDate.getTime() - now.getTime()) /
                               (1000 * 60 * 60 * 24),

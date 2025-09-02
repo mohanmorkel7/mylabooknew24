@@ -202,21 +202,55 @@ router.get("/follow-ups", async (req: Request, res: Response) => {
             f.status,
             f.assigned_to,
             f.follow_up_type,
-            vs.name as step_name,
-            v.round_title,
+            f.created_at,
+            -- Get step name from either vc_steps or fund_raise_steps
+            COALESCE(vs.name, frs.name, 'General') as step_name,
+            -- Get round title from either vcs or fund_raises
+            COALESCE(
+              v.round_title,
+              v.investor_name,
+              fr.investor_name,
+              fr.round_stage,
+              CONCAT(fr.round_stage, ' - ', fr.investor_name),
+              'Fund Raise'
+            ) as round_title,
             CONCAT(u.first_name, ' ', u.last_name) as assigned_user_name
           FROM follow_ups f
           LEFT JOIN vcs v ON f.vc_id = v.id
           LEFT JOIN vc_steps vs ON f.vc_step_id = vs.id
           LEFT JOIN users u ON f.assigned_to = u.id
+          -- Join with fund_raises to get fund raise information
+          LEFT JOIN fund_raises fr ON f.vc_id = fr.vc_id
+          -- Join with fund_raise_steps using message_id when vc_step_id is null
+          LEFT JOIN fund_raise_steps frs ON (
+            f.vc_step_id IS NULL
+            AND f.message_id IS NOT NULL
+            AND frs.id = f.message_id
+          )
           WHERE f.vc_id IS NOT NULL
             AND f.status IN ('pending', 'in_progress', 'completed')
-            AND f.due_date IS NOT NULL
-          ORDER BY f.due_date ASC
+          ORDER BY COALESCE(f.due_date, f.created_at) ASC
           LIMIT 50
         `;
         const result = await withTimeout(pool.query(query), 5000);
         followUps = result.rows;
+        console.log(`📊 Found ${followUps.length} VC follow-ups for dashboard`);
+
+        // Debug: log first few follow-ups to see the data
+        if (followUps.length > 0) {
+          console.log(
+            `📊 Sample follow-up data:`,
+            followUps.slice(0, 2).map((f) => ({
+              id: f.id,
+              title: f.title,
+              round_title: f.round_title,
+              step_name: f.step_name,
+              vc_id: f.vc_id,
+              vc_step_id: f.vc_step_id,
+              message_id: f.message_id,
+            })),
+          );
+        }
       } else {
         // Return mock follow-ups when database is unavailable
         followUps = [
