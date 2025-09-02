@@ -47,6 +47,7 @@ export function VCDraggableStepsList({
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [items, setItems] = useState(steps);
   const updateStepMutation = useUpdateVCStep();
+  const { user } = useAuth();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
