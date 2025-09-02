@@ -488,7 +488,9 @@ export default function VCDetails() {
                   { label: "Website", value: vcData.website },
                   {
                     label: "Investor Last Feedback",
-                    value: getInvestorFeedbackLabel(vcData.investor_last_feedback as any),
+                    value: getInvestorFeedbackLabel(
+                      vcData.investor_last_feedback as any,
+                    ),
                   },
                 ]
                   .filter(

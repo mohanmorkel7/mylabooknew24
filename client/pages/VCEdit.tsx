@@ -94,7 +94,6 @@ const ROUND_STAGES = [
   { value: "ipo", label: "IPO" },
 ];
 
-
 const COUNTRIES = [
   "India",
   "United States",

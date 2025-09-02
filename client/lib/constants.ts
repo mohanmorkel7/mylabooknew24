@@ -25,7 +25,9 @@ export const INVESTOR_FEEDBACK = [
 ];
 
 const SECTOR_FOCUS_MAP = new Map(SECTOR_FOCUS.map((s) => [s.value, s.label]));
-const INVESTOR_FEEDBACK_MAP = new Map(INVESTOR_FEEDBACK.map((s) => [s.value, s.label]));
+const INVESTOR_FEEDBACK_MAP = new Map(
+  INVESTOR_FEEDBACK.map((s) => [s.value, s.label]),
+);
 
 export function getSectorLabel(value?: string | null): string {
   if (!value) return "";
@@ -44,12 +46,15 @@ export function getSectorLabel(value?: string | null): string {
 export function getInvestorFeedbackLabel(value?: string | null): string {
   if (!value) return "";
   const key = value.trim();
-  return INVESTOR_FEEDBACK_MAP.get(key) || key
-    .replace(/_/g, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  return (
+    INVESTOR_FEEDBACK_MAP.get(key) ||
+    key
+      .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  );
 }
 
 const COUNTRY_DIAL_CODES = new Map<string, string>([

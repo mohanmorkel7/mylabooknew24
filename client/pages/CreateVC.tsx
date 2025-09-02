@@ -94,7 +94,6 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-
 const COUNTRIES = [
   "India",
   "United States",
