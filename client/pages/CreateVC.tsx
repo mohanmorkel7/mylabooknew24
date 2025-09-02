@@ -81,7 +81,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Country, State, City } from "country-state-city";
-import { VC_TYPES } from "@/lib/constants";
+import { VC_TYPES, SECTOR_FOCUS } from "@/lib/constants";
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
@@ -94,13 +94,6 @@ const ROUND_STAGES = [
   { value: "series_c", label: "Series C" },
 ];
 
-const SECTOR_FOCUS = [
-  { value: "fintech", label: "Fintech" },
-  { value: "fintech_b2b", label: "Fintech -B2B" },
-  { value: "fintech_saas", label: "Fintech - SaaS" },
-  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
-  { value: "sector_agnostic", label: "Sector Agnostic" },
-];
 
 const INVESTOR_FEEDBACK = [
   { value: "existing_investor", label: "Existing Investor" },
