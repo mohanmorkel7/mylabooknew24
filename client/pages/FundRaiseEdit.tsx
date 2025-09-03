@@ -506,75 +506,85 @@ export default function FundRaiseEdit() {
           <Card>
             <CardHeader>
               <CardTitle>Investor Status Queue</CardTitle>
-              <CardDescription>Quickly update key fields</CardDescription>
+              <CardDescription>Add or edit investors for this round</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Fund $ Mn *</Label>
-                <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
+            <CardContent className="space-y-4">
+              {queueItems.map((item, idx) => (
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border p-3 rounded">
+                  <div className="md:col-span-5">
+                    <Label>VC *</Label>
+                    <Select
+                      value={item.vc_investor}
+                      onValueChange={(v) => setQueueItems((arr) => arr.map((it, i) => (i === idx ? { ...it, vc_investor: v } : it)))}
                     >
-                      {form.fund_mn || "Select amount"}
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select VC" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investorOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4" /> {opt.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Label>Fund $ Mn *</Label>
+                    <Select
+                      value={item.fund_mn}
+                      onValueChange={(v) => setQueueItems((arr) => arr.map((it, i) => (i === idx ? { ...it, fund_mn: v } : it)))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select amount" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64 overflow-auto">
+                        {FUND_MN_OPTIONS.map((v) => (
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Label>Investor Status *</Label>
+                    <Select
+                      value={item.investor_status}
+                      onValueChange={(v) => setQueueItems((arr) => arr.map((it, i) => (i === idx ? { ...it, investor_status: v } : it)))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVESTOR_STATUS_OPTIONS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-1 flex justify-end md:justify-center">
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => setQueueItems((arr) => arr.filter((_, i) => i !== idx))}
+                      disabled={queueItems.length === 1}
+                      title={queueItems.length === 1 ? "At least one row required" : "Delete row"}
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="bottom"
-                    align="start"
-                    avoidCollisions={true}
-                    collisionPadding={8}
-                    className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
-                  >
-                    <Command>
-                      <CommandInput placeholder="Search amount..." />
-                      <CommandList>
-                        <CommandEmpty>No amounts found.</CommandEmpty>
-                        <CommandGroup>
-                          {FUND_MN_OPTIONS.map((v) => (
-                            <CommandItem
-                              key={v}
-                              value={v}
-                              onSelect={(val) => {
-                                handleChange("fund_mn", val);
-                                setFundMnOpen(false);
-                              }}
-                            >
-                              {v}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-                {errors.fund_mn && (
-                  <p className="text-sm text-red-600 mt-1">{errors.fund_mn}</p>
-                )}
-              </div>
-              <div>
-                <Label>Investor Status *</Label>
-                <Select
-                  value={form.investor_status}
-                  onValueChange={(v) => handleChange("investor_status", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Investor Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INVESTOR_STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors.investor_status && (
-                  <p className="text-sm text-red-600 mt-1">
-                    {errors.investor_status}
-                  </p>
-                )}
+                  </div>
+                </div>
+              ))}
+              <div className="flex justify-between items-center">
+                <Button variant="outline" onClick={() => setQueueItems((arr) => [...arr, { vc_investor: "", fund_mn: "", investor_status: "" }])}>
+                  <Plus className="w-4 h-4 mr-2" /> Add Investor
+                </Button>
+                {errors.queue && <p className="text-sm text-red-600">{errors.queue}</p>}
               </div>
             </CardContent>
           </Card>
