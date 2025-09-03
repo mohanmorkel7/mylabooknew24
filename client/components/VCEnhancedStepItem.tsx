@@ -605,7 +605,8 @@ export function VCEnhancedStepItem({
                   >
                     {step.status === "in_progress"
                       ? "In Progress"
-                      : step.status.charAt(0).toUpperCase() + step.status.slice(1).replace("_", " ")}
+                      : step.status.charAt(0).toUpperCase() +
+                        step.status.slice(1).replace("_", " ")}
                   </Badge>
                 )}
                 <div className="flex items-center space-x-2">
