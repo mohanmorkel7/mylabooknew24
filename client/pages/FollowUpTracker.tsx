@@ -249,6 +249,17 @@ export default function FollowUpTracker() {
     return true;
   };
 
+  const assigneeOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    followUps.forEach((f) => {
+      if (canViewFollowUp(f) && f.assigned_user_name) {
+        const name = String(f.assigned_user_name).trim();
+        if (name) set.add(name);
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [followUps, user?.role]);
+
   // Fetch follow-ups data from API
   useEffect(() => {
     if (!user) return;
@@ -352,6 +363,13 @@ export default function FollowUpTracker() {
       }
     }
   }, [location.search, followUps]);
+
+  // Ensure assignee selection stays valid when options change
+  useEffect(() => {
+    if (assigneeFilter !== "all" && !assigneeOptions.includes(assigneeFilter)) {
+      setAssigneeFilter("all");
+    }
+  }, [assigneeOptions]);
 
   const handleNavigateToMessage = (followUp: FollowUp) => {
     // Navigate to the lead details page and scroll to the specific message
@@ -795,12 +813,11 @@ export default function FollowUpTracker() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Assignees</SelectItem>
-                  <SelectItem value="Mike Johnson">Mike Johnson</SelectItem>
-                  <SelectItem value="Jane Smith">Jane Smith</SelectItem>
-                  <SelectItem value="John Doe">John Doe</SelectItem>
-                  <SelectItem value="Emily Davis">Emily Davis</SelectItem>
-                  <SelectItem value="Finance Team">Finance Team</SelectItem>
-                  <SelectItem value="Tech Lead">Tech Lead</SelectItem>
+                  {assigneeOptions.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <div className="flex items-center gap-2">
