@@ -1412,7 +1412,8 @@ export default function FundRaiseDashboard() {
                                               </span>
                                               {iv.fund_mn && (
                                                 <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                                                  <DollarSign className="w-3 h-3 mr-1 inline" /> {iv.fund_mn} Mn
+                                                  <DollarSign className="w-3 h-3 mr-1 inline" />{" "}
+                                                  {iv.fund_mn} Mn
                                                 </Badge>
                                               )}
                                               {iv.investor_status && (
@@ -1427,8 +1428,12 @@ export default function FundRaiseDashboard() {
                                           {fr.start_date && (
                                             <span className="inline-flex items-center gap-1">
                                               <Calendar className="w-3 h-3 text-gray-400" />
-                                              <span className="text-gray-500">Start:</span>
-                                              {new Date(fr.start_date).toLocaleDateString("en-IN", {
+                                              <span className="text-gray-500">
+                                                Start:
+                                              </span>
+                                              {new Date(
+                                                fr.start_date,
+                                              ).toLocaleDateString("en-IN", {
                                                 timeZone: "Asia/Kolkata",
                                               })}
                                             </span>
@@ -1436,8 +1441,12 @@ export default function FundRaiseDashboard() {
                                           {fr.end_date && (
                                             <span className="inline-flex items-center gap-1">
                                               <Calendar className="w-3 h-3 text-gray-400" />
-                                              <span className="text-gray-500">End:</span>
-                                              {new Date(fr.end_date).toLocaleDateString("en-IN", {
+                                              <span className="text-gray-500">
+                                                End:
+                                              </span>
+                                              {new Date(
+                                                fr.end_date,
+                                              ).toLocaleDateString("en-IN", {
                                                 timeZone: "Asia/Kolkata",
                                               })}
                                             </span>
