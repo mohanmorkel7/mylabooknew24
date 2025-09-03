@@ -14,6 +14,7 @@ export interface FollowUpStatusChangeData {
 /**
  * Creates a system chat message when a follow-up status changes
  */
+
 export async function notifyFollowUpStatusChange(
   data: FollowUpStatusChangeData,
 ) {
@@ -25,13 +26,14 @@ export async function notifyFollowUpStatusChange(
     userName,
     followUpTitle,
     isVC,
+    stepApiBase,
   } = data;
 
   console.log("Follow-up notification data:", data);
 
   if (!stepId) {
     console.warn("No step ID provided for follow-up status notification");
-    return;
+    return null;
   }
 
   let message = "";
@@ -55,7 +57,7 @@ export async function notifyFollowUpStatusChange(
   const chatData = {
     user_id: userId,
     user_name: userName,
-    message: message,
+    message,
     message_type: messageType,
     is_rich_text: false,
   };
@@ -67,38 +69,16 @@ export async function notifyFollowUpStatusChange(
       "with data:",
       chatData,
     );
-    // Create the system message in the step's chat (VC, Fund Raise, or Lead)
-    let endpoint: string;
-    if (data.stepApiBase === "fund-raises") {
-      endpoint = `/api/fund-raises/steps/${stepId}/chats`;
-      console.log("Using Fund Raise endpoint:", endpoint);
-    } else if (isVC || data.stepApiBase === "vc") {
-      endpoint = `/api/vc/steps/${stepId}/chats`;
-      console.log("Using VC endpoint:", endpoint);
-    } else {
-      endpoint = `/api/leads/steps/${stepId}/chats`;
-      console.log("Using Lead endpoint:", endpoint);
-    }
+    // Determine API base
+    const base = stepApiBase || (isVC ? "vc" : "leads");
+    const endpoint = `/${base}/steps/${stepId}/chats`;
+    console.log("Using endpoint:", endpoint);
 
-    const response = await fetch(endpoint, {
+    const result = await apiClient.request<any>(endpoint, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
       body: JSON.stringify(chatData),
     });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(
-        `HTTP ${response.status}: ${response.statusText} - ${errorText}`,
-      );
-      throw new Error(
-        `Failed to create follow-up status notification: ${response.statusText}`,
-      );
-    }
-
-    const result = await response.json();
     console.log(
       `Follow-up status notification added to step ${stepId}:`,
       result,
@@ -106,7 +86,6 @@ export async function notifyFollowUpStatusChange(
     return result;
   } catch (error) {
     console.error("Failed to create follow-up status notification:", error);
-    // Don't re-throw the error - we don't want to break the status update if notification fails
     return null;
   }
 }

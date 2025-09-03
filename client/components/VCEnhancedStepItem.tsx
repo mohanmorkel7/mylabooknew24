@@ -67,6 +67,7 @@ import {
   useUsers,
   useUpdateFollowUpStatus,
 } from "@/hooks/useApi";
+import { notifyFollowUpStatusChange } from "@/utils/followUpUtils";
 import { apiClient } from "@/lib/api";
 import { formatToISTDateTime } from "@/lib/dateUtils";
 
@@ -834,6 +835,24 @@ export function VCEnhancedStepItem({
                                                     ...s,
                                                     [fid]: val,
                                                   }));
+                                                  // Optimistic chat message for instant feedback
+                                                  const optimistic = {
+                                                    id: Date.now(),
+                                                    user_id: parseInt(
+                                                      user?.id || "0",
+                                                    ),
+                                                    user_name: "System",
+                                                    message: `📋 Follow-up task status changed to "${val}": "#${fid}" by ${user?.name || "User"}`,
+                                                    message_type:
+                                                      "system" as const,
+                                                    is_rich_text: false,
+                                                    created_at:
+                                                      new Date().toISOString(),
+                                                  } as any;
+                                                  setChatMessages((prev) => [
+                                                    ...prev,
+                                                    optimistic,
+                                                  ]);
                                                   try {
                                                     await updateFollowUpStatus.mutateAsync(
                                                       {
@@ -847,8 +866,36 @@ export function VCEnhancedStepItem({
                                                         },
                                                       },
                                                     );
+                                                    const created =
+                                                      await notifyFollowUpStatusChange(
+                                                        {
+                                                          followUpId: fid,
+                                                          newStatus: val,
+                                                          stepId: step.id,
+                                                          userId: parseInt(
+                                                            user?.id || "0",
+                                                          ),
+                                                          userName:
+                                                            user?.name ||
+                                                            "User",
+                                                          stepApiBase:
+                                                            stepApiBase as any,
+                                                        },
+                                                      );
+                                                    if (
+                                                      created &&
+                                                      (created as any).id
+                                                    ) {
+                                                      setChatMessages((prev) =>
+                                                        prev.map((m) =>
+                                                          m.id === optimistic.id
+                                                            ? (created as any)
+                                                            : m,
+                                                        ),
+                                                      );
+                                                    }
                                                   } catch (e) {
-                                                    // ignore
+                                                    // keep optimistic message on error
                                                   }
                                                 }}
                                               >
