@@ -51,6 +51,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const statusColors: Record<string, string> = {
   "in-progress": "bg-blue-100 text-blue-700",
