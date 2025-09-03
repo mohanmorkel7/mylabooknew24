@@ -1345,7 +1345,7 @@ export default function FundRaiseDashboard() {
                                 return (
                                   <div
                                     key={fr.id}
-                                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:shadow-sm"
+                                    className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:shadow-sm no-underline"
                                     onClick={() =>
                                       navigate(`/fundraise/${fr.id}`)
                                     }
