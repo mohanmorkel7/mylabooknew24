@@ -698,6 +698,14 @@ export default function VCDashboard() {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start gap-3">
+                          <Avatar className="h-10 w-10 bg-blue-100 text-blue-700">
+                            <AvatarFallback>
+                              {((vc.investor_name || "VC").match(/\b\w/g) || [])
+                                .slice(0, 2)
+                                .join("")
+                                .toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-2">
                               <h3 className="font-semibold text-lg">
