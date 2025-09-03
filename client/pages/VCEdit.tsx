@@ -4,7 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
 import { Country, State, City } from "country-state-city";
-import { VC_TYPES, SECTOR_FOCUS, INVESTOR_FEEDBACK, VC_LEAD_SOURCES } from "@/lib/constants";
+import {
+  VC_TYPES,
+  SECTOR_FOCUS,
+  INVESTOR_FEEDBACK,
+  VC_LEAD_SOURCES,
+} from "@/lib/constants";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -1038,12 +1043,15 @@ export default function VCEdit() {
                 {vcData.lead_source && (
                   <div>
                     <Label htmlFor="lead_source_value">
-                      {vcData.lead_source?.startsWith("email_") && "Email Address *"}
-                      {vcData.lead_source?.startsWith("call_") && "Phone Number *"}
+                      {vcData.lead_source?.startsWith("email_") &&
+                        "Email Address *"}
+                      {vcData.lead_source?.startsWith("call_") &&
+                        "Phone Number *"}
                       {vcData.lead_source?.startsWith("linkedin_") &&
                         "LinkedIn Profile/Link *"}
                       {vcData.lead_source === "reference" && "Referred by *"}
-                      {vcData.lead_source === "general_list" && "List Name/Details *"}
+                      {vcData.lead_source === "general_list" &&
+                        "List Name/Details *"}
                     </Label>
                     <div className="relative mt-1">
                       {vcData.lead_source?.startsWith("email_") && (

@@ -528,7 +528,8 @@ export default function FundRaiseDetails() {
                               className="text-sm text-blue-600 hover:underline cursor-pointer"
                               title={vcData.lead_source_value}
                             >
-                              {vcData.lead_source === "email" || vcData.lead_source?.startsWith("email_") ? (
+                              {vcData.lead_source === "email" ||
+                              vcData.lead_source?.startsWith("email_") ? (
                                 <a href={`mailto:${vcData.lead_source_value}`}>
                                   {vcData.lead_source_value}
                                 </a>
