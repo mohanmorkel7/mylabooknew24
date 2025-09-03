@@ -184,37 +184,41 @@ export default function CreateFundRaise() {
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    // Try to link to an existing VC by name; do not create new VC records
-    const matched = (vcList || []).find(
-      (vc: any) => (vc.investor_name || "").trim() === form.vc_investor.trim(),
-    );
-    const linkedVcId: number | null = matched?.id ?? null;
-
     setSubmitting(true);
     try {
-      const created = await apiClient.request("/fund-raises", {
-        method: "POST",
-        body: JSON.stringify({
-          vc_id: linkedVcId,
-          investor_name: form.vc_investor,
-          ui_status: form.status,
-          investor_status: form.investor_status,
-          round_stage: form.round_stage,
-          start_date: form.start_date || null,
-          end_date: form.end_date || null,
-          total_raise_mn: form.total_raise_mn || null,
-          fund_mn: form.fund_mn || null,
-          valuation_mn: form.valuation_mn || null,
-          reason: form.reason || null,
-          template_id: form.template_id,
-          created_by: parseInt(user?.id || "1"),
-          updated_by: parseInt(user?.id || "1"),
+      const base = {
+        ui_status: form.status,
+        round_stage: form.round_stage,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
+        total_raise_mn: form.total_raise_mn || null,
+        valuation_mn: form.valuation_mn || null,
+        reason: form.reason || null,
+        template_id: form.template_id,
+        created_by: parseInt(user?.id || "1"),
+        updated_by: parseInt(user?.id || "1"),
+      };
+
+      await Promise.all(
+        queueItems.map(async (it) => {
+          const matched = (vcList || []).find(
+            (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+          );
+          const linkedVcId: number | null = matched?.id ?? null;
+          await apiClient.request("/fund-raises", {
+            method: "POST",
+            body: JSON.stringify({
+              ...base,
+              vc_id: linkedVcId,
+              investor_name: it.vc_investor,
+              investor_status: it.investor_status,
+              fund_mn: it.fund_mn || null,
+            }),
+          });
         }),
-      });
+      );
 
-      // Refresh fund raise lists
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
-
       navigate("/fundraise");
     } catch (e) {
       alert("Failed to create fund raise. Please try again.");
