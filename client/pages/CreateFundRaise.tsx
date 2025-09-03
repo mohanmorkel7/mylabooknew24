@@ -268,31 +268,7 @@ export default function CreateFundRaise() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>VC *</Label>
-                  <Select
-                    value={form.vc_investor}
-                    onValueChange={(v) => handleChange("vc_investor", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select VC" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {investorOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          <div className="flex items-center gap-2">
-                            <Building className="w-4 h-4" /> {opt.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.vc_investor && (
-                    <p className="text-sm text-red-600 mt-1">
-                      {errors.vc_investor}
-                    </p>
-                  )}
-                </div>
+                <div className="hidden"></div>
 
                 <div>
                   <Label>Status *</Label>
