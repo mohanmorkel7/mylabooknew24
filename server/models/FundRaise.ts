@@ -4,6 +4,7 @@ export interface FundRaise {
   id: number;
   vc_id?: number | null;
   investor_name?: string | null;
+  investors?: Array<{ vc_id?: number | null; investor_name?: string | null; investor_status?: string | null; fund_mn?: string | null }> | null;
   ui_status?: "WIP" | "Closed" | "Dropped";
   status?: "in-progress" | "won" | "lost" | "completed";
   investor_status?:
@@ -85,6 +86,7 @@ export class FundRaiseRepository {
         fr.updated_by,
         fr.created_at,
         fr.updated_at,
+        fr.investors,
         -- VC context fields used by UI
         v.lead_source,
         v.lead_source_value,
@@ -120,12 +122,14 @@ export class FundRaiseRepository {
         vc_id, investor_name, ui_status, status, investor_status,
         round_stage, start_date, end_date, total_raise_mn, valuation_mn,
         fund_mn,
-        reason, template_id, created_by, updated_by
+        reason, template_id, created_by, updated_by,
+        investors
       ) VALUES (
         $1, $2, $3, $4, $5,
         $6, $7, $8, $9, $10,
         $11,
-        $12, $13, $14, $15
+        $12, $13, $14, $15,
+        $16
       ) RETURNING *
     `;
     const values = [
@@ -144,6 +148,7 @@ export class FundRaiseRepository {
       data.template_id ?? null,
       data.created_by ?? null,
       data.updated_by ?? null,
+      JSON.stringify(data.investors ?? []),
     ];
     const result = await pool.query(query, values);
     return result.rows[0];
