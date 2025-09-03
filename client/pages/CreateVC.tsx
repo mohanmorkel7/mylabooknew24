@@ -1562,6 +1562,9 @@ export default function CreateVC() {
                       })}
                     </SelectContent>
                   </Select>
+                  {errors.lead_source && (
+                    <p className="text-sm text-red-600 mt-1">{errors.lead_source}</p>
+                  )}
                 </div>
 
                 {/* Dynamic Lead Source Value */}
@@ -1610,6 +1613,9 @@ export default function CreateVC() {
                         }
                       />
                     </div>
+                    {errors.lead_source_value && (
+                      <p className="text-sm text-red-600 mt-1">{errors.lead_source_value}</p>
+                    )}
                   </div>
                 )}
 
@@ -1653,6 +1659,9 @@ export default function CreateVC() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.investor_category && (
+                      <p className="text-sm text-red-600 mt-1">{errors.investor_category}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1674,6 +1683,9 @@ export default function CreateVC() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.industry && (
+                      <p className="text-sm text-red-600 mt-1">{errors.industry}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1738,6 +1750,9 @@ export default function CreateVC() {
                         </Command>
                       </PopoverContent>
                     </Popover>
+                    {errors.minimum_size && (
+                      <p className="text-sm text-red-600 mt-1">{errors.minimum_size}</p>
+                    )}
                   </div>
 
                   <div>
@@ -1790,6 +1805,9 @@ export default function CreateVC() {
                         </Command>
                       </PopoverContent>
                     </Popover>
+                    {errors.maximum_size && (
+                      <p className="text-sm text-red-600 mt-1">{errors.maximum_size}</p>
+                    )}
                   </div>
 
                   <div className="md:col-span-2">
@@ -1891,7 +1909,7 @@ export default function CreateVC() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={false}
-                        className="w-full justify-between"
+                        className={`w-full justify-between ${errors.country ? "border-red-500" : ""}`}
                       >
                         {vcData.country || "Select country"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1932,6 +1950,9 @@ export default function CreateVC() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors.country && (
+                    <p className="text-sm text-red-600 mt-1">{errors.country}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1942,7 +1963,7 @@ export default function CreateVC() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={false}
-                        className="w-full justify-between"
+                        className={`w-full justify-between ${errors.state ? "border-red-500" : ""}`}
                       >
                         {vcData.state || "Select state"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1993,6 +2014,9 @@ export default function CreateVC() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors.state && (
+                    <p className="text-sm text-red-600 mt-1">{errors.state}</p>
+                  )}
                 </div>
 
                 <div>
@@ -2003,7 +2027,7 @@ export default function CreateVC() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={false}
-                        className="w-full justify-between"
+                        className={`w-full justify-between ${errors.city ? "border-red-500" : ""}`}
                       >
                         {vcData.city || "Select city"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -2065,6 +2089,9 @@ export default function CreateVC() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors.city && (
+                    <p className="text-sm text-red-600 mt-1">{errors.city}</p>
+                  )}
                 </div>
               </div>
 
