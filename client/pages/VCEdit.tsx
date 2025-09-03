@@ -80,7 +80,6 @@ import {
   HelpCircle,
   ChevronsUpDown,
   Check,
-  FileText,
 } from "lucide-react";
 
 const ROUND_STAGES = [
