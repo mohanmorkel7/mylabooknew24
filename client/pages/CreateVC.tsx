@@ -1594,7 +1594,7 @@ export default function CreateVC() {
                         onChange={(e) =>
                           handleInputChange("lead_source_value", e.target.value)
                         }
-                        className="pl-10"
+                        className={`pl-10 ${errors.lead_source_value ? "border-red-500" : ""}`}
                         placeholder={
                           vcData.lead_source?.startsWith("email_")
                             ? "contact@investor.com"
