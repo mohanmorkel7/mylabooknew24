@@ -79,6 +79,8 @@ interface VCEnhancedStepItemProps {
   onDeleteStep: (stepId: number) => void;
   isDragOverlay?: boolean;
   stepApiBase?: "vc" | "fund-raises";
+  focusStepId?: number;
+  focusFollowUpId?: number;
 }
 
 interface ChatMessage {
@@ -100,6 +102,8 @@ export function VCEnhancedStepItem({
   onDeleteStep,
   isDragOverlay = false,
   stepApiBase = "vc",
+  focusStepId,
+  focusFollowUpId,
 }: VCEnhancedStepItemProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -134,6 +138,7 @@ export function VCEnhancedStepItem({
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatLoading, setChatLoading] = useState<boolean>(false);
   const [chatError, setChatError] = useState<any>(null);
+  const hasFocusedRef = useRef(false);
 
   // Load chats when expanded
   useEffect(() => {
@@ -164,13 +169,35 @@ export function VCEnhancedStepItem({
     );
   }, [chatMessages]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to a targeted follow-up message or to bottom
   useEffect(() => {
-    if (messagesContainerRef.current && sortedMessages.length > 0) {
-      messagesContainerRef.current.scrollTop =
-        messagesContainerRef.current.scrollHeight;
+    if (!messagesContainerRef.current || sortedMessages.length === 0) return;
+
+    // If focus requested and this is the target step, try to scroll to the message containing #<followUpId>
+    if (
+      isExpanded &&
+      focusFollowUpId &&
+      focusStepId &&
+      step?.id === focusStepId &&
+      !hasFocusedRef.current
+    ) {
+      const target = messagesContainerRef.current.querySelector(
+        `#focus-followup-${focusFollowUpId}`,
+      ) as HTMLElement | null;
+      if (target) {
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        // Temporary highlight effect
+        target.classList.add("ring-2", "ring-yellow-400");
+        setTimeout(() => target.classList.remove("ring-2", "ring-yellow-400"), 2000);
+        hasFocusedRef.current = true;
+        return;
+      }
     }
-  }, [sortedMessages]);
+
+    // Fallback: scroll to bottom
+    messagesContainerRef.current.scrollTop =
+      messagesContainerRef.current.scrollHeight;
+  }, [sortedMessages, isExpanded, focusFollowUpId, focusStepId, step?.id]);
 
   const [newMessage, setNewMessage] = useState("");
   const [stagedAttachments, setStagedAttachments] = useState<any[]>([]);
@@ -754,9 +781,16 @@ export function VCEnhancedStepItem({
                           (message.message || "").includes(
                             "Step status changed",
                           );
+                        const isFocusAnchor =
+                          !!focusFollowUpId &&
+                          !!focusStepId &&
+                          step?.id === focusStepId &&
+                          typeof message.message === "string" &&
+                          message.message.includes(`#${focusFollowUpId}`);
                         return (
                           <div
                             key={`msg-${message.id}-${index}`}
+                            id={isFocusAnchor ? `focus-followup-${focusFollowUpId}` : undefined}
                             className={`flex space-x-3 ${
                               isStatusChange
                                 ? "px-2 py-1"
