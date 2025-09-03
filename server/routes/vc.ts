@@ -775,6 +775,7 @@ router.put("/:id", async (req: Request, res: Response) => {
     try {
       if (await isDatabaseAvailable()) {
         await ensureVCInvestorCategoryConstraint();
+        await ensureVCLeadSourceConstraint();
         // Get current VC to check if template_id is changing
         const currentVC = await VCRepository.findById(id);
 
