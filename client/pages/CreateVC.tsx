@@ -1642,7 +1642,7 @@ export default function CreateVC() {
                         handleInputChange("investor_category" as any, value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.investor_category ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select VC Type" />
                       </SelectTrigger>
                       <SelectContent>
