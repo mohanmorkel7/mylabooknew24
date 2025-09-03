@@ -789,7 +789,7 @@ export function VCEnhancedStepItem({
                               {isStatusChange ? (
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs text-gray-500">
-                                    {(message.message || "").replace(/^📝\s*/, "")}
+                                    {(message.message || "").replace(/^([📝📋]\s*)+/, "")}
                                   </span>
                                   <span className="text-[10px] text-gray-400">
                                     {formatToISTDateTime(message.created_at)}
