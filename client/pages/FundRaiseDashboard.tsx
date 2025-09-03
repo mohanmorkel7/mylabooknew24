@@ -515,7 +515,7 @@ export default function FundRaiseDashboard() {
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div className="bg-gray-50 p-4 rounded-lg">
+                      <div className="bg-gray-50 p-4 rounded-lg pb-24">
                         <div className="text-sm font-medium text-gray-700 mb-4">
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
@@ -551,7 +551,7 @@ export default function FundRaiseDashboard() {
                               </div>
 
                               <div
-                                className="relative flex-1 pb-28"
+                                className="relative flex-1 pb-24"
                                 style={{
                                   height: `${chartHeight}px`,
                                   minWidth: "100%",
