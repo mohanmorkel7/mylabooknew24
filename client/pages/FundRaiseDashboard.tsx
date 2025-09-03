@@ -510,13 +510,13 @@ export default function FundRaiseDashboard() {
                   return stepColors[stepIndex % stepColors.length];
                 };
 
-                const chartHeight = 400;
+                const chartHeight = 500;
                 const colWidth = 120;
 
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div className="bg-gray-50 p-4 rounded-lg pb-24">
+                      <div className="bg-gray-50 p-4 rounded-lg pb-4">
                         <div className="text-sm font-medium text-gray-700 mb-4">
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
@@ -552,7 +552,7 @@ export default function FundRaiseDashboard() {
                               </div>
 
                               <div
-                                className="relative flex-1 pb-24"
+                                className="relative flex-1 pb-4"
                                 style={{
                                   height: `${chartHeight}px`,
                                   minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
