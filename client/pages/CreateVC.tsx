@@ -1263,9 +1263,6 @@ export default function CreateVC() {
     if (!vcData.maximum_size) {
       newErrors.maximum_size = "Max.Chq Size is required";
     }
-    if (!vcData.address.trim()) {
-      newErrors.address = "Address is required";
-    }
     if (!vcData.country) {
       newErrors.country = "Country is required";
     }
