@@ -81,7 +81,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Country, State, City } from "country-state-city";
-import { VC_TYPES, SECTOR_FOCUS, INVESTOR_FEEDBACK } from "@/lib/constants";
+import { VC_TYPES, SECTOR_FOCUS, INVESTOR_FEEDBACK, VC_LEAD_SOURCES } from "@/lib/constants";
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
