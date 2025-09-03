@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
+import { getSourceLabel } from "@/lib/constants";
 import { apiClient } from "@/lib/api";
 import { useUpdateFundRaiseStep } from "@/hooks/useApi";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
@@ -74,13 +75,19 @@ const priorityColors = {
 };
 
 const sourceIcons = {
+  linkedin_outbound: User,
+  linkedin_inbound: User,
+  email_outbound: Mail,
+  email_inbound: Mail,
+  call_outbound: Phone,
+  call_inbound: Phone,
+  reference: Award,
+  general_list: Globe,
   email: Mail,
   "social-media": User,
   phone: Phone,
   website: Globe,
   referral: Award,
-  "cold-call": Phone,
-  event: Building,
   other: Zap,
 };
 
@@ -514,7 +521,7 @@ export default function FundRaiseDetails() {
                         </div>
                         <div className="flex flex-col">
                           <span className="capitalize">
-                            {vcData.lead_source?.replace("-", " ")}
+                            {getSourceLabel(vcData.lead_source)}
                           </span>
                           {vcData.lead_source_value && (
                             <span
