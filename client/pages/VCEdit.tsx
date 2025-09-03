@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
 import { Country, State, City } from "country-state-city";
-import { VC_TYPES, SECTOR_FOCUS, INVESTOR_FEEDBACK } from "@/lib/constants";
+import { VC_TYPES, SECTOR_FOCUS, INVESTOR_FEEDBACK, VC_LEAD_SOURCES } from "@/lib/constants";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,6 +80,7 @@ import {
   HelpCircle,
   ChevronsUpDown,
   Check,
+  FileText,
 } from "lucide-react";
 
 const ROUND_STAGES = [
@@ -1004,54 +1005,27 @@ export default function VCEdit() {
                       <SelectValue placeholder="Select how you found this lead" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="email">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          Email
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="social-media">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4" />
-                          Social Media
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="phone">
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4" />
-                          Phone
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="website">
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4" />
-                          Website
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="referral">
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="w-4 h-4" />
-                          Referral
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="cold-call">
-                        <div className="flex items-center gap-2">
-                          <PhoneCall className="w-4 h-4" />
-                          Cold Call
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="event">
-                        <div className="flex items-center gap-2">
-                          <Presentation className="w-4 h-4" />
-                          Event
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="other">
-                        <div className="flex items-center gap-2">
-                          <HelpCircle className="w-4 h-4" />
-                          Other
-                        </div>
-                      </SelectItem>
+                      {VC_LEAD_SOURCES.map((opt) => {
+                        const Icon = opt.value.startsWith("email_")
+                          ? Mail
+                          : opt.value.startsWith("call_")
+                            ? Phone
+                            : opt.value.startsWith("linkedin_")
+                              ? MessageSquare
+                              : opt.value === "reference"
+                                ? UserCheck
+                                : opt.value === "general_list"
+                                  ? FileText
+                                  : HelpCircle;
+                        return (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="w-4 h-4" />
+                              {opt.label}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   {errors.lead_source && (
@@ -1065,27 +1039,22 @@ export default function VCEdit() {
                 {vcData.lead_source && (
                   <div>
                     <Label htmlFor="lead_source_value">
-                      {vcData.lead_source === "email" && "Email Address *"}
-                      {vcData.lead_source === "phone" && "Phone Number *"}
-                      {vcData.lead_source === "social-media" &&
-                        "Social Media Profile/Link *"}
-                      {vcData.lead_source === "website" && "Website URL *"}
-                      {vcData.lead_source === "referral" &&
-                        "Referral Source/Contact *"}
-                      {vcData.lead_source === "cold-call" &&
-                        "Phone Number Called *"}
-                      {vcData.lead_source === "event" && "Event Name/Details *"}
-                      {vcData.lead_source === "other" && "Source Details *"}
+                      {vcData.lead_source?.startsWith("email_") && "Email Address *"}
+                      {vcData.lead_source?.startsWith("call_") && "Phone Number *"}
+                      {vcData.lead_source?.startsWith("linkedin_") &&
+                        "LinkedIn Profile/Link *"}
+                      {vcData.lead_source === "reference" && "Referred by *"}
+                      {vcData.lead_source === "general_list" && "List Name/Details *"}
                     </Label>
                     <div className="relative mt-1">
-                      {vcData.lead_source === "email" && (
+                      {vcData.lead_source?.startsWith("email_") && (
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
-                      {vcData.lead_source === "phone" && (
+                      {vcData.lead_source?.startsWith("call_") && (
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
-                      {vcData.lead_source === "website" && (
-                        <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      {vcData.lead_source?.startsWith("linkedin_") && (
+                        <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
                       <Input
                         id="lead_source_value"
@@ -1095,21 +1064,17 @@ export default function VCEdit() {
                         }
                         className="pl-10"
                         placeholder={
-                          vcData.lead_source === "email"
+                          vcData.lead_source?.startsWith("email_")
                             ? "contact@investor.com"
-                            : vcData.lead_source === "phone"
+                            : vcData.lead_source?.startsWith("call_")
                               ? "+1 (555) 000-0000"
-                              : vcData.lead_source === "social-media"
-                                ? "LinkedIn profile or social media link"
-                                : vcData.lead_source === "website"
-                                  ? "https://investor.com"
-                                  : vcData.lead_source === "referral"
-                                    ? "Name of person who referred"
-                                    : vcData.lead_source === "cold-call"
-                                      ? "+1 (555) 000-0000"
-                                      : vcData.lead_source === "event"
-                                        ? "Conference name or event details"
-                                        : "Describe the source"
+                              : vcData.lead_source?.startsWith("linkedin_")
+                                ? "LinkedIn profile link"
+                                : vcData.lead_source === "reference"
+                                  ? "Name of person who referred"
+                                  : vcData.lead_source === "general_list"
+                                    ? "List name or details"
+                                    : "Describe the source"
                         }
                       />
                     </div>
