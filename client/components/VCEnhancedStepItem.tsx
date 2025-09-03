@@ -188,7 +188,10 @@ export function VCEnhancedStepItem({
         target.scrollIntoView({ block: "center", behavior: "smooth" });
         // Temporary highlight effect
         target.classList.add("ring-2", "ring-yellow-400");
-        setTimeout(() => target.classList.remove("ring-2", "ring-yellow-400"), 2000);
+        setTimeout(
+          () => target.classList.remove("ring-2", "ring-yellow-400"),
+          2000,
+        );
         hasFocusedRef.current = true;
         return;
       }
@@ -790,7 +793,11 @@ export function VCEnhancedStepItem({
                         return (
                           <div
                             key={`msg-${message.id}-${index}`}
-                            id={isFocusAnchor ? `focus-followup-${focusFollowUpId}` : undefined}
+                            id={
+                              isFocusAnchor
+                                ? `focus-followup-${focusFollowUpId}`
+                                : undefined
+                            }
                             className={`flex space-x-3 ${
                               isStatusChange
                                 ? "px-2 py-1"

@@ -620,7 +620,16 @@ export default function FollowUpTracker() {
   // Filter follow-ups based on search and filters
   const filteredFollowUps = React.useMemo(() => {
     return followUps.filter(baseFilter);
-  }, [followUps, searchTerm, statusFilter, assigneeFilter, typeFilter, dateFrom, dateTo, user?.role]);
+  }, [
+    followUps,
+    searchTerm,
+    statusFilter,
+    assigneeFilter,
+    typeFilter,
+    dateFrom,
+    dateTo,
+    user?.role,
+  ]);
 
   // Tab-specific filtered follow-ups
   const allFollowUps = filteredFollowUps;
@@ -672,7 +681,16 @@ export default function FollowUpTracker() {
       default:
         return allFollowUps;
     }
-  }, [activeTab, allFollowUps, pendingFollowUps, inProgressFollowUps, completedFollowUps, overdueFollowUps, myFollowUps, assignedByMe]);
+  }, [
+    activeTab,
+    allFollowUps,
+    pendingFollowUps,
+    inProgressFollowUps,
+    completedFollowUps,
+    overdueFollowUps,
+    myFollowUps,
+    assignedByMe,
+  ]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -1116,9 +1134,15 @@ export default function FollowUpTracker() {
                                   size="sm"
                                   onClick={() => {
                                     if (isFundRaise && fundRaiseId) {
-                                      const stepId = (followUp as any).message_id || (followUp as any).step_id || (followUp as any).vc_step_id;
+                                      const stepId =
+                                        (followUp as any).message_id ||
+                                        (followUp as any).step_id ||
+                                        (followUp as any).vc_step_id;
                                       navigate(`/fundraise/${fundRaiseId}`, {
-                                        state: { openStepId: stepId, focusFollowUpId: followUp.id },
+                                        state: {
+                                          openStepId: stepId,
+                                          focusFollowUpId: followUp.id,
+                                        },
                                       });
                                     } else {
                                       navigate(`/vc/${followUp.vc_id}`);
@@ -1181,9 +1205,15 @@ export default function FollowUpTracker() {
                                   size="sm"
                                   onClick={() => {
                                     if (isFundRaise && fundRaiseId) {
-                                      const stepId = (followUp as any).message_id || (followUp as any).step_id || (followUp as any).vc_step_id;
+                                      const stepId =
+                                        (followUp as any).message_id ||
+                                        (followUp as any).step_id ||
+                                        (followUp as any).vc_step_id;
                                       navigate(`/fundraise/${fundRaiseId}`, {
-                                        state: { openStepId: stepId, focusFollowUpId: followUp.id },
+                                        state: {
+                                          openStepId: stepId,
+                                          focusFollowUpId: followUp.id,
+                                        },
                                       });
                                     } else {
                                       navigate(`/vc/${followUp.vc_id}`);
