@@ -56,7 +56,10 @@ async function ensureVCLeadSourceConstraint() {
     vcLeadSourceConstraintEnsured = true;
     console.log("VC lead_source constraint ensured/updated");
   } catch (e: any) {
-    console.log("VC lead_source constraint ensure failed or not needed:", e.message);
+    console.log(
+      "VC lead_source constraint ensure failed or not needed:",
+      e.message,
+    );
     vcLeadSourceConstraintEnsured = true; // prevent repeated attempts each request
   }
 }
