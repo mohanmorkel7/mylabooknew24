@@ -1100,7 +1100,7 @@ export default function FollowUpTracker() {
                                   }
                                 >
                                   Due:{" "}
-                                  {formatToUTCDateTime(followUp.due_date, {
+                                  {formatToISTDateTime(followUp.due_date, {
                                     day: "numeric",
                                     month: "short",
                                     hour: "2-digit",
