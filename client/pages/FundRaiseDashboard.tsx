@@ -1412,7 +1412,7 @@ export default function FundRaiseDashboard() {
                                               </span>
                                               {iv.fund_mn && (
                                                 <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                                                  ${iv.fund_mn} Mn
+                                                  <DollarSign className="w-3 h-3 mr-1 inline" /> {iv.fund_mn} Mn
                                                 </Badge>
                                               )}
                                               {iv.investor_status && (
