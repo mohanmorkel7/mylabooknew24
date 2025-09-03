@@ -360,6 +360,9 @@ export function VCEnhancedStepItem({
       const assignee = teamMembers.find(
         (m) => m.id === parseInt(followUpAssignTo),
       );
+      if (created?.id && created?.status) {
+        setFollowUpStatuses((s) => ({ ...s, [created.id]: created.status }));
+      }
       const details = [
         created?.id ? `ID: #${created.id}` : null,
         assignee ? `Assignee: ${assignee.name}` : null,
