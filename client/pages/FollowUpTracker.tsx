@@ -41,7 +41,7 @@ import {
   Reply,
   Target,
 } from "lucide-react";
-import { formatToIST, formatToISTDateTime, isOverdue } from "@/lib/dateUtils";
+import { formatToIST, formatToISTDateTime, formatToUTCDateTime, isOverdue } from "@/lib/dateUtils";
 import { updateFollowUpStatusWithNotification } from "@/utils/followUpUtils";
 
 interface FollowUp {
@@ -1096,7 +1096,7 @@ export default function FollowUpTracker() {
                                   }
                                 >
                                   Due:{" "}
-                                  {formatToISTDateTime(followUp.due_date, {
+                                  {formatToUTCDateTime(followUp.due_date, {
                                     day: "numeric",
                                     month: "short",
                                     hour: "2-digit",
