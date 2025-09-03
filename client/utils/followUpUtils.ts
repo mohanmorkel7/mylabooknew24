@@ -74,7 +74,9 @@ export async function notifyFollowUpStatusChange(
 
     // For fund-raises, do not create follow-up chat notifications
     if (base === "fund-raises") {
-      console.log("Skipping follow-up chat notification in fund-raises context");
+      console.log(
+        "Skipping follow-up chat notification in fund-raises context",
+      );
       return null;
     }
 
