@@ -44,7 +44,6 @@ import {
 import {
   formatToIST,
   formatToISTDateTime,
-  formatToUTCDateTime,
   isOverdue,
 } from "@/lib/dateUtils";
 import { updateFollowUpStatusWithNotification } from "@/utils/followUpUtils";
