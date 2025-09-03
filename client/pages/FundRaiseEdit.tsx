@@ -232,30 +232,50 @@ export default function FundRaiseEdit() {
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    const payload: any = {
-      investor_name: form.vc_investor,
+
+    const base: any = {
       ui_status: form.status,
       round_stage: form.round_stage,
       total_raise_mn: form.total_raise_mn,
       valuation_mn: form.valuation_mn,
-      fund_mn: form.fund_mn,
       start_date: form.start_date || null,
       end_date: form.end_date || null,
       reason: form.reason,
-      investor_status: form.investor_status || null,
       template_id: form.template_id || 1,
       updated_by: parseInt(user?.id || "1"),
     };
     try {
-      await updateMutation.mutateAsync(payload);
-      await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
-      await queryClient.invalidateQueries({ queryKey: ["fundraise-edit", id] });
-      await queryClient.invalidateQueries({
-        queryKey: ["fund-raise-steps", id],
+      const first = queueItems[0];
+      await updateMutation.mutateAsync({
+        ...base,
+        investor_name: first.vc_investor,
+        fund_mn: first.fund_mn,
+        investor_status: first.investor_status || null,
       });
-      await queryClient.refetchQueries({ queryKey: ["fundraise", id] });
-      await queryClient.refetchQueries({ queryKey: ["fundraise-edit", id] });
-      await queryClient.refetchQueries({ queryKey: ["fund-raise-steps", id] });
+
+      const extras = queueItems.slice(1);
+      await Promise.all(
+        extras.map(async (it) => {
+          const matched = (vcList || []).find(
+            (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+          );
+          const linkedVcId: number | null = matched?.id ?? null;
+          await apiClient.request("/fund-raises", {
+            method: "POST",
+            body: JSON.stringify({
+              ...base,
+              vc_id: linkedVcId,
+              investor_name: it.vc_investor,
+              fund_mn: it.fund_mn,
+              investor_status: it.investor_status || null,
+              created_by: parseInt(user?.id || "1"),
+            }),
+          });
+        }),
+      );
+
+      await queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
+      await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
       navigate(`/fundraise/${id}`);
     } catch (e) {
       // ignore
