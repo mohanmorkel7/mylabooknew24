@@ -583,7 +583,10 @@ export default function FundRaiseDashboard() {
 
                                 <div
                                   className="absolute inset-0 grid"
-                                  style={{ paddingTop: "0px", gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)` }}
+                                  style={{
+                                    paddingTop: "0px",
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                  }}
                                 >
                                   {(vcProgressData || []).map(
                                     (vcProgress: any) => {
@@ -676,19 +679,28 @@ export default function FundRaiseDashboard() {
                                     gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
                                   }}
                                 >
-                                  {(vcProgressData || []).map((vcProgress: any) => (
-                                    <div key={vcProgress.vc_id} className="text-center flex-none" style={{ width: `${colWidth}px` }}>
-                                      <div className="text-xs font-medium text-gray-700 mb-1">
-                                        {vcProgress.round_title}
+                                  {(vcProgressData || []).map(
+                                    (vcProgress: any) => (
+                                      <div
+                                        key={vcProgress.vc_id}
+                                        className="text-center flex-none"
+                                        style={{ width: `${colWidth}px` }}
+                                      >
+                                        <div className="text-xs font-medium text-gray-700 mb-1">
+                                          {vcProgress.round_title}
+                                        </div>
+                                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
+                                          {
+                                            vcProgress.total_completed_probability
+                                          }
+                                          %
+                                        </div>
+                                        <div className="text-sm font-semibold text-gray-800 break-words px-1">
+                                          {vcProgress.investor_name}
+                                        </div>
                                       </div>
-                                      <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
-                                        {vcProgress.total_completed_probability}%
-                                      </div>
-                                      <div className="text-sm font-semibold text-gray-800 break-words px-1">
-                                        {vcProgress.investor_name}
-                                      </div>
-                                    </div>
-                                  ))}
+                                    ),
+                                  )}
                                 </div>
                               </div>
                             </div>
