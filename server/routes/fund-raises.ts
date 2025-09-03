@@ -210,7 +210,11 @@ router.post("/", async (req: Request, res: Response) => {
       vc_id: item.vc_id ?? null,
       investor_name: item.investor_name ?? null,
       ui_status:
-        item.ui_status ?? item.uiStatus ?? item.status_ui ?? item.statusLabel ?? "WIP",
+        item.ui_status ??
+        item.uiStatus ??
+        item.status_ui ??
+        item.statusLabel ??
+        "WIP",
       status: item.status ?? null,
       investor_status: item.investor_status ?? null,
       round_stage: item.round_stage ?? null,
@@ -240,11 +244,15 @@ router.post("/", async (req: Request, res: Response) => {
           // Optional FK check
           if (raw.vc_id) {
             try {
-              const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [
-                Number(raw.vc_id),
-              ]);
+              const check = await pool.query(
+                "SELECT 1 FROM vcs WHERE id = $1",
+                [Number(raw.vc_id)],
+              );
               if (check.rowCount === 0) {
-                created.push({ warning: "VC not found; skipped", vc_id: raw.vc_id });
+                created.push({
+                  warning: "VC not found; skipped",
+                  vc_id: raw.vc_id,
+                });
                 continue;
               }
             } catch {}
@@ -255,7 +263,9 @@ router.post("/", async (req: Request, res: Response) => {
         await pool.query("COMMIT");
         return res.status(201).json(created);
       } catch (e) {
-        try { await pool.query("ROLLBACK"); } catch {}
+        try {
+          await pool.query("ROLLBACK");
+        } catch {}
         throw e;
       }
     }
@@ -265,7 +275,9 @@ router.post("/", async (req: Request, res: Response) => {
     return res.status(201).json(row);
   } catch (error: any) {
     if (error && error.code === "23503") {
-      return res.status(202).json({ warning: "Invalid vc_id, record not created" });
+      return res
+        .status(202)
+        .json({ warning: "Invalid vc_id, record not created" });
     }
     console.error("Error creating fund_raise:", error.message);
     return res.status(500).json({ error: "Failed" });
