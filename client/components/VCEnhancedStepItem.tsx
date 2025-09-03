@@ -838,37 +838,59 @@ export function VCEnhancedStepItem({
                                                   // Optimistic chat message for instant feedback
                                                   const optimistic = {
                                                     id: Date.now(),
-                                                    user_id: parseInt(user?.id || "0"),
+                                                    user_id: parseInt(
+                                                      user?.id || "0",
+                                                    ),
                                                     user_name: "System",
                                                     message: `📋 Follow-up task status changed to "${val}": "#${fid}" by ${user?.name || "User"}`,
-                                                    message_type: "system" as const,
+                                                    message_type:
+                                                      "system" as const,
                                                     is_rich_text: false,
-                                                    created_at: new Date().toISOString(),
+                                                    created_at:
+                                                      new Date().toISOString(),
                                                   } as any;
-                                                  setChatMessages((prev) => [...prev, optimistic]);
+                                                  setChatMessages((prev) => [
+                                                    ...prev,
+                                                    optimistic,
+                                                  ]);
                                                   try {
-                                                    await updateFollowUpStatus.mutateAsync({
-                                                      followUpId: fid,
-                                                      statusData: {
-                                                        status: val,
-                                                        completed_at:
-                                                          val === "completed"
-                                                            ? new Date().toISOString()
-                                                            : null,
+                                                    await updateFollowUpStatus.mutateAsync(
+                                                      {
+                                                        followUpId: fid,
+                                                        statusData: {
+                                                          status: val,
+                                                          completed_at:
+                                                            val === "completed"
+                                                              ? new Date().toISOString()
+                                                              : null,
+                                                        },
                                                       },
-                                                    });
-                                                    const created = await notifyFollowUpStatusChange({
-                                                      followUpId: fid,
-                                                      newStatus: val,
-                                                      stepId: step.id,
-                                                      userId: parseInt(user?.id || "0"),
-                                                      userName: user?.name || "User",
-                                                      stepApiBase: stepApiBase as any,
-                                                    });
-                                                    if (created && (created as any).id) {
+                                                    );
+                                                    const created =
+                                                      await notifyFollowUpStatusChange(
+                                                        {
+                                                          followUpId: fid,
+                                                          newStatus: val,
+                                                          stepId: step.id,
+                                                          userId: parseInt(
+                                                            user?.id || "0",
+                                                          ),
+                                                          userName:
+                                                            user?.name ||
+                                                            "User",
+                                                          stepApiBase:
+                                                            stepApiBase as any,
+                                                        },
+                                                      );
+                                                    if (
+                                                      created &&
+                                                      (created as any).id
+                                                    ) {
                                                       setChatMessages((prev) =>
                                                         prev.map((m) =>
-                                                          m.id === optimistic.id ? (created as any) : m,
+                                                          m.id === optimistic.id
+                                                            ? (created as any)
+                                                            : m,
                                                         ),
                                                       );
                                                     }
