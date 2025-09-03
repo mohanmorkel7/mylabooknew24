@@ -62,7 +62,11 @@ import {
   Edit,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { useCreateFollowUp, useUsers, useUpdateFollowUpStatus } from "@/hooks/useApi";
+import {
+  useCreateFollowUp,
+  useUsers,
+  useUpdateFollowUpStatus,
+} from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { formatToISTDateTime } from "@/lib/dateUtils";
 
@@ -191,7 +195,9 @@ export function VCEnhancedStepItem({
 
   const createFollowUpMutation = useCreateFollowUp();
   const updateFollowUpStatus = useUpdateFollowUpStatus();
-  const [followUpStatuses, setFollowUpStatuses] = useState<Record<number, string>>({});
+  const [followUpStatuses, setFollowUpStatuses] = useState<
+    Record<number, string>
+  >({});
 
   // Function to highlight mentions and make follow-up IDs clickable
   const processMessageContent = (messageText: string) => {
@@ -717,44 +723,63 @@ export function VCEnhancedStepItem({
                                 <span className="text-xs text-gray-500">
                                   {formatToISTDateTime(message.created_at)}
                                 </span>
-                                {message.message_type === "system" && (() => {
-                                  const m = (message.message || "").match(/#(\d+)/);
-                                  if (!m) return null;
-                                  const fid = parseInt(m[1]);
-                                  const current = followUpStatuses[fid] || "pending";
-                                  return (
-                                    <div className="flex items-center space-x-1">
-                                      <Label className="text-xs text-gray-600">Status</Label>
-                                      <Select
-                                        value={current}
-                                        onValueChange={async (val) => {
-                                          setFollowUpStatuses((s) => ({ ...s, [fid]: val }));
-                                          try {
-                                            await updateFollowUpStatus.mutateAsync({
-                                              followUpId: fid,
-                                              statusData: {
-                                                status: val,
-                                                completed_at:
-                                                  val === "completed" ? new Date().toISOString() : null,
-                                              },
-                                            });
-                                          } catch (e) {
-                                            // ignore
-                                          }
-                                        }}
-                                      >
-                                        <SelectTrigger className="h-7 w-36 text-xs">
-                                          <SelectValue placeholder="Update status" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="pending">Pending</SelectItem>
-                                          <SelectItem value="in_progress">In Progress</SelectItem>
-                                          <SelectItem value="completed">Completed</SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                    </div>
-                                  );
-                                })()}
+                                {message.message_type === "system" &&
+                                  (() => {
+                                    const m = (message.message || "").match(
+                                      /#(\d+)/,
+                                    );
+                                    if (!m) return null;
+                                    const fid = parseInt(m[1]);
+                                    const current =
+                                      followUpStatuses[fid] || "pending";
+                                    return (
+                                      <div className="flex items-center space-x-1">
+                                        <Label className="text-xs text-gray-600">
+                                          Status
+                                        </Label>
+                                        <Select
+                                          value={current}
+                                          onValueChange={async (val) => {
+                                            setFollowUpStatuses((s) => ({
+                                              ...s,
+                                              [fid]: val,
+                                            }));
+                                            try {
+                                              await updateFollowUpStatus.mutateAsync(
+                                                {
+                                                  followUpId: fid,
+                                                  statusData: {
+                                                    status: val,
+                                                    completed_at:
+                                                      val === "completed"
+                                                        ? new Date().toISOString()
+                                                        : null,
+                                                  },
+                                                },
+                                              );
+                                            } catch (e) {
+                                              // ignore
+                                            }
+                                          }}
+                                        >
+                                          <SelectTrigger className="h-7 w-36 text-xs">
+                                            <SelectValue placeholder="Update status" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="pending">
+                                              Pending
+                                            </SelectItem>
+                                            <SelectItem value="in_progress">
+                                              In Progress
+                                            </SelectItem>
+                                            <SelectItem value="completed">
+                                              Completed
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    );
+                                  })()}
                                 {message.message_type !== "system" && (
                                   <>
                                     {/* Only show edit/delete for own messages */}
