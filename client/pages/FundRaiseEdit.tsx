@@ -190,7 +190,10 @@ export default function FundRaiseEdit() {
         eq(fr.ui_status, current.ui_status) &&
         eq(fr.start_date, current.start_date) &&
         eq(fr.end_date, current.end_date) &&
-        eq(String(fr.total_raise_mn || ""), String(current.total_raise_mn || "")) &&
+        eq(
+          String(fr.total_raise_mn || ""),
+          String(current.total_raise_mn || ""),
+        ) &&
         eq(String(fr.valuation_mn || ""), String(current.valuation_mn || "")) &&
         eq(String(fr.template_id || ""), String(current.template_id || "")) &&
         eq(String(fr.reason || ""), String(current.reason || ""))
