@@ -6,6 +6,14 @@ export interface VC {
 
   // Lead Source Information
   lead_source:
+    | "linkedin_outbound"
+    | "linkedin_inbound"
+    | "email_outbound"
+    | "email_inbound"
+    | "call_outbound"
+    | "call_inbound"
+    | "reference"
+    | "general_list"
     | "email"
     | "social-media"
     | "phone"
