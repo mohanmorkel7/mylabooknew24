@@ -43,7 +43,9 @@ import {
   XCircle,
   FileText,
   BarChart3,
+  DollarSign,
 } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const statusColors: Record<string, string> = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -1221,114 +1223,148 @@ export default function FundRaiseDashboard() {
       <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Fund Raises</CardTitle>
-            <CardDescription>Recent entries</CardDescription>
+            <CardTitle>Fund Raises Projects</CardTitle>
+            <CardDescription>Grouped by Investment Stage</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             {fundRaisesError ? (
               <div className="p-3 text-red-600">Failed to load fund raises</div>
             ) : fundRaisesLoading ? (
               <div className="p-3 text-gray-500">Loading...</div>
-            ) : filteredFundRaises.length === 0 ? (
-              <div className="p-3 text-gray-500">No entries</div>
-            ) : (
-              filteredFundRaises.map((fr: any) => {
-                const internalStatus =
-                  fr.status ||
-                  UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
-                  "in-progress";
+            ) : (() => {
+              const STAGE_LABELS: Record<string, string> = {
+                pre_seed: "Pre Seed",
+                seed: "Seed",
+                bridge_1: "Bridge 1",
+                bridge_2: "Bridge 2",
+                bridge: "Bridge",
+                pre_series_a: "Pre Series A",
+                series_a: "Series A",
+                series_b: "Series B",
+                series_c: "Series C",
+                unknown: "Unknown",
+              };
+              const ORDER = [
+                "pre_seed",
+                "seed",
+                "bridge_1",
+                "bridge_2",
+                "bridge",
+                "pre_series_a",
+                "series_a",
+                "series_b",
+                "series_c",
+                "unknown",
+              ];
 
-                const pd = (vcProgressData || []).find(
-                  (p: any) => p.vc_id === fr.vc_id,
-                );
-                const completedProb = pd?.total_completed_probability || 0;
-                const progressPercent = Math.max(
-                  0,
-                  Math.min(100, completedProb),
-                );
+              const groups: Record<string, any[]> = {};
+              (filteredFundRaises || []).forEach((fr: any) => {
+                const key = fr.round_stage || "unknown";
+                if (!groups[key]) groups[key] = [];
+                groups[key].push(fr);
+              });
+              const keys = ORDER.filter((k) => groups[k]?.length).concat(
+                Object.keys(groups).filter((k) => !ORDER.includes(k)),
+              );
+              if (keys.length === 0) return <div className="p-3 text-gray-500">No entries</div>;
 
-                return (
-                  <div
-                    key={fr.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                    onClick={() => navigate(`/fundraise/${fr.id}`)}
-                    title={
-                      fr.vc_id ? "Open Fund Raise Overview" : "VC not linked"
-                    }
-                  >
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-medium text-gray-900 flex items-center gap-2">
-                          <span>{fr.investor_name || "Fund Raise"}</span>
-                          {fr.round_stage && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs bg-purple-50 text-purple-700 border-purple-200"
-                            >
-                              {fr.round_stage}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-600 mt-1 flex flex-wrap gap-3">
-                          {fr.valuation_mn && (
-                            <span>Valuation: ${fr.valuation_mn} Mn</span>
-                          )}
-                          {fr.fund_mn && <span>Fund: ${fr.fund_mn} Mn</span>}
-                          {fr.start_date && (
-                            <span>
-                              Start:{" "}
-                              {new Date(fr.start_date).toLocaleDateString(
-                                "en-IN",
-                                { timeZone: "Asia/Kolkata" },
-                              )}
-                            </span>
-                          )}
-                          {fr.end_date && (
-                            <span>
-                              End:{" "}
-                              {new Date(fr.end_date).toLocaleDateString(
-                                "en-IN",
-                                { timeZone: "Asia/Kolkata" },
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Badge className={statusColors[internalStatus] || ""}>
-                        {(fr.ui_status || internalStatus)
-                          .toString()
-                          .replace("-", " ")}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="hidden md:flex items-center gap-2">
-                        <div className="w-32 bg-gray-200 rounded h-2">
-                          <div
-                            className={`${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-700 font-medium w-8 text-right">
-                          {progressPercent}%
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-700">
-                          {fr.total_raise_mn
-                            ? `Total: $${fr.total_raise_mn} Mn`
-                            : ""}
-                        </div>
-                        {fr.vc_id && (
-                          <div className="text-[10px] text-gray-500">
-                            VC #{fr.vc_id}
+              return (
+                <Accordion type="single" collapsible className="w-full">
+                  {keys.map((k) => {
+                    const list = groups[k] || [];
+                    const statusCount: Record<string, number> = {};
+                    let totalFund = 0;
+                    list.forEach((fr: any) => {
+                      const s = (fr.investor_status || "").trim() || "N/A";
+                      statusCount[s] = (statusCount[s] || 0) + 1;
+                      const f = parseFloat(fr.fund_mn);
+                      if (!isNaN(f)) totalFund += f;
+                    });
+                    return (
+                      <AccordionItem key={k} value={k}>
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium">{STAGE_LABELS[k] || k}</span>
+                            <Badge variant="secondary">{list.length}</Badge>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {Object.entries(statusCount).map(([s, c]) => (
+                              <Badge key={s} variant="outline" className="bg-gray-50">
+                                {s}: {c}
+                              </Badge>
+                            ))}
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              <DollarSign className="w-3 h-3 mr-1 inline" /> {totalFund.toFixed(2)} Mn
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-2">
+                            {list.map((fr: any) => {
+                              const internalStatus =
+                                fr.status || UI_STATUS_TO_INTERNAL[fr.ui_status || ""] || "in-progress";
+                              const pd = (vcProgressData || []).find((p: any) => p.vc_id === fr.vc_id);
+                              const completedProb = pd?.total_completed_probability || 0;
+                              const progressPercent = Math.max(0, Math.min(100, completedProb));
+                              return (
+                                <div
+                                  key={fr.id}
+                                  className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                                  onClick={() => navigate(`/fundraise/${fr.id}`)}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <div>
+                                      <div className="font-medium text-gray-900 flex items-center gap-2">
+                                        <span>{fr.investor_name || "Fund Raise"}</span>
+                                        {fr.investor_status && (
+                                          <Badge className="text-xs bg-amber-50 text-amber-700 border-amber-200">
+                                            {fr.investor_status}
+                                          </Badge>
+                                        )}
+                                        {fr.fund_mn && (
+                                          <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                            ${fr.fund_mn} Mn
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className="text-[11px] text-gray-600 mt-1 flex flex-wrap gap-3">
+                                        {fr.start_date && (
+                                          <span>
+                                            Start: {new Date(fr.start_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}
+                                          </span>
+                                        )}
+                                        {fr.end_date && (
+                                          <span>
+                                            End: {new Date(fr.end_date).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}
+                                          </span>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Badge className={statusColors[internalStatus] || ""}>
+                                      {(fr.ui_status || internalStatus).toString().replace("-", " ")}
+                                    </Badge>
+                                  </div>
+                                  <div className="hidden md:flex items-center gap-2">
+                                    <div className="w-32 bg-gray-200 rounded h-2">
+                                      <div
+                                        className={`${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
+                                        style={{ width: `${progressPercent}%` }}
+                                      />
+                                    </div>
+                                    <span className="text-xs text-gray-700 font-medium w-8 text-right">{progressPercent}%</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
