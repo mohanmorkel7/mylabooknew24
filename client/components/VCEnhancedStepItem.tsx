@@ -750,7 +750,9 @@ export function VCEnhancedStepItem({
                       sortedMessages.map((message, index) => {
                         const isStatusChange =
                           message.message_type === "system" &&
-                          (message.message || "").includes("Step status changed");
+                          (message.message || "").includes(
+                            "Step status changed",
+                          );
                         return (
                           <div
                             key={`msg-${message.id}-${index}`}
@@ -760,13 +762,16 @@ export function VCEnhancedStepItem({
                                 : "p-3 rounded border " +
                                   (message.message_type === "system"
                                     ? "bg-blue-50 border-blue-200"
-                                    : message.user_id === parseInt(user?.id || "0")
+                                    : message.user_id ===
+                                        parseInt(user?.id || "0")
                                       ? "bg-green-50 border-green-200"
                                       : "bg-white")
                             }`}
                           >
                             {isStatusChange ? (
-                              <div className="w-4 h-4 flex items-center justify-center text-gray-500">📝</div>
+                              <div className="w-4 h-4 flex items-center justify-center text-gray-500">
+                                📝
+                              </div>
                             ) : (
                               <div
                                 className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
@@ -794,38 +799,51 @@ export function VCEnhancedStepItem({
                                 <>
                                   <div className="flex items-center justify-between mb-1">
                                     <span className="text-sm font-medium text-gray-900">
-                                      {message.user_id === parseInt(user?.id || "0")
+                                      {message.user_id ===
+                                      parseInt(user?.id || "0")
                                         ? "Me"
                                         : message.user_name}
                                     </span>
                                     <div className="flex items-center space-x-2">
                                       <span className="text-xs text-gray-500">
-                                        {formatToISTDateTime(message.created_at)}
+                                        {formatToISTDateTime(
+                                          message.created_at,
+                                        )}
                                       </span>
                                       {message.message_type === "system" &&
                                         (() => {
-                                          const m = (message.message || "").match(/#(\d+)/);
+                                          const m = (
+                                            message.message || ""
+                                          ).match(/#(\d+)/);
                                           if (!m) return null;
                                           const fid = parseInt(m[1]);
-                                          const current = followUpStatuses[fid] || "pending";
+                                          const current =
+                                            followUpStatuses[fid] || "pending";
                                           return (
                                             <div className="flex items-center space-x-1">
-                                              <Label className="text-xs text-gray-600">Status</Label>
+                                              <Label className="text-xs text-gray-600">
+                                                Status
+                                              </Label>
                                               <Select
                                                 value={current}
                                                 onValueChange={async (val) => {
-                                                  setFollowUpStatuses((s) => ({ ...s, [fid]: val }));
+                                                  setFollowUpStatuses((s) => ({
+                                                    ...s,
+                                                    [fid]: val,
+                                                  }));
                                                   try {
-                                                    await updateFollowUpStatus.mutateAsync({
-                                                      followUpId: fid,
-                                                      statusData: {
-                                                        status: val,
-                                                        completed_at:
-                                                          val === "completed"
-                                                            ? new Date().toISOString()
-                                                            : null,
+                                                    await updateFollowUpStatus.mutateAsync(
+                                                      {
+                                                        followUpId: fid,
+                                                        statusData: {
+                                                          status: val,
+                                                          completed_at:
+                                                            val === "completed"
+                                                              ? new Date().toISOString()
+                                                              : null,
+                                                        },
                                                       },
-                                                    });
+                                                    );
                                                   } catch (e) {
                                                     // ignore
                                                   }
@@ -835,9 +853,15 @@ export function VCEnhancedStepItem({
                                                   <SelectValue placeholder="Update status" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                  <SelectItem value="pending">Pending</SelectItem>
-                                                  <SelectItem value="in_progress">In Progress</SelectItem>
-                                                  <SelectItem value="completed">Completed</SelectItem>
+                                                  <SelectItem value="pending">
+                                                    Pending
+                                                  </SelectItem>
+                                                  <SelectItem value="in_progress">
+                                                    In Progress
+                                                  </SelectItem>
+                                                  <SelectItem value="completed">
+                                                    Completed
+                                                  </SelectItem>
                                                 </SelectContent>
                                               </Select>
                                             </div>
@@ -845,7 +869,8 @@ export function VCEnhancedStepItem({
                                         })()}
                                       {message.message_type !== "system" && (
                                         <>
-                                          {message.user_id === parseInt(user?.id || "0") && (
+                                          {message.user_id ===
+                                            parseInt(user?.id || "0") && (
                                             <>
                                               <Button
                                                 size="sm"
@@ -864,7 +889,11 @@ export function VCEnhancedStepItem({
                                               <Button
                                                 size="sm"
                                                 variant="ghost"
-                                                onClick={() => handleDeleteMessage(message.id)}
+                                                onClick={() =>
+                                                  handleDeleteMessage(
+                                                    message.id,
+                                                  )
+                                                }
                                                 className="text-red-600 hover:text-red-700"
                                               >
                                                 <Trash2 className="w-3 h-3" />
@@ -909,72 +938,116 @@ export function VCEnhancedStepItem({
                                     ) : (
                                       <div
                                         dangerouslySetInnerHTML={{
-                                          __html: processMessageContent(message.message),
+                                          __html: processMessageContent(
+                                            message.message,
+                                          ),
                                         }}
                                       />
                                     )}
-                                    {message.attachments && message.attachments.length > 0 && (
-                                      <div className="mt-2 space-y-1">
-                                        {message.attachments.map((attachment, idx) => {
-                                          const fname =
-                                            attachment.filename ||
-                                            attachment.file_name ||
-                                            "file";
-                                          const directPath = attachment.file_path || attachment.path || "";
-                                          const downloadUrl =
-                                            attachment.download_url ||
-                                            (attachment.filename
-                                              ? `/api/files/download/${attachment.filename}`
-                                              : directPath);
-                                          return (
-                                            <div
-                                              key={idx}
-                                              className="flex items-center space-x-2 text-xs bg-gray-100 px-2 py-1 rounded"
-                                            >
-                                              <FileText className="w-3 h-3" />
-                                              <a
-                                                href={downloadUrl || "#"}
-                                                onClick={async (e) => {
-                                                  e.stopPropagation();
-                                                  if (!downloadUrl) return;
-                                                  try {
-                                                    if (attachment.filename) {
-                                                      const response = await fetch(
-                                                        `/api/files/download/${attachment.filename}`,
-                                                      );
-                                                      if (!response.ok) throw new Error("Download failed");
-                                                      const blob = await response.blob();
-                                                      const url = window.URL.createObjectURL(blob);
-                                                      const link = document.createElement("a");
-                                                      link.href = url;
-                                                      link.download = attachment.file_name || fname;
-                                                      document.body.appendChild(link);
-                                                      link.click();
-                                                      document.body.removeChild(link);
-                                                      window.URL.revokeObjectURL(url);
-                                                    } else {
-                                                      window.open(downloadUrl, "_blank");
+                                    {message.attachments &&
+                                      message.attachments.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          {message.attachments.map(
+                                            (attachment, idx) => {
+                                              const fname =
+                                                attachment.filename ||
+                                                attachment.file_name ||
+                                                "file";
+                                              const directPath =
+                                                attachment.file_path ||
+                                                attachment.path ||
+                                                "";
+                                              const downloadUrl =
+                                                attachment.download_url ||
+                                                (attachment.filename
+                                                  ? `/api/files/download/${attachment.filename}`
+                                                  : directPath);
+                                              return (
+                                                <div
+                                                  key={idx}
+                                                  className="flex items-center space-x-2 text-xs bg-gray-100 px-2 py-1 rounded"
+                                                >
+                                                  <FileText className="w-3 h-3" />
+                                                  <a
+                                                    href={downloadUrl || "#"}
+                                                    onClick={async (e) => {
+                                                      e.stopPropagation();
+                                                      if (!downloadUrl) return;
+                                                      try {
+                                                        if (
+                                                          attachment.filename
+                                                        ) {
+                                                          const response =
+                                                            await fetch(
+                                                              `/api/files/download/${attachment.filename}`,
+                                                            );
+                                                          if (!response.ok)
+                                                            throw new Error(
+                                                              "Download failed",
+                                                            );
+                                                          const blob =
+                                                            await response.blob();
+                                                          const url =
+                                                            window.URL.createObjectURL(
+                                                              blob,
+                                                            );
+                                                          const link =
+                                                            document.createElement(
+                                                              "a",
+                                                            );
+                                                          link.href = url;
+                                                          link.download =
+                                                            attachment.file_name ||
+                                                            fname;
+                                                          document.body.appendChild(
+                                                            link,
+                                                          );
+                                                          link.click();
+                                                          document.body.removeChild(
+                                                            link,
+                                                          );
+                                                          window.URL.revokeObjectURL(
+                                                            url,
+                                                          );
+                                                        } else {
+                                                          window.open(
+                                                            downloadUrl,
+                                                            "_blank",
+                                                          );
+                                                        }
+                                                      } catch (err) {
+                                                        console.error(
+                                                          "Download failed:",
+                                                          err,
+                                                        );
+                                                        alert(
+                                                          "Download failed. File may not be available.",
+                                                        );
+                                                      }
+                                                    }}
+                                                    download={
+                                                      !!attachment.filename
                                                     }
-                                                  } catch (err) {
-                                                    console.error("Download failed:", err);
-                                                    alert("Download failed. File may not be available.");
-                                                  }
-                                                }}
-                                                download={!!attachment.filename}
-                                                className="text-blue-600 hover:underline"
-                                              >
-                                                {fname}
-                                              </a>
-                                              {attachment.file_size ? (
-                                                <span className="text-gray-500">
-                                                  ({(attachment.file_size / 1024).toFixed(1)} KB)
-                                                </span>
-                                              ) : null}
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
+                                                    className="text-blue-600 hover:underline"
+                                                  >
+                                                    {fname}
+                                                  </a>
+                                                  {attachment.file_size ? (
+                                                    <span className="text-gray-500">
+                                                      (
+                                                      {(
+                                                        attachment.file_size /
+                                                        1024
+                                                      ).toFixed(1)}{" "}
+                                                      KB)
+                                                    </span>
+                                                  ) : null}
+                                                </div>
+                                              );
+                                            },
+                                          )}
+                                        </div>
+                                      )}
                                   </div>
                                 </>
                               )}
