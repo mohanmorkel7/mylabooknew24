@@ -553,7 +553,7 @@ export default function FundRaiseDashboard() {
                               </div>
 
                               <div
-                                className="relative flex-1"
+                                className="relative flex-1 pb-20"
                                 style={{
                                   height: `${chartHeight}px`,
                                   minWidth: `${Math.max((vcProgressData || []).length * 120, 800)}px`,
@@ -669,43 +669,27 @@ export default function FundRaiseDashboard() {
                                     },
                                   )}
                                 </div>
-                              </div>
-                            </div>
 
-                            <div className="flex">
-                              <div className="w-48 pr-4"></div>
-                              <div
-                                className="grid flex-1"
-                                style={{
-                                  minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
-                                  gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
-                                }}
-                              >
-                                {(vcProgressData || []).map(
-                                  (vcProgress: any) => {
-                                    const colWidth = 120;
-                                    return (
-                                      <div
-                                        key={vcProgress.vc_id}
-                                        className="text-center flex-none"
-                                        style={{ width: `${colWidth}px` }}
-                                      >
-                                        <div className="text-xs font-medium text-gray-700 mb-1">
-                                          {vcProgress.round_title}
-                                        </div>
-                                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
-                                          {
-                                            vcProgress.total_completed_probability
-                                          }
-                                          %
-                                        </div>
-                                        <div className="text-sm font-semibold text-gray-800 break-words px-1">
-                                          {vcProgress.investor_name}
-                                        </div>
+                                <div
+                                  className="absolute left-0 right-0 bottom-0 translate-y-full grid"
+                                  style={{
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                  }}
+                                >
+                                  {(vcProgressData || []).map((vcProgress: any) => (
+                                    <div key={vcProgress.vc_id} className="text-center flex-none" style={{ width: `${colWidth}px` }}>
+                                      <div className="text-xs font-medium text-gray-700 mb-1">
+                                        {vcProgress.round_title}
                                       </div>
-                                    );
-                                  },
-                                )}
+                                      <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
+                                        {vcProgress.total_completed_probability}%
+                                      </div>
+                                      <div className="text-sm font-semibold text-gray-800 break-words px-1">
+                                        {vcProgress.investor_name}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
                               </div>
                             </div>
                           </div>
