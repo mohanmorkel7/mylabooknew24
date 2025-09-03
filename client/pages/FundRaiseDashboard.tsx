@@ -571,7 +571,7 @@ export default function FundRaiseDashboard() {
                                   minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
                                 }}
                               >
-                                <div className="absolute inset-0">
+                                <div className="absolute left-0 right-0 top-0 bottom-20">
                                   {allSteps.map(
                                     (stepName: string, index: number) => {
                                       const stepHeight =
@@ -594,7 +594,7 @@ export default function FundRaiseDashboard() {
                                 </div>
 
                                 <div
-                                  className="absolute inset-0 grid"
+                                  className="absolute left-0 right-0 top-0 bottom-20 grid"
                                   style={{
                                     paddingTop: "0px",
                                     gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
@@ -684,7 +684,7 @@ export default function FundRaiseDashboard() {
                                 </div>
 
                                 <div
-                                  className="absolute left-0 right-0 bottom-0 translate-y-full grid pointer-events-none"
+                                  className="absolute left-0 right-0 bottom-0 grid pointer-events-none"
                                   style={{
                                     gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
                                   }}
