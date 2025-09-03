@@ -267,35 +267,28 @@ export default function FundRaiseEdit() {
       updated_by: parseInt(user?.id || "1"),
     };
     try {
-      const first = queueItems[0];
+      const investors = queueItems.map((it) => {
+        const matched = (vcList || []).find(
+          (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+        );
+        const linkedVcId: number | null = matched?.id ?? null;
+        return {
+          vc_id: linkedVcId,
+          investor_name: it.vc_investor,
+          fund_mn: it.fund_mn,
+          investor_status: it.investor_status || null,
+        };
+      });
+      const first = investors[0] || {};
+
       await updateMutation.mutateAsync({
         ...base,
-        investor_name: first.vc_investor,
-        fund_mn: first.fund_mn,
-        investor_status: first.investor_status || null,
+        vc_id: first.vc_id ?? null,
+        investor_name: first.investor_name ?? null,
+        fund_mn: first.fund_mn ?? null,
+        investor_status: first.investor_status ?? null,
+        investors,
       });
-
-      const extras = queueItems.slice(1);
-      await Promise.all(
-        extras.map(async (it) => {
-          const matched = (vcList || []).find(
-            (vc: any) =>
-              (vc.investor_name || "").trim() === it.vc_investor.trim(),
-          );
-          const linkedVcId: number | null = matched?.id ?? null;
-          await apiClient.request("/fund-raises", {
-            method: "POST",
-            body: JSON.stringify({
-              ...base,
-              vc_id: linkedVcId,
-              investor_name: it.vc_investor,
-              fund_mn: it.fund_mn,
-              investor_status: it.investor_status || null,
-              created_by: parseInt(user?.id || "1"),
-            }),
-          });
-        }),
-      );
 
       await queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
       await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
