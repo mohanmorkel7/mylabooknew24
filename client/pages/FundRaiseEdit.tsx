@@ -98,6 +98,9 @@ export default function FundRaiseEdit() {
   const queryClient = useQueryClient();
   const [fundMnOpen, setFundMnOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [queueItems, setQueueItems] = useState<Array<{ vc_investor: string; fund_mn: string; investor_status: string }>>([
+    { vc_investor: "", fund_mn: "", investor_status: "" },
+  ]);
 
   const [form, setForm] = useState({
     vc_investor: "",
