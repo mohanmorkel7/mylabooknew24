@@ -32,6 +32,8 @@ interface VCDraggableStepsListProps {
   onReorderSteps: (steps: any[]) => void;
   updateStepStatus?: (stepId: number, payload: any) => void;
   stepApiBase?: "vc" | "fund-raises";
+  focusStepId?: number;
+  focusFollowUpId?: number;
 }
 
 export function VCDraggableStepsList({
@@ -43,6 +45,8 @@ export function VCDraggableStepsList({
   onReorderSteps,
   updateStepStatus,
   stepApiBase,
+  focusStepId,
+  focusFollowUpId,
 }: VCDraggableStepsListProps) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [items, setItems] = useState(steps);
@@ -277,6 +281,8 @@ export function VCDraggableStepsList({
               onUpdateStatus={handleUpdateStatus}
               onDeleteStep={(id) => onDeleteStep(id)}
               stepApiBase={apiBase}
+              focusStepId={focusStepId}
+              focusFollowUpId={focusFollowUpId}
             />
           ))}
         </div>
