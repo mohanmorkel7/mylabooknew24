@@ -159,22 +159,26 @@ export default function CreateFundRaise() {
 
   const validateForm = () => {
     const n: Record<string, string> = {};
-    if (!form.vc_investor) n.vc_investor = "VC is required";
     if (!form.status) n.status = "Status is required";
     if (!form.round_stage) n.round_stage = "Investment Stage is required";
-    if (!form.fund_mn) n.fund_mn = "Fund $ Mn is required";
-    if (!form.investor_status)
-      n.investor_status = "Investor Status is required";
-    setErrors(n);
 
-    const keys = Object.keys(n);
-    if (keys.length) {
-      const queueFields = new Set(["fund_mn", "investor_status"]);
-      const goQueue = keys.some((k) => queueFields.has(k));
-      setActiveTab(goQueue ? "queue" : "fundraise");
+    const badRows: number[] = [];
+    queueItems.forEach((it, idx) => {
+      if (!it.vc_investor || !it.fund_mn || !it.investor_status) badRows.push(idx + 1);
+    });
+    if (queueItems.length === 0 || badRows.length > 0) {
+      n.queue = badRows.length
+        ? `Please complete all fields for investor row(s): ${badRows.join(", ")}`
+        : "Add at least one investor in the queue";
     }
 
-    return Object.keys(n).length === 0;
+    setErrors(n);
+    const keys = Object.keys(n);
+    if (keys.length) {
+      const goQueue = !!n.queue;
+      setActiveTab(goQueue ? "queue" : "fundraise");
+    }
+    return keys.length === 0;
   };
 
   const handleSubmit = async () => {
