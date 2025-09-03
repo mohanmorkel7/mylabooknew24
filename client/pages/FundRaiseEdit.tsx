@@ -171,6 +171,13 @@ export default function FundRaiseEdit() {
       fund_mn: current.fund_mn || "",
       template_id: current.template_id || 1,
     });
+    setQueueItems([
+      {
+        vc_investor: current.investor_name || "",
+        fund_mn: current.fund_mn || "",
+        investor_status: current.investor_status || "",
+      },
+    ]);
   }, [current]);
 
   const updateMutation = useMutation({
