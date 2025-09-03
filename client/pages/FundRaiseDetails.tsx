@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { getSourceLabel } from "@/lib/constants";
@@ -106,6 +106,7 @@ const roundStageColors = {
 export default function FundRaiseDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation() as any;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const updateStepMutation = useUpdateFundRaiseStep();
@@ -124,6 +125,8 @@ export default function FundRaiseDetails() {
 
   const [newStepDialog, setNewStepDialog] = useState(false);
   const [expandedSteps, setExpandedSteps] = useState(new Set<number>());
+  const focusStepId = location?.state?.openStepId || null;
+  const focusFollowUpId = location?.state?.focusFollowUpId || null;
   const [newStep, setNewStep] = useState({
     name: "",
     description: "",
@@ -244,6 +247,17 @@ export default function FundRaiseDetails() {
       // ignore
     }
   };
+
+  useEffect(() => {
+    if (!stepsLoading && vcSteps?.length && focusStepId) {
+      setExpandedSteps((prev) => {
+        const s = new Set(prev);
+        s.add(focusStepId as number);
+        return s;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepsLoading, vcSteps, focusStepId]);
 
   const handleToggleExpansion = (stepId: number) => {
     setExpandedSteps((prev) => {
@@ -706,6 +720,8 @@ export default function FundRaiseDetails() {
                   onReorderSteps={handleReorderSteps}
                   updateStepStatus={updateFundRaiseStepStatus}
                   stepApiBase="fund-raises"
+                  focusStepId={focusStepId || undefined}
+                  focusFollowUpId={focusFollowUpId || undefined}
                 />
               )}
             </CardContent>

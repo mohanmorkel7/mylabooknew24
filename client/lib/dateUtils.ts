@@ -43,34 +43,17 @@ export const formatToISTDateTime = (
     return "Invalid Date";
   }
 
-  try {
-    const formatter = new Intl.DateTimeFormat("en-IN", {
-      timeZone: IST_TIMEZONE,
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      ...options,
-    });
+  const istDate = convertToIST(dateObj);
+  const day = istDate.getDate();
+  const month = istDate.toLocaleString("en-IN", { month: "short" });
+  const year = istDate.getFullYear();
+  let hours = istDate.getHours();
+  const minutes = istDate.getMinutes().toString().padStart(2, "0");
+  const ampm = hours >= 12 ? "pm" : "am";
+  hours = hours % 12;
+  hours = hours ? hours : 12;
 
-    return formatter.format(dateObj);
-  } catch (error) {
-    console.warn("Error formatting date:", error);
-    // Fallback formatting with proper IST conversion
-    const istDate = convertToIST(dateObj);
-    const day = istDate.getDate();
-    const month = istDate.toLocaleString("en-IN", { month: "short" });
-    const year = istDate.getFullYear();
-    let hours = istDate.getHours();
-    const minutes = istDate.getMinutes().toString().padStart(2, "0");
-    const ampm = hours >= 12 ? "pm" : "am";
-    hours = hours % 12;
-    hours = hours ? hours : 12;
-
-    return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
-  }
+  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
 };
 
 /**

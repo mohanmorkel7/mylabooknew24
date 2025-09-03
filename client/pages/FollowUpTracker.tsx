@@ -220,6 +220,8 @@ export default function FollowUpTracker() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(
     null,
   );
@@ -247,6 +249,17 @@ export default function FollowUpTracker() {
     return true;
   };
 
+  const assigneeOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    followUps.forEach((f) => {
+      if (canViewFollowUp(f) && f.assigned_user_name) {
+        const name = String(f.assigned_user_name).trim();
+        if (name) set.add(name);
+      }
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [followUps, user?.role]);
+
   // Fetch follow-ups data from API
   useEffect(() => {
     if (!user) return;
@@ -263,11 +276,15 @@ export default function FollowUpTracker() {
 
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
+          const useMock =
+            apiClient.isOffline() || !Array.isArray(data) || data.length === 0;
+          const source = useMock ? mockFollowUps : data;
+
           // Convert to expected format and ensure IST timestamps
-          const formattedFollowUps = data.map((f: any) => ({
+          const formattedFollowUps = source.map((f: any) => ({
             ...f,
             created_at: new Date(f.created_at).toISOString(),
-            updated_at: new Date(f.updated_at).toISOString(),
+            updated_at: new Date(f.updated_at || f.created_at).toISOString(),
             due_date: f.due_date || new Date().toISOString().split("T")[0],
             // Determine type based on available fields if not explicitly set
             type:
@@ -347,6 +364,13 @@ export default function FollowUpTracker() {
       }
     }
   }, [location.search, followUps]);
+
+  // Ensure assignee selection stays valid when options change
+  useEffect(() => {
+    if (assigneeFilter !== "all" && !assigneeOptions.includes(assigneeFilter)) {
+      setAssigneeFilter("all");
+    }
+  }, [assigneeOptions]);
 
   const handleNavigateToMessage = (followUp: FollowUp) => {
     // Navigate to the lead details page and scroll to the specific message
@@ -564,39 +588,83 @@ export default function FollowUpTracker() {
       followUp.assigned_user_name === assigneeFilter;
     const matchesType = typeFilter === "all" || followUpType === typeFilter;
 
-    return matchesSearch && matchesStatus && matchesAssignee && matchesType;
+    // Date-wise filtering using due_date (fallback to created_at)
+    const targetDateStr = followUp.due_date || followUp.created_at;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+
+    let matchesDate = true;
+    if (targetDate) {
+      const normalizedTarget = new Date(targetDate);
+      normalizedTarget.setHours(0, 0, 0, 0);
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (normalizedTarget < from) matchesDate = false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(0, 0, 0, 0);
+        if (normalizedTarget > to) matchesDate = false;
+      }
+    }
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesAssignee &&
+      matchesType &&
+      matchesDate
+    );
   };
 
   // Filter follow-ups based on search and filters
-  const filteredFollowUps = followUps.filter(baseFilter);
+  const filteredFollowUps = React.useMemo(() => {
+    return followUps.filter(baseFilter);
+  }, [
+    followUps,
+    searchTerm,
+    statusFilter,
+    assigneeFilter,
+    typeFilter,
+    dateFrom,
+    dateTo,
+    user?.role,
+  ]);
 
   // Tab-specific filtered follow-ups
   const allFollowUps = filteredFollowUps;
-  const pendingFollowUps = filteredFollowUps.filter(
-    (f) => f.status === "pending",
+  const pendingFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.status === "pending"),
+    [filteredFollowUps],
   );
-  const inProgressFollowUps = filteredFollowUps.filter(
-    (f) => f.status === "in_progress",
+  const inProgressFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.status === "in_progress"),
+    [filteredFollowUps],
   );
-  const completedFollowUps = filteredFollowUps.filter(
-    (f) => f.status === "completed",
+  const completedFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.status === "completed"),
+    [filteredFollowUps],
   );
-  const overdueFollowUps = filteredFollowUps.filter((f) => {
-    const isOverdueStatus =
-      f.status === "overdue" ||
-      (f.status !== "completed" && f.due_date && isOverdue(f.due_date));
-    return isOverdueStatus;
-  });
+  const overdueFollowUps = React.useMemo(() => {
+    return filteredFollowUps.filter((f) => {
+      const isOverdueStatus =
+        f.status === "overdue" ||
+        (f.status !== "completed" && f.due_date && isOverdue(f.due_date));
+      return isOverdueStatus;
+    });
+  }, [filteredFollowUps]);
 
-  const myFollowUps = filteredFollowUps.filter(
-    (f) => f.assigned_user_name === user?.name,
+  const myFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.assigned_user_name === user?.name),
+    [filteredFollowUps, user?.name],
   );
-  const assignedByMe = filteredFollowUps.filter(
-    (f) => f.created_by_name === user?.name,
+  const assignedByMe = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.created_by_name === user?.name),
+    [filteredFollowUps, user?.name],
   );
 
-  // Get current tab's follow-ups
-  const getCurrentTabFollowUps = () => {
+  // Current tab's follow-ups (derived)
+  const currentTabFollowUps = React.useMemo(() => {
     switch (activeTab) {
       case "pending":
         return pendingFollowUps;
@@ -613,9 +681,16 @@ export default function FollowUpTracker() {
       default:
         return allFollowUps;
     }
-  };
-
-  const currentTabFollowUps = getCurrentTabFollowUps();
+  }, [
+    activeTab,
+    allFollowUps,
+    pendingFollowUps,
+    inProgressFollowUps,
+    completedFollowUps,
+    overdueFollowUps,
+    myFollowUps,
+    assignedByMe,
+  ]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -733,7 +808,7 @@ export default function FollowUpTracker() {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {isAdmin && (
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-32">
@@ -741,8 +816,8 @@ export default function FollowUpTracker() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="lead">Leads</SelectItem>
-                    <SelectItem value="vc">VC</SelectItem>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="vc">Fund Raise</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -764,14 +839,40 @@ export default function FollowUpTracker() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Assignees</SelectItem>
-                  <SelectItem value="Mike Johnson">Mike Johnson</SelectItem>
-                  <SelectItem value="Jane Smith">Jane Smith</SelectItem>
-                  <SelectItem value="John Doe">John Doe</SelectItem>
-                  <SelectItem value="Emily Davis">Emily Davis</SelectItem>
-                  <SelectItem value="Finance Team">Finance Team</SelectItem>
-                  <SelectItem value="Tech Lead">Tech Lead</SelectItem>
+                  {assigneeOptions.map((name) => (
+                    <SelectItem key={name} value={name}>
+                      {name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-40"
+                />
+                <span className="text-gray-500">to</span>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-40"
+                />
+                {(dateFrom || dateTo) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -1033,10 +1134,17 @@ export default function FollowUpTracker() {
                                   size="sm"
                                   onClick={() => {
                                     if (isFundRaise && fundRaiseId) {
-                                      // Navigate to fund raise details using the actual fund raise ID
-                                      navigate(`/fundraise/${fundRaiseId}`);
+                                      const stepId =
+                                        (followUp as any).message_id ||
+                                        (followUp as any).step_id ||
+                                        (followUp as any).vc_step_id;
+                                      navigate(`/fundraise/${fundRaiseId}`, {
+                                        state: {
+                                          openStepId: stepId,
+                                          focusFollowUpId: followUp.id,
+                                        },
+                                      });
                                     } else {
-                                      // Navigate to VC round
                                       navigate(`/vc/${followUp.vc_id}`);
                                     }
                                   }}
@@ -1097,10 +1205,17 @@ export default function FollowUpTracker() {
                                   size="sm"
                                   onClick={() => {
                                     if (isFundRaise && fundRaiseId) {
-                                      // Navigate to fund raise details using the actual fund raise ID
-                                      navigate(`/fundraise/${fundRaiseId}`);
+                                      const stepId =
+                                        (followUp as any).message_id ||
+                                        (followUp as any).step_id ||
+                                        (followUp as any).vc_step_id;
+                                      navigate(`/fundraise/${fundRaiseId}`, {
+                                        state: {
+                                          openStepId: stepId,
+                                          focusFollowUpId: followUp.id,
+                                        },
+                                      });
                                     } else {
-                                      // Navigate to VC round
                                       navigate(`/vc/${followUp.vc_id}`);
                                     }
                                   }}

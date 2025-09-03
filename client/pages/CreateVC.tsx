@@ -282,6 +282,9 @@ const TABS = [
   { value: "investor", label: "Investors Contact Info", icon: "🏢" },
 ];
 
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
 export default function CreateVC() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -1095,6 +1098,32 @@ export default function CreateVC() {
 
   // Navigation functions
   const handleNextTab = async () => {
+    // Validate current tab before moving next
+    if (activeTab === "lead") {
+      const newErrors: Record<string, string> = {};
+      if (!vcData.lead_source) newErrors.lead_source = "Source is required";
+      if (!vcData.lead_source_value?.trim())
+        newErrors.lead_source_value = "Source information is required";
+      if (
+        vcData.lead_source?.startsWith("email_") &&
+        vcData.lead_source_value?.trim() &&
+        !isValidEmail(vcData.lead_source_value)
+      ) {
+        newErrors.lead_source_value = "Enter a valid email address";
+      }
+      if (!vcData.investor_name.trim())
+        newErrors.investor_name = "Venture Capital Name is required";
+      if (!(vcData as any).investor_category)
+        (newErrors as any).investor_category = "VC Type is required";
+      if (!(vcData as any).industry)
+        (newErrors as any).industry = "Sector Focus is required";
+      if (!vcData.minimum_size)
+        newErrors.minimum_size = "Min.Chq Size is required";
+      if (!vcData.maximum_size)
+        newErrors.maximum_size = "Max.Chq Size is required";
+      setErrors(newErrors);
+      if (Object.keys(newErrors).length > 0) return;
+    }
     if (!isLastTab) {
       // Auto-save when moving to next tab
       const hasData =
@@ -1227,6 +1256,13 @@ export default function CreateVC() {
     if (!vcData.lead_source_value?.trim()) {
       newErrors.lead_source_value = "Source information is required";
     }
+    if (
+      vcData.lead_source?.startsWith("email_") &&
+      vcData.lead_source_value?.trim() &&
+      !isValidEmail(vcData.lead_source_value)
+    ) {
+      newErrors.lead_source_value = "Enter a valid email address";
+    }
     if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Venture Capital Name is required";
     }
@@ -1241,9 +1277,6 @@ export default function CreateVC() {
     }
     if (!vcData.maximum_size) {
       newErrors.maximum_size = "Max.Chq Size is required";
-    }
-    if (!vcData.address.trim()) {
-      newErrors.address = "Address is required";
     }
     if (!vcData.country) {
       newErrors.country = "Country is required";
@@ -1447,29 +1480,6 @@ export default function CreateVC() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="currency" className="text-sm font-medium">
-              Currency:
-            </Label>
-            <Select
-              value={selectedCurrency}
-              onValueChange={(value) => {
-                setSelectedCurrency(value);
-                handleInputChange("billing_currency", value);
-              }}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             variant="outline"
             onClick={handlePartialSave}
@@ -1482,7 +1492,7 @@ export default function CreateVC() {
             onClick={handleSubmit}
             disabled={isSubmitting || createVCMutation.isPending}
           >
-            {isSubmitting ? "Creating..." : "Create VC"}
+            {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </div>
@@ -1525,7 +1535,9 @@ export default function CreateVC() {
                       handleInputChange("lead_source", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger
+                      className={errors.lead_source ? "border-red-500" : ""}
+                    >
                       <SelectValue placeholder="Select how you found this lead" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1552,6 +1564,11 @@ export default function CreateVC() {
                       })}
                     </SelectContent>
                   </Select>
+                  {errors.lead_source && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.lead_source}
+                    </p>
+                  )}
                 </div>
 
                 {/* Dynamic Lead Source Value */}
@@ -1584,7 +1601,7 @@ export default function CreateVC() {
                         onChange={(e) =>
                           handleInputChange("lead_source_value", e.target.value)
                         }
-                        className="pl-10"
+                        className={`pl-10 ${errors.lead_source_value ? "border-red-500" : ""}`}
                         placeholder={
                           vcData.lead_source?.startsWith("email_")
                             ? "contact@investor.com"
@@ -1600,6 +1617,11 @@ export default function CreateVC() {
                         }
                       />
                     </div>
+                    {errors.lead_source_value && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.lead_source_value}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -1632,7 +1654,11 @@ export default function CreateVC() {
                         handleInputChange("investor_category" as any, value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        className={
+                          errors.investor_category ? "border-red-500" : ""
+                        }
+                      >
                         <SelectValue placeholder="Select VC Type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1643,6 +1669,11 @@ export default function CreateVC() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.investor_category && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_category}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -1653,7 +1684,9 @@ export default function CreateVC() {
                         handleInputChange("industry" as any, value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger
+                        className={errors.industry ? "border-red-500" : ""}
+                      >
                         <SelectValue placeholder="Select Sector Focus" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1664,6 +1697,11 @@ export default function CreateVC() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.industry && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.industry}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -1686,7 +1724,7 @@ export default function CreateVC() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={false}
-                          className="w-full justify-between"
+                          className={`w-full justify-between ${errors.minimum_size ? "border-red-500" : ""}`}
                         >
                           {vcData.minimum_size || "Select amount"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1728,6 +1766,11 @@ export default function CreateVC() {
                         </Command>
                       </PopoverContent>
                     </Popover>
+                    {errors.minimum_size && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.minimum_size}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -1738,7 +1781,7 @@ export default function CreateVC() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={false}
-                          className="w-full justify-between"
+                          className={`w-full justify-between ${errors.maximum_size ? "border-red-500" : ""}`}
                         >
                           {vcData.maximum_size || "Select amount"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1780,6 +1823,11 @@ export default function CreateVC() {
                         </Command>
                       </PopoverContent>
                     </Popover>
+                    {errors.maximum_size && (
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.maximum_size}
+                      </p>
+                    )}
                   </div>
 
                   <div className="md:col-span-2">
@@ -1861,7 +1909,7 @@ export default function CreateVC() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="address">Address *</Label>
+                  <Label htmlFor="address">Address</Label>
                   <Input
                     id="address"
                     placeholder="Street address"
@@ -1881,7 +1929,7 @@ export default function CreateVC() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={false}
-                        className="w-full justify-between"
+                        className={`w-full justify-between ${errors.country ? "border-red-500" : ""}`}
                       >
                         {vcData.country || "Select country"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1922,6 +1970,11 @@ export default function CreateVC() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors.country && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.country}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -1932,7 +1985,7 @@ export default function CreateVC() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={false}
-                        className="w-full justify-between"
+                        className={`w-full justify-between ${errors.state ? "border-red-500" : ""}`}
                       >
                         {vcData.state || "Select state"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -1983,6 +2036,9 @@ export default function CreateVC() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors.state && (
+                    <p className="text-sm text-red-600 mt-1">{errors.state}</p>
+                  )}
                 </div>
 
                 <div>
@@ -1993,7 +2049,7 @@ export default function CreateVC() {
                         variant="outline"
                         role="combobox"
                         aria-expanded={false}
-                        className="w-full justify-between"
+                        className={`w-full justify-between ${errors.city ? "border-red-500" : ""}`}
                       >
                         {vcData.city || "Select city"}
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -2055,6 +2111,9 @@ export default function CreateVC() {
                       </Command>
                     </PopoverContent>
                   </Popover>
+                  {errors.city && (
+                    <p className="text-sm text-red-600 mt-1">{errors.city}</p>
+                  )}
                 </div>
               </div>
 
@@ -2211,7 +2270,7 @@ export default function CreateVC() {
               onClick={handleSubmit}
               disabled={isSubmitting || createVCMutation.isPending}
             >
-              {isSubmitting ? "Creating..." : "Create VC"}
+              {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </TabsContent>

@@ -32,6 +32,8 @@ interface VCDraggableStepsListProps {
   onReorderSteps: (steps: any[]) => void;
   updateStepStatus?: (stepId: number, payload: any) => void;
   stepApiBase?: "vc" | "fund-raises";
+  focusStepId?: number;
+  focusFollowUpId?: number;
 }
 
 export function VCDraggableStepsList({
@@ -43,6 +45,8 @@ export function VCDraggableStepsList({
   onReorderSteps,
   updateStepStatus,
   stepApiBase,
+  focusStepId,
+  focusFollowUpId,
 }: VCDraggableStepsListProps) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [items, setItems] = useState(steps);
@@ -142,7 +146,7 @@ export function VCDraggableStepsList({
       const oldStatusDisplay = statusDisplayMap[oldStatus] || oldStatus;
       const newStatusDisplay = statusDisplayMap[status] || status;
 
-      const systemMessage = `📝 Step status changed from "${oldStatusDisplay}" to "${newStatusDisplay}" by ${user.name}`;
+      const systemMessage = `Step status changed from "${oldStatusDisplay}" to "${newStatusDisplay}" by ${user.name}`;
 
       try {
         const apiBase =
@@ -150,6 +154,10 @@ export function VCDraggableStepsList({
           (typeof (updateStepStatus as any) === "function"
             ? "fund-raises"
             : "vc");
+
+        // For fund-raises, the backend already creates the system chat message. Avoid posting duplicate from client.
+        if (apiBase === "fund-raises") return;
+
         await apiClient.request(`/${apiBase}/steps/${stepId}/chats`, {
           method: "POST",
           body: JSON.stringify({
@@ -273,6 +281,8 @@ export function VCDraggableStepsList({
               onUpdateStatus={handleUpdateStatus}
               onDeleteStep={(id) => onDeleteStep(id)}
               stepApiBase={apiBase}
+              focusStepId={focusStepId}
+              focusFollowUpId={focusFollowUpId}
             />
           ))}
         </div>
