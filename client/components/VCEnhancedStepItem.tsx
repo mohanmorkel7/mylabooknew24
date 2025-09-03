@@ -769,11 +769,7 @@ export function VCEnhancedStepItem({
                                       : "bg-white")
                             }`}
                           >
-                            {isStatusChange ? (
-                              <div className="w-4 h-4 flex items-center justify-center text-gray-500">
-                                📝
-                              </div>
-                            ) : (
+                            {isStatusChange ? null : (
                               <div
                                 className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
                                   message.message_type === "system"
@@ -788,17 +784,9 @@ export function VCEnhancedStepItem({
                             )}
                             <div className="flex-1">
                               {isStatusChange ? (
-                                <div className="flex items-center justify-between">
-                                  <span className="text-xs text-gray-500">
-                                    {(message.message || "").replace(
-                                      /^([📝📋]\s*)+/,
-                                      "",
-                                    )}
-                                  </span>
-                                  <span className="text-[10px] text-gray-400">
-                                    {formatToISTDateTime(message.created_at)}
-                                  </span>
-                                </div>
+                                <span className="text-xs text-gray-600">
+                                  {`📝 ${(message.message || "").replace(/^([📝📋]\s*)+/, "")} ${formatToISTDateTime(message.created_at)}`}
+                                </span>
                               ) : (
                                 <>
                                   <div className="flex items-center justify-between mb-1">
