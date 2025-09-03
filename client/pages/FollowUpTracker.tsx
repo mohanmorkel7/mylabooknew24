@@ -277,7 +277,7 @@ export default function FollowUpTracker() {
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
           const useMock =
-            apiClient.isOffline() || !Array.isArray(data) || data.length === 0;
+            apiClient.isOffline() || !Array.isArray(data);
           const source = useMock ? mockFollowUps : data;
 
           // Convert to expected format and ensure IST timestamps
@@ -1179,56 +1179,6 @@ export default function FollowUpTracker() {
                             </SelectContent>
                           </Select>
 
-                          {followUpType === "lead" ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                navigate(`/leads/${followUp.lead_id}`)
-                              }
-                              className="text-gray-600 hover:text-gray-700"
-                            >
-                              <Target className="w-3 h-3 mr-1" />
-                              Go to Lead
-                            </Button>
-                          ) : (
-                            (() => {
-                              // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
-                              const isFundRaise =
-                                followUp.message_id &&
-                                (followUp as any).fund_raise_stage;
-                              const fundRaiseId = (followUp as any)
-                                .fund_raise_id;
-                              return (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (isFundRaise && fundRaiseId) {
-                                      const stepId =
-                                        (followUp as any).message_id ||
-                                        (followUp as any).step_id ||
-                                        (followUp as any).vc_step_id;
-                                      navigate(`/fundraise/${fundRaiseId}`, {
-                                        state: {
-                                          openStepId: stepId,
-                                          focusFollowUpId: followUp.id,
-                                        },
-                                      });
-                                    } else {
-                                      navigate(`/vc/${followUp.vc_id}`);
-                                    }
-                                  }}
-                                  className="text-gray-600 hover:text-gray-700"
-                                >
-                                  <Target className="w-3 h-3 mr-1" />
-                                  {isFundRaise
-                                    ? "Go to Fund Raise"
-                                    : "Go to VC"}
-                                </Button>
-                              );
-                            })()
-                          )}
                         </div>
                       </div>
                     </CardContent>
