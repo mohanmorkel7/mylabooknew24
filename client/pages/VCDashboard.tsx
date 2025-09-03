@@ -659,6 +659,9 @@ export default function VCDashboard() {
                                 </a>
                               )}
                             </div>
+
+                            {/* Tagged Fund Raises for this VC */}
+                            <VCLinkedFundRaises vcId={vc.id} />
                           </div>
                         </div>
                       </div>
