@@ -276,8 +276,7 @@ export default function FollowUpTracker() {
 
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
-          const useMock =
-            apiClient.isOffline() || !Array.isArray(data);
+          const useMock = apiClient.isOffline() || !Array.isArray(data);
           const source = useMock ? mockFollowUps : data;
 
           // Convert to expected format and ensure IST timestamps
@@ -1178,7 +1177,6 @@ export default function FollowUpTracker() {
                               </SelectItem>
                             </SelectContent>
                           </Select>
-
                         </div>
                       </div>
                     </CardContent>
