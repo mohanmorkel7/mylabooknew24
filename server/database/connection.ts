@@ -11,7 +11,7 @@ const dbConfig = {
   port: Number(process.env.PG_PORT) || 2019,
   ssl: false,
 };
- 
+
 // Log the actual connection parameters being used (hide password for security)
 console.log("🔗 Database connection config:", {
   user: dbConfig.user,
@@ -373,7 +373,9 @@ export async function initializeDatabase() {
       if (fs.existsSync(dueDateMigrationPath)) {
         const dueDateMigration = fs.readFileSync(dueDateMigrationPath, "utf8");
         await client.query(dueDateMigration);
-        console.log("follow_ups.due_date TIMESTAMPTZ migration applied successfully");
+        console.log(
+          "follow_ups.due_date TIMESTAMPTZ migration applied successfully",
+        );
       }
     } catch (dueDateMigrationError) {
       console.log(

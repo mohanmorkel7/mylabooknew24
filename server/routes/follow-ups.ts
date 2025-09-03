@@ -110,7 +110,8 @@ router.post("/", async (req: Request, res: Response) => {
 
           // Set default due date to 3 days from now (preserve time, store as UTC ISO)
           const defaultDueDate =
-            due_date || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+            due_date ||
+            new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
           // For fund raise steps, store the fund_raise_step_id in message_id field for reference
           let finalMessageId = message_id;
