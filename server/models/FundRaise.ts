@@ -4,7 +4,12 @@ export interface FundRaise {
   id: number;
   vc_id?: number | null;
   investor_name?: string | null;
-  investors?: Array<{ vc_id?: number | null; investor_name?: string | null; investor_status?: string | null; fund_mn?: string | null }> | null;
+  investors?: Array<{
+    vc_id?: number | null;
+    investor_name?: string | null;
+    investor_status?: string | null;
+    fund_mn?: string | null;
+  }> | null;
   ui_status?: "WIP" | "Closed" | "Dropped";
   status?: "in-progress" | "won" | "lost" | "completed";
   investor_status?:

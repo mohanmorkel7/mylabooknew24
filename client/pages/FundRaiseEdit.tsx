@@ -183,7 +183,10 @@ export default function FundRaiseEdit() {
     });
 
     // Prefer stored investors array if present; fallback to current top-level fields
-    if (Array.isArray((current as any).investors) && (current as any).investors.length > 0) {
+    if (
+      Array.isArray((current as any).investors) &&
+      (current as any).investors.length > 0
+    ) {
       const items = (current as any).investors.map((it: any) => ({
         vc_investor: it.investor_name || "",
         fund_mn: it.fund_mn || "",
@@ -269,7 +272,8 @@ export default function FundRaiseEdit() {
     try {
       const investors = queueItems.map((it) => {
         const matched = (vcList || []).find(
-          (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+          (vc: any) =>
+            (vc.investor_name || "").trim() === it.vc_investor.trim(),
         );
         const linkedVcId: number | null = matched?.id ?? null;
         return {

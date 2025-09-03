@@ -209,7 +209,8 @@ export default function CreateFundRaise() {
 
       const investors = queueItems.map((it) => {
         const matched = (vcList || []).find(
-          (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+          (vc: any) =>
+            (vc.investor_name || "").trim() === it.vc_investor.trim(),
         );
         const linkedVcId: number | null = matched?.id ?? null;
         return {

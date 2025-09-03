@@ -215,7 +215,10 @@ router.post("/", async (req: Request, res: Response) => {
 
     const normalize = (item: any) => ({
       vc_id: item.vc_id ?? null,
-      investor_name: item.investor_name ?? (Array.isArray(item.investors) && item.investors[0]?.investor_name) ?? null,
+      investor_name:
+        item.investor_name ??
+        (Array.isArray(item.investors) && item.investors[0]?.investor_name) ??
+        null,
       ui_status:
         item.ui_status ??
         item.uiStatus ??
@@ -229,12 +232,26 @@ router.post("/", async (req: Request, res: Response) => {
       end_date: item.end_date ?? null,
       total_raise_mn: item.total_raise_mn ?? null,
       valuation_mn: item.valuation_mn ?? null,
-      fund_mn: item.fund_mn ?? (Array.isArray(item.investors) && item.investors[0]?.fund_mn) ?? null,
+      fund_mn:
+        item.fund_mn ??
+        (Array.isArray(item.investors) && item.investors[0]?.fund_mn) ??
+        null,
       reason: item.reason ?? null,
       template_id: item.template_id ?? null,
       created_by: item.created_by ?? null,
       updated_by: item.updated_by ?? null,
-      investors: Array.isArray(item.investors) ? item.investors : (item.investor_name || item.fund_mn || item.investor_status) ? [{ vc_id: item.vc_id ?? null, investor_name: item.investor_name ?? null, fund_mn: item.fund_mn ?? null, investor_status: item.investor_status ?? null }] : [],
+      investors: Array.isArray(item.investors)
+        ? item.investors
+        : item.investor_name || item.fund_mn || item.investor_status
+          ? [
+              {
+                vc_id: item.vc_id ?? null,
+                investor_name: item.investor_name ?? null,
+                fund_mn: item.fund_mn ?? null,
+                investor_status: item.investor_status ?? null,
+              },
+            ]
+          : [],
     });
 
     // Support batch creation when body is an array or has items[]
@@ -310,7 +327,8 @@ router.put("/:id", async (req: Request, res: Response) => {
         const first = body.investors[0];
         body.investor_name = body.investor_name ?? first.investor_name ?? null;
         body.fund_mn = body.fund_mn ?? first.fund_mn ?? null;
-        body.investor_status = body.investor_status ?? first.investor_status ?? null;
+        body.investor_status =
+          body.investor_status ?? first.investor_status ?? null;
       }
       const updated = await FundRaiseRepository.update(id, body);
       if (!updated) return res.status(404).json({ error: "Not found" });
