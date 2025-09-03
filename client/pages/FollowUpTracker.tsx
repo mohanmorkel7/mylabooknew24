@@ -220,6 +220,8 @@ export default function FollowUpTracker() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
   const [selectedFollowUp, setSelectedFollowUp] = useState<FollowUp | null>(
     null,
   );
@@ -564,7 +566,33 @@ export default function FollowUpTracker() {
       followUp.assigned_user_name === assigneeFilter;
     const matchesType = typeFilter === "all" || followUpType === typeFilter;
 
-    return matchesSearch && matchesStatus && matchesAssignee && matchesType;
+    // Date-wise filtering using due_date (fallback to created_at)
+    const targetDateStr = followUp.due_date || followUp.created_at;
+    const targetDate = targetDateStr ? new Date(targetDateStr) : null;
+
+    let matchesDate = true;
+    if (targetDate) {
+      const normalizedTarget = new Date(targetDate);
+      normalizedTarget.setHours(0, 0, 0, 0);
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        from.setHours(0, 0, 0, 0);
+        if (normalizedTarget < from) matchesDate = false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(0, 0, 0, 0);
+        if (normalizedTarget > to) matchesDate = false;
+      }
+    }
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesAssignee &&
+      matchesType &&
+      matchesDate
+    );
   };
 
   // Filter follow-ups based on search and filters
@@ -733,7 +761,7 @@ export default function FollowUpTracker() {
                 className="pl-10"
               />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {isAdmin && (
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-32">
@@ -772,6 +800,33 @@ export default function FollowUpTracker() {
                   <SelectItem value="Tech Lead">Tech Lead</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="w-40"
+                />
+                <span className="text-gray-500">to</span>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="w-40"
+                />
+                {(dateFrom || dateTo) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         </CardContent>
