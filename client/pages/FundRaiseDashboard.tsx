@@ -1343,19 +1343,25 @@ export default function FundRaiseDashboard() {
                                     <div className="flex items-center gap-3">
                                       <div>
                                         <div className="font-medium text-gray-900 flex items-center gap-2">
-                                          <span>
-                                            {fr.investor_name || "Fund Raise"}
-                                          </span>
-                                          {fr.investor_status && (
-                                            <Badge className="text-xs bg-amber-50 text-amber-700 border-amber-200">
-                                              {fr.investor_status}
+                                          <span>Fund Raise</span>
+                                          {!fr.investor_status && (
+                                            <Badge className={statusColors[internalStatus] || ""}>
+                                              {(fr.ui_status || internalStatus).toString().replace("-", " ")}
                                             </Badge>
                                           )}
-                                          {fr.fund_mn && (
-                                            <Badge className="text-xs bg-blue-50 text-blue-700 border-blue-200">
-                                              ${fr.fund_mn} Mn
-                                            </Badge>
-                                          )}
+                                        </div>
+                                        <div className="mt-1 space-y-1">
+                                          {(Array.isArray(fr.investors) && fr.investors.length ? fr.investors : [{ investor_name: fr.investor_name, fund_mn: fr.fund_mn, investor_status: fr.investor_status }]).map((iv: any, idx: number) => (
+                                            <div key={idx} className="flex flex-wrap items-center gap-2 text-[12px]">
+                                              <span className="font-medium text-gray-800">{iv.investor_name}</span>
+                                              {iv.fund_mn && (
+                                                <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">${iv.fund_mn} Mn</Badge>
+                                              )}
+                                              {iv.investor_status && (
+                                                <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">{iv.investor_status}</Badge>
+                                              )}
+                                            </div>
+                                          ))}
                                         </div>
                                         <div className="text-[11px] text-gray-600 mt-1 flex flex-wrap gap-3">
                                           {fr.start_date && (
