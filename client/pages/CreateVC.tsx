@@ -1535,7 +1535,9 @@ export default function CreateVC() {
                       handleInputChange("lead_source", value)
                     }
                   >
-                    <SelectTrigger className={errors.lead_source ? "border-red-500" : ""}>
+                    <SelectTrigger
+                      className={errors.lead_source ? "border-red-500" : ""}
+                    >
                       <SelectValue placeholder="Select how you found this lead" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1563,7 +1565,9 @@ export default function CreateVC() {
                     </SelectContent>
                   </Select>
                   {errors.lead_source && (
-                    <p className="text-sm text-red-600 mt-1">{errors.lead_source}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.lead_source}
+                    </p>
                   )}
                 </div>
 
@@ -1614,7 +1618,9 @@ export default function CreateVC() {
                       />
                     </div>
                     {errors.lead_source_value && (
-                      <p className="text-sm text-red-600 mt-1">{errors.lead_source_value}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.lead_source_value}
+                      </p>
                     )}
                   </div>
                 )}
@@ -1648,7 +1654,11 @@ export default function CreateVC() {
                         handleInputChange("investor_category" as any, value)
                       }
                     >
-                      <SelectTrigger className={errors.investor_category ? "border-red-500" : ""}>
+                      <SelectTrigger
+                        className={
+                          errors.investor_category ? "border-red-500" : ""
+                        }
+                      >
                         <SelectValue placeholder="Select VC Type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1660,7 +1670,9 @@ export default function CreateVC() {
                       </SelectContent>
                     </Select>
                     {errors.investor_category && (
-                      <p className="text-sm text-red-600 mt-1">{errors.investor_category}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.investor_category}
+                      </p>
                     )}
                   </div>
 
@@ -1672,7 +1684,9 @@ export default function CreateVC() {
                         handleInputChange("industry" as any, value)
                       }
                     >
-                      <SelectTrigger className={errors.industry ? "border-red-500" : ""}>
+                      <SelectTrigger
+                        className={errors.industry ? "border-red-500" : ""}
+                      >
                         <SelectValue placeholder="Select Sector Focus" />
                       </SelectTrigger>
                       <SelectContent>
@@ -1684,7 +1698,9 @@ export default function CreateVC() {
                       </SelectContent>
                     </Select>
                     {errors.industry && (
-                      <p className="text-sm text-red-600 mt-1">{errors.industry}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.industry}
+                      </p>
                     )}
                   </div>
 
@@ -1751,7 +1767,9 @@ export default function CreateVC() {
                       </PopoverContent>
                     </Popover>
                     {errors.minimum_size && (
-                      <p className="text-sm text-red-600 mt-1">{errors.minimum_size}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.minimum_size}
+                      </p>
                     )}
                   </div>
 
@@ -1806,7 +1824,9 @@ export default function CreateVC() {
                       </PopoverContent>
                     </Popover>
                     {errors.maximum_size && (
-                      <p className="text-sm text-red-600 mt-1">{errors.maximum_size}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        {errors.maximum_size}
+                      </p>
                     )}
                   </div>
 
@@ -1951,7 +1971,9 @@ export default function CreateVC() {
                     </PopoverContent>
                   </Popover>
                   {errors.country && (
-                    <p className="text-sm text-red-600 mt-1">{errors.country}</p>
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.country}
+                    </p>
                   )}
                 </div>
 
