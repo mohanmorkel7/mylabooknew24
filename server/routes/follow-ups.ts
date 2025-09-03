@@ -358,6 +358,24 @@ router.get("/lead/:leadId", async (req: Request, res: Response) => {
   }
 });
 
+// Get single follow-up by id
+router.get("/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
+    if (await isDatabaseAvailable()) {
+      const r = await pool.query("SELECT * FROM follow_ups WHERE id = $1", [id]);
+      if (r.rows.length === 0) return res.status(404).json({ error: "Not found" });
+      return res.json(r.rows[0]);
+    }
+    // Mock when DB down
+    return res.json({ id, status: "pending" });
+  } catch (e: any) {
+    return res.json({ id: parseInt(req.params.id), status: "pending" });
+  }
+});
+
 // Update follow-up status
 router.patch("/:id", async (req: Request, res: Response) => {
   try {
