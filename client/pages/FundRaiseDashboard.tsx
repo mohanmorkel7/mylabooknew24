@@ -555,7 +555,7 @@ export default function FundRaiseDashboard() {
                                 className="relative flex-1 pb-24"
                                 style={{
                                   height: `${chartHeight}px`,
-                                  minWidth: "100%",
+                                  minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
                                 }}
                               >
                                 <div className="absolute inset-0">
