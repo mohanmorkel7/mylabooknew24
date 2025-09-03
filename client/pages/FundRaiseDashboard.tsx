@@ -453,8 +453,25 @@ export default function FundRaiseDashboard() {
         </Card>
       )}
 
-      {SHOW_PROGRESS_DASHBOARD && (() => {
-        if (progressLoading) {
+      {SHOW_PROGRESS_DASHBOARD &&
+        (() => {
+          if (progressLoading) {
+            return (
+              <Card className="max-w-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5" /> Fund Raise Progress
+                    Dashboard
+                  </CardTitle>
+                  <CardDescription>Loading progress data...</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-64 bg-gray-100 rounded animate-pulse"></div>
+                </CardContent>
+              </Card>
+            );
+          }
+          if ((vcProgressData || []).length === 0) return null;
           return (
             <Card className="max-w-full">
               <CardHeader>
@@ -462,213 +479,163 @@ export default function FundRaiseDashboard() {
                   <BarChart3 className="w-5 h-5" /> Fund Raise Progress
                   Dashboard
                 </CardTitle>
-                <CardDescription>Loading progress data...</CardDescription>
+                <CardDescription>
+                  Track each fund raise's current stage and step progress
+                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="h-64 bg-gray-100 rounded animate-pulse"></div>
-              </CardContent>
-            </Card>
-          );
-        }
-        if ((vcProgressData || []).length === 0) return null;
-        return (
-          <Card className="max-w-full">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" /> Fund Raise Progress Dashboard
-              </CardTitle>
-              <CardDescription>
-                Track each fund raise's current stage and step progress
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {(() => {
-                const allCompletedSteps = (vcProgressData || []).flatMap(
-                  (vc: any) => vc.completed_steps || [],
-                );
-                const maxProbability =
-                  allCompletedSteps.length > 0
-                    ? Math.max(
-                        ...allCompletedSteps.map((s: any) => s.probability),
-                      )
-                    : 100;
+                {(() => {
+                  const allCompletedSteps = (vcProgressData || []).flatMap(
+                    (vc: any) => vc.completed_steps || [],
+                  );
+                  const maxProbability =
+                    allCompletedSteps.length > 0
+                      ? Math.max(
+                          ...allCompletedSteps.map((s: any) => s.probability),
+                        )
+                      : 100;
 
-                const stepOrderMap = new Map<string, number>();
-                const allStepsSet = new Set<string>();
+                  const stepOrderMap = new Map<string, number>();
+                  const allStepsSet = new Set<string>();
 
-                (vcProgressData || []).forEach((vc: any) => {
-                  if (vc.all_steps && Array.isArray(vc.all_steps)) {
-                    vc.all_steps.forEach((step: any, index: number) => {
-                      if (step.name) {
-                        allStepsSet.add(step.name);
-                        if (!stepOrderMap.has(step.name)) {
-                          stepOrderMap.set(step.name, index);
+                  (vcProgressData || []).forEach((vc: any) => {
+                    if (vc.all_steps && Array.isArray(vc.all_steps)) {
+                      vc.all_steps.forEach((step: any, index: number) => {
+                        if (step.name) {
+                          allStepsSet.add(step.name);
+                          if (!stepOrderMap.has(step.name)) {
+                            stepOrderMap.set(step.name, index);
+                          }
                         }
-                      }
+                      });
+                    }
+                  });
+
+                  let allSteps: string[];
+                  if (allStepsSet.size === 0) {
+                    allSteps = [
+                      "Initial Pitch",
+                      "Product Demo",
+                      "Due Diligence",
+                      "Term Sheet",
+                      "Legal Review",
+                      "Final Approval",
+                    ];
+                  } else {
+                    allSteps = Array.from(allStepsSet).sort((a, b) => {
+                      const orderA = stepOrderMap.get(a) ?? 999;
+                      const orderB = stepOrderMap.get(b) ?? 999;
+                      return orderA - orderB;
                     });
                   }
-                });
 
-                let allSteps: string[];
-                if (allStepsSet.size === 0) {
-                  allSteps = [
-                    "Initial Pitch",
-                    "Product Demo",
-                    "Due Diligence",
-                    "Term Sheet",
-                    "Legal Review",
-                    "Final Approval",
+                  const stepColors = [
+                    "#fca5a5",
+                    "#fdba74",
+                    "#fde047",
+                    "#86efac",
+                    "#67e8f9",
+                    "#93c5fd",
+                    "#c4b5fd",
+                    "#f9a8d4",
                   ];
-                } else {
-                  allSteps = Array.from(allStepsSet).sort((a, b) => {
-                    const orderA = stepOrderMap.get(a) ?? 999;
-                    const orderB = stepOrderMap.get(b) ?? 999;
-                    return orderA - orderB;
-                  });
-                }
 
-                const stepColors = [
-                  "#fca5a5",
-                  "#fdba74",
-                  "#fde047",
-                  "#86efac",
-                  "#67e8f9",
-                  "#93c5fd",
-                  "#c4b5fd",
-                  "#f9a8d4",
-                ];
+                  const getStepColor = (stepIndex: number) => {
+                    return stepColors[stepIndex % stepColors.length];
+                  };
 
-                const getStepColor = (stepIndex: number) => {
-                  return stepColors[stepIndex % stepColors.length];
-                };
-
-                return (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div
-                        ref={chartContainerRef}
-                        className="bg-gray-50 p-4 rounded-lg pb-4"
-                      >
-                        <div className="text-sm font-medium text-gray-700 mb-4">
-                          All Fund Raises Progress Overview (
-                          {(vcProgressData || []).length} rounds)
-                        </div>
+                  return (
+                    <div className="space-y-6">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <div
-                          className="w-full overflow-x-auto overflow-y-hidden"
-                          style={{ height: "500px" }}
+                          ref={chartContainerRef}
+                          className="bg-gray-50 p-4 rounded-lg pb-4"
                         >
-                          <div className="w-full">
-                            <div
-                              className="flex"
-                              style={{ height: `${chartHeight}px` }}
-                            >
+                          <div className="text-sm font-medium text-gray-700 mb-4">
+                            All Fund Raises Progress Overview (
+                            {(vcProgressData || []).length} rounds)
+                          </div>
+                          <div
+                            className="w-full overflow-x-auto overflow-y-hidden"
+                            style={{ height: "500px" }}
+                          >
+                            <div className="w-full">
                               <div
-                                className="w-48 pr-4 flex flex-col"
+                                className="flex"
                                 style={{ height: `${chartHeight}px` }}
                               >
-                                {allSteps
-                                  .slice()
-                                  .reverse()
-                                  .map((stepName: string) => {
-                                    const stepHeight =
-                                      chartHeight / allSteps.length;
-                                    return (
-                                      <div
-                                        key={stepName}
-                                        className="flex items-center justify-end text-right border-b border-gray-200"
-                                        style={{ height: `${stepHeight}px` }}
-                                      >
-                                        <span className="text-sm font-medium text-gray-700">
-                                          {stepName}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                              </div>
-
-                              <div
-                                className="relative flex-1 pb-28 overflow-y-hidden"
-                                style={{
-                                  height: `${chartHeight}px`,
-                                  minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
-                                }}
-                              >
-                                <div className="absolute left-0 right-0 top-0 bottom-28">
-                                  {allSteps.map(
-                                    (stepName: string, index: number) => {
+                                <div
+                                  className="w-48 pr-4 flex flex-col"
+                                  style={{ height: `${chartHeight}px` }}
+                                >
+                                  {allSteps
+                                    .slice()
+                                    .reverse()
+                                    .map((stepName: string) => {
                                       const stepHeight =
                                         chartHeight / allSteps.length;
-                                      const yPosition =
-                                        (allSteps.length - 1 - index) *
-                                        stepHeight;
                                       return (
                                         <div
                                           key={stepName}
-                                          className="absolute w-full border-b border-gray-200"
-                                          style={{
-                                            top: `${yPosition}px`,
-                                            height: `${stepHeight}px`,
-                                          }}
-                                        />
+                                          className="flex items-center justify-end text-right border-b border-gray-200"
+                                          style={{ height: `${stepHeight}px` }}
+                                        >
+                                          <span className="text-sm font-medium text-gray-700">
+                                            {stepName}
+                                          </span>
+                                        </div>
                                       );
-                                    },
-                                  )}
+                                    })}
                                 </div>
 
                                 <div
-                                  className="absolute left-0 right-0 top-0 bottom-28 grid"
+                                  className="relative flex-1 pb-28 overflow-y-hidden"
                                   style={{
-                                    paddingTop: "0px",
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                    height: `${chartHeight}px`,
+                                    minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
                                   }}
                                 >
-                                  {(vcProgressData || []).map(
-                                    (vcProgress: any) => {
-                                      return (
-                                        <div
-                                          key={vcProgress.vc_id}
-                                          className="relative w-full"
-                                        >
-                                          {(
-                                            vcProgress.completed_steps || []
-                                          ).map((step: any) => {
-                                            const stepIndex = allSteps.indexOf(
-                                              step.name,
-                                            );
-                                            if (stepIndex === -1) return null;
-                                            const stepHeight =
-                                              chartHeight / allSteps.length;
-                                            const yPosition =
-                                              (allSteps.length -
-                                                1 -
-                                                stepIndex) *
-                                              stepHeight;
-                                            return (
-                                              <div
-                                                key={step.name}
-                                                className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded transition-all duration-300 cursor-pointer group flex items-center justify-center"
-                                                style={{
-                                                  top: `${yPosition}px`,
-                                                  height: `${stepHeight}px`,
-                                                  backgroundColor:
-                                                    getStepColor(stepIndex),
-                                                  opacity: 0.8,
-                                                }}
-                                                title={`${vcProgress.round_title}: ${step.name} - ${step.probability}% (Completed)`}
-                                              >
-                                                <span className="text-xs font-bold text-gray-800">
-                                                  {step.probability}%
-                                                </span>
-                                              </div>
-                                            );
-                                          })}
+                                  <div className="absolute left-0 right-0 top-0 bottom-28">
+                                    {allSteps.map(
+                                      (stepName: string, index: number) => {
+                                        const stepHeight =
+                                          chartHeight / allSteps.length;
+                                        const yPosition =
+                                          (allSteps.length - 1 - index) *
+                                          stepHeight;
+                                        return (
+                                          <div
+                                            key={stepName}
+                                            className="absolute w-full border-b border-gray-200"
+                                            style={{
+                                              top: `${yPosition}px`,
+                                              height: `${stepHeight}px`,
+                                            }}
+                                          />
+                                        );
+                                      },
+                                    )}
+                                  </div>
 
-                                          {vcProgress.current_step &&
-                                            (() => {
+                                  <div
+                                    className="absolute left-0 right-0 top-0 bottom-28 grid"
+                                    style={{
+                                      paddingTop: "0px",
+                                      gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                    }}
+                                  >
+                                    {(vcProgressData || []).map(
+                                      (vcProgress: any) => {
+                                        return (
+                                          <div
+                                            key={vcProgress.vc_id}
+                                            className="relative w-full"
+                                          >
+                                            {(
+                                              vcProgress.completed_steps || []
+                                            ).map((step: any) => {
                                               const stepIndex =
-                                                allSteps.indexOf(
-                                                  vcProgress.current_step.name,
-                                                );
+                                                allSteps.indexOf(step.name);
                                               if (stepIndex === -1) return null;
                                               const stepHeight =
                                                 chartHeight / allSteps.length;
@@ -679,287 +646,324 @@ export default function FundRaiseDashboard() {
                                                 stepHeight;
                                               return (
                                                 <div
-                                                  className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded border-2 border-blue-600 transition-all duration-300 cursor-pointer group flex items-center justify-center"
+                                                  key={step.name}
+                                                  className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded transition-all duration-300 cursor-pointer group flex items-center justify-center"
                                                   style={{
                                                     top: `${yPosition}px`,
                                                     height: `${stepHeight}px`,
                                                     backgroundColor:
                                                       getStepColor(stepIndex),
-                                                    opacity: 1,
+                                                    opacity: 0.8,
                                                   }}
-                                                  title={`${vcProgress.round_title}: ${vcProgress.current_step.name} - ${vcProgress.current_step.probability}% (Current)`}
+                                                  title={`${vcProgress.round_title}: ${step.name} - ${step.probability}% (Completed)`}
                                                 >
                                                   <span className="text-xs font-bold text-gray-800">
-                                                    {
-                                                      vcProgress.current_step
-                                                        .probability
-                                                    }
-                                                    %
+                                                    {step.probability}%
                                                   </span>
                                                 </div>
                                               );
-                                            })()}
-                                        </div>
-                                      );
-                                    },
-                                  )}
-                                </div>
+                                            })}
 
-                                <div
-                                  className="absolute left-0 right-0 bottom-0 grid pointer-events-none"
-                                  style={{
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
-                                  }}
-                                >
-                                  {(vcProgressData || []).map(
-                                    (vcProgress: any) => (
-                                      <div
-                                        key={vcProgress.vc_id}
-                                        className="text-center w-full px-1 overflow-hidden"
-                                      >
+                                            {vcProgress.current_step &&
+                                              (() => {
+                                                const stepIndex =
+                                                  allSteps.indexOf(
+                                                    vcProgress.current_step
+                                                      .name,
+                                                  );
+                                                if (stepIndex === -1)
+                                                  return null;
+                                                const stepHeight =
+                                                  chartHeight / allSteps.length;
+                                                const yPosition =
+                                                  (allSteps.length -
+                                                    1 -
+                                                    stepIndex) *
+                                                  stepHeight;
+                                                return (
+                                                  <div
+                                                    className="absolute left-1/2 transform -translate-x-1/2 w-8 rounded border-2 border-blue-600 transition-all duration-300 cursor-pointer group flex items-center justify-center"
+                                                    style={{
+                                                      top: `${yPosition}px`,
+                                                      height: `${stepHeight}px`,
+                                                      backgroundColor:
+                                                        getStepColor(stepIndex),
+                                                      opacity: 1,
+                                                    }}
+                                                    title={`${vcProgress.round_title}: ${vcProgress.current_step.name} - ${vcProgress.current_step.probability}% (Current)`}
+                                                  >
+                                                    <span className="text-xs font-bold text-gray-800">
+                                                      {
+                                                        vcProgress.current_step
+                                                          .probability
+                                                      }
+                                                      %
+                                                    </span>
+                                                  </div>
+                                                );
+                                              })()}
+                                          </div>
+                                        );
+                                      },
+                                    )}
+                                  </div>
+
+                                  <div
+                                    className="absolute left-0 right-0 bottom-0 grid pointer-events-none"
+                                    style={{
+                                      gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                    }}
+                                  >
+                                    {(vcProgressData || []).map(
+                                      (vcProgress: any) => (
                                         <div
-                                          className="text-xs font-medium text-gray-700 mb-1 truncate"
-                                          title={vcProgress.round_title}
+                                          key={vcProgress.vc_id}
+                                          className="text-center w-full px-1 overflow-hidden"
                                         >
-                                          {vcProgress.round_title}
+                                          <div
+                                            className="text-xs font-medium text-gray-700 mb-1 truncate"
+                                            title={vcProgress.round_title}
+                                          >
+                                            {vcProgress.round_title}
+                                          </div>
+                                          <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
+                                            {
+                                              vcProgress.total_completed_probability
+                                            }
+                                            %
+                                          </div>
+                                          <div
+                                            className="text-sm font-semibold text-gray-800 truncate"
+                                            title={vcProgress.investor_name}
+                                          >
+                                            {vcProgress.investor_name}
+                                          </div>
                                         </div>
-                                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
-                                          {
-                                            vcProgress.total_completed_probability
-                                          }
-                                          %
-                                        </div>
-                                        <div
-                                          className="text-sm font-semibold text-gray-800 truncate"
-                                          title={vcProgress.investor_name}
-                                        >
-                                          {vcProgress.investor_name}
-                                        </div>
-                                      </div>
-                                    ),
-                                  )}
+                                      ),
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
 
-                      <div className="bg-gray-50 p-4 rounded-lg overflow-hidden">
-                        <div className="text-sm font-medium text-gray-700 mb-4">
-                          Step-wise Distribution - VC Count by Step
-                        </div>
-                        <div>
+                        <div className="bg-gray-50 p-4 rounded-lg overflow-hidden">
+                          <div className="text-sm font-medium text-gray-700 mb-4">
+                            Step-wise Distribution - VC Count by Step
+                          </div>
                           <div>
-                            {(() => {
-                              const stepDistribution = allSteps.map(
-                                (stepName: string) => {
-                                  const currentVCsCount = (
-                                    vcProgressData || []
-                                  ).filter(
-                                    (vc: any) =>
-                                      vc.current_step?.name === stepName,
-                                  ).length;
-                                  const totalVCsAtStep = currentVCsCount;
-                                  return {
-                                    stepName,
-                                    currentVCsCount,
-                                    completedVCsCount: 0,
-                                    totalVCsAtStep,
-                                    stepIndex: allSteps.indexOf(stepName),
-                                  };
-                                },
-                              );
+                            <div>
+                              {(() => {
+                                const stepDistribution = allSteps.map(
+                                  (stepName: string) => {
+                                    const currentVCsCount = (
+                                      vcProgressData || []
+                                    ).filter(
+                                      (vc: any) =>
+                                        vc.current_step?.name === stepName,
+                                    ).length;
+                                    const totalVCsAtStep = currentVCsCount;
+                                    return {
+                                      stepName,
+                                      currentVCsCount,
+                                      completedVCsCount: 0,
+                                      totalVCsAtStep,
+                                      stepIndex: allSteps.indexOf(stepName),
+                                    };
+                                  },
+                                );
 
-                              const maxVCsAtStep = Math.max(
-                                ...stepDistribution.map(
-                                  (s) => s.totalVCsAtStep,
-                                ),
-                                1,
-                              );
+                                const maxVCsAtStep = Math.max(
+                                  ...stepDistribution.map(
+                                    (s) => s.totalVCsAtStep,
+                                  ),
+                                  1,
+                                );
 
-                              return (
-                                <div
-                                  className="flex"
-                                  style={{ height: `${chartHeight}px` }}
-                                >
+                                return (
                                   <div
-                                    className="w-48 pr-4 flex flex-col"
+                                    className="flex"
                                     style={{ height: `${chartHeight}px` }}
                                   >
-                                    {allSteps
-                                      .slice()
-                                      .reverse()
-                                      .map((stepName: string) => {
-                                        const stepHeight =
-                                          chartHeight / allSteps.length;
-                                        return (
-                                          <div
-                                            key={stepName}
-                                            className="flex items-center justify-end text-right border-b border-gray-200"
-                                            style={{
-                                              height: `${stepHeight}px`,
-                                            }}
-                                          >
-                                            <span className="text-sm font-medium text-gray-700">
-                                              {stepName}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                  </div>
-
-                                  <div
-                                    className="relative flex-1"
-                                    style={{ height: `${chartHeight}px` }}
-                                  >
-                                    <div className="absolute inset-0">
-                                      {allSteps.map(
-                                        (stepName: string, index: number) => {
+                                    <div
+                                      className="w-48 pr-4 flex flex-col"
+                                      style={{ height: `${chartHeight}px` }}
+                                    >
+                                      {allSteps
+                                        .slice()
+                                        .reverse()
+                                        .map((stepName: string) => {
                                           const stepHeight =
                                             chartHeight / allSteps.length;
-                                          const yPosition =
-                                            (allSteps.length - 1 - index) *
-                                            stepHeight;
                                           return (
                                             <div
                                               key={stepName}
-                                              className="absolute w-full border-b border-gray-200"
+                                              className="flex items-center justify-end text-right border-b border-gray-200"
                                               style={{
-                                                top: `${yPosition}px`,
                                                 height: `${stepHeight}px`,
                                               }}
-                                            />
+                                            >
+                                              <span className="text-sm font-medium text-gray-700">
+                                                {stepName}
+                                              </span>
+                                            </div>
                                           );
-                                        },
-                                      )}
+                                        })}
                                     </div>
 
-                                    <div className="absolute inset-0">
-                                      {stepDistribution.map((stepData) => {
-                                        const stepIndex = allSteps.indexOf(
-                                          stepData.stepName,
-                                        );
-                                        const stepHeight =
-                                          chartHeight / allSteps.length;
-                                        const yPosition =
-                                          (allSteps.length - 1 - stepIndex) *
-                                          stepHeight;
-                                        const barWidth =
-                                          (stepData.totalVCsAtStep /
-                                            maxVCsAtStep) *
-                                          85;
-                                        return (
-                                          <div key={stepData.stepName}>
-                                            <div
-                                              className="absolute rounded transition-all duration-300 cursor-pointer group"
-                                              style={{
-                                                top: `${yPosition + stepHeight * 0.2}px`,
-                                                left: "10px",
-                                                height: `${stepHeight * 0.6}px`,
-                                                width: `${Math.max(barWidth, 5)}%`,
-                                                backgroundColor:
-                                                  getStepColor(stepIndex),
-                                                opacity: 0.8,
-                                              }}
-                                              title={`${stepData.stepName}: ${stepData.totalVCsAtStep} Fund Raises in progress`}
-                                            >
-                                              <div className="absolute inset-0 flex items-center justify-center">
-                                                <span className="text-xs font-bold text-gray-800">
-                                                  {stepData.totalVCsAtStep}
-                                                </span>
-                                              </div>
-                                              <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-pre-wrap z-20 pointer-events-none max-w-xs">
-                                                {(() => {
-                                                  const names = (
-                                                    vcProgressData || []
-                                                  )
-                                                    .filter(
-                                                      (vc: any) =>
-                                                        vc.current_step
-                                                          ?.name ===
-                                                        stepData.stepName,
+                                    <div
+                                      className="relative flex-1"
+                                      style={{ height: `${chartHeight}px` }}
+                                    >
+                                      <div className="absolute inset-0">
+                                        {allSteps.map(
+                                          (stepName: string, index: number) => {
+                                            const stepHeight =
+                                              chartHeight / allSteps.length;
+                                            const yPosition =
+                                              (allSteps.length - 1 - index) *
+                                              stepHeight;
+                                            return (
+                                              <div
+                                                key={stepName}
+                                                className="absolute w-full border-b border-gray-200"
+                                                style={{
+                                                  top: `${yPosition}px`,
+                                                  height: `${stepHeight}px`,
+                                                }}
+                                              />
+                                            );
+                                          },
+                                        )}
+                                      </div>
+
+                                      <div className="absolute inset-0">
+                                        {stepDistribution.map((stepData) => {
+                                          const stepIndex = allSteps.indexOf(
+                                            stepData.stepName,
+                                          );
+                                          const stepHeight =
+                                            chartHeight / allSteps.length;
+                                          const yPosition =
+                                            (allSteps.length - 1 - stepIndex) *
+                                            stepHeight;
+                                          const barWidth =
+                                            (stepData.totalVCsAtStep /
+                                              maxVCsAtStep) *
+                                            85;
+                                          return (
+                                            <div key={stepData.stepName}>
+                                              <div
+                                                className="absolute rounded transition-all duration-300 cursor-pointer group"
+                                                style={{
+                                                  top: `${yPosition + stepHeight * 0.2}px`,
+                                                  left: "10px",
+                                                  height: `${stepHeight * 0.6}px`,
+                                                  width: `${Math.max(barWidth, 5)}%`,
+                                                  backgroundColor:
+                                                    getStepColor(stepIndex),
+                                                  opacity: 0.8,
+                                                }}
+                                                title={`${stepData.stepName}: ${stepData.totalVCsAtStep} Fund Raises in progress`}
+                                              >
+                                                <div className="absolute inset-0 flex items-center justify-center">
+                                                  <span className="text-xs font-bold text-gray-800">
+                                                    {stepData.totalVCsAtStep}
+                                                  </span>
+                                                </div>
+                                                <div className="absolute left-full ml-2 top-1/2 transform -translate-y-1/2 px-2 py-1 bg-black text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-pre-wrap z-20 pointer-events-none max-w-xs">
+                                                  {(() => {
+                                                    const names = (
+                                                      vcProgressData || []
                                                     )
-                                                    .map(
-                                                      (vc: any) =>
-                                                        vc.investor_name ||
-                                                        vc.round_title,
-                                                    )
-                                                    .slice(0, 20);
-                                                  return `${stepData.stepName}: ${stepData.totalVCsAtStep} Fund Raises\n- ${names.join("\n- ")}`;
-                                                })()}
+                                                      .filter(
+                                                        (vc: any) =>
+                                                          vc.current_step
+                                                            ?.name ===
+                                                          stepData.stepName,
+                                                      )
+                                                      .map(
+                                                        (vc: any) =>
+                                                          vc.investor_name ||
+                                                          vc.round_title,
+                                                      )
+                                                      .slice(0, 20);
+                                                    return `${stepData.stepName}: ${stepData.totalVCsAtStep} Fund Raises\n- ${names.join("\n- ")}`;
+                                                  })()}
+                                                </div>
                                               </div>
                                             </div>
-                                          </div>
-                                        );
-                                      })}
+                                          );
+                                        })}
+                                      </div>
                                     </div>
                                   </div>
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        <div className="bg-green-50 p-3 rounded-lg">
-                          <div className="text-sm font-medium text-green-800">
-                            Total Completed Steps
-                          </div>
-                          <div className="text-2xl font-bold text-green-900">
-                            {(vcProgressData || []).reduce(
-                              (sum: number, vc: any) =>
-                                sum + (vc.completed_count || 0),
-                              0,
-                            )}
+                                );
+                              })()}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="bg-blue-50 p-3 rounded-lg">
-                          <div className="text-sm font-medium text-blue-800">
-                            Active Fund Raises
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          <div className="bg-green-50 p-3 rounded-lg">
+                            <div className="text-sm font-medium text-green-800">
+                              Total Completed Steps
+                            </div>
+                            <div className="text-2xl font-bold text-green-900">
+                              {(vcProgressData || []).reduce(
+                                (sum: number, vc: any) =>
+                                  sum + (vc.completed_count || 0),
+                                0,
+                              )}
+                            </div>
                           </div>
-                          <div className="text-2xl font-bold text-blue-900">
-                            {
-                              (vcProgressData || []).filter(
-                                (vc: any) => vc.current_step,
-                              ).length
-                            }
-                          </div>
-                        </div>
 
-                        <div className="bg-orange-50 p-3 rounded-lg">
-                          <div className="text-sm font-medium text-orange-800">
-                            Avg Progress
+                          <div className="bg-blue-50 p-3 rounded-lg">
+                            <div className="text-sm font-medium text-blue-800">
+                              Active Fund Raises
+                            </div>
+                            <div className="text-2xl font-bold text-blue-900">
+                              {
+                                (vcProgressData || []).filter(
+                                  (vc: any) => vc.current_step,
+                                ).length
+                              }
+                            </div>
                           </div>
-                          <div className="text-2xl font-bold text-orange-900">
-                            {(() => {
-                              const avgProgress =
-                                (vcProgressData || []).length > 0
-                                  ? Math.round(
-                                      (vcProgressData || []).reduce(
-                                        (sum: number, vc: any) =>
-                                          sum +
-                                          (vc.total_completed_probability || 0),
-                                        0,
-                                      ) / (vcProgressData || []).length,
-                                    )
-                                  : 0;
-                              return avgProgress;
-                            })()}
-                            %
+
+                          <div className="bg-orange-50 p-3 rounded-lg">
+                            <div className="text-sm font-medium text-orange-800">
+                              Avg Progress
+                            </div>
+                            <div className="text-2xl font-bold text-orange-900">
+                              {(() => {
+                                const avgProgress =
+                                  (vcProgressData || []).length > 0
+                                    ? Math.round(
+                                        (vcProgressData || []).reduce(
+                                          (sum: number, vc: any) =>
+                                            sum +
+                                            (vc.total_completed_probability ||
+                                              0),
+                                          0,
+                                        ) / (vcProgressData || []).length,
+                                      )
+                                    : 0;
+                                return avgProgress;
+                              })()}
+                              %
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })()}
-            </CardContent>
-          </Card>
-        );
-      })()}
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
       {/* Follow-up Status Cards (cloned from VC) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
