@@ -385,7 +385,7 @@ export function VCEnhancedStepItem({
         title: `Fund Raise Follow-up: ${step.name}`,
         description: followUpNotes,
         assigned_to: parseInt(followUpAssignTo),
-        due_date: followUpDueDate,
+        due_date: new Date(followUpDueDate).toISOString(),
         priority: "medium",
         vc_id: step.vc_id,
         vc_step_id: step.id,
