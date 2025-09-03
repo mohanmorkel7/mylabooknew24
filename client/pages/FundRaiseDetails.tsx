@@ -720,7 +720,8 @@ export default function FundRaiseDetails() {
                   onReorderSteps={handleReorderSteps}
                   updateStepStatus={updateFundRaiseStepStatus}
                   stepApiBase="fund-raises"
-                  /* focus props will be injected after reading location state */
+                  focusStepId={focusStepId || undefined}
+                  focusFollowUpId={focusFollowUpId || undefined}
                 />
               )}
             </CardContent>
