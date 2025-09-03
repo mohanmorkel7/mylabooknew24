@@ -511,6 +511,7 @@ export default function FundRaiseDashboard() {
                 };
 
                 const chartHeight = 400;
+                const colWidth = 120;
 
                 return (
                   <div className="space-y-6">
