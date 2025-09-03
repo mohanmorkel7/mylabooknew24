@@ -1425,21 +1425,19 @@ export default function FundRaiseDashboard() {
                                         </div>
                                         <div className="text-[11px] text-gray-600 mt-1 flex flex-wrap gap-3">
                                           {fr.start_date && (
-                                            <span>
-                                              Start:{" "}
-                                              {new Date(
-                                                fr.start_date,
-                                              ).toLocaleDateString("en-IN", {
+                                            <span className="inline-flex items-center gap-1">
+                                              <Calendar className="w-3 h-3 text-gray-400" />
+                                              <span className="text-gray-500">Start:</span>
+                                              {new Date(fr.start_date).toLocaleDateString("en-IN", {
                                                 timeZone: "Asia/Kolkata",
                                               })}
                                             </span>
                                           )}
                                           {fr.end_date && (
-                                            <span>
-                                              End:{" "}
-                                              {new Date(
-                                                fr.end_date,
-                                              ).toLocaleDateString("en-IN", {
+                                            <span className="inline-flex items-center gap-1">
+                                              <Calendar className="w-3 h-3 text-gray-400" />
+                                              <span className="text-gray-500">End:</span>
+                                              {new Date(fr.end_date).toLocaleDateString("en-IN", {
                                                 timeZone: "Asia/Kolkata",
                                               })}
                                             </span>
