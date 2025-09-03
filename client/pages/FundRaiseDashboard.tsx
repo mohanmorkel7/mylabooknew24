@@ -189,7 +189,7 @@ export default function FundRaiseDashboard() {
       if (entries[0]) {
         const width = entries[0].contentRect.width;
         const responsiveHeight = Math.max(
-          360,
+          500,
           Math.min(600, Math.round(width * 0.5)),
         );
         setChartHeight(responsiveHeight);
