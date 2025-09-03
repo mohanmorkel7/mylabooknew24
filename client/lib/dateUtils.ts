@@ -29,31 +29,33 @@ export const formatToISTDateTime = (
   date: string | Date,
   options: Intl.DateTimeFormatOptions = {},
 ): string => {
-  let dateObj: Date;
+  const dateObj = typeof date === "string" ? new Date(date) : date;
 
-  if (typeof date === "string") {
-    // Parse the date normally - database timestamps should be in UTC
-    dateObj = new Date(date);
-  } else {
-    dateObj = date;
-  }
+  if (isNaN(dateObj.getTime())) return "Invalid Date";
 
-  // Ensure we have a valid date
-  if (isNaN(dateObj.getTime())) {
-    return "Invalid Date";
-  }
+  const fmt: Intl.DateTimeFormatOptions = {
+    timeZone: IST_TIMEZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    ...options,
+  };
 
-  const istDate = convertToIST(dateObj);
-  const day = istDate.getDate();
-  const month = istDate.toLocaleString("en-IN", { month: "short" });
-  const year = istDate.getFullYear();
-  let hours = istDate.getHours();
-  const minutes = istDate.getMinutes().toString().padStart(2, "0");
-  const ampm = hours >= 12 ? "pm" : "am";
-  hours = hours % 12;
-  hours = hours ? hours : 12;
+  // Use Intl to format directly in IST to avoid double-offset issues
+  const parts = new Intl.DateTimeFormat("en-IN", fmt).formatToParts(dateObj);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
 
-  return `${day} ${month} ${year}, ${hours}:${minutes} ${ampm}`;
+  const day = get("day");
+  const month = get("month");
+  const year = get("year");
+  const hour = get("hour");
+  const minute = get("minute");
+  const dayPeriod = get("dayPeriod");
+
+  return `${day} ${month} ${year}, ${hour}:${minute} ${dayPeriod?.toUpperCase()}`;
 };
 
 /**
