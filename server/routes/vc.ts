@@ -15,6 +15,55 @@ import { pool, isDatabaseAvailable, withTimeout } from "../database/connection";
 
 const router = Router();
 
+// Ensure investor_category constraint matches UI options (idempotent)
+let vcConstraintEnsured = false;
+async function ensureVCInvestorCategoryConstraint() {
+  if (vcConstraintEnsured) return;
+  try {
+    await pool.query(`
+      ALTER TABLE vcs DROP CONSTRAINT IF EXISTS vcs_investor_category_check;
+      ALTER TABLE vcs ADD CONSTRAINT vcs_investor_category_check
+        CHECK (investor_category IN (
+          'angel', 'vc', 'private_equity', 'family_office', 'merchant_banker', 'accelerator', 'individual',
+          'early_stage', 'growth', 'strategic_bank', 'strategic_fintech', 'strategic_individual'
+        ));
+    `);
+    vcConstraintEnsured = true;
+    console.log("VC investor_category constraint ensured/updated");
+  } catch (e: any) {
+    console.log(
+      "VC investor_category constraint ensure failed or not needed:",
+      e.message,
+    );
+    // Even if it fails due to permissions/locks, avoid blocking the request
+    vcConstraintEnsured = true; // prevent repeated attempts each request
+  }
+}
+
+// Ensure lead_source constraint matches UI options (idempotent)
+let vcLeadSourceConstraintEnsured = false;
+async function ensureVCLeadSourceConstraint() {
+  if (vcLeadSourceConstraintEnsured) return;
+  try {
+    await pool.query(`
+      ALTER TABLE vcs DROP CONSTRAINT IF EXISTS vcs_lead_source_check;
+      ALTER TABLE vcs ADD CONSTRAINT vcs_lead_source_check
+        CHECK (lead_source IN (
+          'linkedin_outbound','linkedin_inbound','email_outbound','email_inbound','call_outbound','call_inbound','reference','general_list',
+          'email','social-media','phone','website','referral','cold-call','event','other'
+        ));
+    `);
+    vcLeadSourceConstraintEnsured = true;
+    console.log("VC lead_source constraint ensured/updated");
+  } catch (e: any) {
+    console.log(
+      "VC lead_source constraint ensure failed or not needed:",
+      e.message,
+    );
+    vcLeadSourceConstraintEnsured = true; // prevent repeated attempts each request
+  }
+}
+
 // Check if step_id column exists in vc_comments table
 async function hasStepIdColumn(): Promise<boolean> {
   try {
@@ -579,6 +628,11 @@ router.post("/", async (req: Request, res: Response) => {
       console.log("🔍 Database available for VC creation:", dbAvailable);
       console.log("🔍 VC data being created:", JSON.stringify(vcData, null, 2));
 
+      if (dbAvailable) {
+        await ensureVCInvestorCategoryConstraint();
+        await ensureVCLeadSourceConstraint();
+      }
+
       // Normalize/validate investor_category to avoid DB constraint errors
       const allowedInvestorCategories = new Set([
         "angel",
@@ -588,6 +642,11 @@ router.post("/", async (req: Request, res: Response) => {
         "merchant_banker",
         "accelerator",
         "individual",
+        "early_stage",
+        "growth",
+        "strategic_bank",
+        "strategic_fintech",
+        "strategic_individual",
       ]);
       if (
         (vcData as any).investor_category &&
@@ -718,6 +777,8 @@ router.put("/:id", async (req: Request, res: Response) => {
     let vc;
     try {
       if (await isDatabaseAvailable()) {
+        await ensureVCInvestorCategoryConstraint();
+        await ensureVCLeadSourceConstraint();
         // Get current VC to check if template_id is changing
         const currentVC = await VCRepository.findById(id);
 

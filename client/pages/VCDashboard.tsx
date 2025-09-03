@@ -64,6 +64,7 @@ import {
   Activity,
 } from "lucide-react";
 import { formatToIST } from "@/lib/dateUtils";
+import { getSectorLabel } from "@/lib/constants";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -638,7 +639,7 @@ export default function VCDashboard() {
                               <span>
                                 Sector Focus:{" "}
                                 <span className="font-medium">
-                                  {vc.industry || "N/A"}
+                                  {getSectorLabel(vc.industry) || "N/A"}
                                 </span>
                               </span>
                               <span>

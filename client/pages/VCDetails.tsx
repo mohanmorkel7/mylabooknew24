@@ -59,6 +59,12 @@ import {
   MessageSquare,
 } from "lucide-react";
 import { formatToISTDateTime } from "@/lib/dateUtils";
+import {
+  getSectorLabel,
+  getInvestorFeedbackLabel,
+  formatPhoneDisplay,
+  formatPhoneHref,
+} from "@/lib/constants";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -468,7 +474,10 @@ export default function VCDetails() {
                       ?.replace("_", " ")
                       .toUpperCase(),
                   },
-                  { label: "Sector Focus", value: vcData.industry },
+                  {
+                    label: "Sector Focus",
+                    value: vcData.industry && getSectorLabel(vcData.industry),
+                  },
                   {
                     label: "Contact Person",
                     value: getPrimaryContact(vcData)?.contact_name,
@@ -479,7 +488,9 @@ export default function VCDetails() {
                   { label: "Website", value: vcData.website },
                   {
                     label: "Investor Last Feedback",
-                    value: vcData.investor_last_feedback,
+                    value: getInvestorFeedbackLabel(
+                      vcData.investor_last_feedback as any,
+                    ),
                   },
                 ]
                   .filter(
@@ -514,10 +525,13 @@ export default function VCDetails() {
                           </a>
                         ) : item.label === "Phone" ? (
                           <a
-                            href={`tel:${item.value}`}
+                            href={`tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`}
                             className="text-blue-600 hover:underline"
                           >
-                            {String(item.value)}
+                            {formatPhoneDisplay(
+                              getPrimaryContact(vcData)?.phone,
+                              vcData.country,
+                            )}
                           </a>
                         ) : (
                           String(item.value)
@@ -625,7 +639,7 @@ export default function VCDetails() {
                   variant="outline"
                   onClick={() =>
                     window.open(
-                      `tel:${getPrimaryContact(vcData)?.phone}`,
+                      `tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`,
                       "_self",
                     )
                   }

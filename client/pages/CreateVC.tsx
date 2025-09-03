@@ -81,6 +81,12 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Country, State, City } from "country-state-city";
+import {
+  VC_TYPES,
+  SECTOR_FOCUS,
+  INVESTOR_FEEDBACK,
+  VC_LEAD_SOURCES,
+} from "@/lib/constants";
 
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
@@ -91,32 +97,6 @@ const ROUND_STAGES = [
   { value: "series_a", label: "Series A" },
   { value: "series_b", label: "Series B" },
   { value: "series_c", label: "Series C" },
-];
-
-const VC_TYPES = [
-  { value: "early_stage", label: "Early Stage" },
-  { value: "accelerator", label: "Accelerator" },
-  { value: "growth", label: "Growth" },
-  { value: "strategic_bank", label: "Strategic - Bank" },
-  { value: "strategic_fintech", label: "Strategic - Fintech" },
-  { value: "strategic_individual", label: "Strategic - Individual" },
-  { value: "angel", label: "Angel" },
-];
-
-const SECTOR_FOCUS = [
-  { value: "fintech", label: "Fintech" },
-  { value: "fintech_b2b", label: "Fintech -B2B" },
-  { value: "fintech_saas", label: "Fintech - SaaS" },
-  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
-  { value: "sector_agnostic", label: "Sector Agnostic" },
-];
-
-const INVESTOR_FEEDBACK = [
-  { value: "existing_investor", label: "Existing Investor" },
-  { value: "general", label: "General" },
-  { value: "pass", label: "Pass" },
-  { value: "ghosting", label: "Ghosting" },
-  { value: "potential_future", label: "Potential Future" },
 ];
 
 const COUNTRIES = [
@@ -1241,14 +1221,38 @@ export default function CreateVC() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
+    if (!vcData.lead_source) {
+      newErrors.lead_source = "Source is required";
+    }
+    if (!vcData.lead_source_value?.trim()) {
+      newErrors.lead_source_value = "Source information is required";
+    }
     if (!vcData.investor_name.trim()) {
-      newErrors.investor_name = "Investor name is required";
+      newErrors.investor_name = "Venture Capital Name is required";
     }
     if (!(vcData as any).investor_category) {
-      (newErrors as any).investor_category = "Investor category is required";
+      (newErrors as any).investor_category = "VC Type is required";
     }
-    if (!vcData.lead_source) {
-      newErrors.lead_source = "Lead source is required";
+    if (!(vcData as any).industry) {
+      (newErrors as any).industry = "Sector Focus is required";
+    }
+    if (!vcData.minimum_size) {
+      newErrors.minimum_size = "Min.Chq Size is required";
+    }
+    if (!vcData.maximum_size) {
+      newErrors.maximum_size = "Max.Chq Size is required";
+    }
+    if (!vcData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+    if (!vcData.country) {
+      newErrors.country = "Country is required";
+    }
+    if (!vcData.state) {
+      newErrors.state = "State is required";
+    }
+    if (!vcData.city) {
+      newErrors.city = "City is required";
     }
 
     setErrors(newErrors);
@@ -1514,7 +1518,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="lead_source">Source</Label>
+                  <Label htmlFor="lead_source">Source *</Label>
                   <Select
                     value={vcData.lead_source}
                     onValueChange={(value) =>
@@ -1525,54 +1529,27 @@ export default function CreateVC() {
                       <SelectValue placeholder="Select how you found this lead" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="email">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          Email
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="social-media">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4" />
-                          Social Media
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="phone">
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4" />
-                          Phone
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="website">
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4" />
-                          Website
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="referral">
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="w-4 h-4" />
-                          Referral
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="cold-call">
-                        <div className="flex items-center gap-2">
-                          <PhoneCall className="w-4 h-4" />
-                          Cold Call
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="event">
-                        <div className="flex items-center gap-2">
-                          <Presentation className="w-4 h-4" />
-                          Event
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="other">
-                        <div className="flex items-center gap-2">
-                          <HelpCircle className="w-4 h-4" />
-                          Other
-                        </div>
-                      </SelectItem>
+                      {VC_LEAD_SOURCES.map((opt) => {
+                        const Icon = opt.value.startsWith("email_")
+                          ? Mail
+                          : opt.value.startsWith("call_")
+                            ? Phone
+                            : opt.value.startsWith("linkedin_")
+                              ? MessageSquare
+                              : opt.value === "reference"
+                                ? UserCheck
+                                : opt.value === "general_list"
+                                  ? FileText
+                                  : HelpCircle;
+                        return (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="w-4 h-4" />
+                              {opt.label}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>
@@ -1581,26 +1558,25 @@ export default function CreateVC() {
                 {vcData.lead_source && (
                   <div className="md:col-span-2">
                     <Label htmlFor="lead_source_value">
-                      {vcData.lead_source === "email" && "Email Address"}
-                      {vcData.lead_source === "phone" && "Phone Number"}
-                      {vcData.lead_source === "social-media" &&
-                        "Social Media Profile/Link"}
-                      {vcData.lead_source === "website" && "Website URL"}
-                      {vcData.lead_source === "referral" && "Referred by"}
-                      {vcData.lead_source === "cold-call" &&
-                        "Phone Number Called"}
-                      {vcData.lead_source === "event" && "Event Name/Details"}
-                      {vcData.lead_source === "other" && "Source Details"}
+                      {vcData.lead_source?.startsWith("email_") &&
+                        "Email Address *"}
+                      {vcData.lead_source?.startsWith("call_") &&
+                        "Phone Number *"}
+                      {vcData.lead_source?.startsWith("linkedin_") &&
+                        "LinkedIn Profile/Link *"}
+                      {vcData.lead_source === "reference" && "Referred by *"}
+                      {vcData.lead_source === "general_list" &&
+                        "List Name/Details *"}
                     </Label>
                     <div className="relative mt-1">
-                      {vcData.lead_source === "email" && (
+                      {vcData.lead_source?.startsWith("email_") && (
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
-                      {vcData.lead_source === "phone" && (
+                      {vcData.lead_source?.startsWith("call_") && (
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
-                      {vcData.lead_source === "website" && (
-                        <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      {vcData.lead_source?.startsWith("linkedin_") && (
+                        <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
                       <Input
                         id="lead_source_value"
@@ -1610,21 +1586,17 @@ export default function CreateVC() {
                         }
                         className="pl-10"
                         placeholder={
-                          vcData.lead_source === "email"
+                          vcData.lead_source?.startsWith("email_")
                             ? "contact@investor.com"
-                            : vcData.lead_source === "phone"
+                            : vcData.lead_source?.startsWith("call_")
                               ? "+1 (555) 000-0000"
-                              : vcData.lead_source === "social-media"
-                                ? "LinkedIn profile or social media link"
-                                : vcData.lead_source === "website"
-                                  ? "https://investor.com"
-                                  : vcData.lead_source === "referral"
-                                    ? "Name of person who referred"
-                                    : vcData.lead_source === "cold-call"
-                                      ? "+1 (555) 000-0000"
-                                      : vcData.lead_source === "event"
-                                        ? "Conference name or event details"
-                                        : "Describe the source"
+                              : vcData.lead_source?.startsWith("linkedin_")
+                                ? "LinkedIn profile link"
+                                : vcData.lead_source === "reference"
+                                  ? "Name of person who referred"
+                                  : vcData.lead_source === "general_list"
+                                    ? "List name or details"
+                                    : "Describe the source"
                         }
                       />
                     </div>
@@ -1653,7 +1625,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="investor_category">VC Type</Label>
+                    <Label htmlFor="investor_category">VC Type *</Label>
                     <Select
                       value={(vcData as any).investor_category}
                       onValueChange={(value) =>
@@ -1674,7 +1646,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="industry">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus *</Label>
                     <Select
                       value={(vcData as any).industry}
                       onValueChange={(value) =>
@@ -1707,7 +1679,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1759,7 +1731,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1889,7 +1861,7 @@ export default function CreateVC() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address *</Label>
                   <Input
                     id="address"
                     placeholder="Street address"
@@ -1902,7 +1874,7 @@ export default function CreateVC() {
 
                 {/* Searchable Location Fields */}
                 <div>
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country">Country *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -1953,7 +1925,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="state">State/Province</Label>
+                  <Label htmlFor="state">State/Province *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -2014,7 +1986,7 @@ export default function CreateVC() {
                 </div>
 
                 <div>
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">City *</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -2235,8 +2207,11 @@ export default function CreateVC() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting || createVCMutation.isPending}
+            >
+              {isSubmitting ? "Creating..." : "Create VC"}
             </Button>
           </div>
         </TabsContent>

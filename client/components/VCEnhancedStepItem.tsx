@@ -62,7 +62,11 @@ import {
   Edit,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { useCreateFollowUp, useUsers } from "@/hooks/useApi";
+import {
+  useCreateFollowUp,
+  useUsers,
+  useUpdateFollowUpStatus,
+} from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { formatToISTDateTime } from "@/lib/dateUtils";
 
@@ -190,6 +194,32 @@ export function VCEnhancedStepItem({
   const [messageToDelete, setMessageToDelete] = useState<number | null>(null);
 
   const createFollowUpMutation = useCreateFollowUp();
+  const updateFollowUpStatus = useUpdateFollowUpStatus();
+  const [followUpStatuses, setFollowUpStatuses] = useState<
+    Record<number, string>
+  >({});
+
+  // Load status for follow-up IDs referenced in system messages
+  useEffect(() => {
+    if (!isExpanded) return;
+    const ids = new Set<number>();
+    for (const m of sortedMessages) {
+      if (m.message_type === "system") {
+        const match = (m.message || "").match(/#(\d+)/);
+        if (match) ids.add(parseInt(match[1]));
+      }
+    }
+    ids.forEach(async (fid) => {
+      if (followUpStatuses[fid]) return;
+      try {
+        const f = await apiClient.request(`/follow-ups/${fid}`);
+        if (f && f.status) {
+          setFollowUpStatuses((s) => ({ ...s, [fid]: f.status }));
+        }
+      } catch {}
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded, sortedMessages.length]);
 
   // Function to highlight mentions and make follow-up IDs clickable
   const processMessageContent = (messageText: string) => {
@@ -330,6 +360,9 @@ export function VCEnhancedStepItem({
       const assignee = teamMembers.find(
         (m) => m.id === parseInt(followUpAssignTo),
       );
+      if (created?.id && created?.status) {
+        setFollowUpStatuses((s) => ({ ...s, [created.id]: created.status }));
+      }
       const details = [
         created?.id ? `ID: #${created.id}` : null,
         assignee ? `Assignee: ${assignee.name}` : null,
@@ -523,7 +556,13 @@ export function VCEnhancedStepItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`border rounded-lg bg-white ${isDragOverlay ? "shadow-2xl" : ""}`}
+      className={`border rounded-lg bg-white border-l-4 ${
+        step.status === "completed"
+          ? "border-green-600"
+          : step.status === "in_progress"
+            ? "border-blue-600"
+            : "border-gray-300"
+      } ${isDragOverlay ? "shadow-2xl" : ""}`}
     >
       <Collapsible open={isExpanded} onOpenChange={onToggleExpansion}>
         <div className="flex items-center space-x-4 p-4">
@@ -552,6 +591,24 @@ export function VCEnhancedStepItem({
             <div className="flex-1">
               <div className="flex items-center space-x-2">
                 <span className="font-medium text-gray-900">{step.name}</span>
+                {/* Status badge for quick visual cue */}
+                {step.status && (
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${
+                      step.status === "completed"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : step.status === "in_progress"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-gray-50 text-gray-700 border-gray-200"
+                    }`}
+                  >
+                    {step.status === "in_progress"
+                      ? "In Progress"
+                      : step.status.charAt(0).toUpperCase() +
+                        step.status.slice(1).replace("_", " ")}
+                  </Badge>
+                )}
                 <div className="flex items-center space-x-2">
                   {typeof step.probability_percent !== "undefined" &&
                     step.probability_percent !== null && (
@@ -618,7 +675,15 @@ export function VCEnhancedStepItem({
               value={step.status}
               onValueChange={(value) => onUpdateStatus(step.id, value)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger
+                className={`w-32 ${
+                  step.status === "completed"
+                    ? "bg-green-50 text-green-700 border-green-200"
+                    : step.status === "in_progress"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : "bg-gray-50 text-gray-700 border-gray-200"
+                }`}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -682,227 +747,314 @@ export function VCEnhancedStepItem({
                     )}
                     {!chatLoading &&
                       !chatError &&
-                      sortedMessages.map((message, index) => (
-                        <div
-                          key={`msg-${message.id}-${index}`}
-                          className={`flex space-x-3 p-3 rounded border ${
-                            message.message_type === "system"
-                              ? "bg-blue-50 border-blue-200"
-                              : message.user_id === parseInt(user?.id || "0")
-                                ? "bg-green-50 border-green-200"
-                                : "bg-white"
-                          }`}
-                        >
+                      sortedMessages.map((message, index) => {
+                        const isStatusChange =
+                          message.message_type === "system" &&
+                          (message.message || "").includes(
+                            "Step status changed",
+                          );
+                        return (
                           <div
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                              message.message_type === "system"
-                                ? "bg-orange-500"
-                                : "bg-blue-500"
+                            key={`msg-${message.id}-${index}`}
+                            className={`flex space-x-3 ${
+                              isStatusChange
+                                ? "px-2 py-1"
+                                : "p-3 rounded border " +
+                                  (message.message_type === "system"
+                                    ? "bg-blue-50 border-blue-200"
+                                    : message.user_id ===
+                                        parseInt(user?.id || "0")
+                                      ? "bg-green-50 border-green-200"
+                                      : "bg-white")
                             }`}
                           >
-                            {message.message_type === "system"
-                              ? "📋"
-                              : message.user_name.charAt(0)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-medium text-gray-900">
-                                {message.user_id === parseInt(user?.id || "0")
-                                  ? "Me"
-                                  : message.user_name}
-                              </span>
-                              <div className="flex items-center space-x-2">
-                                <span className="text-xs text-gray-500">
-                                  {formatToISTDateTime(message.created_at)}
-                                </span>
-                                {message.message_type !== "system" && (
-                                  <>
-                                    {/* Only show edit/delete for own messages */}
-                                    {message.user_id ===
-                                      parseInt(user?.id || "0") && (
-                                      <>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() =>
-                                            handleEditMessage(
-                                              message.id,
-                                              message.message,
-                                              message.is_rich_text,
-                                            )
-                                          }
-                                          className="text-gray-600 hover:text-gray-700"
-                                        >
-                                          <Edit className="w-3 h-3" />
-                                        </Button>
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          onClick={() =>
-                                            handleDeleteMessage(message.id)
-                                          }
-                                          className="text-red-600 hover:text-red-700"
-                                        >
-                                          <Trash2 className="w-3 h-3" />
-                                        </Button>
-                                      </>
-                                    )}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleFollowUp(message.id)}
-                                      className="text-blue-600 hover:text-blue-700"
-                                    >
-                                      <Reply className="w-3 h-3 mr-1" />
-                                      Follow-up
-                                    </Button>
-                                  </>
-                                )}
+                            {isStatusChange ? (
+                              <div className="w-4 h-4 flex items-center justify-center text-gray-500">
+                                📝
                               </div>
-                            </div>
-                            <div className="text-sm text-gray-700">
-                              {editingMessageId === message.id ? (
-                                <div className="space-y-2">
-                                  <RichTextEditor
-                                    value={editMessageText}
-                                    onChange={setEditMessageText}
-                                    placeholder="Edit your message with rich formatting..."
-                                    className="min-h-[80px] border-gray-200"
-                                  />
-                                  <div className="flex space-x-2">
-                                    <Button
-                                      size="sm"
-                                      onClick={() =>
-                                        handleSaveEdit(
-                                          message.id,
-                                          message.is_rich_text,
-                                        )
-                                      }
-                                      disabled={!editMessageText.trim()}
-                                    >
-                                      Save
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={handleCancelEdit}
-                                    >
-                                      Cancel
-                                    </Button>
-                                  </div>
+                            ) : (
+                              <div
+                                className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                                  message.message_type === "system"
+                                    ? "bg-orange-500"
+                                    : "bg-blue-500"
+                                }`}
+                              >
+                                {message.message_type === "system"
+                                  ? "📋"
+                                  : message.user_name.charAt(0)}
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              {isStatusChange ? (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-gray-500">
+                                    {message.message}
+                                  </span>
+                                  <span className="text-[10px] text-gray-400">
+                                    {formatToISTDateTime(message.created_at)}
+                                  </span>
                                 </div>
                               ) : (
-                                <div
-                                  dangerouslySetInnerHTML={{
-                                    __html: processMessageContent(
-                                      message.message,
-                                    ),
-                                  }}
-                                />
-                              )}
-                              {message.attachments &&
-                                message.attachments.length > 0 && (
-                                  <div className="mt-2 space-y-1">
-                                    {message.attachments.map(
-                                      (attachment, idx) => {
-                                        const fname =
-                                          attachment.filename ||
-                                          attachment.file_name ||
-                                          "file";
-                                        const directPath =
-                                          attachment.file_path ||
-                                          attachment.path ||
-                                          "";
-                                        const downloadUrl =
-                                          attachment.download_url ||
-                                          (attachment.filename
-                                            ? `/api/files/download/${attachment.filename}`
-                                            : directPath);
-                                        return (
-                                          <div
-                                            key={idx}
-                                            className="flex items-center space-x-2 text-xs bg-gray-100 px-2 py-1 rounded"
-                                          >
-                                            <FileText className="w-3 h-3" />
-                                            <a
-                                              href={downloadUrl || "#"}
-                                              onClick={async (e) => {
-                                                e.stopPropagation();
-                                                if (!downloadUrl) return;
-                                                try {
-                                                  if (attachment.filename) {
-                                                    const response =
-                                                      await fetch(
-                                                        `/api/files/download/${attachment.filename}`,
-                                                      );
-                                                    if (!response.ok)
-                                                      throw new Error(
-                                                        "Download failed",
-                                                      );
-                                                    const blob =
-                                                      await response.blob();
-                                                    const url =
-                                                      window.URL.createObjectURL(
-                                                        blob,
-                                                      );
-                                                    const link =
-                                                      document.createElement(
-                                                        "a",
-                                                      );
-                                                    link.href = url;
-                                                    link.download =
-                                                      attachment.file_name ||
-                                                      fname;
-                                                    document.body.appendChild(
-                                                      link,
+                                <>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-sm font-medium text-gray-900">
+                                      {message.user_id ===
+                                      parseInt(user?.id || "0")
+                                        ? "Me"
+                                        : message.user_name}
+                                    </span>
+                                    <div className="flex items-center space-x-2">
+                                      <span className="text-xs text-gray-500">
+                                        {formatToISTDateTime(
+                                          message.created_at,
+                                        )}
+                                      </span>
+                                      {message.message_type === "system" &&
+                                        (() => {
+                                          const m = (
+                                            message.message || ""
+                                          ).match(/#(\d+)/);
+                                          if (!m) return null;
+                                          const fid = parseInt(m[1]);
+                                          const current =
+                                            followUpStatuses[fid] || "pending";
+                                          return (
+                                            <div className="flex items-center space-x-1">
+                                              <Label className="text-xs text-gray-600">
+                                                Status
+                                              </Label>
+                                              <Select
+                                                value={current}
+                                                onValueChange={async (val) => {
+                                                  setFollowUpStatuses((s) => ({
+                                                    ...s,
+                                                    [fid]: val,
+                                                  }));
+                                                  try {
+                                                    await updateFollowUpStatus.mutateAsync(
+                                                      {
+                                                        followUpId: fid,
+                                                        statusData: {
+                                                          status: val,
+                                                          completed_at:
+                                                            val === "completed"
+                                                              ? new Date().toISOString()
+                                                              : null,
+                                                        },
+                                                      },
                                                     );
-                                                    link.click();
-                                                    document.body.removeChild(
-                                                      link,
-                                                    );
-                                                    window.URL.revokeObjectURL(
-                                                      url,
-                                                    );
-                                                  } else {
-                                                    window.open(
-                                                      downloadUrl,
-                                                      "_blank",
-                                                    );
+                                                  } catch (e) {
+                                                    // ignore
                                                   }
-                                                } catch (err) {
-                                                  console.error(
-                                                    "Download failed:",
-                                                    err,
-                                                  );
-                                                  alert(
-                                                    "Download failed. File may not be available.",
-                                                  );
+                                                }}
+                                              >
+                                                <SelectTrigger className="h-7 w-36 text-xs">
+                                                  <SelectValue placeholder="Update status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="pending">
+                                                    Pending
+                                                  </SelectItem>
+                                                  <SelectItem value="in_progress">
+                                                    In Progress
+                                                  </SelectItem>
+                                                  <SelectItem value="completed">
+                                                    Completed
+                                                  </SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                          );
+                                        })()}
+                                      {message.message_type !== "system" && (
+                                        <>
+                                          {message.user_id ===
+                                            parseInt(user?.id || "0") && (
+                                            <>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() =>
+                                                  handleEditMessage(
+                                                    message.id,
+                                                    message.message,
+                                                    message.is_rich_text,
+                                                  )
                                                 }
-                                              }}
-                                              download={!!attachment.filename}
-                                              className="text-blue-600 hover:underline"
-                                            >
-                                              {fname}
-                                            </a>
-                                            {attachment.file_size ? (
-                                              <span className="text-gray-500">
-                                                (
-                                                {(
-                                                  attachment.file_size / 1024
-                                                ).toFixed(1)}{" "}
-                                                KB)
-                                              </span>
-                                            ) : null}
-                                          </div>
-                                        );
-                                      },
-                                    )}
+                                                className="text-gray-600 hover:text-gray-700"
+                                              >
+                                                <Edit className="w-3 h-3" />
+                                              </Button>
+                                              <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() =>
+                                                  handleDeleteMessage(
+                                                    message.id,
+                                                  )
+                                                }
+                                                className="text-red-600 hover:text-red-700"
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </Button>
+                                            </>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
                                   </div>
-                                )}
+                                  <div className="text-sm text-gray-700">
+                                    {editingMessageId === message.id ? (
+                                      <div className="space-y-2">
+                                        <RichTextEditor
+                                          value={editMessageText}
+                                          onChange={setEditMessageText}
+                                          placeholder="Edit your message with rich formatting..."
+                                          className="min-h-[80px] border-gray-200"
+                                        />
+                                        <div className="flex space-x-2">
+                                          <Button
+                                            size="sm"
+                                            onClick={() =>
+                                              handleSaveEdit(
+                                                message.id,
+                                                message.is_rich_text,
+                                              )
+                                            }
+                                            disabled={!editMessageText.trim()}
+                                          >
+                                            Save
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={handleCancelEdit}
+                                          >
+                                            Cancel
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div
+                                        dangerouslySetInnerHTML={{
+                                          __html: processMessageContent(
+                                            message.message,
+                                          ),
+                                        }}
+                                      />
+                                    )}
+                                    {message.attachments &&
+                                      message.attachments.length > 0 && (
+                                        <div className="mt-2 space-y-1">
+                                          {message.attachments.map(
+                                            (attachment, idx) => {
+                                              const fname =
+                                                attachment.filename ||
+                                                attachment.file_name ||
+                                                "file";
+                                              const directPath =
+                                                attachment.file_path ||
+                                                attachment.path ||
+                                                "";
+                                              const downloadUrl =
+                                                attachment.download_url ||
+                                                (attachment.filename
+                                                  ? `/api/files/download/${attachment.filename}`
+                                                  : directPath);
+                                              return (
+                                                <div
+                                                  key={idx}
+                                                  className="flex items-center space-x-2 text-xs bg-gray-100 px-2 py-1 rounded"
+                                                >
+                                                  <FileText className="w-3 h-3" />
+                                                  <a
+                                                    href={downloadUrl || "#"}
+                                                    onClick={async (e) => {
+                                                      e.stopPropagation();
+                                                      if (!downloadUrl) return;
+                                                      try {
+                                                        if (
+                                                          attachment.filename
+                                                        ) {
+                                                          const response =
+                                                            await fetch(
+                                                              `/api/files/download/${attachment.filename}`,
+                                                            );
+                                                          if (!response.ok)
+                                                            throw new Error(
+                                                              "Download failed",
+                                                            );
+                                                          const blob =
+                                                            await response.blob();
+                                                          const url =
+                                                            window.URL.createObjectURL(
+                                                              blob,
+                                                            );
+                                                          const link =
+                                                            document.createElement(
+                                                              "a",
+                                                            );
+                                                          link.href = url;
+                                                          link.download =
+                                                            attachment.file_name ||
+                                                            fname;
+                                                          document.body.appendChild(
+                                                            link,
+                                                          );
+                                                          link.click();
+                                                          document.body.removeChild(
+                                                            link,
+                                                          );
+                                                          window.URL.revokeObjectURL(
+                                                            url,
+                                                          );
+                                                        } else {
+                                                          window.open(
+                                                            downloadUrl,
+                                                            "_blank",
+                                                          );
+                                                        }
+                                                      } catch (err) {
+                                                        console.error(
+                                                          "Download failed:",
+                                                          err,
+                                                        );
+                                                        alert(
+                                                          "Download failed. File may not be available.",
+                                                        );
+                                                      }
+                                                    }}
+                                                    download={
+                                                      !!attachment.filename
+                                                    }
+                                                    className="text-blue-600 hover:underline"
+                                                  >
+                                                    {fname}
+                                                  </a>
+                                                  {attachment.file_size ? (
+                                                    <span className="text-gray-500">
+                                                      (
+                                                      {(
+                                                        attachment.file_size /
+                                                        1024
+                                                      ).toFixed(1)}{" "}
+                                                      KB)
+                                                    </span>
+                                                  ) : null}
+                                                </div>
+                                              );
+                                            },
+                                          )}
+                                        </div>
+                                      )}
+                                  </div>
+                                </>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                   </div>
 
                   {/* Staged Attachments Display */}
@@ -938,64 +1090,6 @@ export function VCEnhancedStepItem({
                     </div>
                   )}
 
-                  {/* Follow-up Creation Section */}
-                  {createFollowUp && (
-                    <div className="border-t pt-4">
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <Label className="text-sm font-medium mb-3 block">
-                          Create Follow-up Task
-                        </Label>
-                        <div className="space-y-3">
-                          <Textarea
-                            placeholder="Follow-up description..."
-                            value={followUpNotes}
-                            onChange={(e) => setFollowUpNotes(e.target.value)}
-                            className="min-h-[60px]"
-                          />
-                          <div className="grid grid-cols-2 gap-3">
-                            <Select
-                              value={followUpAssignTo}
-                              onValueChange={setFollowUpAssignTo}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Assign to..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {teamMembers.map((member) => (
-                                  <SelectItem
-                                    key={member.id}
-                                    value={member.id.toString()}
-                                  >
-                                    {member.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="date"
-                              value={followUpDueDate}
-                              onChange={(e) =>
-                                setFollowUpDueDate(e.target.value)
-                              }
-                            />
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button size="sm" onClick={handleCreateFollowUp}>
-                              Create Follow-up
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setCreateFollowUp(false)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Message Input Section */}
                   <div className="border-t pt-4">
                     <div className="space-y-3">
@@ -1005,6 +1099,78 @@ export function VCEnhancedStepItem({
                         placeholder="Type your message with rich formatting..."
                         className="min-h-[100px] border-gray-300"
                       />
+
+                      {/* Create Follow-up Checkbox */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          id="create_follow_up_checkbox_"
+                          type="checkbox"
+                          checked={createFollowUp}
+                          onChange={(e) => setCreateFollowUp(e.target.checked)}
+                        />
+                        <Label
+                          htmlFor="create_follow_up_checkbox_"
+                          className="text-sm"
+                        >
+                          Create follow-up
+                        </Label>
+                      </div>
+
+                      {/* Follow-up Creation Section (below editor) */}
+                      {createFollowUp && (
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <Label className="text-sm font-medium mb-3 block">
+                            Create Follow-up Task
+                          </Label>
+                          <div className="space-y-3">
+                            <Textarea
+                              placeholder="Follow-up description..."
+                              value={followUpNotes}
+                              onChange={(e) => setFollowUpNotes(e.target.value)}
+                              className="min-h-[60px]"
+                            />
+                            <div className="grid grid-cols-2 gap-3">
+                              <Select
+                                value={followUpAssignTo}
+                                onValueChange={setFollowUpAssignTo}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Assign to..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {teamMembers.map((member) => (
+                                    <SelectItem
+                                      key={member.id}
+                                      value={member.id.toString()}
+                                    >
+                                      {member.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                type="date"
+                                value={followUpDueDate}
+                                onChange={(e) =>
+                                  setFollowUpDueDate(e.target.value)
+                                }
+                              />
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button size="sm" onClick={handleCreateFollowUp}>
+                                Create Follow-up
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setCreateFollowUp(false)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">

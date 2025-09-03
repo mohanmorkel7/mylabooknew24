@@ -42,7 +42,7 @@ ALTER TABLE fund_raises DROP CONSTRAINT IF EXISTS fund_raises_investor_status_ch
 ALTER TABLE fund_raises ADD CONSTRAINT fund_raises_investor_status_check CHECK (investor_status IN ('Pass','WIP','Closed','Yet to Connect','Future Potential'));
 
 ALTER TABLE fund_raises DROP CONSTRAINT IF EXISTS fund_raises_round_stage_check;
-ALTER TABLE fund_raises ADD CONSTRAINT fund_raises_round_stage_check CHECK (round_stage IN ('pre_seed','pre_series_a','seed','series_a','series_b','series_c','bridge','growth','ipo'));
+ALTER TABLE fund_raises ADD CONSTRAINT fund_raises_round_stage_check CHECK (round_stage IN ('pre_seed','pre_series_a','seed','series_a','series_b','series_c','bridge','bridge_1','bridge_2','growth','ipo'));
 
 -- Helpful indexes
 CREATE INDEX IF NOT EXISTS idx_fund_raises_investor_name ON fund_raises(investor_name);

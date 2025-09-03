@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Popover,
   PopoverContent,
@@ -35,7 +36,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ArrowLeft, Plus, Calendar, DollarSign, Building } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Calendar,
+  DollarSign,
+  Building,
+  Trash2,
+} from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Dropped", label: "Dropped" },
@@ -46,6 +54,8 @@ const STATUS_OPTIONS = [
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre seed" },
   { value: "seed", label: "Seed" },
+  { value: "bridge_1", label: "Bridge 1" },
+  { value: "bridge_2", label: "Bridge 2" },
   { value: "bridge", label: "Bridge" },
   { value: "pre_series_a", label: "Pre Series A" },
   { value: "series_a", label: "Series A" },
@@ -93,6 +103,10 @@ export default function CreateFundRaise() {
   const [fundMnOpen, setFundMnOpen] = useState(false);
   const [fundMnOpenMain, setFundMnOpenMain] = useState(false);
   const [valuationOpen, setValuationOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("fundraise");
+  const [queueItems, setQueueItems] = useState<
+    Array<{ vc_investor: string; fund_mn: string; investor_status: string }>
+  >([{ vc_investor: "", fund_mn: "", investor_status: "" }]);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -137,52 +151,90 @@ export default function CreateFundRaise() {
   }, [vcList]);
 
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (field: string, value: any) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => {
+        const n = { ...prev };
+        delete n[field];
+        return n;
+      });
+    }
+  };
+
+  const validateForm = () => {
+    const n: Record<string, string> = {};
+    if (!form.status) n.status = "Status is required";
+    if (!form.round_stage) n.round_stage = "Investment Stage is required";
+
+    const badRows: number[] = [];
+    queueItems.forEach((it, idx) => {
+      if (!it.vc_investor || !it.fund_mn || !it.investor_status)
+        badRows.push(idx + 1);
+    });
+    if (queueItems.length === 0 || badRows.length > 0) {
+      n.queue = badRows.length
+        ? `Please complete all fields for investor row(s): ${badRows.join(", ")}`
+        : "Add at least one investor in the queue";
+    }
+
+    setErrors(n);
+    const keys = Object.keys(n);
+    if (keys.length) {
+      const goQueue = !!n.queue;
+      setActiveTab(goQueue ? "queue" : "fundraise");
+    }
+    return keys.length === 0;
   };
 
   const handleSubmit = async () => {
-    if (!form.vc_investor) {
-      alert("Please select a VC");
-      return;
-    }
-    if (!form.round_stage) {
-      alert("Please select Investment Stage");
-      return;
-    }
-
-    // Try to link to an existing VC by name; do not create new VC records
-    const matched = (vcList || []).find(
-      (vc: any) => (vc.investor_name || "").trim() === form.vc_investor.trim(),
-    );
-    const linkedVcId: number | null = matched?.id ?? null;
+    if (!validateForm()) return;
 
     setSubmitting(true);
     try {
-      const created = await apiClient.request("/fund-raises", {
+      const base = {
+        ui_status: form.status,
+        round_stage: form.round_stage,
+        start_date: form.start_date || null,
+        end_date: form.end_date || null,
+        total_raise_mn: form.total_raise_mn || null,
+        valuation_mn: form.valuation_mn || null,
+        reason: form.reason || null,
+        template_id: form.template_id,
+        created_by: parseInt(user?.id || "1"),
+        updated_by: parseInt(user?.id || "1"),
+      };
+
+      const investors = queueItems.map((it) => {
+        const matched = (vcList || []).find(
+          (vc: any) =>
+            (vc.investor_name || "").trim() === it.vc_investor.trim(),
+        );
+        const linkedVcId: number | null = matched?.id ?? null;
+        return {
+          vc_id: linkedVcId,
+          investor_name: it.vc_investor,
+          investor_status: it.investor_status,
+          fund_mn: it.fund_mn || null,
+        };
+      });
+
+      const first = investors[0] || {};
+      await apiClient.request("/fund-raises", {
         method: "POST",
         body: JSON.stringify({
-          vc_id: linkedVcId,
-          investor_name: form.vc_investor,
-          ui_status: form.status,
-          investor_status: form.investor_status,
-          round_stage: form.round_stage,
-          start_date: form.start_date || null,
-          end_date: form.end_date || null,
-          total_raise_mn: form.total_raise_mn || null,
-          fund_mn: form.fund_mn || null,
-          valuation_mn: form.valuation_mn || null,
-          reason: form.reason || null,
-          template_id: form.template_id,
-          created_by: parseInt(user?.id || "1"),
-          updated_by: parseInt(user?.id || "1"),
+          ...base,
+          vc_id: first.vc_id ?? null,
+          investor_name: first.investor_name ?? null,
+          investor_status: first.investor_status ?? null,
+          fund_mn: first.fund_mn ?? null,
+          investors,
         }),
       });
 
-      // Refresh fund raise lists
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
-
       navigate("/fundraise");
     } catch (e) {
       alert("Failed to create fund raise. Please try again.");
@@ -216,7 +268,7 @@ export default function CreateFundRaise() {
         </Button>
       </div>
 
-      <Tabs defaultValue="fundraise">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-4">
           <TabsTrigger value="fundraise">Fund Raise</TabsTrigger>
           <TabsTrigger value="queue">Investor Status Queue</TabsTrigger>
@@ -232,29 +284,10 @@ export default function CreateFundRaise() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>VC</Label>
-                  <Select
-                    value={form.vc_investor}
-                    onValueChange={(v) => handleChange("vc_investor", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select VC" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {investorOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          <div className="flex items-center gap-2">
-                            <Building className="w-4 h-4" /> {opt.label}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <div className="hidden"></div>
 
                 <div>
-                  <Label>Status</Label>
+                  <Label>Status *</Label>
                   <Select
                     value={form.status}
                     onValueChange={(v) => handleChange("status", v)}
@@ -270,29 +303,13 @@ export default function CreateFundRaise() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.status && (
+                    <p className="text-sm text-red-600 mt-1">{errors.status}</p>
+                  )}
                 </div>
 
                 <div>
-                  <Label>Investor Status</Label>
-                  <Select
-                    value={form.investor_status}
-                    onValueChange={(v) => handleChange("investor_status", v)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Investor Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {INVESTOR_STATUS_OPTIONS.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Investment Stage</Label>
+                  <Label>Investment Stage *</Label>
                   <Select
                     value={form.round_stage}
                     onValueChange={(v) => handleChange("round_stage", v)}
@@ -308,6 +325,11 @@ export default function CreateFundRaise() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {errors.round_stage && (
+                    <p className="text-sm text-red-600 mt-1">
+                      {errors.round_stage}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -442,72 +464,143 @@ export default function CreateFundRaise() {
           <Card>
             <CardHeader>
               <CardTitle>Investor Status Queue</CardTitle>
-              <CardDescription>Quickly update status fields</CardDescription>
+              <CardDescription>
+                Add one or more investors, fund amount and status
+              </CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Fund $ Mn</Label>
-                <Popover open={fundMnOpen} onOpenChange={setFundMnOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="w-full justify-between"
-                    >
-                      {form.fund_mn || "Select amount"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    side="bottom"
-                    align="start"
-                    avoidCollisions={true}
-                    collisionPadding={8}
-                    className="p-0 w-[240px] max-h-[min(50vh,320px)] overflow-auto"
-                  >
-                    <Command>
-                      <CommandInput placeholder="Search amount..." />
-                      <CommandList>
-                        <CommandEmpty>No amounts found.</CommandEmpty>
-                        <CommandGroup>
-                          {FUND_MN_OPTIONS.map((v) => (
-                            <CommandItem
-                              key={v}
-                              value={v}
-                              onSelect={(val) => {
-                                handleChange("fund_mn", val);
-                                setFundMnOpen(false);
-                              }}
-                            >
-                              {v}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label>Investor Status</Label>
-                <Select
-                  value={form.investor_status}
-                  onValueChange={(v) => handleChange("investor_status", v)}
+            <CardContent className="space-y-4">
+              {queueItems.map((item, idx) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border p-3 rounded"
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Investor Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {INVESTOR_STATUS_OPTIONS.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <div className="md:col-span-5">
+                    <Label>VC *</Label>
+                    <Select
+                      value={item.vc_investor}
+                      onValueChange={(v) =>
+                        setQueueItems((arr) =>
+                          arr.map((it, i) =>
+                            i === idx ? { ...it, vc_investor: v } : it,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select VC" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {investorOptions.map((opt) => (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4" /> {opt.label}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Label>Fund $ Mn *</Label>
+                    <Select
+                      value={item.fund_mn}
+                      onValueChange={(v) =>
+                        setQueueItems((arr) =>
+                          arr.map((it, i) =>
+                            i === idx ? { ...it, fund_mn: v } : it,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select amount" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-64 overflow-auto">
+                        {FUND_MN_OPTIONS.map((v) => (
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3">
+                    <Label>Investor Status *</Label>
+                    <Select
+                      value={item.investor_status}
+                      onValueChange={(v) =>
+                        setQueueItems((arr) =>
+                          arr.map((it, i) =>
+                            i === idx ? { ...it, investor_status: v } : it,
+                          ),
+                        )
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {INVESTOR_STATUS_OPTIONS.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>
+                            {s.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-1 flex justify-end md:justify-center">
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() =>
+                        setQueueItems((arr) => arr.filter((_, i) => i !== idx))
+                      }
+                      disabled={queueItems.length === 1}
+                      title={
+                        queueItems.length === 1
+                          ? "At least one row required"
+                          : "Delete row"
+                      }
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+
+              <div className="flex justify-between items-center">
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setQueueItems((arr) => [
+                      ...arr,
+                      { vc_investor: "", fund_mn: "", investor_status: "" },
+                    ])
+                  }
+                >
+                  <Plus className="w-4 h-4 mr-2" /> Add Investor
+                </Button>
+                {errors.queue && (
+                  <p className="text-sm text-red-600">{errors.queue}</p>
+                )}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {Object.keys(errors).length > 0 && (
+        <Alert className="mt-6">
+          <AlertDescription>
+            Please fix the following errors:
+            <ul className="list-disc list-inside mt-2">
+              {Object.values(errors).map((e, i) => (
+                <li key={i}>{e}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
     </div>
   );
 }

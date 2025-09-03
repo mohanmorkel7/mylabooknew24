@@ -4,6 +4,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { useMyVCPartialSaves } from "@/hooks/useApi";
+import { useSafeResizeObserver } from "@/hooks/useSafeResizeObserver";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -42,7 +43,14 @@ import {
   XCircle,
   FileText,
   BarChart3,
+  DollarSign,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const statusColors: Record<string, string> = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -67,6 +75,8 @@ export default function FundRaiseDashboard() {
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [activeTab] = useState<"vcs" | "drafts">("vcs");
+  const [chartHeight, setChartHeight] = useState(500);
+  const [colWidth, setColWidth] = useState(120);
 
   const userId = user?.id ? parseInt(user.id) : undefined;
 
@@ -180,6 +190,27 @@ export default function FundRaiseDashboard() {
     retry: false,
     staleTime: 30000,
   });
+
+  const chartContainerRef = useSafeResizeObserver<HTMLDivElement>(
+    (entries) => {
+      if (entries[0]) {
+        const width = entries[0].contentRect.width;
+        const responsiveHeight = Math.max(
+          500,
+          Math.min(600, Math.round(width * 0.5)),
+        );
+        setChartHeight(responsiveHeight);
+        const total = (vcProgressData || []).length || 1;
+        const targetCols = Math.min(total, 8);
+        const newColWidth = Math.max(
+          90,
+          Math.min(160, Math.floor((width - 200) / targetCols)),
+        );
+        setColWidth(newColWidth);
+      }
+    },
+    { debounce: 150 },
+  );
 
   const {
     data: vcFollowUps = [],
@@ -510,17 +541,21 @@ export default function FundRaiseDashboard() {
                   return stepColors[stepIndex % stepColors.length];
                 };
 
-                const chartHeight = 400;
-
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div className="bg-gray-50 p-4 rounded-lg overflow-hidden">
+                      <div
+                        ref={chartContainerRef}
+                        className="bg-gray-50 p-4 rounded-lg pb-4"
+                      >
                         <div className="text-sm font-medium text-gray-700 mb-4">
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
                         </div>
-                        <div className="w-full">
+                        <div
+                          className="w-full overflow-x-auto overflow-y-hidden"
+                          style={{ height: "500px" }}
+                        >
                           <div className="w-full">
                             <div
                               className="flex"
@@ -551,13 +586,13 @@ export default function FundRaiseDashboard() {
                               </div>
 
                               <div
-                                className="relative flex-1"
+                                className="relative flex-1 pb-28 overflow-y-hidden"
                                 style={{
                                   height: `${chartHeight}px`,
-                                  minWidth: `${Math.min((vcProgressData || []).length * 80, 800)}px`,
+                                  minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
                                 }}
                               >
-                                <div className="absolute inset-0">
+                                <div className="absolute left-0 right-0 top-0 bottom-28">
                                   {allSteps.map(
                                     (stepName: string, index: number) => {
                                       const stepHeight =
@@ -580,22 +615,18 @@ export default function FundRaiseDashboard() {
                                 </div>
 
                                 <div
-                                  className="absolute inset-0 flex"
-                                  style={{ paddingTop: "0px" }}
+                                  className="absolute left-0 right-0 top-0 bottom-28 grid"
+                                  style={{
+                                    paddingTop: "0px",
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                  }}
                                 >
                                   {(vcProgressData || []).map(
                                     (vcProgress: any) => {
-                                      const vcWidth =
-                                        100 /
-                                        Math.max(
-                                          (vcProgressData || []).length,
-                                          1,
-                                        );
                                       return (
                                         <div
                                           key={vcProgress.vc_id}
-                                          className="relative"
-                                          style={{ width: `${vcWidth}%` }}
+                                          className="relative w-full"
                                         >
                                           {(
                                             vcProgress.completed_steps || []
@@ -672,32 +703,23 @@ export default function FundRaiseDashboard() {
                                     },
                                   )}
                                 </div>
-                              </div>
-                            </div>
 
-                            <div className="flex">
-                              <div className="w-48 pr-4"></div>
-                              <div
-                                className="flex flex-1"
-                                style={{
-                                  minWidth: `${Math.min((vcProgressData || []).length * 80, 800)}px`,
-                                }}
-                              >
-                                {(vcProgressData || []).map(
-                                  (vcProgress: any) => {
-                                    const vcWidth =
-                                      100 /
-                                      Math.max(
-                                        (vcProgressData || []).length,
-                                        1,
-                                      );
-                                    return (
+                                <div
+                                  className="absolute left-0 right-0 bottom-0 grid pointer-events-none"
+                                  style={{
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                  }}
+                                >
+                                  {(vcProgressData || []).map(
+                                    (vcProgress: any) => (
                                       <div
                                         key={vcProgress.vc_id}
-                                        className="text-center"
-                                        style={{ width: `${vcWidth}%` }}
+                                        className="text-center w-full px-1 overflow-hidden"
                                       >
-                                        <div className="text-xs font-medium text-gray-700 mb-1">
+                                        <div
+                                          className="text-xs font-medium text-gray-700 mb-1 truncate"
+                                          title={vcProgress.round_title}
+                                        >
                                           {vcProgress.round_title}
                                         </div>
                                         <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
@@ -706,13 +728,16 @@ export default function FundRaiseDashboard() {
                                           }
                                           %
                                         </div>
-                                        <div className="text-sm font-semibold text-gray-800 break-words px-1">
+                                        <div
+                                          className="text-sm font-semibold text-gray-800 truncate"
+                                          title={vcProgress.investor_name}
+                                        >
                                           {vcProgress.investor_name}
                                         </div>
                                       </div>
-                                    );
-                                  },
-                                )}
+                                    ),
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -1203,113 +1228,228 @@ export default function FundRaiseDashboard() {
       <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle>Fund Raises</CardTitle>
-            <CardDescription>Recent entries</CardDescription>
+            <CardTitle>Fund Raises Projects</CardTitle>
+            <CardDescription>Grouped by Investment Stage</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent>
             {fundRaisesError ? (
               <div className="p-3 text-red-600">Failed to load fund raises</div>
             ) : fundRaisesLoading ? (
               <div className="p-3 text-gray-500">Loading...</div>
-            ) : filteredFundRaises.length === 0 ? (
-              <div className="p-3 text-gray-500">No entries</div>
             ) : (
-              filteredFundRaises.map((fr: any) => {
-                const internalStatus =
-                  fr.status ||
-                  UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
-                  "in-progress";
+              (() => {
+                const STAGE_LABELS: Record<string, string> = {
+                  pre_seed: "Pre Seed",
+                  seed: "Seed",
+                  bridge_1: "Bridge 1",
+                  bridge_2: "Bridge 2",
+                  bridge: "Bridge",
+                  pre_series_a: "Pre Series A",
+                  series_a: "Series A",
+                  series_b: "Series B",
+                  series_c: "Series C",
+                  unknown: "Unknown",
+                };
+                const ORDER = [
+                  "pre_seed",
+                  "seed",
+                  "bridge_1",
+                  "bridge_2",
+                  "bridge",
+                  "pre_series_a",
+                  "series_a",
+                  "series_b",
+                  "series_c",
+                  "unknown",
+                ];
 
-                const pd = (vcProgressData || []).find(
-                  (p: any) => p.vc_id === fr.vc_id,
+                const groups: Record<string, any[]> = {};
+                (filteredFundRaises || []).forEach((fr: any) => {
+                  const key = fr.round_stage || "unknown";
+                  if (!groups[key]) groups[key] = [];
+                  groups[key].push(fr);
+                });
+                const keys = ORDER.filter((k) => groups[k]?.length).concat(
+                  Object.keys(groups).filter((k) => !ORDER.includes(k)),
                 );
-                const completedProb = pd?.total_completed_probability || 0;
-                const progressPercent = Math.max(
-                  0,
-                  Math.min(100, completedProb),
-                );
+                if (keys.length === 0)
+                  return <div className="p-3 text-gray-500">No entries</div>;
 
                 return (
-                  <div
-                    key={fr.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
-                    onClick={() => navigate(`/fundraise/${fr.id}`)}
-                    title={
-                      fr.vc_id ? "Open Fund Raise Overview" : "VC not linked"
-                    }
-                  >
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <div className="font-medium text-gray-900 flex items-center gap-2">
-                          <span>{fr.investor_name || "Fund Raise"}</span>
-                          {fr.round_stage && (
-                            <Badge
-                              variant="outline"
-                              className="text-xs bg-purple-50 text-purple-700 border-purple-200"
-                            >
-                              {fr.round_stage}
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-600 mt-1 flex flex-wrap gap-3">
-                          {fr.valuation_mn && (
-                            <span>Valuation: ${fr.valuation_mn} Mn</span>
-                          )}
-                          {fr.fund_mn && <span>Fund: ${fr.fund_mn} Mn</span>}
-                          {fr.start_date && (
-                            <span>
-                              Start:{" "}
-                              {new Date(fr.start_date).toLocaleDateString(
-                                "en-IN",
-                                { timeZone: "Asia/Kolkata" },
-                              )}
-                            </span>
-                          )}
-                          {fr.end_date && (
-                            <span>
-                              End:{" "}
-                              {new Date(fr.end_date).toLocaleDateString(
-                                "en-IN",
-                                { timeZone: "Asia/Kolkata" },
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      <Badge className={statusColors[internalStatus] || ""}>
-                        {(fr.ui_status || internalStatus)
-                          .toString()
-                          .replace("-", " ")}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="hidden md:flex items-center gap-2">
-                        <div className="w-32 bg-gray-200 rounded h-2">
-                          <div
-                            className={`${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
-                            style={{ width: `${progressPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-xs text-gray-700 font-medium w-8 text-right">
-                          {progressPercent}%
-                        </span>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-700">
-                          {fr.total_raise_mn
-                            ? `Total: $${fr.total_raise_mn} Mn`
-                            : ""}
-                        </div>
-                        {fr.vc_id && (
-                          <div className="text-[10px] text-gray-500">
-                            VC #{fr.vc_id}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <Accordion type="single" collapsible className="w-full">
+                    {keys.map((k) => {
+                      const list = groups[k] || [];
+                      const statusCount: Record<string, number> = {};
+                      let totalFund = 0;
+                      list.forEach((fr: any) => {
+                        const s = (fr.investor_status || "").trim() || "N/A";
+                        statusCount[s] = (statusCount[s] || 0) + 1;
+                        const f = parseFloat(fr.fund_mn);
+                        if (!isNaN(f)) totalFund += f;
+                      });
+                      return (
+                        <AccordionItem key={k} value={k}>
+                          <AccordionTrigger>
+                            <div className="flex items-center gap-3">
+                              <span className="font-medium">
+                                {STAGE_LABELS[k] || k}
+                              </span>
+                              <Badge variant="secondary">{list.length}</Badge>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="flex flex-wrap gap-2 mb-3">
+                              {Object.entries(statusCount).map(([s, c]) => (
+                                <Badge
+                                  key={s}
+                                  variant="outline"
+                                  className="bg-gray-50"
+                                >
+                                  {s}: {c}
+                                </Badge>
+                              ))}
+                              <Badge
+                                variant="outline"
+                                className="bg-blue-50 text-blue-700"
+                              >
+                                <DollarSign className="w-3 h-3 mr-1 inline" />{" "}
+                                {totalFund.toFixed(2)} Mn
+                              </Badge>
+                            </div>
+
+                            <div className="space-y-2">
+                              {list.map((fr: any) => {
+                                const internalStatus =
+                                  fr.status ||
+                                  UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
+                                  "in-progress";
+                                const pd = (vcProgressData || []).find(
+                                  (p: any) => p.vc_id === fr.vc_id,
+                                );
+                                const completedProb =
+                                  pd?.total_completed_probability || 0;
+                                const progressPercent = Math.max(
+                                  0,
+                                  Math.min(100, completedProb),
+                                );
+                                return (
+                                  <div
+                                    key={fr.id}
+                                    className="flex items-center justify-between p-3 bg-gray-50 rounded cursor-pointer hover:bg-gray-100"
+                                    onClick={() =>
+                                      navigate(`/fundraise/${fr.id}`)
+                                    }
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div>
+                                        <div className="font-medium text-gray-900 flex items-center gap-2">
+                                          <span>Fund Raise</span>
+                                          {!fr.investor_status && (
+                                            <Badge
+                                              className={
+                                                statusColors[internalStatus] ||
+                                                ""
+                                              }
+                                            >
+                                              {(fr.ui_status || internalStatus)
+                                                .toString()
+                                                .replace("-", " ")}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <div className="mt-1 space-y-1">
+                                          {(Array.isArray(fr.investors) &&
+                                          fr.investors.length
+                                            ? fr.investors
+                                            : [
+                                                {
+                                                  investor_name:
+                                                    fr.investor_name,
+                                                  fund_mn: fr.fund_mn,
+                                                  investor_status:
+                                                    fr.investor_status,
+                                                },
+                                              ]
+                                          ).map((iv: any, idx: number) => (
+                                            <div
+                                              key={idx}
+                                              className="flex flex-wrap items-center gap-2 text-[12px]"
+                                            >
+                                              <span className="font-medium text-gray-800">
+                                                {iv.investor_name}
+                                              </span>
+                                              {iv.fund_mn && (
+                                                <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                                  ${iv.fund_mn} Mn
+                                                </Badge>
+                                              )}
+                                              {iv.investor_status && (
+                                                <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
+                                                  {iv.investor_status}
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="text-[11px] text-gray-600 mt-1 flex flex-wrap gap-3">
+                                          {fr.start_date && (
+                                            <span>
+                                              Start:{" "}
+                                              {new Date(
+                                                fr.start_date,
+                                              ).toLocaleDateString("en-IN", {
+                                                timeZone: "Asia/Kolkata",
+                                              })}
+                                            </span>
+                                          )}
+                                          {fr.end_date && (
+                                            <span>
+                                              End:{" "}
+                                              {new Date(
+                                                fr.end_date,
+                                              ).toLocaleDateString("en-IN", {
+                                                timeZone: "Asia/Kolkata",
+                                              })}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      {!fr.investor_status && (
+                                        <Badge
+                                          className={
+                                            statusColors[internalStatus] || ""
+                                          }
+                                        >
+                                          {(fr.ui_status || internalStatus)
+                                            .toString()
+                                            .replace("-", " ")}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="hidden md:flex items-center gap-2">
+                                      <div className="w-32 bg-gray-200 rounded h-2">
+                                        <div
+                                          className={`${progressPercent >= 100 ? "bg-green-500" : progressPercent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
+                                          style={{
+                                            width: `${progressPercent}%`,
+                                          }}
+                                        />
+                                      </div>
+                                      <span className="text-xs text-gray-700 font-medium w-8 text-right">
+                                        {progressPercent}%
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
                 );
-              })
+              })()
             )}
           </CardContent>
         </Card>

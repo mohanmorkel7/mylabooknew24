@@ -16,12 +16,15 @@ CREATE TABLE IF NOT EXISTS vcs (
     -- Round Information
     round_title VARCHAR(255),
     round_description TEXT,
-    round_stage VARCHAR(50) CHECK (round_stage IN ('pre_seed', 'seed', 'series_a', 'series_b', 'series_c', 'bridge', 'growth', 'ipo')),
+    round_stage VARCHAR(50) CHECK (round_stage IN ('pre_seed', 'seed', 'series_a', 'series_b', 'series_c', 'bridge', 'bridge_1', 'bridge_2', 'growth', 'ipo')),
     round_size VARCHAR(100), -- Storing as string to allow flexible formats like "$10M", "₹50Cr"
     valuation VARCHAR(100),
     
     -- Investor Information
-    investor_category VARCHAR(50) CHECK (investor_category IN ('angel', 'vc', 'private_equity', 'family_office', 'merchant_banker')),
+    investor_category VARCHAR(50) CHECK (investor_category IN (
+      'angel', 'vc', 'private_equity', 'family_office', 'merchant_banker', 'accelerator', 'individual',
+      'early_stage', 'growth', 'strategic_bank', 'strategic_fintech', 'strategic_individual'
+    )),
     investor_name VARCHAR(255),
     contact_person VARCHAR(255),
     email VARCHAR(255),

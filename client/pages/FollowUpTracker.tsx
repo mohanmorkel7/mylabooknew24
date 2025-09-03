@@ -256,20 +256,10 @@ export default function FollowUpTracker() {
     const fetchFollowUps = async () => {
       try {
         setLoading(true);
-        const params = new URLSearchParams({
+        const data = await apiClient.getAllFollowUps({
           userId: user?.id || "",
           userRole: user?.role || "",
         });
-
-        const response = await fetch(`/api/follow-ups?${params.toString()}`, {
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
 
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
@@ -309,7 +299,8 @@ export default function FollowUpTracker() {
         }
       } catch (error) {
         // Only handle non-abort errors
-        if (error instanceof Error && error.name !== "AbortError") {
+        const errName = (error as any)?.name || "";
+        if (errName !== "AbortError") {
           console.error("Failed to fetch follow-ups:", error);
           // Fallback to mock data when API fails
           const formattedMockFollowUps = mockFollowUps.map((f: any) => ({
@@ -335,7 +326,13 @@ export default function FollowUpTracker() {
 
     // Cleanup function to abort the request if component unmounts or dependencies change
     return () => {
-      controller.abort();
+      try {
+        // Provide a reason to help debuggers and guard against environments that throw
+        // when aborting in StrictMode double-invocation.
+        (controller as any).abort?.("component-unmounted");
+      } catch {
+        // no-op: safely ignore abort errors
+      }
     };
   }, [user]);
 

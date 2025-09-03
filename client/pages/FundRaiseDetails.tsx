@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
+import { getSourceLabel } from "@/lib/constants";
 import { apiClient } from "@/lib/api";
 import { useUpdateFundRaiseStep } from "@/hooks/useApi";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
@@ -74,13 +75,19 @@ const priorityColors = {
 };
 
 const sourceIcons = {
+  linkedin_outbound: User,
+  linkedin_inbound: User,
+  email_outbound: Mail,
+  email_inbound: Mail,
+  call_outbound: Phone,
+  call_inbound: Phone,
+  reference: Award,
+  general_list: Globe,
   email: Mail,
   "social-media": User,
   phone: Phone,
   website: Globe,
   referral: Award,
-  "cold-call": Phone,
-  event: Building,
   other: Zap,
 };
 
@@ -91,6 +98,8 @@ const roundStageColors = {
   series_b: "bg-purple-100 text-purple-800",
   series_c: "bg-pink-100 text-pink-800",
   bridge: "bg-yellow-100 text-yellow-800",
+  bridge_1: "bg-yellow-100 text-yellow-800",
+  bridge_2: "bg-yellow-100 text-yellow-800",
   mezzanine: "bg-red-100 text-red-800",
 };
 
@@ -512,19 +521,21 @@ export default function FundRaiseDetails() {
                         </div>
                         <div className="flex flex-col">
                           <span className="capitalize">
-                            {vcData.lead_source?.replace("-", " ")}
+                            {getSourceLabel(vcData.lead_source)}
                           </span>
                           {vcData.lead_source_value && (
                             <span
                               className="text-sm text-blue-600 hover:underline cursor-pointer"
                               title={vcData.lead_source_value}
                             >
-                              {vcData.lead_source === "email" ? (
+                              {vcData.lead_source === "email" ||
+                              vcData.lead_source?.startsWith("email_") ? (
                                 <a href={`mailto:${vcData.lead_source_value}`}>
                                   {vcData.lead_source_value}
                                 </a>
                               ) : vcData.lead_source === "phone" ||
-                                vcData.lead_source === "cold-call" ? (
+                                vcData.lead_source === "cold-call" ||
+                                vcData.lead_source?.startsWith("call_") ? (
                                 <a href={`tel:${vcData.lead_source_value}`}>
                                   {vcData.lead_source_value}
                                 </a>
@@ -667,118 +678,6 @@ export default function FundRaiseDetails() {
                   <CardTitle>Funding Pipeline</CardTitle>
                   <CardDescription>Manage steps and team chat</CardDescription>
                 </div>
-                <Dialog open={newStepDialog} onOpenChange={setNewStepDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Step
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
-                      <DialogTitle>Add New Step</DialogTitle>
-                      <DialogDescription>
-                        Create a custom step for this fund raise
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 overflow-y-auto flex-1 px-1">
-                      <div>
-                        <Label htmlFor="stepName">Step Name *</Label>
-                        <Input
-                          id="stepName"
-                          value={newStep.name}
-                          onChange={(e) =>
-                            setNewStep((p) => ({ ...p, name: e.target.value }))
-                          }
-                          placeholder="e.g., Due Diligence Review"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="stepDescription">Description *</Label>
-                        <Textarea
-                          id="stepDescription"
-                          value={newStep.description}
-                          onChange={(e) =>
-                            setNewStep((p) => ({
-                              ...p,
-                              description: e.target.value,
-                            }))
-                          }
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="dueDate">Due Date</Label>
-                          <Input
-                            id="dueDate"
-                            type="date"
-                            value={newStep.due_date}
-                            onChange={(e) =>
-                              setNewStep((p) => ({
-                                ...p,
-                                due_date: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="priority">Priority</Label>
-                          <Select
-                            value={newStep.priority}
-                            onValueChange={(v: "low" | "medium" | "high") =>
-                              setNewStep((p) => ({ ...p, priority: v }))
-                            }
-                          >
-                            <SelectTrigger>
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="low">Low</SelectItem>
-                              <SelectItem value="medium">Medium</SelectItem>
-                              <SelectItem value="high">High</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="estimatedDays">Estimated Days</Label>
-                        <Input
-                          id="estimatedDays"
-                          type="number"
-                          min="1"
-                          value={newStep.estimated_days}
-                          onChange={(e) =>
-                            setNewStep((p) => ({
-                              ...p,
-                              estimated_days: parseInt(e.target.value) || 1,
-                            }))
-                          }
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter className="flex-shrink-0 mt-6 pt-4 border-t">
-                      <Button
-                        variant="outline"
-                        onClick={() => setNewStepDialog(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleAddStep}
-                        disabled={
-                          !newStep.name.trim() ||
-                          !newStep.description.trim() ||
-                          createStepMutation.isPending
-                        }
-                      >
-                        {createStepMutation.isPending
-                          ? "Adding..."
-                          : "Add Step"}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
               </div>
             </CardHeader>
             <CardContent>
@@ -796,10 +695,6 @@ export default function FundRaiseDetails() {
                   <p className="text-gray-600 mb-4">
                     Create steps to track your funding process.
                   </p>
-                  <Button onClick={() => setNewStepDialog(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Funding Step
-                  </Button>
                 </div>
               ) : (
                 <VCDraggableStepsList

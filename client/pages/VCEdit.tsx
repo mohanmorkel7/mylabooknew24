@@ -4,6 +4,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { apiClient } from "@/lib/api";
 import { Country, State, City } from "country-state-city";
+import {
+  VC_TYPES,
+  SECTOR_FOCUS,
+  INVESTOR_FEEDBACK,
+  VC_LEAD_SOURCES,
+} from "@/lib/constants";
 import TemplatePreviewModal from "@/components/TemplatePreviewModal";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,16 +87,6 @@ import {
   Check,
 } from "lucide-react";
 
-const VC_TYPES = [
-  { value: "angel", label: "Angel" },
-  { value: "vc", label: "VC" },
-  { value: "private_equity", label: "Private Equity" },
-  { value: "family_office", label: "Family Office" },
-  { value: "merchant_banker", label: "Merchant Banker" },
-  { value: "accelerator", label: "Accelerator" },
-  { value: "individual", label: "Individual" },
-];
-
 const ROUND_STAGES = [
   { value: "pre_seed", label: "Pre-Seed" },
   { value: "pre_series_a", label: "Pre-Series A" },
@@ -101,22 +97,6 @@ const ROUND_STAGES = [
   { value: "bridge", label: "Bridge" },
   { value: "growth", label: "Growth" },
   { value: "ipo", label: "IPO" },
-];
-
-const SECTOR_FOCUS = [
-  { value: "fintech", label: "Fintech" },
-  { value: "fintech_b2b", label: "Fintech -B2B" },
-  { value: "fintech_saas", label: "Fintech - SaaS" },
-  { value: "fintech_infrastructure", label: "Fintech - Infrastructure" },
-  { value: "sector_agnostic", label: "Sector Agnostic" },
-];
-
-const INVESTOR_FEEDBACK = [
-  { value: "existing_investor", label: "Existing Investor" },
-  { value: "general", label: "General" },
-  { value: "pass", label: "Pass" },
-  { value: "ghosting", label: "Ghosting" },
-  { value: "potential_future", label: "Potential Future" },
 ];
 
 const COUNTRIES = [
@@ -679,7 +659,7 @@ export default function VCEdit() {
             // If it's already a YYYY-MM-DD string, use it directly
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
               console.log(
-                "🐛 DEBUG - start_date already in correct format:",
+                "�� DEBUG - start_date already in correct format:",
                 dateStr,
               );
               return dateStr;
@@ -760,8 +740,8 @@ export default function VCEdit() {
       [field]: value,
     };
 
-    // Clear lead_source_value when lead_source changes
-    if (field === "lead_source") {
+    // Clear lead_source_value only when source actually changes
+    if (field === "lead_source" && value !== vcData.lead_source) {
       newData.lead_source_value = "";
     }
 
@@ -812,14 +792,38 @@ export default function VCEdit() {
     const newErrors: Record<string, string> = {};
 
     // Required fields validation
+    if (!vcData.lead_source) {
+      newErrors.lead_source = "Source is required";
+    }
+    if (!vcData.lead_source_value?.trim()) {
+      newErrors.lead_source_value = "Source information is required";
+    }
     if (!vcData.investor_name.trim()) {
-      newErrors.investor_name = "Investor name is required";
+      newErrors.investor_name = "Venture Capital Name is required";
     }
     if (!vcData.investor_category) {
       newErrors.investor_category = "VC Type is required";
     }
-    if (!vcData.lead_source) {
-      newErrors.lead_source = "Lead source is required";
+    if (!vcData.industry) {
+      newErrors.industry = "Sector Focus is required";
+    }
+    if (!vcData.minimum_size) {
+      newErrors.minimum_size = "Min.Chq Size is required";
+    }
+    if (!vcData.maximum_size) {
+      newErrors.maximum_size = "Max.Chq Size is required";
+    }
+    if (!vcData.address.trim()) {
+      newErrors.address = "Address is required";
+    }
+    if (!vcData.country) {
+      newErrors.country = "Country is required";
+    }
+    if (!vcData.state) {
+      newErrors.state = "State is required";
+    }
+    if (!vcData.city) {
+      newErrors.city = "City is required";
     }
 
     setErrors(newErrors);
@@ -1005,54 +1009,27 @@ export default function VCEdit() {
                       <SelectValue placeholder="Select how you found this lead" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="email">
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          Email
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="social-media">
-                        <div className="flex items-center gap-2">
-                          <MessageSquare className="w-4 h-4" />
-                          Social Media
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="phone">
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4" />
-                          Phone
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="website">
-                        <div className="flex items-center gap-2">
-                          <Globe className="w-4 h-4" />
-                          Website
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="referral">
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="w-4 h-4" />
-                          Referral
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="cold-call">
-                        <div className="flex items-center gap-2">
-                          <PhoneCall className="w-4 h-4" />
-                          Cold Call
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="event">
-                        <div className="flex items-center gap-2">
-                          <Presentation className="w-4 h-4" />
-                          Event
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="other">
-                        <div className="flex items-center gap-2">
-                          <HelpCircle className="w-4 h-4" />
-                          Other
-                        </div>
-                      </SelectItem>
+                      {VC_LEAD_SOURCES.map((opt) => {
+                        const Icon = opt.value.startsWith("email_")
+                          ? Mail
+                          : opt.value.startsWith("call_")
+                            ? Phone
+                            : opt.value.startsWith("linkedin_")
+                              ? MessageSquare
+                              : opt.value === "reference"
+                                ? UserCheck
+                                : opt.value === "general_list"
+                                  ? FileText
+                                  : HelpCircle;
+                        return (
+                          <SelectItem key={opt.value} value={opt.value}>
+                            <div className="flex items-center gap-2">
+                              <Icon className="w-4 h-4" />
+                              {opt.label}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   {errors.lead_source && (
@@ -1066,27 +1043,25 @@ export default function VCEdit() {
                 {vcData.lead_source && (
                   <div>
                     <Label htmlFor="lead_source_value">
-                      {vcData.lead_source === "email" && "Email Address"}
-                      {vcData.lead_source === "phone" && "Phone Number"}
-                      {vcData.lead_source === "social-media" &&
-                        "Social Media Profile/Link"}
-                      {vcData.lead_source === "website" && "Website URL"}
-                      {vcData.lead_source === "referral" &&
-                        "Referral Source/Contact"}
-                      {vcData.lead_source === "cold-call" &&
-                        "Phone Number Called"}
-                      {vcData.lead_source === "event" && "Event Name/Details"}
-                      {vcData.lead_source === "other" && "Source Details"}
+                      {vcData.lead_source?.startsWith("email_") &&
+                        "Email Address *"}
+                      {vcData.lead_source?.startsWith("call_") &&
+                        "Phone Number *"}
+                      {vcData.lead_source?.startsWith("linkedin_") &&
+                        "LinkedIn Profile/Link *"}
+                      {vcData.lead_source === "reference" && "Referred by *"}
+                      {vcData.lead_source === "general_list" &&
+                        "List Name/Details *"}
                     </Label>
                     <div className="relative mt-1">
-                      {vcData.lead_source === "email" && (
+                      {vcData.lead_source?.startsWith("email_") && (
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
-                      {vcData.lead_source === "phone" && (
+                      {vcData.lead_source?.startsWith("call_") && (
                         <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
-                      {vcData.lead_source === "website" && (
-                        <Globe className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      {vcData.lead_source?.startsWith("linkedin_") && (
+                        <MessageSquare className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                       )}
                       <Input
                         id="lead_source_value"
@@ -1096,21 +1071,17 @@ export default function VCEdit() {
                         }
                         className="pl-10"
                         placeholder={
-                          vcData.lead_source === "email"
+                          vcData.lead_source?.startsWith("email_")
                             ? "contact@investor.com"
-                            : vcData.lead_source === "phone"
+                            : vcData.lead_source?.startsWith("call_")
                               ? "+1 (555) 000-0000"
-                              : vcData.lead_source === "social-media"
-                                ? "LinkedIn profile or social media link"
-                                : vcData.lead_source === "website"
-                                  ? "https://investor.com"
-                                  : vcData.lead_source === "referral"
-                                    ? "Name of person who referred"
-                                    : vcData.lead_source === "cold-call"
-                                      ? "+1 (555) 000-0000"
-                                      : vcData.lead_source === "event"
-                                        ? "Conference name or event details"
-                                        : "Describe the source"
+                              : vcData.lead_source?.startsWith("linkedin_")
+                                ? "LinkedIn profile link"
+                                : vcData.lead_source === "reference"
+                                  ? "Name of person who referred"
+                                  : vcData.lead_source === "general_list"
+                                    ? "List name or details"
+                                    : "Describe the source"
                         }
                       />
                     </div>
@@ -1165,7 +1136,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="industry">Sector Focus</Label>
+                    <Label htmlFor="industry">Sector Focus *</Label>
                     <Select
                       value={vcData.industry}
                       onValueChange={(value) =>
@@ -1198,7 +1169,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1250,7 +1221,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn *</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1355,7 +1326,7 @@ export default function VCEdit() {
             <CardContent className="space-y-4">
               {/* Address, Country, State/Province, City */}
               <div className="md:col-span-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">Address *</Label>
                 <Input
                   id="address"
                   placeholder="Street address"
@@ -1365,7 +1336,7 @@ export default function VCEdit() {
               </div>
 
               <div>
-                <Label htmlFor="country">Country</Label>
+                <Label htmlFor="country">Country *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1415,7 +1386,7 @@ export default function VCEdit() {
               </div>
 
               <div>
-                <Label htmlFor="state">State/Province</Label>
+                <Label htmlFor="state">State/Province *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -1464,7 +1435,7 @@ export default function VCEdit() {
               </div>
 
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">City *</Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
@@ -2003,6 +1974,19 @@ export default function VCEdit() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {Object.keys(errors).length > 0 && (
+        <Alert className="mt-6">
+          <AlertDescription>
+            Please fix the following errors:
+            <ul className="list-disc list-inside mt-2">
+              {Object.values(errors).map((error, index) => (
+                <li key={index}>{error}</li>
+              ))}
+            </ul>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Template Preview Modal */}
       <TemplatePreviewModal
