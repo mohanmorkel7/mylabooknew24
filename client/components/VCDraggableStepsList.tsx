@@ -150,6 +150,10 @@ export function VCDraggableStepsList({
           (typeof (updateStepStatus as any) === "function"
             ? "fund-raises"
             : "vc");
+
+        // For fund-raises, the backend already creates the system chat message. Avoid posting duplicate from client.
+        if (apiBase === "fund-raises") return;
+
         await apiClient.request(`/${apiBase}/steps/${stepId}/chats`, {
           method: "POST",
           body: JSON.stringify({
