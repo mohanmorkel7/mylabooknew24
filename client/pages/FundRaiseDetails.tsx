@@ -528,12 +528,13 @@ export default function FundRaiseDetails() {
                               className="text-sm text-blue-600 hover:underline cursor-pointer"
                               title={vcData.lead_source_value}
                             >
-                              {vcData.lead_source === "email" ? (
+                              {vcData.lead_source === "email" || vcData.lead_source?.startsWith("email_") ? (
                                 <a href={`mailto:${vcData.lead_source_value}`}>
                                   {vcData.lead_source_value}
                                 </a>
                               ) : vcData.lead_source === "phone" ||
-                                vcData.lead_source === "cold-call" ? (
+                                vcData.lead_source === "cold-call" ||
+                                vcData.lead_source?.startsWith("call_") ? (
                                 <a href={`tel:${vcData.lead_source_value}`}>
                                   {vcData.lead_source_value}
                                 </a>
