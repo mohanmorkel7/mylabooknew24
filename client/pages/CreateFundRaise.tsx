@@ -207,14 +207,12 @@ export default function CreateFundRaise() {
         updated_by: parseInt(user?.id || "1"),
       };
 
-      const items = queueItems.map((it) => {
+      const investors = queueItems.map((it) => {
         const matched = (vcList || []).find(
-          (vc: any) =>
-            (vc.investor_name || "").trim() === it.vc_investor.trim(),
+          (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
         );
         const linkedVcId: number | null = matched?.id ?? null;
         return {
-          ...base,
           vc_id: linkedVcId,
           investor_name: it.vc_investor,
           investor_status: it.investor_status,
@@ -222,9 +220,17 @@ export default function CreateFundRaise() {
         };
       });
 
+      const first = investors[0] || {};
       await apiClient.request("/fund-raises", {
         method: "POST",
-        body: JSON.stringify(items),
+        body: JSON.stringify({
+          ...base,
+          vc_id: first.vc_id ?? null,
+          investor_name: first.investor_name ?? null,
+          investor_status: first.investor_status ?? null,
+          fund_mn: first.fund_mn ?? null,
+          investors,
+        }),
       });
 
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
