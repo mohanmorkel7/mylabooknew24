@@ -190,6 +190,8 @@ export function VCEnhancedStepItem({
   const [messageToDelete, setMessageToDelete] = useState<number | null>(null);
 
   const createFollowUpMutation = useCreateFollowUp();
+  const updateFollowUpStatus = useUpdateFollowUpStatus();
+  const [followUpStatuses, setFollowUpStatuses] = useState<Record<number, string>>({});
 
   // Function to highlight mentions and make follow-up IDs clickable
   const processMessageContent = (messageText: string) => {
