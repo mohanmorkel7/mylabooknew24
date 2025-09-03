@@ -668,25 +668,41 @@ export default function FundRaiseDashboard() {
                                     },
                                   )}
                                 </div>
-
                               </div>
                             </div>
                             <div className="flex mt-2">
                               <div className="w-48 pr-4"></div>
-                              <div className="grid flex-1" style={{ gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)` }}>
-                                {(vcProgressData || []).map((vcProgress: any) => (
-                                  <div key={vcProgress.vc_id} className="text-center w-full">
-                                    <div className="text-xs font-medium text-gray-700 mb-1 truncate" title={vcProgress.round_title}>
-                                      {vcProgress.round_title}
+                              <div
+                                className="grid flex-1"
+                                style={{
+                                  gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)`,
+                                }}
+                              >
+                                {(vcProgressData || []).map(
+                                  (vcProgress: any) => (
+                                    <div
+                                      key={vcProgress.vc_id}
+                                      className="text-center w-full"
+                                    >
+                                      <div
+                                        className="text-xs font-medium text-gray-700 mb-1 truncate"
+                                        title={vcProgress.round_title}
+                                      >
+                                        {vcProgress.round_title}
+                                      </div>
+                                      <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
+                                        {vcProgress.total_completed_probability}
+                                        %
+                                      </div>
+                                      <div
+                                        className="text-sm font-semibold text-gray-800 px-1 truncate"
+                                        title={vcProgress.investor_name}
+                                      >
+                                        {vcProgress.investor_name}
+                                      </div>
                                     </div>
-                                    <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
-                                      {vcProgress.total_completed_probability}%
-                                    </div>
-                                    <div className="text-sm font-semibold text-gray-800 px-1 truncate" title={vcProgress.investor_name}>
-                                      {vcProgress.investor_name}
-                                    </div>
-                                  </div>
-                                ))}
+                                  ),
+                                )}
                               </div>
                             </div>
                           </div>
