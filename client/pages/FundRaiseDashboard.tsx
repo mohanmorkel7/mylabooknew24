@@ -44,6 +44,7 @@ import {
   FileText,
   BarChart3,
   DollarSign,
+  Calendar,
 } from "lucide-react";
 import {
   Accordion,
