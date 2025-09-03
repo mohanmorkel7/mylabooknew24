@@ -453,7 +453,7 @@ export default function FundRaiseDashboard() {
         </Card>
       )}
 
-      {(() => {
+      {SHOW_PROGRESS_DASHBOARD && (() => {
         if (progressLoading) {
           return (
             <Card className="max-w-full">
