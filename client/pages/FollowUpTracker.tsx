@@ -798,8 +798,8 @@ export default function FollowUpTracker() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="lead">Leads</SelectItem>
-                    <SelectItem value="vc">VC</SelectItem>
+                    <SelectItem value="lead">Lead</SelectItem>
+                    <SelectItem value="vc">Fund Raise</SelectItem>
                   </SelectContent>
                 </Select>
               )}
