@@ -1696,7 +1696,7 @@ export default function CreateVC() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={false}
-                          className="w-full justify-between"
+                          className={`w-full justify-between ${errors.minimum_size ? "border-red-500" : ""}`}
                         >
                           {vcData.minimum_size || "Select amount"}
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
