@@ -184,17 +184,26 @@ export default function FundRaiseDashboard() {
     staleTime: 30000,
   });
 
-  const chartContainerRef = useSafeResizeObserver<HTMLDivElement>((entries) => {
-    if (entries[0]) {
-      const width = entries[0].contentRect.width;
-      const responsiveHeight = Math.max(360, Math.min(600, Math.round(width * 0.5)));
-      setChartHeight(responsiveHeight);
-      const total = (vcProgressData || []).length || 1;
-      const targetCols = Math.min(total, 8);
-      const newColWidth = Math.max(90, Math.min(160, Math.floor((width - 200) / targetCols)));
-      setColWidth(newColWidth);
-    }
-  }, { debounce: 150 });
+  const chartContainerRef = useSafeResizeObserver<HTMLDivElement>(
+    (entries) => {
+      if (entries[0]) {
+        const width = entries[0].contentRect.width;
+        const responsiveHeight = Math.max(
+          360,
+          Math.min(600, Math.round(width * 0.5)),
+        );
+        setChartHeight(responsiveHeight);
+        const total = (vcProgressData || []).length || 1;
+        const targetCols = Math.min(total, 8);
+        const newColWidth = Math.max(
+          90,
+          Math.min(160, Math.floor((width - 200) / targetCols)),
+        );
+        setColWidth(newColWidth);
+      }
+    },
+    { debounce: 150 },
+  );
 
   const {
     data: vcFollowUps = [],
@@ -525,11 +534,13 @@ export default function FundRaiseDashboard() {
                   return stepColors[stepIndex % stepColors.length];
                 };
 
-
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                      <div ref={chartContainerRef} className="bg-gray-50 p-4 rounded-lg pb-4">
+                      <div
+                        ref={chartContainerRef}
+                        className="bg-gray-50 p-4 rounded-lg pb-4"
+                      >
                         <div className="text-sm font-medium text-gray-700 mb-4">
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
