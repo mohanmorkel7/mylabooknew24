@@ -1500,7 +1500,7 @@ export default function CreateVC() {
             onClick={handleSubmit}
             disabled={isSubmitting || createVCMutation.isPending}
           >
-            {isSubmitting ? "Creating..." : "Create VC"}
+            {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
         </div>
       </div>
@@ -2229,7 +2229,7 @@ export default function CreateVC() {
               onClick={handleSubmit}
               disabled={isSubmitting || createVCMutation.isPending}
             >
-              {isSubmitting ? "Creating..." : "Create VC"}
+              {isSubmitting ? "Submitting..." : "Submit"}
             </Button>
           </div>
         </TabsContent>
