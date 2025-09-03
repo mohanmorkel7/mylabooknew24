@@ -827,7 +827,7 @@ export function VCEnhancedStepItem({
                                                     (stepApiBase as any) ===
                                                     "fund-raises";
 
-                                                  // For fund-raises chats: update status only, do NOT post chat notifications
+                                                  // For fund-raises chats: post step-style system message after status update
                                                   if (isFundRaises) {
                                                     try {
                                                       await updateFollowUpStatus.mutateAsync(
@@ -836,13 +836,53 @@ export function VCEnhancedStepItem({
                                                           statusData: {
                                                             status: val,
                                                             completed_at:
-                                                              val ===
-                                                              "completed"
+                                                              val === "completed"
                                                                 ? new Date().toISOString()
                                                                 : null,
                                                           },
                                                         },
                                                       );
+
+                                                      const statusDisplayMap: Record<string, string> = {
+                                                        pending: "Pending",
+                                                        in_progress: "In Progress",
+                                                        completed: "Completed",
+                                                        overdue: "Overdue",
+                                                      };
+                                                      const oldDisplay = statusDisplayMap[current] || current;
+                                                      const newDisplay = statusDisplayMap[val] || val;
+                                                      const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user?.name || "User"}`;
+
+                                                      const optimistic = {
+                                                        id: Date.now(),
+                                                        user_id: parseInt(user?.id || "0"),
+                                                        user_name: "System",
+                                                        message: sysMsg,
+                                                        message_type: "system" as const,
+                                                        is_rich_text: false,
+                                                        created_at: new Date().toISOString(),
+                                                      } as any;
+                                                      setChatMessages((prev) => [...prev, optimistic]);
+
+                                                      const created = await apiClient.request(
+                                                        `/${stepApiBase}/steps/${step.id}/chats`,
+                                                        {
+                                                          method: "POST",
+                                                          body: JSON.stringify({
+                                                            user_id: parseInt(user?.id || "0"),
+                                                            user_name: "System",
+                                                            message: sysMsg,
+                                                            message_type: "system",
+                                                            is_rich_text: false,
+                                                            attachments: [],
+                                                          }),
+                                                        },
+                                                      );
+                                                      if (created && (created as any).id) {
+                                                        setChatMessages((prev) =>
+                                                          prev.map((m) => (m.id === optimistic.id ? (created as any) : m)),
+                                                        );
+                                                      }
                                                     } catch (e) {}
                                                     return;
                                                   }
