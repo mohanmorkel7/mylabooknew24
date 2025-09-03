@@ -565,7 +565,7 @@ export default function FundRaiseDashboard() {
                               </div>
 
                               <div
-                                className="relative flex-1 pb-4 overflow-y-hidden"
+                                className="relative flex-1 pb-16 overflow-y-hidden"
                                 style={{
                                   height: `${chartHeight}px`,
                                   minWidth: `${Math.max((vcProgressData || []).length * colWidth, 800)}px`,
