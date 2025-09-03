@@ -142,7 +142,7 @@ export function VCDraggableStepsList({
       const oldStatusDisplay = statusDisplayMap[oldStatus] || oldStatus;
       const newStatusDisplay = statusDisplayMap[status] || status;
 
-      const systemMessage = `📝 Step status changed from "${oldStatusDisplay}" to "${newStatusDisplay}" by ${user.name}`;
+      const systemMessage = `Step status changed from "${oldStatusDisplay}" to "${newStatusDisplay}" by ${user.name}`;
 
       try {
         const apiBase =
