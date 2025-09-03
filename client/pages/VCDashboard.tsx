@@ -692,7 +692,7 @@ export default function VCDashboard() {
                 {(filteredVCs || []).map((vc: any) => (
                   <div
                     key={vc.id}
-                    className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                    className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow cursor-pointer"
                     onClick={() => navigate(`/vc/${vc.id}`)}
                   >
                     <div className="flex items-start justify-between">
