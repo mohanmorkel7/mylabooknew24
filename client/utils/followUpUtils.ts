@@ -14,7 +14,6 @@ export interface FollowUpStatusChangeData {
 /**
  * Creates a system chat message when a follow-up status changes
  */
-import { apiClient } from "@/lib/api";
 
 export async function notifyFollowUpStatusChange(
   data: FollowUpStatusChangeData,
