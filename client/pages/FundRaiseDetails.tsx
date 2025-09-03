@@ -248,6 +248,17 @@ export default function FundRaiseDetails() {
     }
   };
 
+  useEffect(() => {
+    if (!stepsLoading && vcSteps?.length && focusStepId) {
+      setExpandedSteps((prev) => {
+        const s = new Set(prev);
+        s.add(focusStepId as number);
+        return s;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stepsLoading, vcSteps, focusStepId]);
+
   const handleToggleExpansion = (stepId: number) => {
     setExpandedSteps((prev) => {
       const s = new Set(prev);
