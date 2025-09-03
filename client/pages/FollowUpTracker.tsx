@@ -276,14 +276,15 @@ export default function FollowUpTracker() {
 
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
-          const useMock = apiClient.isOffline() || !Array.isArray(data) || data.length === 0;
+          const useMock =
+            apiClient.isOffline() || !Array.isArray(data) || data.length === 0;
           const source = useMock ? mockFollowUps : data;
 
           // Convert to expected format and ensure IST timestamps
           const formattedFollowUps = source.map((f: any) => ({
             ...f,
             created_at: new Date(f.created_at).toISOString(),
-            updated_at: new Date((f.updated_at || f.created_at)).toISOString(),
+            updated_at: new Date(f.updated_at || f.created_at).toISOString(),
             due_date: f.due_date || new Date().toISOString().split("T")[0],
             // Determine type based on available fields if not explicitly set
             type:
