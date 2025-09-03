@@ -133,6 +133,7 @@ function StatusDot({ status }: { status?: string | null }) {
 }
 
 function VCLinkedFundRaises({ vcId }: { vcId: number }) {
+  const navigate = useNavigate();
   const { data = [], isLoading } = useQuery({
     queryKey: ["fund-raises-by-vc", vcId],
     queryFn: async () => {
@@ -165,32 +166,43 @@ function VCLinkedFundRaises({ vcId }: { vcId: number }) {
   return (
     <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-sm font-medium text-gray-800">
-          Tagged Fund Raises
+        <div className="text-sm font-medium text-gray-800 flex items-center gap-2">
+          <Target className="w-4 h-4 text-blue-500" /> Tagged Fund Raises
         </div>
         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
           {data.length}
         </Badge>
       </div>
-      <div className="flex flex-wrap gap-2">
-        {data.slice(0, 6).map((fr: any) => (
+      <div className="space-y-2">
+        {data.slice(0, 4).map((fr: any) => (
           <div
             key={fr.id}
-            className="inline-flex items-center gap-2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm"
+            className="flex items-center justify-between px-2.5 py-2 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition"
             title={`${formatRoundStage(fr.round_stage)} — ${fr.investor_name || "Investor"}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/fundraise/${fr.id}`);
+            }}
           >
-            <StatusDot status={fr.status} />
-            <span className="text-xs font-medium text-gray-700">
-              {formatRoundStage(fr.round_stage)}
-            </span>
-            <span className="text-xs text-gray-400">•</span>
-            <span className="text-xs text-gray-600 truncate max-w-[140px]">
-              {fr.investor_name || "Investor"}
-            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <StatusDot status={fr.status} />
+              <span className="text-sm font-medium text-gray-800">
+                {formatRoundStage(fr.round_stage)}
+              </span>
+              <span className="text-xs text-gray-400">•</span>
+              <span className="text-sm text-gray-600 truncate max-w-[180px]">
+                {fr.investor_name || "Investor"}
+              </span>
+            </div>
+            {fr.status && (
+              <Badge className="capitalize">
+                {fr.status.replace("_", " ")}
+              </Badge>
+            )}
           </div>
         ))}
-        {data.length > 6 && (
-          <span className="text-xs text-gray-500">+{data.length - 6} more</span>
+        {data.length > 4 && (
+          <div className="text-xs text-gray-500">+{data.length - 4} more</div>
         )}
       </div>
     </div>
