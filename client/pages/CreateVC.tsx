@@ -194,7 +194,7 @@ const CITIES_BY_STATE: Record<string, string[]> = {
   Ontario: ["Toronto"],
   "New South Wales": ["Sydney"],
   Berlin: ["Berlin"],
-  "Île-de-France": ["Paris"],
+  "��le-de-France": ["Paris"],
   Tokyo: ["Tokyo"],
 };
 
@@ -1097,6 +1097,22 @@ export default function CreateVC() {
 
   // Navigation functions
   const handleNextTab = async () => {
+    // Validate current tab before moving next
+    if (activeTab === "lead") {
+      const newErrors: Record<string, string> = {};
+      if (!vcData.lead_source) newErrors.lead_source = "Source is required";
+      if (!vcData.lead_source_value?.trim()) newErrors.lead_source_value = "Source information is required";
+      if (vcData.lead_source?.startsWith("email_") && vcData.lead_source_value?.trim() && !isValidEmail(vcData.lead_source_value)) {
+        newErrors.lead_source_value = "Enter a valid email address";
+      }
+      if (!vcData.investor_name.trim()) newErrors.investor_name = "Venture Capital Name is required";
+      if (!(vcData as any).investor_category) (newErrors as any).investor_category = "VC Type is required";
+      if (!(vcData as any).industry) (newErrors as any).industry = "Sector Focus is required";
+      if (!vcData.minimum_size) newErrors.minimum_size = "Min.Chq Size is required";
+      if (!vcData.maximum_size) newErrors.maximum_size = "Max.Chq Size is required";
+      setErrors(newErrors);
+      if (Object.keys(newErrors).length > 0) return;
+    }
     if (!isLastTab) {
       // Auto-save when moving to next tab
       const hasData =
