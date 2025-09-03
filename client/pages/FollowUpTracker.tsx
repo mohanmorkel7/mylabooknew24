@@ -1116,10 +1116,11 @@ export default function FollowUpTracker() {
                                   size="sm"
                                   onClick={() => {
                                     if (isFundRaise && fundRaiseId) {
-                                      // Navigate to fund raise details using the actual fund raise ID
-                                      navigate(`/fundraise/${fundRaiseId}`);
+                                      const stepId = (followUp as any).message_id || (followUp as any).step_id || (followUp as any).vc_step_id;
+                                      navigate(`/fundraise/${fundRaiseId}`, {
+                                        state: { openStepId: stepId, focusFollowUpId: followUp.id },
+                                      });
                                     } else {
-                                      // Navigate to VC round
                                       navigate(`/vc/${followUp.vc_id}`);
                                     }
                                   }}
@@ -1180,10 +1181,11 @@ export default function FollowUpTracker() {
                                   size="sm"
                                   onClick={() => {
                                     if (isFundRaise && fundRaiseId) {
-                                      // Navigate to fund raise details using the actual fund raise ID
-                                      navigate(`/fundraise/${fundRaiseId}`);
+                                      const stepId = (followUp as any).message_id || (followUp as any).step_id || (followUp as any).vc_step_id;
+                                      navigate(`/fundraise/${fundRaiseId}`, {
+                                        state: { openStepId: stepId, focusFollowUpId: followUp.id },
+                                      });
                                     } else {
-                                      // Navigate to VC round
                                       navigate(`/vc/${followUp.vc_id}`);
                                     }
                                   }}
