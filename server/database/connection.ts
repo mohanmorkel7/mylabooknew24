@@ -364,6 +364,24 @@ export async function initializeDatabase() {
       );
     }
 
+    // Migrate follow_ups.due_date to TIMESTAMPTZ (store date and time)
+    try {
+      const dueDateMigrationPath = path.join(
+        __dirname,
+        "alter-follow-ups-due-datetime.sql",
+      );
+      if (fs.existsSync(dueDateMigrationPath)) {
+        const dueDateMigration = fs.readFileSync(dueDateMigrationPath, "utf8");
+        await client.query(dueDateMigration);
+        console.log("follow_ups.due_date TIMESTAMPTZ migration applied successfully");
+      }
+    } catch (dueDateMigrationError) {
+      console.log(
+        "follow_ups.due_date migration already applied or error:",
+        (dueDateMigrationError as any).message,
+      );
+    }
+
     // Always try to apply Fund Raises table migration
     try {
       const fundRaisesMigrationPath = path.join(
