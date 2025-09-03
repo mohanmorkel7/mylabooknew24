@@ -551,7 +551,7 @@ export default function FundRaiseDashboard() {
                               </div>
 
                               <div
-                                className="relative flex-1 pb-20"
+                                className="relative flex-1 pb-28"
                                 style={{
                                   height: `${chartHeight}px`,
                                   minWidth: "100%",
