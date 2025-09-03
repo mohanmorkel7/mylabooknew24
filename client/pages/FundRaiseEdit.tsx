@@ -100,9 +100,9 @@ export default function FundRaiseEdit() {
   const queryClient = useQueryClient();
   const [fundMnOpen, setFundMnOpen] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [queueItems, setQueueItems] = useState<Array<{ vc_investor: string; fund_mn: string; investor_status: string }>>([
-    { vc_investor: "", fund_mn: "", investor_status: "" },
-  ]);
+  const [queueItems, setQueueItems] = useState<
+    Array<{ vc_investor: string; fund_mn: string; investor_status: string }>
+  >([{ vc_investor: "", fund_mn: "", investor_status: "" }]);
 
   const [form, setForm] = useState({
     vc_investor: "",
@@ -220,7 +220,8 @@ export default function FundRaiseEdit() {
 
     const badRows: number[] = [];
     queueItems.forEach((it, idx) => {
-      if (!it.vc_investor || !it.fund_mn || !it.investor_status) badRows.push(idx + 1);
+      if (!it.vc_investor || !it.fund_mn || !it.investor_status)
+        badRows.push(idx + 1);
     });
     if (queueItems.length === 0 || badRows.length > 0) {
       n.queue = badRows.length
@@ -259,7 +260,8 @@ export default function FundRaiseEdit() {
       await Promise.all(
         extras.map(async (it) => {
           const matched = (vcList || []).find(
-            (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+            (vc: any) =>
+              (vc.investor_name || "").trim() === it.vc_investor.trim(),
           );
           const linkedVcId: number | null = matched?.id ?? null;
           await apiClient.request("/fund-raises", {
@@ -508,16 +510,27 @@ export default function FundRaiseEdit() {
           <Card>
             <CardHeader>
               <CardTitle>Investor Status Queue</CardTitle>
-              <CardDescription>Add or edit investors for this round</CardDescription>
+              <CardDescription>
+                Add or edit investors for this round
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {queueItems.map((item, idx) => (
-                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border p-3 rounded">
+                <div
+                  key={idx}
+                  className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border p-3 rounded"
+                >
                   <div className="md:col-span-5">
                     <Label>VC *</Label>
                     <Select
                       value={item.vc_investor}
-                      onValueChange={(v) => setQueueItems((arr) => arr.map((it, i) => (i === idx ? { ...it, vc_investor: v } : it)))}
+                      onValueChange={(v) =>
+                        setQueueItems((arr) =>
+                          arr.map((it, i) =>
+                            i === idx ? { ...it, vc_investor: v } : it,
+                          ),
+                        )
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select VC" />
@@ -537,7 +550,13 @@ export default function FundRaiseEdit() {
                     <Label>Fund $ Mn *</Label>
                     <Select
                       value={item.fund_mn}
-                      onValueChange={(v) => setQueueItems((arr) => arr.map((it, i) => (i === idx ? { ...it, fund_mn: v } : it)))}
+                      onValueChange={(v) =>
+                        setQueueItems((arr) =>
+                          arr.map((it, i) =>
+                            i === idx ? { ...it, fund_mn: v } : it,
+                          ),
+                        )
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select amount" />
@@ -555,7 +574,13 @@ export default function FundRaiseEdit() {
                     <Label>Investor Status *</Label>
                     <Select
                       value={item.investor_status}
-                      onValueChange={(v) => setQueueItems((arr) => arr.map((it, i) => (i === idx ? { ...it, investor_status: v } : it)))}
+                      onValueChange={(v) =>
+                        setQueueItems((arr) =>
+                          arr.map((it, i) =>
+                            i === idx ? { ...it, investor_status: v } : it,
+                          ),
+                        )
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
@@ -573,9 +598,15 @@ export default function FundRaiseEdit() {
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => setQueueItems((arr) => arr.filter((_, i) => i !== idx))}
+                      onClick={() =>
+                        setQueueItems((arr) => arr.filter((_, i) => i !== idx))
+                      }
                       disabled={queueItems.length === 1}
-                      title={queueItems.length === 1 ? "At least one row required" : "Delete row"}
+                      title={
+                        queueItems.length === 1
+                          ? "At least one row required"
+                          : "Delete row"
+                      }
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -583,10 +614,20 @@ export default function FundRaiseEdit() {
                 </div>
               ))}
               <div className="flex justify-between items-center">
-                <Button variant="outline" onClick={() => setQueueItems((arr) => [...arr, { vc_investor: "", fund_mn: "", investor_status: "" }])}>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setQueueItems((arr) => [
+                      ...arr,
+                      { vc_investor: "", fund_mn: "", investor_status: "" },
+                    ])
+                  }
+                >
                   <Plus className="w-4 h-4 mr-2" /> Add Investor
                 </Button>
-                {errors.queue && <p className="text-sm text-red-600">{errors.queue}</p>}
+                {errors.queue && (
+                  <p className="text-sm text-red-600">{errors.queue}</p>
+                )}
               </div>
             </CardContent>
           </Card>
