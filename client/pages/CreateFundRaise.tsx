@@ -263,7 +263,6 @@ export default function CreateFundRaise() {
           </div>
         </div>
         <Button onClick={handleSubmit} disabled={submitting}>
-          <Plus className="w-4 h-4 mr-2" />
           Submit
         </Button>
       </div>
