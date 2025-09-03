@@ -194,7 +194,7 @@ const CITIES_BY_STATE: Record<string, string[]> = {
   Ontario: ["Toronto"],
   "New South Wales": ["Sydney"],
   Berlin: ["Berlin"],
-  "��le-de-France": ["Paris"],
+  "Île-de-France": ["Paris"],
   Tokyo: ["Tokyo"],
 };
 
@@ -1244,6 +1244,9 @@ export default function CreateVC() {
     }
     if (!vcData.lead_source_value?.trim()) {
       newErrors.lead_source_value = "Source information is required";
+    }
+    if (vcData.lead_source?.startsWith("email_") && vcData.lead_source_value?.trim() && !isValidEmail(vcData.lead_source_value)) {
+      newErrors.lead_source_value = "Enter a valid email address";
     }
     if (!vcData.investor_name.trim()) {
       newErrors.investor_name = "Venture Capital Name is required";
