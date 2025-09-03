@@ -105,8 +105,24 @@ export class FundRaiseRepository {
       LEFT JOIN vcs v ON v.id = fr.vc_id
       WHERE fr.id = $1
     `;
-    const result = await pool.query(query, [id]);
-    return result.rows[0] || null;
+    try {
+      const result = await pool.query(query, [id]);
+      return result.rows[0] || null;
+    } catch (err: any) {
+      const msg = (err && err.message) || "";
+      if (err?.code === "42703" && msg.includes("investors")) {
+        try {
+          await pool.query(
+            `ALTER TABLE IF EXISTS fund_raises ADD COLUMN IF NOT EXISTS investors JSONB DEFAULT '[]'::jsonb;`,
+          );
+          const retry = await pool.query(query, [id]);
+          return retry.rows[0] || null;
+        } catch (e2) {
+          throw err;
+        }
+      }
+      throw err;
+    }
   }
 
   static async findByVC(vcId: number): Promise<FundRaise[]> {
