@@ -947,7 +947,12 @@ export function VCEnhancedStepItem({
                           checked={createFollowUp}
                           onChange={(e) => setCreateFollowUp(e.target.checked)}
                         />
-                        <Label htmlFor="create_follow_up_checkbox_" className="text-sm">Create follow-up</Label>
+                        <Label
+                          htmlFor="create_follow_up_checkbox_"
+                          className="text-sm"
+                        >
+                          Create follow-up
+                        </Label>
                       </div>
 
                       {/* Follow-up Creation Section (below editor) */}
@@ -985,7 +990,9 @@ export function VCEnhancedStepItem({
                               <Input
                                 type="date"
                                 value={followUpDueDate}
-                                onChange={(e) => setFollowUpDueDate(e.target.value)}
+                                onChange={(e) =>
+                                  setFollowUpDueDate(e.target.value)
+                                }
                               />
                             </div>
                             <div className="flex space-x-2">
@@ -1025,7 +1032,9 @@ export function VCEnhancedStepItem({
                         <Button
                           size="sm"
                           onClick={handleSendMessage}
-                          disabled={!newMessage.trim() && stagedAttachments.length === 0}
+                          disabled={
+                            !newMessage.trim() && stagedAttachments.length === 0
+                          }
                         >
                           <Send className="w-4 h-4 mr-1" />
                           Send
