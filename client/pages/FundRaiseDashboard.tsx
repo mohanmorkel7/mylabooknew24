@@ -669,34 +669,6 @@ export default function FundRaiseDashboard() {
                                   )}
                                 </div>
 
-                                <div
-                                  className="absolute left-0 right-0 bottom-0 translate-y-full grid"
-                                  style={{
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)`,
-                                  }}
-                                >
-                                  {(vcProgressData || []).map(
-                                    (vcProgress: any) => (
-                                      <div
-                                        key={vcProgress.vc_id}
-                                        className="text-center w-full"
-                                      >
-                                        <div className="text-xs font-medium text-gray-700 mb-1">
-                                          {vcProgress.round_title}
-                                        </div>
-                                        <div className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-1 inline-block">
-                                          {
-                                            vcProgress.total_completed_probability
-                                          }
-                                          %
-                                        </div>
-                                        <div className="text-sm font-semibold text-gray-800 break-words px-1">
-                                          {vcProgress.investor_name}
-                                        </div>
-                                      </div>
-                                    ),
-                                  )}
-                                </div>
                               </div>
                             </div>
                           </div>
