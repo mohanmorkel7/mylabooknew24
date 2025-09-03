@@ -182,30 +182,23 @@ export default function FundRaiseEdit() {
       template_id: current.template_id || 1,
     });
 
-    // Build queue from related fund raises created via Create page
-    const eq = (a: any, b: any) => (a || "") === (b || "");
-    const related = (allFundRaises || []).filter((fr: any) => {
-      return (
-        eq(fr.round_stage, current.round_stage) &&
-        eq(fr.ui_status, current.ui_status) &&
-        eq(fr.start_date, current.start_date) &&
-        eq(fr.end_date, current.end_date) &&
-        eq(
-          String(fr.total_raise_mn || ""),
-          String(current.total_raise_mn || ""),
-        ) &&
-        eq(String(fr.valuation_mn || ""), String(current.valuation_mn || "")) &&
-        eq(String(fr.template_id || ""), String(current.template_id || "")) &&
-        eq(String(fr.reason || ""), String(current.reason || ""))
-      );
-    });
-
-    const items = (related.length ? related : [current]).map((fr: any) => ({
-      vc_investor: fr.investor_name || "",
-      fund_mn: fr.fund_mn || "",
-      investor_status: fr.investor_status || "",
-    }));
-    setQueueItems(items);
+    // Prefer stored investors array if present; fallback to current top-level fields
+    if (Array.isArray((current as any).investors) && (current as any).investors.length > 0) {
+      const items = (current as any).investors.map((it: any) => ({
+        vc_investor: it.investor_name || "",
+        fund_mn: it.fund_mn || "",
+        investor_status: it.investor_status || "",
+      }));
+      setQueueItems(items);
+    } else {
+      setQueueItems([
+        {
+          vc_investor: current.investor_name || "",
+          fund_mn: current.fund_mn || "",
+          investor_status: current.investor_status || "",
+        },
+      ]);
+    }
   }, [current, allFundRaises]);
 
   const updateMutation = useMutation({
