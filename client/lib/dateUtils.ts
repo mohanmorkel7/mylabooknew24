@@ -94,6 +94,33 @@ export const getCurrentISTDateTime = (): string => {
   return formatToISTDateTime(getCurrentISTTimestamp());
 };
 
+export const formatToUTCDateTime = (
+  date: string | Date,
+  options: Intl.DateTimeFormatOptions = {},
+): string => {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) return "Invalid Date";
+  const fmt: Intl.DateTimeFormatOptions = {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    ...options,
+  };
+  const parts = new Intl.DateTimeFormat("en-IN", fmt).formatToParts(dateObj);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
+  const day = get("day");
+  const month = get("month");
+  const year = get("year");
+  const hour = get("hour");
+  const minute = get("minute");
+  const dayPeriod = get("dayPeriod");
+  return `${day} ${month} ${year}, ${hour}:${minute} ${dayPeriod?.toUpperCase()}`;
+};
+
 /**
  * Checks if a date is overdue (past current IST time)
  */
