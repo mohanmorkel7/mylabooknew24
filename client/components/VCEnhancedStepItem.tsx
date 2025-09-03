@@ -403,7 +403,7 @@ export function VCEnhancedStepItem({
       const details = [
         created?.id ? `ID: #${created.id}` : null,
         assignee ? `Assignee: ${assignee.name}` : null,
-        `Due: ${new Date(followUpDueDate).toLocaleDateString()}`,
+        `Due: ${formatToISTDateTime(new Date(followUpDueDate).toISOString())}`,
       ]
         .filter(Boolean)
         .join(" | ");
