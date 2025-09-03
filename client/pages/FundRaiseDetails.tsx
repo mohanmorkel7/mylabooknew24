@@ -125,6 +125,8 @@ export default function FundRaiseDetails() {
 
   const [newStepDialog, setNewStepDialog] = useState(false);
   const [expandedSteps, setExpandedSteps] = useState(new Set<number>());
+  const focusStepId = location?.state?.openStepId || null;
+  const focusFollowUpId = location?.state?.focusFollowUpId || null;
   const [newStep, setNewStep] = useState({
     name: "",
     description: "",
