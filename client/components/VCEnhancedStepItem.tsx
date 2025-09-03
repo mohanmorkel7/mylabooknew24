@@ -556,7 +556,13 @@ export function VCEnhancedStepItem({
     <div
       ref={setNodeRef}
       style={style}
-      className={`border rounded-lg bg-white ${isDragOverlay ? "shadow-2xl" : ""}`}
+      className={`border rounded-lg bg-white border-l-4 ${
+        step.status === "completed"
+          ? "border-green-600"
+          : step.status === "in_progress"
+            ? "border-blue-600"
+            : "border-gray-300"
+      } ${isDragOverlay ? "shadow-2xl" : ""}`}
     >
       <Collapsible open={isExpanded} onOpenChange={onToggleExpansion}>
         <div className="flex items-center space-x-4 p-4">
@@ -585,6 +591,23 @@ export function VCEnhancedStepItem({
             <div className="flex-1">
               <div className="flex items-center space-x-2">
                 <span className="font-medium text-gray-900">{step.name}</span>
+                {/* Status badge for quick visual cue */}
+                {step.status && (
+                  <Badge
+                    variant="outline"
+                    className={`text-xs ${
+                      step.status === "completed"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : step.status === "in_progress"
+                          ? "bg-blue-50 text-blue-700 border-blue-200"
+                          : "bg-gray-50 text-gray-700 border-gray-200"
+                    }`}
+                  >
+                    {step.status === "in_progress"
+                      ? "In Progress"
+                      : step.status.charAt(0).toUpperCase() + step.status.slice(1).replace("_", " ")}
+                  </Badge>
+                )}
                 <div className="flex items-center space-x-2">
                   {typeof step.probability_percent !== "undefined" &&
                     step.probability_percent !== null && (
@@ -651,7 +674,15 @@ export function VCEnhancedStepItem({
               value={step.status}
               onValueChange={(value) => onUpdateStatus(step.id, value)}
             >
-              <SelectTrigger className="w-32">
+              <SelectTrigger
+                className={`w-32 ${
+                  step.status === "completed"
+                    ? "bg-green-50 text-green-700 border-green-200"
+                    : step.status === "in_progress"
+                      ? "bg-blue-50 text-blue-700 border-blue-200"
+                      : "bg-gray-50 text-gray-700 border-gray-200"
+                }`}
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
