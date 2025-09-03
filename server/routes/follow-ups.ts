@@ -365,8 +365,11 @@ router.get("/:id", async (req: Request, res: Response) => {
     if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
 
     if (await isDatabaseAvailable()) {
-      const r = await pool.query("SELECT * FROM follow_ups WHERE id = $1", [id]);
-      if (r.rows.length === 0) return res.status(404).json({ error: "Not found" });
+      const r = await pool.query("SELECT * FROM follow_ups WHERE id = $1", [
+        id,
+      ]);
+      if (r.rows.length === 0)
+        return res.status(404).json({ error: "Not found" });
       return res.json(r.rows[0]);
     }
     // Mock when DB down
