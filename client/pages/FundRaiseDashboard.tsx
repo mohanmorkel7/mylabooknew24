@@ -1346,6 +1346,7 @@ export default function FundRaiseDashboard() {
                                     }
                                   >
                                     <div className="flex items-center gap-3">
+                                      <Avatar className="h-8 w-8 bg-blue-100 text-blue-700"><AvatarFallback>{((fr.investor_name || "FR").match(/\b\w/g) || []).slice(0,2).join("").toUpperCase()}</AvatarFallback></Avatar>
                                       <div>
                                         <div className="font-medium text-gray-900 flex items-center gap-2">
                                           <span>Fund Raise</span>
