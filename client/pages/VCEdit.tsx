@@ -740,8 +740,8 @@ export default function VCEdit() {
       [field]: value,
     };
 
-    // Clear lead_source_value when lead_source changes
-    if (field === "lead_source") {
+    // Clear lead_source_value only when source actually changes
+    if (field === "lead_source" && value !== vcData.lead_source) {
       newData.lead_source_value = "";
     }
 
