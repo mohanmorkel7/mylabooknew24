@@ -106,6 +106,7 @@ const roundStageColors = {
 export default function FundRaiseDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation() as any;
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const updateStepMutation = useUpdateFundRaiseStep();
