@@ -36,7 +36,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { ArrowLeft, Plus, Calendar, DollarSign, Building } from "lucide-react";
+import { ArrowLeft, Plus, Calendar, DollarSign, Building, Trash2 } from "lucide-react";
 
 const STATUS_OPTIONS = [
   { value: "Dropped", label: "Dropped" },
