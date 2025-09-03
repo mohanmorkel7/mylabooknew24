@@ -284,7 +284,7 @@ export default function FollowUpTracker() {
             ...f,
             created_at: new Date(f.created_at).toISOString(),
             updated_at: new Date(f.updated_at || f.created_at).toISOString(),
-            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            due_date: f.due_date,
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
@@ -323,7 +323,7 @@ export default function FollowUpTracker() {
             ...f,
             created_at: new Date(f.created_at).toISOString(),
             updated_at: new Date(f.updated_at || f.created_at).toISOString(),
-            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            due_date: f.due_date,
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
@@ -723,7 +723,7 @@ export default function FollowUpTracker() {
                 <p className="text-yellow-600 text-sm font-medium">Pending</p>
                 <p className="text-2xl font-bold text-yellow-900">
                   {
-                    followUps.filter(
+                    filteredFollowUps.filter(
                       (f) => f.status === "pending" && canViewFollowUp(f),
                     ).length
                   }
@@ -741,7 +741,7 @@ export default function FollowUpTracker() {
                 <p className="text-blue-600 text-sm font-medium">In Progress</p>
                 <p className="text-2xl font-bold text-blue-900">
                   {
-                    followUps.filter(
+                    filteredFollowUps.filter(
                       (f) => f.status === "in_progress" && canViewFollowUp(f),
                     ).length
                   }
@@ -759,7 +759,7 @@ export default function FollowUpTracker() {
                 <p className="text-green-600 text-sm font-medium">Completed</p>
                 <p className="text-2xl font-bold text-green-900">
                   {
-                    followUps.filter(
+                    filteredFollowUps.filter(
                       (f) => f.status === "completed" && canViewFollowUp(f),
                     ).length
                   }
@@ -777,7 +777,7 @@ export default function FollowUpTracker() {
                 <p className="text-red-600 text-sm font-medium">Overdue</p>
                 <p className="text-2xl font-bold text-red-900">
                   {
-                    followUps.filter((f) => {
+                    filteredFollowUps.filter((f) => {
                       const isOverdueStatus =
                         f.status === "overdue" ||
                         (f.status !== "completed" &&
