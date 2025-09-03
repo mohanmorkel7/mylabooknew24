@@ -282,6 +282,8 @@ const TABS = [
   { value: "investor", label: "Investors Contact Info", icon: "🏢" },
 ];
 
+const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+
 export default function CreateVC() {
   const navigate = useNavigate();
   const location = useLocation();
