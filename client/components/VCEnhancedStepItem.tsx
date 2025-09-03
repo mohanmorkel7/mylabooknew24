@@ -67,6 +67,7 @@ import {
   useUsers,
   useUpdateFollowUpStatus,
 } from "@/hooks/useApi";
+import { notifyFollowUpStatusChange } from "@/utils/followUpUtils";
 import { apiClient } from "@/lib/api";
 import { formatToISTDateTime } from "@/lib/dateUtils";
 
@@ -835,18 +836,40 @@ export function VCEnhancedStepItem({
                                                     [fid]: val,
                                                   }));
                                                   try {
-                                                    await updateFollowUpStatus.mutateAsync(
-                                                      {
-                                                        followUpId: fid,
-                                                        statusData: {
-                                                          status: val,
-                                                          completed_at:
-                                                            val === "completed"
-                                                              ? new Date().toISOString()
-                                                              : null,
-                                                        },
+                                                    await updateFollowUpStatus.mutateAsync({
+                                                      followUpId: fid,
+                                                      statusData: {
+                                                        status: val,
+                                                        completed_at:
+                                                          val === "completed"
+                                                            ? new Date().toISOString()
+                                                            : null,
                                                       },
-                                                    );
+                                                    });
+                                                    // Also create a system chat notification and update UI immediately
+                                                    const created = await notifyFollowUpStatusChange({
+                                                      followUpId: fid,
+                                                      newStatus: val,
+                                                      stepId: step.id,
+                                                      userId: parseInt(user?.id || "0"),
+                                                      userName: user?.name || "User",
+                                                      stepApiBase: stepApiBase as any,
+                                                    });
+                                                    if (created && (created as any).id) {
+                                                      setChatMessages((prev) => [...prev, created as any]);
+                                                    } else {
+                                                      // Fallback: append a local system message for instant feedback
+                                                      const fallback = {
+                                                        id: Date.now(),
+                                                        user_id: parseInt(user?.id || "0"),
+                                                        user_name: "System",
+                                                        message: `📋 Follow-up task status changed to "${val}": "#${fid}" by ${user?.name || "User"}`,
+                                                        message_type: "system" as const,
+                                                        is_rich_text: false,
+                                                        created_at: new Date().toISOString(),
+                                                      };
+                                                      setChatMessages((prev) => [...prev, fallback as any]);
+                                                    }
                                                   } catch (e) {
                                                     // ignore
                                                   }
