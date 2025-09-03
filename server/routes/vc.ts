@@ -627,6 +627,7 @@ router.post("/", async (req: Request, res: Response) => {
 
       if (dbAvailable) {
         await ensureVCInvestorCategoryConstraint();
+        await ensureVCLeadSourceConstraint();
       }
 
       // Normalize/validate investor_category to avoid DB constraint errors
