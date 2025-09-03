@@ -97,6 +97,9 @@ export default function CreateFundRaise() {
   const [fundMnOpenMain, setFundMnOpenMain] = useState(false);
   const [valuationOpen, setValuationOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("fundraise");
+  const [queueItems, setQueueItems] = useState<Array<{ vc_investor: string; fund_mn: string; investor_status: string }>>([
+    { vc_investor: "", fund_mn: "", investor_status: "" },
+  ]);
 
   const [form, setForm] = useState({
     vc_investor: "",
