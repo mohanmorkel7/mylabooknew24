@@ -512,8 +512,6 @@ export default function FundRaiseDashboard() {
 
                 const chartHeight = 400;
 
-                const colWidth = 120;
-
                 return (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
@@ -522,7 +520,7 @@ export default function FundRaiseDashboard() {
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
                         </div>
-                        <div className="w-full overflow-x-auto">
+                        <div className="w-full">
                           <div className="w-full">
                             <div
                               className="flex"
@@ -556,7 +554,7 @@ export default function FundRaiseDashboard() {
                                 className="relative flex-1 pb-20"
                                 style={{
                                   height: `${chartHeight}px`,
-                                  minWidth: `${Math.max((vcProgressData || []).length * 120, 800)}px`,
+                                  minWidth: "100%",
                                 }}
                               >
                                 <div className="absolute inset-0">
@@ -585,17 +583,15 @@ export default function FundRaiseDashboard() {
                                   className="absolute inset-0 grid"
                                   style={{
                                     paddingTop: "0px",
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)`,
                                   }}
                                 >
                                   {(vcProgressData || []).map(
                                     (vcProgress: any) => {
-                                      const colWidth = 120;
                                       return (
                                         <div
                                           key={vcProgress.vc_id}
-                                          className="relative flex-none"
-                                          style={{ width: `${colWidth}px` }}
+                                          className="relative w-full"
                                         >
                                           {(
                                             vcProgress.completed_steps || []
@@ -676,15 +672,14 @@ export default function FundRaiseDashboard() {
                                 <div
                                   className="absolute left-0 right-0 bottom-0 translate-y-full grid"
                                   style={{
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)`,
                                   }}
                                 >
                                   {(vcProgressData || []).map(
                                     (vcProgress: any) => (
                                       <div
                                         key={vcProgress.vc_id}
-                                        className="text-center flex-none"
-                                        style={{ width: `${colWidth}px` }}
+                                        className="text-center w-full"
                                       >
                                         <div className="text-xs font-medium text-gray-700 mb-1">
                                           {vcProgress.round_title}
