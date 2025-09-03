@@ -199,6 +199,28 @@ export function VCEnhancedStepItem({
     Record<number, string>
   >({});
 
+  // Load status for follow-up IDs referenced in system messages
+  useEffect(() => {
+    if (!isExpanded) return;
+    const ids = new Set<number>();
+    for (const m of sortedMessages) {
+      if (m.message_type === "system") {
+        const match = (m.message || "").match(/#(\d+)/);
+        if (match) ids.add(parseInt(match[1]));
+      }
+    }
+    ids.forEach(async (fid) => {
+      if (followUpStatuses[fid]) return;
+      try {
+        const f = await apiClient.request(`/follow-ups/${fid}`);
+        if (f && f.status) {
+          setFollowUpStatuses((s) => ({ ...s, [fid]: f.status }));
+        }
+      } catch {}
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isExpanded, sortedMessages.length]);
+
   // Function to highlight mentions and make follow-up IDs clickable
   const processMessageContent = (messageText: string) => {
     if (!user) return messageText;
