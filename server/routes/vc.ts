@@ -40,6 +40,27 @@ async function ensureVCInvestorCategoryConstraint() {
   }
 }
 
+// Ensure lead_source constraint matches UI options (idempotent)
+let vcLeadSourceConstraintEnsured = false;
+async function ensureVCLeadSourceConstraint() {
+  if (vcLeadSourceConstraintEnsured) return;
+  try {
+    await pool.query(`
+      ALTER TABLE vcs DROP CONSTRAINT IF EXISTS vcs_lead_source_check;
+      ALTER TABLE vcs ADD CONSTRAINT vcs_lead_source_check
+        CHECK (lead_source IN (
+          'linkedin_outbound','linkedin_inbound','email_outbound','email_inbound','call_outbound','call_inbound','reference','general_list',
+          'email','social-media','phone','website','referral','cold-call','event','other'
+        ));
+    `);
+    vcLeadSourceConstraintEnsured = true;
+    console.log("VC lead_source constraint ensured/updated");
+  } catch (e: any) {
+    console.log("VC lead_source constraint ensure failed or not needed:", e.message);
+    vcLeadSourceConstraintEnsured = true; // prevent repeated attempts each request
+  }
+}
+
 // Check if step_id column exists in vc_comments table
 async function hasStepIdColumn(): Promise<boolean> {
   try {
