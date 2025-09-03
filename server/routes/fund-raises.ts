@@ -202,56 +202,70 @@ router.get("/by-vc/:vcId", async (req: Request, res: Response) => {
 router.post("/", async (req: Request, res: Response) => {
   try {
     const body = req.body || {};
-    if (await isDatabaseAvailable()) {
-      // If vc_id provided, ensure it exists to avoid FK errors
-      if (body.vc_id) {
-        try {
-          const { pool } = await import("../database/connection");
-          const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [
-            Number(body.vc_id),
-          ]);
-          if (check.rowCount === 0) {
-            return res.status(202).json({
-              warning:
-                "VC not found in database; fund raise record not created",
-              vc_id: body.vc_id,
-            });
-          }
-        } catch (e) {
-          // continue; FK will enforce
-        }
-      }
-
-      const row = await FundRaiseRepository.createFull({
-        vc_id: body.vc_id ?? null,
-        investor_name: body.investor_name ?? null,
-        ui_status:
-          body.ui_status ??
-          body.uiStatus ??
-          body.status_ui ??
-          body.statusLabel ??
-          "WIP",
-        status: body.status ?? null,
-        investor_status: body.investor_status ?? null,
-        round_stage: body.round_stage ?? null,
-        start_date: body.start_date ?? null,
-        end_date: body.end_date ?? null,
-        total_raise_mn: body.total_raise_mn ?? null,
-        valuation_mn: body.valuation_mn ?? null,
-        fund_mn: body.fund_mn ?? null,
-        reason: body.reason ?? null,
-        template_id: body.template_id ?? null,
-        created_by: body.created_by ?? null,
-        updated_by: body.updated_by ?? null,
-      });
-      return res.status(201).json(row);
+    if (!(await isDatabaseAvailable())) {
+      return res.status(503).json({ error: "Database unavailable" });
     }
-    return res.status(503).json({ error: "Database unavailable" });
+
+    const normalize = (item: any) => ({
+      vc_id: item.vc_id ?? null,
+      investor_name: item.investor_name ?? null,
+      ui_status:
+        item.ui_status ?? item.uiStatus ?? item.status_ui ?? item.statusLabel ?? "WIP",
+      status: item.status ?? null,
+      investor_status: item.investor_status ?? null,
+      round_stage: item.round_stage ?? null,
+      start_date: item.start_date ?? null,
+      end_date: item.end_date ?? null,
+      total_raise_mn: item.total_raise_mn ?? null,
+      valuation_mn: item.valuation_mn ?? null,
+      fund_mn: item.fund_mn ?? null,
+      reason: item.reason ?? null,
+      template_id: item.template_id ?? null,
+      created_by: item.created_by ?? null,
+      updated_by: item.updated_by ?? null,
+    });
+
+    // Support batch creation when body is an array or has items[]
+    const items: any[] = Array.isArray(body)
+      ? body
+      : Array.isArray(body.items)
+        ? body.items.map((it: any) => ({ ...body.base, ...it }))
+        : null;
+
+    if (items && items.length) {
+      await pool.query("BEGIN");
+      try {
+        const created: any[] = [];
+        for (const raw of items) {
+          // Optional FK check
+          if (raw.vc_id) {
+            try {
+              const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [
+                Number(raw.vc_id),
+              ]);
+              if (check.rowCount === 0) {
+                created.push({ warning: "VC not found; skipped", vc_id: raw.vc_id });
+                continue;
+              }
+            } catch {}
+          }
+          const row = await FundRaiseRepository.createFull(normalize(raw));
+          created.push(row);
+        }
+        await pool.query("COMMIT");
+        return res.status(201).json(created);
+      } catch (e) {
+        try { await pool.query("ROLLBACK"); } catch {}
+        throw e;
+      }
+    }
+
+    // Single create
+    const row = await FundRaiseRepository.createFull(normalize(body));
+    return res.status(201).json(row);
   } catch (error: any) {
     if (error && error.code === "23503") {
-      return res
-        .status(202)
-        .json({ warning: "Invalid vc_id, record not created" });
+      return res.status(202).json({ warning: "Invalid vc_id, record not created" });
     }
     console.error("Error creating fund_raise:", error.message);
     return res.status(500).json({ error: "Failed" });
