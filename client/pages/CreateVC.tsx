@@ -282,7 +282,8 @@ const TABS = [
   { value: "investor", label: "Investors Contact Info", icon: "🏢" },
 ];
 
-const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+const isValidEmail = (email: string) =>
+  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 
 export default function CreateVC() {
   const navigate = useNavigate();
@@ -1101,15 +1102,25 @@ export default function CreateVC() {
     if (activeTab === "lead") {
       const newErrors: Record<string, string> = {};
       if (!vcData.lead_source) newErrors.lead_source = "Source is required";
-      if (!vcData.lead_source_value?.trim()) newErrors.lead_source_value = "Source information is required";
-      if (vcData.lead_source?.startsWith("email_") && vcData.lead_source_value?.trim() && !isValidEmail(vcData.lead_source_value)) {
+      if (!vcData.lead_source_value?.trim())
+        newErrors.lead_source_value = "Source information is required";
+      if (
+        vcData.lead_source?.startsWith("email_") &&
+        vcData.lead_source_value?.trim() &&
+        !isValidEmail(vcData.lead_source_value)
+      ) {
         newErrors.lead_source_value = "Enter a valid email address";
       }
-      if (!vcData.investor_name.trim()) newErrors.investor_name = "Venture Capital Name is required";
-      if (!(vcData as any).investor_category) (newErrors as any).investor_category = "VC Type is required";
-      if (!(vcData as any).industry) (newErrors as any).industry = "Sector Focus is required";
-      if (!vcData.minimum_size) newErrors.minimum_size = "Min.Chq Size is required";
-      if (!vcData.maximum_size) newErrors.maximum_size = "Max.Chq Size is required";
+      if (!vcData.investor_name.trim())
+        newErrors.investor_name = "Venture Capital Name is required";
+      if (!(vcData as any).investor_category)
+        (newErrors as any).investor_category = "VC Type is required";
+      if (!(vcData as any).industry)
+        (newErrors as any).industry = "Sector Focus is required";
+      if (!vcData.minimum_size)
+        newErrors.minimum_size = "Min.Chq Size is required";
+      if (!vcData.maximum_size)
+        newErrors.maximum_size = "Max.Chq Size is required";
       setErrors(newErrors);
       if (Object.keys(newErrors).length > 0) return;
     }
@@ -1245,7 +1256,11 @@ export default function CreateVC() {
     if (!vcData.lead_source_value?.trim()) {
       newErrors.lead_source_value = "Source information is required";
     }
-    if (vcData.lead_source?.startsWith("email_") && vcData.lead_source_value?.trim() && !isValidEmail(vcData.lead_source_value)) {
+    if (
+      vcData.lead_source?.startsWith("email_") &&
+      vcData.lead_source_value?.trim() &&
+      !isValidEmail(vcData.lead_source_value)
+    ) {
       newErrors.lead_source_value = "Enter a valid email address";
     }
     if (!vcData.investor_name.trim()) {
