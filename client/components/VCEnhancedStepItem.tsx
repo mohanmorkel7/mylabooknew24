@@ -1344,7 +1344,9 @@ export function VCEnhancedStepItem({
                               <Input
                                 type="datetime-local"
                                 value={followUpDueDate}
-                                onChange={(e) => setFollowUpDueDate(e.target.value)}
+                                onChange={(e) =>
+                                  setFollowUpDueDate(e.target.value)
+                                }
                               />
                             </div>
                             <div className="flex space-x-2">
