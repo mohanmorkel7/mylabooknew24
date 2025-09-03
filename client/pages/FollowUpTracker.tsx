@@ -311,7 +311,13 @@ export default function FollowUpTracker() {
             );
           }
 
-          setFollowUps(formattedFollowUps);
+          const uniqueMap = new Map<string | number, FollowUp>();
+          formattedFollowUps.forEach((f: any) => {
+            const compositeKey =
+              f.id ?? `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+            uniqueMap.set(compositeKey, f);
+          });
+          setFollowUps(Array.from(uniqueMap.values()));
         }
       } catch (error) {
         // Only handle non-abort errors
@@ -329,7 +335,13 @@ export default function FollowUpTracker() {
               f.type ||
               (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
           }));
-          setFollowUps(formattedMockFollowUps);
+          const uniqueMockMap = new Map<string | number, FollowUp>();
+          formattedMockFollowUps.forEach((f: any) => {
+            const compositeKey =
+              f.id ?? `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+            uniqueMockMap.set(compositeKey, f);
+          });
+          setFollowUps(Array.from(uniqueMockMap.values()));
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -957,7 +969,7 @@ export default function FollowUpTracker() {
 
                 return (
                   <Card
-                    key={followUp.id}
+                    key={followUp.id ?? `${followUp.type || (followUp.vc_id || followUp.vc_round_title || followUp.investor_name ? "vc" : "lead")}-${followUp.lead_id ?? ""}-${(followUp as any).vc_id ?? ""}-${followUp.step_id ?? followUp.message_id ?? ""}-${followUp.created_at}`}
                     className={`hover:shadow-md transition-shadow border-l-4 ${
                       isAssignedToMe
                         ? isFollowUpOverdue
