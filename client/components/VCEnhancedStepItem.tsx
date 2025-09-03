@@ -747,15 +747,6 @@ export function VCEnhancedStepItem({
                                         </Button>
                                       </>
                                     )}
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      onClick={() => handleFollowUp(message.id)}
-                                      className="text-blue-600 hover:text-blue-700"
-                                    >
-                                      <Reply className="w-3 h-3 mr-1" />
-                                      Follow-up
-                                    </Button>
                                   </>
                                 )}
                               </div>
@@ -938,64 +929,6 @@ export function VCEnhancedStepItem({
                     </div>
                   )}
 
-                  {/* Follow-up Creation Section */}
-                  {createFollowUp && (
-                    <div className="border-t pt-4">
-                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                        <Label className="text-sm font-medium mb-3 block">
-                          Create Follow-up Task
-                        </Label>
-                        <div className="space-y-3">
-                          <Textarea
-                            placeholder="Follow-up description..."
-                            value={followUpNotes}
-                            onChange={(e) => setFollowUpNotes(e.target.value)}
-                            className="min-h-[60px]"
-                          />
-                          <div className="grid grid-cols-2 gap-3">
-                            <Select
-                              value={followUpAssignTo}
-                              onValueChange={setFollowUpAssignTo}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Assign to..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {teamMembers.map((member) => (
-                                  <SelectItem
-                                    key={member.id}
-                                    value={member.id.toString()}
-                                  >
-                                    {member.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              type="date"
-                              value={followUpDueDate}
-                              onChange={(e) =>
-                                setFollowUpDueDate(e.target.value)
-                              }
-                            />
-                          </div>
-                          <div className="flex space-x-2">
-                            <Button size="sm" onClick={handleCreateFollowUp}>
-                              Create Follow-up
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setCreateFollowUp(false)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* Message Input Section */}
                   <div className="border-t pt-4">
                     <div className="space-y-3">
@@ -1005,6 +938,71 @@ export function VCEnhancedStepItem({
                         placeholder="Type your message with rich formatting..."
                         className="min-h-[100px] border-gray-300"
                       />
+
+                      {/* Create Follow-up Checkbox */}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          id="create_follow_up_checkbox_"
+                          type="checkbox"
+                          checked={createFollowUp}
+                          onChange={(e) => setCreateFollowUp(e.target.checked)}
+                        />
+                        <Label htmlFor="create_follow_up_checkbox_" className="text-sm">Create follow-up</Label>
+                      </div>
+
+                      {/* Follow-up Creation Section (below editor) */}
+                      {createFollowUp && (
+                        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                          <Label className="text-sm font-medium mb-3 block">
+                            Create Follow-up Task
+                          </Label>
+                          <div className="space-y-3">
+                            <Textarea
+                              placeholder="Follow-up description..."
+                              value={followUpNotes}
+                              onChange={(e) => setFollowUpNotes(e.target.value)}
+                              className="min-h-[60px]"
+                            />
+                            <div className="grid grid-cols-2 gap-3">
+                              <Select
+                                value={followUpAssignTo}
+                                onValueChange={setFollowUpAssignTo}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Assign to..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {teamMembers.map((member) => (
+                                    <SelectItem
+                                      key={member.id}
+                                      value={member.id.toString()}
+                                    >
+                                      {member.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Input
+                                type="date"
+                                value={followUpDueDate}
+                                onChange={(e) => setFollowUpDueDate(e.target.value)}
+                              />
+                            </div>
+                            <div className="flex space-x-2">
+                              <Button size="sm" onClick={handleCreateFollowUp}>
+                                Create Follow-up
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setCreateFollowUp(false)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
@@ -1027,9 +1025,7 @@ export function VCEnhancedStepItem({
                         <Button
                           size="sm"
                           onClick={handleSendMessage}
-                          disabled={
-                            !newMessage.trim() && stagedAttachments.length === 0
-                          }
+                          disabled={!newMessage.trim() && stagedAttachments.length === 0}
                         >
                           <Send className="w-4 h-4 mr-1" />
                           Send
