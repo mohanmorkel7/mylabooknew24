@@ -112,6 +112,85 @@ const investorCategoryColors = {
   individual: "bg-gray-100 text-gray-700",
 };
 
+function formatRoundStage(stage?: string | null): string {
+  if (!stage) return "Unknown";
+  return stage
+    .toString()
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function StatusDot({ status }: { status?: string | null }) {
+  const color =
+    status === "completed" || status === "won"
+      ? "bg-green-500"
+      : status === "in-progress"
+      ? "bg-blue-500"
+      : status === "lost"
+      ? "bg-red-500"
+      : "bg-gray-400";
+  return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
+}
+
+function VCLinkedFundRaises({ vcId }: { vcId: number }) {
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["fund-raises-by-vc", vcId],
+    queryFn: async () => {
+      try {
+        const rows = await apiClient.request<any[]>(`/fund-raises/by-vc/${vcId}`);
+        return Array.isArray(rows) ? rows : [];
+      } catch (e) {
+        return [];
+      }
+    },
+    staleTime: 30000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="text-xs text-gray-500">Loading tagged fund raises...</div>
+      </div>
+    );
+  }
+
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm font-medium text-gray-800">Tagged Fund Raises</div>
+        <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+          {data.length}
+        </Badge>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {data.slice(0, 6).map((fr: any) => (
+          <div
+            key={fr.id}
+            className="inline-flex items-center gap-2 px-2.5 py-1.5 bg-white border border-gray-200 rounded-full shadow-sm"
+            title={`${formatRoundStage(fr.round_stage)} — ${fr.investor_name || "Investor"}`}
+         >
+            <StatusDot status={fr.status} />
+            <span className="text-xs font-medium text-gray-700">
+              {formatRoundStage(fr.round_stage)}
+            </span>
+            <span className="text-xs text-gray-400">•</span>
+            <span className="text-xs text-gray-600 truncate max-w-[140px]">
+              {fr.investor_name || "Investor"}
+            </span>
+          </div>
+        ))}
+        {data.length > 6 && (
+          <span className="text-xs text-gray-500">+{data.length - 6} more</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function VCDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
