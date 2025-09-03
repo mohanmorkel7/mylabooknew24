@@ -1380,15 +1380,17 @@ export default function FundRaiseDashboard() {
                                           )}
                                         </div>
                                       </div>
-                                      <Badge
-                                        className={
-                                          statusColors[internalStatus] || ""
-                                        }
-                                      >
-                                        {(fr.ui_status || internalStatus)
-                                          .toString()
-                                          .replace("-", " ")}
-                                      </Badge>
+                                      {!fr.investor_status && (
+                                        <Badge
+                                          className={
+                                            statusColors[internalStatus] || ""
+                                          }
+                                        >
+                                          {(fr.ui_status || internalStatus)
+                                            .toString()
+                                            .replace("-", " ")}
+                                        </Badge>
+                                      )}
                                     </div>
                                     <div className="hidden md:flex items-center gap-2">
                                       <div className="w-32 bg-gray-200 rounded h-2">
