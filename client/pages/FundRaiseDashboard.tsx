@@ -584,7 +584,7 @@ export default function FundRaiseDashboard() {
                                   className="absolute inset-0 grid"
                                   style={{
                                     paddingTop: "0px",
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)`,
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
                                   }}
                                 >
                                   {(vcProgressData || []).map(
