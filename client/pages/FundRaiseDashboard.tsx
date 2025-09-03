@@ -1298,9 +1298,12 @@ export default function FundRaiseDashboard() {
                         <AccordionItem key={k} value={k}>
                           <AccordionTrigger>
                             <div className="flex items-center gap-3">
-                              <span className="font-medium">
-                                {STAGE_LABELS[k] || k}
-                              </span>
+                              <div className="flex items-center gap-2">
+                                <Target className="w-4 h-4 text-blue-500" />
+                                <span className="font-medium">
+                                  {STAGE_LABELS[k] || k}
+                                </span>
+                              </div>
                               <Badge variant="secondary">{list.length}</Badge>
                             </div>
                           </AccordionTrigger>
