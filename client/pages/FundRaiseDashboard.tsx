@@ -545,7 +545,7 @@ export default function FundRaiseDashboard() {
                           All Fund Raises Progress Overview (
                           {(vcProgressData || []).length} rounds)
                         </div>
-                        <div className="w-full overflow-x-auto overflow-y-hidden">
+                        <div className="w-full overflow-x-auto">
                           <div className="w-full">
                             <div
                               className="flex"
