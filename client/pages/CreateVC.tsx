@@ -1535,7 +1535,7 @@ export default function CreateVC() {
                       handleInputChange("lead_source", value)
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className={errors.lead_source ? "border-red-500" : ""}>
                       <SelectValue placeholder="Select how you found this lead" />
                     </SelectTrigger>
                     <SelectContent>
