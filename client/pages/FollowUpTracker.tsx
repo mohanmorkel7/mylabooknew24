@@ -618,35 +618,44 @@ export default function FollowUpTracker() {
   };
 
   // Filter follow-ups based on search and filters
-  const filteredFollowUps = followUps.filter(baseFilter);
+  const filteredFollowUps = React.useMemo(() => {
+    return followUps.filter(baseFilter);
+  }, [followUps, searchTerm, statusFilter, assigneeFilter, typeFilter, dateFrom, dateTo, user?.role]);
 
   // Tab-specific filtered follow-ups
   const allFollowUps = filteredFollowUps;
-  const pendingFollowUps = filteredFollowUps.filter(
-    (f) => f.status === "pending",
+  const pendingFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.status === "pending"),
+    [filteredFollowUps],
   );
-  const inProgressFollowUps = filteredFollowUps.filter(
-    (f) => f.status === "in_progress",
+  const inProgressFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.status === "in_progress"),
+    [filteredFollowUps],
   );
-  const completedFollowUps = filteredFollowUps.filter(
-    (f) => f.status === "completed",
+  const completedFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.status === "completed"),
+    [filteredFollowUps],
   );
-  const overdueFollowUps = filteredFollowUps.filter((f) => {
-    const isOverdueStatus =
-      f.status === "overdue" ||
-      (f.status !== "completed" && f.due_date && isOverdue(f.due_date));
-    return isOverdueStatus;
-  });
+  const overdueFollowUps = React.useMemo(() => {
+    return filteredFollowUps.filter((f) => {
+      const isOverdueStatus =
+        f.status === "overdue" ||
+        (f.status !== "completed" && f.due_date && isOverdue(f.due_date));
+      return isOverdueStatus;
+    });
+  }, [filteredFollowUps]);
 
-  const myFollowUps = filteredFollowUps.filter(
-    (f) => f.assigned_user_name === user?.name,
+  const myFollowUps = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.assigned_user_name === user?.name),
+    [filteredFollowUps, user?.name],
   );
-  const assignedByMe = filteredFollowUps.filter(
-    (f) => f.created_by_name === user?.name,
+  const assignedByMe = React.useMemo(
+    () => filteredFollowUps.filter((f) => f.created_by_name === user?.name),
+    [filteredFollowUps, user?.name],
   );
 
-  // Get current tab's follow-ups
-  const getCurrentTabFollowUps = () => {
+  // Current tab's follow-ups (derived)
+  const currentTabFollowUps = React.useMemo(() => {
     switch (activeTab) {
       case "pending":
         return pendingFollowUps;
@@ -663,9 +672,7 @@ export default function FollowUpTracker() {
       default:
         return allFollowUps;
     }
-  };
-
-  const currentTabFollowUps = getCurrentTabFollowUps();
+  }, [activeTab, allFollowUps, pendingFollowUps, inProgressFollowUps, completedFollowUps, overdueFollowUps, myFollowUps, assignedByMe]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
