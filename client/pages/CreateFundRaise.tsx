@@ -207,25 +207,24 @@ export default function CreateFundRaise() {
         updated_by: parseInt(user?.id || "1"),
       };
 
-      await Promise.all(
-        queueItems.map(async (it) => {
-          const matched = (vcList || []).find(
-            (vc: any) =>
-              (vc.investor_name || "").trim() === it.vc_investor.trim(),
-          );
-          const linkedVcId: number | null = matched?.id ?? null;
-          await apiClient.request("/fund-raises", {
-            method: "POST",
-            body: JSON.stringify({
-              ...base,
-              vc_id: linkedVcId,
-              investor_name: it.vc_investor,
-              investor_status: it.investor_status,
-              fund_mn: it.fund_mn || null,
-            }),
-          });
-        }),
-      );
+      const items = queueItems.map((it) => {
+        const matched = (vcList || []).find(
+          (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+        );
+        const linkedVcId: number | null = matched?.id ?? null;
+        return {
+          ...base,
+          vc_id: linkedVcId,
+          investor_name: it.vc_investor,
+          investor_status: it.investor_status,
+          fund_mn: it.fund_mn || null,
+        };
+      });
+
+      await apiClient.request("/fund-raises", {
+        method: "POST",
+        body: JSON.stringify(items),
+      });
 
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
       navigate("/fundraise");
