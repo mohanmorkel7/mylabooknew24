@@ -673,7 +673,7 @@ export default function FundRaiseDashboard() {
                                 <div
                                   className="absolute left-0 right-0 bottom-0 translate-y-full grid pointer-events-none"
                                   style={{
-                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, 1fr)`,
+                                    gridTemplateColumns: `repeat(${(vcProgressData || []).length}, ${colWidth}px)`,
                                   }}
                                 >
                                   {(vcProgressData || []).map(
