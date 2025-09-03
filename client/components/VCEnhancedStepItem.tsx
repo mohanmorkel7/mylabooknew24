@@ -210,10 +210,16 @@ export function VCEnhancedStepItem({
   const [followUpNotes, setFollowUpNotes] = useState("");
   const [followUpAssignTo, setFollowUpAssignTo] = useState("");
   const [followUpDueDate, setFollowUpDueDate] = useState(() => {
-    // Default to 3 days from now
+    // Default to 3 days from now with time
     const defaultDate = new Date();
     defaultDate.setDate(defaultDate.getDate() + 3);
-    return defaultDate.toISOString().split("T")[0];
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    const yyyy = defaultDate.getFullYear();
+    const mm = pad(defaultDate.getMonth() + 1);
+    const dd = pad(defaultDate.getDate());
+    const hh = pad(defaultDate.getHours());
+    const min = pad(defaultDate.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
   });
 
   // Edit message state
