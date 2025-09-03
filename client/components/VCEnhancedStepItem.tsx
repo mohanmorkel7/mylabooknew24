@@ -62,7 +62,7 @@ import {
   Edit,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
-import { useCreateFollowUp, useUsers } from "@/hooks/useApi";
+import { useCreateFollowUp, useUsers, useUpdateFollowUpStatus } from "@/hooks/useApi";
 import { apiClient } from "@/lib/api";
 import { formatToISTDateTime } from "@/lib/dateUtils";
 
