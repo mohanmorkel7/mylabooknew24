@@ -1663,7 +1663,7 @@ export default function CreateVC() {
                         handleInputChange("industry" as any, value)
                       }
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.industry ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select Sector Focus" />
                       </SelectTrigger>
                       <SelectContent>
