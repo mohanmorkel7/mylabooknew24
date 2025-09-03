@@ -24,9 +24,24 @@ export const INVESTOR_FEEDBACK = [
   { value: "potential_future", label: "Potential Future" },
 ];
 
+// VC lead source options
+export const VC_LEAD_SOURCES = [
+  { value: "linkedin_outbound", label: "LinkedIn - Outbound" },
+  { value: "linkedin_inbound", label: "LinkedIn - Inbound" },
+  { value: "email_outbound", label: "Email - Outbound" },
+  { value: "email_inbound", label: "Email - Inbound" },
+  { value: "call_outbound", label: "Call - Outbound" },
+  { value: "call_inbound", label: "Call - Inbound" },
+  { value: "reference", label: "Reference" },
+  { value: "general_list", label: "General List" },
+] as const;
+
 const SECTOR_FOCUS_MAP = new Map(SECTOR_FOCUS.map((s) => [s.value, s.label]));
 const INVESTOR_FEEDBACK_MAP = new Map(
   INVESTOR_FEEDBACK.map((s) => [s.value, s.label]),
+);
+const VC_LEAD_SOURCE_MAP = new Map(
+  VC_LEAD_SOURCES.map((s) => [s.value, s.label]),
 );
 
 export function getSectorLabel(value?: string | null): string {
@@ -50,6 +65,21 @@ export function getInvestorFeedbackLabel(value?: string | null): string {
     INVESTOR_FEEDBACK_MAP.get(key) ||
     key
       .replace(/_/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}
+
+export function getSourceLabel(value?: string | null): string {
+  if (!value) return "";
+  const key = value.trim();
+  return (
+    VC_LEAD_SOURCE_MAP.get(key) ||
+    key
+      .replace(/_/g, " ")
+      .replace(/-/g, " ")
       .replace(/\s+/g, " ")
       .trim()
       .toLowerCase()
