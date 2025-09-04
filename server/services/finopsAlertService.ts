@@ -267,30 +267,9 @@ class FinOpsAlertService {
    */
   private async checkOverdueRepeatAlerts(): Promise<void> {
     try {
-      // Load config (create defaults if missing)
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS finops_settings (
-          id SERIAL PRIMARY KEY,
-          initial_overdue_call_delay_minutes INTEGER DEFAULT 0,
-          repeat_overdue_call_interval_minutes INTEGER DEFAULT 10,
-          only_repeat_when_single_overdue BOOLEAN DEFAULT false,
-          updated_at TIMESTAMP DEFAULT NOW()
-        )
-      `);
-      const cfgRes = await pool.query(
-        `SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`,
-      );
-      const cfg = cfgRes.rows[0] || {
-        initial_overdue_call_delay_minutes: 0,
-        repeat_overdue_call_interval_minutes: 10,
-        only_repeat_when_single_overdue: false,
-      };
-      const initialDelay = Number(cfg.initial_overdue_call_delay_minutes || 0);
-      const repeatInterval = Math.max(
-        1,
-        Number(cfg.repeat_overdue_call_interval_minutes || 10),
-      );
-      const onlySingle = Boolean(cfg.only_repeat_when_single_overdue || false);
+      // Default behavior: check every minute, no initial delay, no single-overdue constraint
+      const initialDelay = 0;
+      const repeatInterval = 1;
 
       const result = await pool.query(
         `
@@ -309,6 +288,7 @@ class FinOpsAlertService {
         WHERE st.status = 'overdue'
           AND t.is_active = true
           AND t.deleted_at IS NULL
+          AND st.scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
       `,
       );
 
@@ -394,16 +374,6 @@ class FinOpsAlertService {
 
         // Repeat calls with configured interval
         if (minutes >= initialDelay + repeatInterval) {
-          // Enforce optional single-overdue condition per task (applies to repeats only)
-          if (onlySingle) {
-            const c = await pool.query(
-              `SELECT COUNT(*)::int AS cnt FROM finops_subtasks WHERE task_id = $1 AND status = 'overdue'`,
-              [row.task_id],
-            );
-            if ((c.rows[0]?.cnt ?? 0) !== 1) {
-              continue;
-            }
-          }
           const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
           const alertKey = `replica_down_overdue_${bucket}`;
 
