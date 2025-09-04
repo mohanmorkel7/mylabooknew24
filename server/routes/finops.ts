@@ -524,9 +524,10 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
 
         for (const subtask of incoming) {
           const rawId = (subtask as any).id;
-          const numericId = rawId !== undefined && rawId !== null && !isNaN(Number(rawId))
-            ? Number(rawId)
-            : NaN;
+          const numericId =
+            rawId !== undefined && rawId !== null && !isNaN(Number(rawId))
+              ? Number(rawId)
+              : NaN;
 
           if (!isNaN(numericId) && existingIds.has(numericId)) {
             incomingIds.add(numericId);
@@ -593,7 +594,9 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
 
         await client.query("COMMIT");
 
-        console.log(`FinOps task ${taskId} updated with preserved subtask statuses`);
+        console.log(
+          `FinOps task ${taskId} updated with preserved subtask statuses`,
+        );
 
         // Log activity
         await logActivity(taskId, null, "updated", "User", "Task updated");
