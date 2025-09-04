@@ -370,7 +370,7 @@ const transformDbNotifications = (
     const members = getMembersForTask(dbNotif.task_id, notificationType);
 
     const transformed = {
-      id: `${dbNotif.id}_${index}`,
+      id: String(dbNotif.id),
       type: notificationType,
       title:
         realTimeTitle && realTimeTitle !== dbNotif.details
