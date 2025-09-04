@@ -166,6 +166,8 @@ class FinOpsAlertService {
    */
   async checkSLAAlerts(): Promise<void> {
     try {
+      const { isDatabaseAvailable } = await import("../database/connection");
+      if (!(await isDatabaseAvailable())) return;
       console.log("Starting SLA alert check...");
 
       // Get all active tasks with their subtasks
