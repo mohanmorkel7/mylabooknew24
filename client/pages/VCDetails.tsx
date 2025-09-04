@@ -65,6 +65,7 @@ import {
   formatPhoneDisplay,
   formatPhoneHref,
 } from "@/lib/constants";
+import { toast } from "@/components/ui/use-toast";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -318,11 +319,11 @@ export default function VCDetails() {
 
   const handleAddStep = async () => {
     if (!newStep.name.trim()) {
-      alert("Step name is required");
+      toast({ title: "Missing name", description: "Step name is required.", variant: "destructive" });
       return;
     }
     if (!newStep.description.trim()) {
-      alert("Step description is required");
+      toast({ title: "Missing description", description: "Step description is required.", variant: "destructive" });
       return;
     }
 
@@ -340,7 +341,7 @@ export default function VCDetails() {
       await createStepMutation.mutateAsync(stepData);
     } catch (error) {
       console.error("Failed to create step:", error);
-      alert("Failed to create step. Please try again.");
+      toast({ title: "Create failed", description: "Failed to create step. Please try again.", variant: "destructive" });
     }
   };
 
@@ -364,10 +365,10 @@ export default function VCDetails() {
     try {
       await deleteVCStepMutation.mutateAsync(stepId);
       refetchSteps();
-      alert("Step deleted successfully!");
+      toast({ title: "Step deleted", description: "The step was deleted successfully." });
     } catch (error) {
       console.error("Failed to delete step:", error);
-      alert("Failed to delete step. Please try again.");
+      toast({ title: "Delete failed", description: "Failed to delete step. Please try again.", variant: "destructive" });
     }
   };
 
