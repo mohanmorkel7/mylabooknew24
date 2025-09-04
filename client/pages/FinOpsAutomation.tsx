@@ -49,6 +49,7 @@ import {
   Timer,
   Target,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import ClientBasedFinOpsTaskManager from "@/components/ClientBasedFinOpsTaskManager";
 import FinOpsNotifications from "@/components/FinOpsNotifications";
@@ -84,10 +85,10 @@ interface ProcessStep {
 }
 
 function FinOpsConfigButton() {
-  const [open, setOpen] = React.useState(false);
-  const [initialDelay, setInitialDelay] = React.useState(0);
-  const [repeatInterval, setRepeatInterval] = React.useState(10);
-  const [onlySingle, setOnlySingle] = React.useState(false);
+  const [open, setOpen] = useState(false);
+  const [initialDelay, setInitialDelay] = useState(0);
+  const [repeatInterval, setRepeatInterval] = useState(10);
+  const [onlySingle, setOnlySingle] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: config } = useQuery({
@@ -96,7 +97,7 @@ function FinOpsConfigButton() {
     enabled: open,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (config) {
       setInitialDelay(Number((config as any).initial_overdue_call_delay_minutes || 0));
       setRepeatInterval(Number((config as any).repeat_overdue_call_interval_minutes || 10));
