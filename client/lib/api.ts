@@ -1029,6 +1029,21 @@ export class ApiClient {
     return this.request("/finops/scheduler-status");
   }
 
+  async getFinOpsConfig() {
+    return this.request("/finops/config");
+  }
+
+  async updateFinOpsConfig(data: {
+    initial_overdue_call_delay_minutes: number;
+    repeat_overdue_call_interval_minutes: number;
+    only_repeat_when_single_overdue: boolean;
+  }) {
+    return this.request("/finops/config", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
   async getFinOpsTaskSummary(taskId: number) {
     return this.request(`/finops/tasks/${taskId}/summary`);
   }
