@@ -818,12 +818,31 @@ class FinOpsAlertService {
     minutesData: number,
   ): Promise<void> {
     try {
+      const level = alertType.includes("overdue")
+        ? "critical"
+        : alertType.includes("warning")
+          ? "warning"
+          : "info";
+      const message = `${alertType} • ${minutesData} min`;
+      const recipsArray = recipients
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const metadata = { minutes_data: minutesData } as any;
       await pool.query(
         `
-        INSERT INTO finops_alerts (task_id, subtask_id, alert_type, recipients, minutes_data, status)
-        VALUES ($1, $2, $3, $4, $5, 'sent')
+        INSERT INTO finops_alerts (task_id, subtask_id, alert_type, alert_level, message, recipients, metadata, sent_at, is_active)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, NOW(), true)
       `,
-        [taskId, subtaskId, alertType, recipients, minutesData],
+        [
+          taskId,
+          subtaskId,
+          alertType,
+          level,
+          message,
+          JSON.stringify(recipsArray),
+          JSON.stringify(metadata),
+        ],
       );
     } catch (error) {
       console.error("Error logging alert:", error);
