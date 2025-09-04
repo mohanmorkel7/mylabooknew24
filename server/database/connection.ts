@@ -384,6 +384,24 @@ export async function initializeDatabase() {
       );
     }
 
+    // Setup DB-side FinOps scheduler (pg_cron if available)
+    try {
+      const dbSchedulerPath = path.join(
+        __dirname,
+        "setup-finops-db-scheduler.sql",
+      );
+      if (fs.existsSync(dbSchedulerPath)) {
+        const schedulerSql = fs.readFileSync(dbSchedulerPath, "utf8");
+        await client.query(schedulerSql);
+        console.log("DB-side FinOps scheduler setup applied successfully");
+      }
+    } catch (dbSchedulerError) {
+      console.log(
+        "DB-side FinOps scheduler already applied or error:",
+        (dbSchedulerError as any).message,
+      );
+    }
+
     // Always try to apply Fund Raises table migration
     try {
       const fundRaisesMigrationPath = path.join(
