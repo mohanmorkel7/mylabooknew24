@@ -156,8 +156,8 @@ export default function FinOpsAutomation() {
   const notifications = Array.isArray(notificationsRaw)
     ? notificationsRaw
     : Array.isArray((notificationsRaw as any)?.notifications)
-    ? (notificationsRaw as any).notifications
-    : [];
+      ? (notificationsRaw as any).notifications
+      : [];
 
   const triggerAutomationMutation = useMutation({
     mutationFn: (automationId: number) =>
@@ -311,11 +311,14 @@ export default function FinOpsAutomation() {
       )}
 
       {/* Alert for Critical Notifications */}
-      {notifications.filter((n: any) => n.priority === "critical").length > 0 && (
+      {notifications.filter((n: any) => n.priority === "critical").length >
+        0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            You have {notifications.filter((n: any) => n.priority === "critical").length} critical alert(s) requiring immediate attention.
+            You have{" "}
+            {notifications.filter((n: any) => n.priority === "critical").length}{" "}
+            critical alert(s) requiring immediate attention.
             <Button variant="link" className="p-0 h-auto ml-2">
               View Details <ArrowRight className="w-3 h-3 ml-1" />
             </Button>

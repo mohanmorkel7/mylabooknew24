@@ -28,7 +28,7 @@ class FinOpsScheduler {
       },
     );
 
-cron.schedule(
+    cron.schedule(
       "*/5 * * * *",
       async () => {
         console.log("Running SLA monitoring check...");
