@@ -1,7 +1,11 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
-import { getSourceLabel, formatPhoneDisplay, formatPhoneHref } from "@/lib/constants";
+import {
+  getSourceLabel,
+  formatPhoneDisplay,
+  formatPhoneHref,
+} from "@/lib/constants";
 import { apiClient } from "@/lib/api";
 import { useUpdateFundRaiseStep } from "@/hooks/useApi";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
@@ -757,20 +761,26 @@ export default function FundRaiseDetails() {
           <Card>
             <CardHeader>
               <CardTitle>Investor Information</CardTitle>
-              <CardDescription>Primary contact and investor details</CardDescription>
+              <CardDescription>
+                Primary contact and investor details
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="space-y-2">
                 {vcData.investor_name && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Investor</span>
-                    <span className="text-gray-900">{vcData.investor_name}</span>
+                    <span className="text-gray-900">
+                      {vcData.investor_name}
+                    </span>
                   </div>
                 )}
                 {getPrimaryContact(vcData)?.contact_name && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Contact</span>
-                    <span className="text-gray-900">{getPrimaryContact(vcData)?.contact_name}</span>
+                    <span className="text-gray-900">
+                      {getPrimaryContact(vcData)?.contact_name}
+                    </span>
                   </div>
                 )}
                 {getPrimaryContact(vcData)?.email && (
@@ -796,26 +806,34 @@ export default function FundRaiseDetails() {
                   </div>
                 )}
               </div>
-              {Array.isArray(vcData.investors) && vcData.investors.length > 0 && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="text-xs font-medium text-gray-600 mb-2">Investor Status Queue</div>
-                    <div className="space-y-2">
-                      {vcData.investors.map((inv: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between">
-                          <div className="text-gray-900 truncate pr-2">{inv.investor_name || inv.vc_id}</div>
-                          {inv.investor_status && (
-                            <Badge variant="secondary" className="text-xs">
-                              {String(inv.investor_status)}
-                            </Badge>
-                          )}
-                        </div>
-                      ))}
+              {Array.isArray(vcData.investors) &&
+                vcData.investors.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">
+                        Investor Status Queue
+                      </div>
+                      <div className="space-y-2">
+                        {vcData.investors.map((inv: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="text-gray-900 truncate pr-2">
+                              {inv.investor_name || inv.vc_id}
+                            </div>
+                            {inv.investor_status && (
+                              <Badge variant="secondary" className="text-xs">
+                                {String(inv.investor_status)}
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
             </CardContent>
           </Card>
 
