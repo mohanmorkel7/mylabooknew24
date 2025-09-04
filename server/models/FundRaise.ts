@@ -189,11 +189,17 @@ export class FundRaiseRepository {
     const values: any[] = [];
     let i = 1;
     for (const [key, value] of Object.entries(toUpdate)) {
-      if (value !== undefined) {
+      if (value === undefined) continue;
+      if (key === "investors") {
+        const jsonVal = typeof value === "string" ? value : JSON.stringify(value ?? []);
         fields.push(`${key} = $${i}`);
-        values.push(value);
+        values.push(jsonVal);
         i++;
+        continue;
       }
+      fields.push(`${key} = $${i}`);
+      values.push(value);
+      i++;
     }
     if (fields.length === 0) return this.findById(id);
     values.push(id);
