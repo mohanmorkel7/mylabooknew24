@@ -458,7 +458,7 @@ export default function FundRaiseDetails() {
               </Badge>
             </div>
             <p className="text-gray-600 mt-1">Fund Raise Details & Pipeline</p>
-            <div className="mt-3">
+            <div className="hidden">
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-700">
                   Progress:
@@ -718,7 +718,7 @@ export default function FundRaiseDetails() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Funding Pipeline</CardTitle>
+                  <CardTitle>{`${vcData.investor_name || "Investor"} Funding Pipeline`}</CardTitle>
                   <CardDescription>Manage steps and team chat</CardDescription>
                 </div>
               </div>
