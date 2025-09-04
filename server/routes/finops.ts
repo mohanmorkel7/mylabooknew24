@@ -746,7 +746,11 @@ async function sendReplicaDownAlertOnce(
     );
 
     if (reserve.rows.length === 0) {
-      console.log("Direct-call skip (already sent)", { taskId, subtaskId, alert_key: "replica_down_overdue" });
+      console.log("Direct-call skip (already sent)", {
+        taskId,
+        subtaskId,
+        alert_key: "replica_down_overdue",
+      });
       return;
     }
 
