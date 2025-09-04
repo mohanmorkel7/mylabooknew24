@@ -222,11 +222,18 @@ export default function FundRaiseEdit() {
       await queryClient.refetchQueries({ queryKey: ["fundraise", id] });
       await queryClient.refetchQueries({ queryKey: ["fundraise-edit", id] });
       await queryClient.refetchQueries({ queryKey: ["fund-raise-steps", id] });
-      toast({ title: "Fund Raise updated", description: "Changes saved successfully." });
+      toast({
+        title: "Fund Raise updated",
+        description: "Changes saved successfully.",
+      });
     },
     onError: () => {
-      toast({ title: "Update failed", description: "Failed to update Fund Raise.", variant: "destructive" });
-    }
+      toast({
+        title: "Update failed",
+        description: "Failed to update Fund Raise.",
+        variant: "destructive",
+      });
+    },
   });
 
   const handleChange = (field: string, value: any) => {
@@ -303,7 +310,11 @@ export default function FundRaiseEdit() {
       await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
       navigate(`/fundraise/${id}`);
     } catch (e) {
-      toast({ title: "Save failed", description: "Failed to save changes.", variant: "destructive" });
+      toast({
+        title: "Save failed",
+        description: "Failed to save changes.",
+        variant: "destructive",
+      });
     }
   };
 

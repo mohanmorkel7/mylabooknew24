@@ -191,7 +191,8 @@ export class FundRaiseRepository {
     for (const [key, value] of Object.entries(toUpdate)) {
       if (value === undefined) continue;
       if (key === "investors") {
-        const jsonVal = typeof value === "string" ? value : JSON.stringify(value ?? []);
+        const jsonVal =
+          typeof value === "string" ? value : JSON.stringify(value ?? []);
         fields.push(`${key} = $${i}`);
         values.push(jsonVal);
         i++;

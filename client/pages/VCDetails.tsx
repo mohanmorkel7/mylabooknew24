@@ -319,11 +319,19 @@ export default function VCDetails() {
 
   const handleAddStep = async () => {
     if (!newStep.name.trim()) {
-      toast({ title: "Missing name", description: "Step name is required.", variant: "destructive" });
+      toast({
+        title: "Missing name",
+        description: "Step name is required.",
+        variant: "destructive",
+      });
       return;
     }
     if (!newStep.description.trim()) {
-      toast({ title: "Missing description", description: "Step description is required.", variant: "destructive" });
+      toast({
+        title: "Missing description",
+        description: "Step description is required.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -341,7 +349,11 @@ export default function VCDetails() {
       await createStepMutation.mutateAsync(stepData);
     } catch (error) {
       console.error("Failed to create step:", error);
-      toast({ title: "Create failed", description: "Failed to create step. Please try again.", variant: "destructive" });
+      toast({
+        title: "Create failed",
+        description: "Failed to create step. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -365,10 +377,17 @@ export default function VCDetails() {
     try {
       await deleteVCStepMutation.mutateAsync(stepId);
       refetchSteps();
-      toast({ title: "Step deleted", description: "The step was deleted successfully." });
+      toast({
+        title: "Step deleted",
+        description: "The step was deleted successfully.",
+      });
     } catch (error) {
       console.error("Failed to delete step:", error);
-      toast({ title: "Delete failed", description: "Failed to delete step. Please try again.", variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete step. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

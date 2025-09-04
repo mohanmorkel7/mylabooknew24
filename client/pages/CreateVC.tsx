@@ -1360,11 +1360,18 @@ export default function CreateVC() {
         }
       }
 
-      toast({ title: "VC created", description: "New VC created successfully." });
+      toast({
+        title: "VC created",
+        description: "New VC created successfully.",
+      });
       navigate(`/vc/${result.data?.id || result.id}`);
     } catch (error) {
       console.error("Failed to create VC:", error);
-      toast({ title: "Create failed", description: "Failed to create VC. Please try again.", variant: "destructive" });
+      toast({
+        title: "Create failed",
+        description: "Failed to create VC. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -1452,11 +1459,17 @@ export default function CreateVC() {
 
       toast({
         title: currentDraftId ? "Draft updated" : "Draft saved",
-        description: currentDraftId ? "Draft updated successfully." : "VC data saved as draft.",
+        description: currentDraftId
+          ? "Draft updated successfully."
+          : "VC data saved as draft.",
       });
     } catch (error) {
       console.error("Failed to save partial VC:", error);
-      toast({ title: "Save failed", description: "Failed to save draft. Please try again.", variant: "destructive" });
+      toast({
+        title: "Save failed",
+        description: "Failed to save draft. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 

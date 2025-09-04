@@ -132,12 +132,19 @@ export default function FundRaiseDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
       queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
-      toast({ title: "Fund Raise deleted", description: "The fund raise has been deleted." });
+      toast({
+        title: "Fund Raise deleted",
+        description: "The fund raise has been deleted.",
+      });
       navigate("/fundraise");
     },
     onError: () => {
-      toast({ title: "Delete failed", description: "Failed to delete fund raise.", variant: "destructive" });
-    }
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete fund raise.",
+        variant: "destructive",
+      });
+    },
   });
 
   const [newStepDialog, setNewStepDialog] = useState(false);
@@ -249,7 +256,11 @@ export default function FundRaiseDetails() {
 
   const handleAddStep = async () => {
     if (!newStep.name.trim() || !newStep.description.trim()) {
-      toast({ title: "Missing fields", description: "Step name and description are required.", variant: "destructive" });
+      toast({
+        title: "Missing fields",
+        description: "Step name and description are required.",
+        variant: "destructive",
+      });
       return;
     }
     try {
@@ -295,9 +306,16 @@ export default function FundRaiseDetails() {
         method: "DELETE",
       });
       refetchSteps();
-      toast({ title: "Step deleted", description: "The step was deleted successfully." });
+      toast({
+        title: "Step deleted",
+        description: "The step was deleted successfully.",
+      });
     } catch (e) {
-      toast({ title: "Delete failed", description: "Failed to delete step.", variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete step.",
+        variant: "destructive",
+      });
     }
   };
 

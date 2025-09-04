@@ -369,10 +369,17 @@ export default function VCDashboard() {
       queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
       queryClient.invalidateQueries({ queryKey: ["my-vc-partial-saves"] });
       console.log("VC deleted successfully and queries invalidated");
-      toast({ title: "VC deleted", description: "The VC has been deleted successfully." });
+      toast({
+        title: "VC deleted",
+        description: "The VC has been deleted successfully.",
+      });
     } catch (error) {
       console.error("Failed to delete VC:", error);
-      toast({ title: "Delete failed", description: "Failed to delete VC. Please try again.", variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete VC. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -396,12 +403,19 @@ export default function VCDashboard() {
     try {
       await deleteVC.mutateAsync(partialSaveId);
       console.log(`Draft ${partialSaveName} deleted successfully`);
-      toast({ title: "Draft deleted", description: `${partialSaveName} has been deleted.` });
+      toast({
+        title: "Draft deleted",
+        description: `${partialSaveName} has been deleted.`,
+      });
       // Refresh partial saves
       refetchVCPartialSaves();
     } catch (error) {
       console.error("Failed to delete draft:", error);
-      toast({ title: "Delete failed", description: "Failed to delete draft. Please try again.", variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete draft. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -973,7 +987,12 @@ export default function VCDashboard() {
                             "Error resuming VC partial save:",
                             error,
                           );
-                          toast({ title: "Resume failed", description: "Error resuming draft. Please try again or create a new VC.", variant: "destructive" });
+                          toast({
+                            title: "Resume failed",
+                            description:
+                              "Error resuming draft. Please try again or create a new VC.",
+                            variant: "destructive",
+                          });
                         }
                       }}
                     >

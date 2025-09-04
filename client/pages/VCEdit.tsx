@@ -562,13 +562,20 @@ export default function VCEdit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vc", id] });
       queryClient.invalidateQueries({ queryKey: ["vcs"] });
-      toast({ title: "VC updated", description: "Changes saved successfully." });
+      toast({
+        title: "VC updated",
+        description: "Changes saved successfully.",
+      });
       navigate(`/vc/${id}`);
     },
     onError: (error: any) => {
       console.error("Update failed:", error);
       setErrors({ submit: "Failed to update VC. Please try again." });
-      toast({ title: "Update failed", description: "Failed to update VC. Please try again.", variant: "destructive" });
+      toast({
+        title: "Update failed",
+        description: "Failed to update VC. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -879,7 +886,11 @@ export default function VCEdit() {
       await updateVCMutation.mutateAsync(submitData);
     } catch (error) {
       console.error("Failed to update VC:", error);
-      toast({ title: "Update failed", description: "Failed to update VC. Please try again.", variant: "destructive" });
+      toast({
+        title: "Update failed",
+        description: "Failed to update VC. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

@@ -236,10 +236,17 @@ export default function CreateFundRaise() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
-      toast({ title: "Fund Raise created", description: "New fund raise created successfully." });
+      toast({
+        title: "Fund Raise created",
+        description: "New fund raise created successfully.",
+      });
       navigate("/fundraise");
     } catch (e) {
-      toast({ title: "Create failed", description: "Failed to create fund raise. Please try again.", variant: "destructive" });
+      toast({
+        title: "Create failed",
+        description: "Failed to create fund raise. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }
