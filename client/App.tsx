@@ -119,6 +119,7 @@ import DepartmentUploadTestPage from "@/pages/DepartmentUploadTestPage";
 import UserRoleDebugPage from "@/pages/UserRoleDebugPage";
 import NotFound from "@/pages/NotFound";
 import { OfflineIndicator } from "@/components/OfflineIndicator";
+import { Toaster } from "@/components/ui/toaster";
 
 // Protected Route Component
 function ProtectedRoute({
@@ -960,6 +961,7 @@ export default function App() {
             >
               <OfflineIndicator />
               <AppRoutes />
+              <Toaster />
             </React.Suspense>
           </BrowserRouter>
         </AuthProvider>
