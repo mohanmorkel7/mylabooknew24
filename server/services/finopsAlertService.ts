@@ -95,10 +95,10 @@ class FinOpsAlertService {
     const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
 
     const result = await pool.query(
-      `
-      SELECT azure_object_id, first_name, last_name, email
+    `
+      SELECT azure_object_id, sso_id, first_name, last_name, email
       FROM users
-      WHERE azure_object_id IS NOT NULL AND (
+      WHERE (
         LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
         OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
         OR LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))) = ANY($1)
@@ -111,7 +111,7 @@ class FinOpsAlertService {
     );
 
     const ids = result.rows
-      .map((r: any) => r.azure_object_id)
+      .map((r: any) => r.azure_object_id || r.sso_id)
       .filter((id: string | null) => !!id) as string[];
 
     // Visibility for names that didn't resolve to a user id
