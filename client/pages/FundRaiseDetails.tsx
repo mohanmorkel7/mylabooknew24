@@ -587,22 +587,42 @@ export default function FundRaiseDetails() {
                 <div>
                   <div className="grid grid-cols-2 gap-6">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-xs text-slate-500">Lead Source:</span>
+                      <span className="text-xs text-slate-500">
+                        Lead Source:
+                      </span>
                       <Badge variant="secondary" className="capitalize">
                         {getSourceLabel(vcData.lead_source)}
                       </Badge>
                       {vcData.lead_source_value && (
                         <span className="text-gray-900">
-                          {vcData.lead_source === "email" || vcData.lead_source?.startsWith("email_") ? (
-                            <a href={`mailto:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                          {vcData.lead_source === "email" ||
+                          vcData.lead_source?.startsWith("email_") ? (
+                            <a
+                              href={`mailto:${vcData.lead_source_value}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {vcData.lead_source_value}
                             </a>
-                          ) : vcData.lead_source === "phone" || vcData.lead_source === "cold-call" || vcData.lead_source?.startsWith("call_") ? (
-                            <a href={`tel:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                          ) : vcData.lead_source === "phone" ||
+                            vcData.lead_source === "cold-call" ||
+                            vcData.lead_source?.startsWith("call_") ? (
+                            <a
+                              href={`tel:${vcData.lead_source_value}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {vcData.lead_source_value}
                             </a>
                           ) : vcData.lead_source === "website" ? (
-                            <a href={vcData.lead_source_value.startsWith("http") ? vcData.lead_source_value : `https://${vcData.lead_source_value}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                            <a
+                              href={
+                                vcData.lead_source_value.startsWith("http")
+                                  ? vcData.lead_source_value
+                                  : `https://${vcData.lead_source_value}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
                               {vcData.lead_source_value}
                             </a>
                           ) : (
@@ -613,19 +633,35 @@ export default function FundRaiseDetails() {
                     </div>
                     <div className="flex items-center gap-2 justify-end">
                       <span className="text-xs text-slate-500">Status:</span>
-                      <Badge className={statusColors[vcData.status as keyof typeof statusColors]}>
-                        {vcData.status?.charAt(0).toUpperCase() + vcData.status?.slice(1).replace("-", " ")}
+                      <Badge
+                        className={
+                          statusColors[
+                            vcData.status as keyof typeof statusColors
+                          ]
+                        }
+                      >
+                        {vcData.status?.charAt(0).toUpperCase() +
+                          vcData.status?.slice(1).replace("-", " ")}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500">Priority:</span>
-                      <Badge className={priorityColors[vcData.priority_level as keyof typeof priorityColors]}>
-                        {vcData.priority_level?.charAt(0).toUpperCase() + vcData.priority_level?.slice(1)}
+                      <Badge
+                        className={
+                          priorityColors[
+                            vcData.priority_level as keyof typeof priorityColors
+                          ]
+                        }
+                      >
+                        {vcData.priority_level?.charAt(0).toUpperCase() +
+                          vcData.priority_level?.slice(1)}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 justify-end">
                       <span className="text-xs text-slate-500">Investor:</span>
-                      <span className="text-gray-900">{vcData.investor_name}</span>
+                      <span className="text-gray-900">
+                        {vcData.investor_name}
+                      </span>
                     </div>
                   </div>
                 </div>
