@@ -160,6 +160,9 @@ class FinOpsAlertService {
         await this.processTaskAlerts(task);
       }
 
+      // Additionally, trigger repeat escalations for items that remain overdue
+      await this.checkOverdueRepeatAlerts();
+
       console.log("SLA alert check completed");
     } catch (error) {
       console.error("Error in SLA alert check:", error);
@@ -256,6 +259,113 @@ class FinOpsAlertService {
       console.log(
         `Subtask ${subtask.id} has no start_time defined, cannot check for overdue status`,
       );
+    }
+  }
+
+  /**
+   * For subtasks that remain overdue, send repeat external alerts every 10 minutes
+   */
+  private async checkOverdueRepeatAlerts(): Promise<void> {
+    try {
+      const result = await pool.query(
+        `
+        SELECT
+          t.id as task_id,
+          t.task_name,
+          t.reporting_managers,
+          t.escalation_managers,
+          t.assigned_to,
+          st.id as subtask_id,
+          st.name as subtask_name,
+          st.updated_at as overdue_since,
+          st.status
+        FROM finops_subtasks st
+        JOIN finops_tasks t ON t.id = st.task_id
+        WHERE st.status = 'overdue'
+          AND t.is_active = true
+          AND t.deleted_at IS NULL
+      `,
+      );
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS finops_external_alerts (
+          id SERIAL PRIMARY KEY,
+          task_id INTEGER NOT NULL,
+          subtask_id INTEGER NOT NULL,
+          alert_key TEXT NOT NULL,
+          title TEXT,
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(task_id, subtask_id, alert_key)
+        )
+      `);
+
+      const now = new Date();
+      for (const row of result.rows) {
+        const since = row.overdue_since ? new Date(row.overdue_since) : null;
+        if (!since) continue;
+        const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
+        if (minutes < 10) continue; // start repeats after 10 minutes overdue
+
+        const bucket = Math.floor(minutes / 10); // 10-min buckets: 1,2,3...
+        const alertKey = `replica_down_overdue_${bucket}`;
+
+        const exists = await pool.query(
+          `SELECT id FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
+          [row.task_id, row.subtask_id, alertKey],
+        );
+        if (exists.rows.length) continue; // already sent for this bucket
+
+        const names = Array.from(
+          new Set([
+            ...this.parseManagers(row.reporting_managers),
+            ...this.parseManagers(row.escalation_managers),
+            ...this.parseManagers(row.assigned_to),
+          ]),
+        );
+        const userIds = await this.getUserIdsFromNames(names);
+
+        const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+
+        console.log("Direct-call payload (service repeat)", {
+          taskId: row.task_id,
+          subtaskId: row.subtask_id,
+          title,
+          minutes_overdue: minutes,
+          bucket,
+          user_ids: userIds,
+        });
+
+        const response = await fetch(
+          "https://pulsealerts.mylapay.com/direct-call",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: userIds }),
+          },
+        );
+
+        if (!response.ok) {
+          console.warn("Replica-down repeat alert failed:", response.status);
+          continue;
+        }
+
+        await pool.query(
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+          [row.task_id, row.subtask_id, alertKey, title],
+        );
+
+        await this.logAlert(
+          row.task_id,
+          String(row.subtask_id),
+          "sla_overdue_repeat",
+          "all",
+          minutes,
+        );
+      }
+    } catch (e) {
+      console.warn("Error in overdue repeat alerts:", (e as Error).message);
     }
   }
 
