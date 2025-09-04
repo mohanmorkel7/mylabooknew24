@@ -269,9 +269,15 @@ router.post("/", async (req: Request, res: Response) => {
         for (const raw of items) {
           if (raw.vc_id) {
             try {
-              const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [Number(raw.vc_id)]);
+              const check = await pool.query(
+                "SELECT 1 FROM vcs WHERE id = $1",
+                [Number(raw.vc_id)],
+              );
               if (check.rowCount === 0) {
-                created.push({ warning: "VC not found; skipped", vc_id: raw.vc_id });
+                created.push({
+                  warning: "VC not found; skipped",
+                  vc_id: raw.vc_id,
+                });
                 continue;
               }
             } catch {}
@@ -282,7 +288,9 @@ router.post("/", async (req: Request, res: Response) => {
         await pool.query("COMMIT");
         return res.status(201).json(created);
       } catch (e) {
-        try { await pool.query("ROLLBACK"); } catch {}
+        try {
+          await pool.query("ROLLBACK");
+        } catch {}
         throw e;
       }
     } else if (Array.isArray(body.investors) && body.investors.length > 1) {
@@ -302,9 +310,15 @@ router.post("/", async (req: Request, res: Response) => {
           };
           if (payload.vc_id) {
             try {
-              const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [Number(payload.vc_id)]);
+              const check = await pool.query(
+                "SELECT 1 FROM vcs WHERE id = $1",
+                [Number(payload.vc_id)],
+              );
               if (check.rowCount === 0) {
-                created.push({ warning: "VC not found; skipped", vc_id: payload.vc_id });
+                created.push({
+                  warning: "VC not found; skipped",
+                  vc_id: payload.vc_id,
+                });
                 continue;
               }
             } catch {}
@@ -315,7 +329,9 @@ router.post("/", async (req: Request, res: Response) => {
         await pool.query("COMMIT");
         return res.status(201).json(created);
       } catch (e) {
-        try { await pool.query("ROLLBACK"); } catch {}
+        try {
+          await pool.query("ROLLBACK");
+        } catch {}
         throw e;
       }
     }
