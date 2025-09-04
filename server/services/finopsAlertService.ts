@@ -330,16 +330,7 @@ class FinOpsAlertService {
         if (!since) continue;
         const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
 
-        // Enforce optional single-overdue condition per task
-        if (onlySingle) {
-          const c = await pool.query(
-            `SELECT COUNT(*)::int AS cnt FROM finops_subtasks WHERE task_id = $1 AND status = 'overdue'`,
-            [row.task_id],
-          );
-          if ((c.rows[0]?.cnt ?? 0) !== 1) continue;
-        }
-
-        // Initial delayed call
+        // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
         if (minutes >= initialDelay) {
           const initialKey = `replica_down_overdue_initial`;
           const doneInitial = await pool.query(
@@ -403,6 +394,16 @@ class FinOpsAlertService {
 
         // Repeat calls with configured interval
         if (minutes >= initialDelay + repeatInterval) {
+          // Enforce optional single-overdue condition per task (applies to repeats only)
+          if (onlySingle) {
+            const c = await pool.query(
+              `SELECT COUNT(*)::int AS cnt FROM finops_subtasks WHERE task_id = $1 AND status = 'overdue'`,
+              [row.task_id],
+            );
+            if ((c.rows[0]?.cnt ?? 0) !== 1) {
+              continue;
+            }
+          }
           const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
           const alertKey = `replica_down_overdue_${bucket}`;
 
@@ -764,7 +765,8 @@ class FinOpsAlertService {
             'order_position', st.order_position,
             'status', st.status,
             'started_at', st.started_at,
-            'completed_at', st.completed_at
+            'completed_at', st.completed_at,
+            'start_time', st.start_time
           ) ORDER BY st.order_position
         ) FILTER (WHERE st.id IS NOT NULL) as subtasks
       FROM finops_tasks t
