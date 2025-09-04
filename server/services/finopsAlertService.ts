@@ -116,18 +116,20 @@ class FinOpsAlertService {
 
     // Visibility for names that didn't resolve to a user id
     try {
-      const foundNames = new Set(
-        result.rows.map(
-          (r: any) =>
-            `${String(r.first_name || "")
-              .toLowerCase()
-              .replace(/\s+/g, " ")
-              .trim()} ${String(r.last_name || "")
-              .toLowerCase()
-              .replace(/\s+/g, " ")
-              .trim()}`,
-        ),
-      );
+      const foundNames = new Set<string>();
+      for (const r of result.rows) {
+        const fn = String(r.first_name || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const ln = String(r.last_name || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const full = `${fn}${ln ? " " + ln : ""}`.trim();
+        const initial = `${fn}${ln ? " " + ln.charAt(0) : ""}`.trim();
+        const emailLocal = String(r.email || "").toLowerCase().split("@")[0] || "";
+        foundNames.add(full);
+        if (initial) foundNames.add(initial);
+        if (emailLocal) {
+          foundNames.add(emailLocal);
+          foundNames.add(emailLocal.replace(/\./g, ""));
+        }
+      }
       const missing = normalized.filter((n) => !foundNames.has(n));
       if (missing.length) {
         console.warn("Missing Azure IDs for names (no user match):", missing);
