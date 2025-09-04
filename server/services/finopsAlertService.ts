@@ -95,12 +95,16 @@ class FinOpsAlertService {
     const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
 
     const result = await pool.query(
-      `
-      SELECT azure_object_id, first_name, last_name
+    `
+      SELECT azure_object_id, first_name, last_name, email
       FROM users
       WHERE azure_object_id IS NOT NULL AND (
         LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
         OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
+        OR LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))) = ANY($1)
+        OR REPLACE(LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))),' ','') = ANY($2)
+        OR LOWER(SPLIT_PART(COALESCE(email,''),'@',1)) = ANY($1)
+        OR REPLACE(LOWER(SPLIT_PART(COALESCE(email,''),'@',1)),'.','') = ANY($2)
       )
     `,
       [normalized, collapsed],
