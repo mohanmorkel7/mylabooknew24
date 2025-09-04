@@ -587,28 +587,47 @@ export default function FundRaiseDetails() {
                 <div>
                   <div className="space-y-3">
                     <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Lead Source:</span>
-                      <div className={`inline-flex items-center px-2.5 py-1 rounded-full border ${
-                        (sourceIcons as any)[vcData.lead_source]
-                          ? "border-blue-200 bg-blue-50 text-blue-700"
-                          : "border-gray-200 bg-gray-50 text-gray-700"
-                      }`}>
+                      <span className="font-medium text-gray-600">
+                        Lead Source:
+                      </span>
+                      <div
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full border ${
+                          (sourceIcons as any)[vcData.lead_source]
+                            ? "border-blue-200 bg-blue-50 text-blue-700"
+                            : "border-gray-200 bg-gray-50 text-gray-700"
+                        }`}
+                      >
                         <SourceIcon className="w-3 h-3 mr-1.5" />
-                        <span className="capitalize font-medium">{getSourceLabel(vcData.lead_source)}</span>
+                        <span className="capitalize font-medium">
+                          {getSourceLabel(vcData.lead_source)}
+                        </span>
                       </div>
                       {vcData.lead_source_value && (
                         <span className="text-gray-900">
-                          {vcData.lead_source === "email" || vcData.lead_source?.startsWith("email_") ? (
-                            <a href={`mailto:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                          {vcData.lead_source === "email" ||
+                          vcData.lead_source?.startsWith("email_") ? (
+                            <a
+                              href={`mailto:${vcData.lead_source_value}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {vcData.lead_source_value}
                             </a>
-                          ) : vcData.lead_source === "phone" || vcData.lead_source === "cold-call" || vcData.lead_source?.startsWith("call_") ? (
-                            <a href={`tel:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                          ) : vcData.lead_source === "phone" ||
+                            vcData.lead_source === "cold-call" ||
+                            vcData.lead_source?.startsWith("call_") ? (
+                            <a
+                              href={`tel:${vcData.lead_source_value}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {vcData.lead_source_value}
                             </a>
                           ) : vcData.lead_source === "website" ? (
                             <a
-                              href={vcData.lead_source_value.startsWith("http") ? vcData.lead_source_value : `https://${vcData.lead_source_value}`}
+                              href={
+                                vcData.lead_source_value.startsWith("http")
+                                  ? vcData.lead_source_value
+                                  : `https://${vcData.lead_source_value}`
+                              }
                               target="_blank"
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:underline"
@@ -779,7 +798,10 @@ export default function FundRaiseDetails() {
                       href={`tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`}
                       className="text-blue-600 hover:underline"
                     >
-                      {formatPhoneDisplay(getPrimaryContact(vcData)?.phone, vcData.country)}
+                      {formatPhoneDisplay(
+                        getPrimaryContact(vcData)?.phone,
+                        vcData.country,
+                      )}
                     </a>
                   </div>
                 )}
