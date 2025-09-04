@@ -9,7 +9,10 @@ export const handler: Handler = async () => {
       await initializeDatabase();
       console.log("[pulse-sync] Database initialized");
     } catch (dbErr: any) {
-      console.warn("[pulse-sync] Database init warning:", dbErr?.message || dbErr);
+      console.warn(
+        "[pulse-sync] Database init warning:",
+        dbErr?.message || dbErr,
+      );
     }
 
     // Ensure idempotency table exists
@@ -47,7 +50,8 @@ export const handler: Handler = async () => {
         )
       ORDER BY st.id DESC
       LIMIT 100
-    `);
+    `,
+    );
 
     let sent = 0;
     for (const row of overdue.rows) {
@@ -66,30 +70,52 @@ export const handler: Handler = async () => {
       // Parse managers
       const parseManagers = (val: any): string[] => {
         if (!val) return [];
-        if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
-        try { const p = JSON.parse(val); return Array.isArray(p) ? p.map(String).map((s)=>s.trim()).filter(Boolean) : []; } catch {}
-        return String(val).split(",").map((s)=>s.trim()).filter(Boolean);
+        if (Array.isArray(val))
+          return val
+            .map(String)
+            .map((s) => s.trim())
+            .filter(Boolean);
+        try {
+          const p = JSON.parse(val);
+          return Array.isArray(p)
+            ? p
+                .map(String)
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [];
+        } catch {}
+        return String(val)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
       };
 
-      const names = Array.from(new Set([
-        ...parseManagers(row.reporting_managers),
-        ...parseManagers(row.escalation_managers),
-        ...(row.assigned_to ? [String(row.assigned_to)] : []),
-      ]));
+      const names = Array.from(
+        new Set([
+          ...parseManagers(row.reporting_managers),
+          ...parseManagers(row.escalation_managers),
+          ...(row.assigned_to ? [String(row.assigned_to)] : []),
+        ]),
+      );
 
       const lowered = names.map((n) => n.toLowerCase());
       const users = await pool.query(
         `SELECT azure_object_id FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
         [lowered],
       );
-      const user_ids = users.rows.map((r) => r.azure_object_id).filter((id) => !!id);
+      const user_ids = users.rows
+        .map((r) => r.azure_object_id)
+        .filter((id) => !!id);
 
       try {
-        const resp = await fetch("https://pulsealerts.mylapay.com/direct-call", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
-        });
+        const resp = await fetch(
+          "https://pulsealerts.mylapay.com/direct-call",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+          },
+        );
         if (!resp.ok) {
           console.warn("[pulse-sync] Pulse call failed:", resp.status);
         } else {
@@ -101,10 +127,24 @@ export const handler: Handler = async () => {
     }
 
     const finishedAt = new Date().toISOString();
-    console.log(`[pulse-sync] END ${finishedAt} checked=${overdue.rowCount} sent=${sent}`);
-    return { statusCode: 200, body: JSON.stringify({ ok: true, startedAt, finishedAt, checked: overdue.rowCount, sent }) };
+    console.log(
+      `[pulse-sync] END ${finishedAt} checked=${overdue.rowCount} sent=${sent}`,
+    );
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        ok: true,
+        startedAt,
+        finishedAt,
+        checked: overdue.rowCount,
+        sent,
+      }),
+    };
   } catch (e: any) {
     console.error("[pulse-sync] ERROR:", e?.stack || e?.message || String(e));
-    return { statusCode: 500, body: JSON.stringify({ ok: false, error: e?.message || String(e) }) };
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ ok: false, error: e?.message || String(e) }),
+    };
   }
 };
