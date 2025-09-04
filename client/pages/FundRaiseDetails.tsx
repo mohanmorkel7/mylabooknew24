@@ -553,7 +553,13 @@ export default function FundRaiseDetails() {
                 <div className="rounded-md border bg-slate-50 p-3">
                   <div className="text-xs text-slate-500">Round Stage</div>
                   <div className="mt-1">
-                    <Badge className={roundStageColors[vcData.round_stage as keyof typeof roundStageColors]}>
+                    <Badge
+                      className={
+                        roundStageColors[
+                          vcData.round_stage as keyof typeof roundStageColors
+                        ]
+                      }
+                    >
                       {getRoundStageDisplay(vcData.round_stage)}
                     </Badge>
                   </div>
@@ -561,13 +567,19 @@ export default function FundRaiseDetails() {
                 <div className="rounded-md border bg-slate-50 p-3">
                   <div className="text-xs text-slate-500">Round Size</div>
                   <div className="mt-1 font-semibold text-slate-900">
-                    {formatCurrency(vcData.round_size, vcData.billing_currency) || "TBD"}
+                    {formatCurrency(
+                      vcData.round_size,
+                      vcData.billing_currency,
+                    ) || "TBD"}
                   </div>
                 </div>
                 <div className="rounded-md border bg-slate-50 p-3">
                   <div className="text-xs text-slate-500">Valuation</div>
                   <div className="mt-1 font-semibold text-slate-900">
-                    {formatCurrency(vcData.valuation, vcData.billing_currency) || "TBD"}
+                    {formatCurrency(
+                      vcData.valuation,
+                      vcData.billing_currency,
+                    ) || "TBD"}
                   </div>
                 </div>
               </div>
@@ -667,8 +679,12 @@ export default function FundRaiseDetails() {
                     <h4 className="font-medium text-gray-900">Round Details</h4>
                     {vcData.round_description && (
                       <div className="mt-1">
-                        <span className="font-medium text-gray-600">Description: </span>
-                        <span className="text-gray-900">{vcData.round_description}</span>
+                        <span className="font-medium text-gray-600">
+                          Description:{" "}
+                        </span>
+                        <span className="text-gray-900">
+                          {vcData.round_description}
+                        </span>
                       </div>
                     )}
                   </div>
