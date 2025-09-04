@@ -95,7 +95,7 @@ class FinOpsAlertService {
     const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
 
     const result = await pool.query(
-    `
+      `
       SELECT azure_object_id, sso_id, first_name, last_name, email
       FROM users
       WHERE (
