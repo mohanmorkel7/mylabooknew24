@@ -549,6 +549,28 @@ export default function FundRaiseDetails() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-md border bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">Round Stage</div>
+                  <div className="mt-1">
+                    <Badge className={roundStageColors[vcData.round_stage as keyof typeof roundStageColors]}>
+                      {getRoundStageDisplay(vcData.round_stage)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="rounded-md border bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">Round Size</div>
+                  <div className="mt-1 font-semibold text-slate-900">
+                    {formatCurrency(vcData.round_size, vcData.billing_currency) || "TBD"}
+                  </div>
+                </div>
+                <div className="rounded-md border bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">Valuation</div>
+                  <div className="mt-1 font-semibold text-slate-900">
+                    {formatCurrency(vcData.valuation, vcData.billing_currency) || "TBD"}
+                  </div>
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <div className="space-y-3">
