@@ -415,11 +415,29 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
 
       // Trigger alerts if needed
       if (status === "overdue") {
+        // Existing DB alert
         await finopsAlertService.createSLABreachAlert(
           subtask.task_id,
           subtaskId,
           delay_reason,
         );
+
+        // External Pulse alert with managers and assignees
+        const meta = await client.query(
+          `SELECT task_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
+          [subtask.task_id],
+        );
+        const row = meta.rows[0] || {};
+        const title = `Take immediate action on the overdue subtask ${subtask.name}`;
+        const managerNames = Array.from(
+          new Set([
+            ...parseManagers(row.reporting_managers),
+            ...parseManagers(row.escalation_managers),
+            ...parseManagers(row.assigned_to),
+          ]),
+        );
+        const userIds = await getUserIdsFromNames(managerNames);
+        await sendReplicaDownAlertOnce(subtask.task_id, subtaskId, title, userIds);
       }
 
       await client.query("COMMIT");
