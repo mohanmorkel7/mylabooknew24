@@ -95,7 +95,7 @@ class FinOpsAlertService {
     const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
 
     const result = await pool.query(
-    `
+      `
       SELECT azure_object_id, first_name, last_name, email
       FROM users
       WHERE azure_object_id IS NOT NULL AND (
@@ -118,11 +118,20 @@ class FinOpsAlertService {
     try {
       const foundNames = new Set<string>();
       for (const r of result.rows) {
-        const fn = String(r.first_name || "").toLowerCase().replace(/\s+/g, " ").trim();
-        const ln = String(r.last_name || "").toLowerCase().replace(/\s+/g, " ").trim();
+        const fn = String(r.first_name || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+        const ln = String(r.last_name || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
         const full = `${fn}${ln ? " " + ln : ""}`.trim();
         const initial = `${fn}${ln ? " " + ln.charAt(0) : ""}`.trim();
-        const emailLocal = String(r.email || "").toLowerCase().split("@")[0] || "";
+        const emailLocal =
+          String(r.email || "")
+            .toLowerCase()
+            .split("@")[0] || "";
         foundNames.add(full);
         if (initial) foundNames.add(initial);
         if (emailLocal) {

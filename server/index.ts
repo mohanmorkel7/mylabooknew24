@@ -55,7 +55,10 @@ export function createServer() {
       finopsScheduler.initialize();
     }, 500);
   } catch (e) {
-    console.error("Failed to initialize FinOps Scheduler:", (e as any)?.message);
+    console.error(
+      "Failed to initialize FinOps Scheduler:",
+      (e as any)?.message,
+    );
   }
 
   // Middleware
