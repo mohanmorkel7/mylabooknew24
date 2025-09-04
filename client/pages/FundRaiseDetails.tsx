@@ -585,54 +585,41 @@ export default function FundRaiseDetails() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-3">
-                    <div className="flex items-center flex-wrap gap-2">
-                      <span className="font-medium text-gray-600">
-                        Lead Source:
-                      </span>
-                      <Badge variant="secondary" className="capitalize">
-                        {getSourceLabel(vcData.lead_source)}
-                      </Badge>
-                      {vcData.lead_source_value && (
-                        <span className="text-gray-900">
-                          {vcData.lead_source === "email" ||
-                          vcData.lead_source?.startsWith("email_") ? (
-                            <a
-                              href={`mailto:${vcData.lead_source_value}`}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {vcData.lead_source_value}
-                            </a>
-                          ) : vcData.lead_source === "phone" ||
-                            vcData.lead_source === "cold-call" ||
-                            vcData.lead_source?.startsWith("call_") ? (
-                            <a
-                              href={`tel:${vcData.lead_source_value}`}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {vcData.lead_source_value}
-                            </a>
-                          ) : vcData.lead_source === "website" ? (
-                            <a
-                              href={
-                                vcData.lead_source_value.startsWith("http")
-                                  ? vcData.lead_source_value
-                                  : `https://${vcData.lead_source_value}`
-                              }
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline"
-                            >
-                              {vcData.lead_source_value}
-                            </a>
-                          ) : (
-                            vcData.lead_source_value
-                          )}
-                        </span>
-                      )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-500">Lead Source</div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="capitalize">
+                          {getSourceLabel(vcData.lead_source)}
+                        </Badge>
+                        {vcData.lead_source_value && (
+                          <span className="text-gray-900">
+                            {vcData.lead_source === "email" || vcData.lead_source?.startsWith("email_") ? (
+                              <a href={`mailto:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                                {vcData.lead_source_value}
+                              </a>
+                            ) : vcData.lead_source === "phone" || vcData.lead_source === "cold-call" || vcData.lead_source?.startsWith("call_") ? (
+                              <a href={`tel:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                                {vcData.lead_source_value}
+                              </a>
+                            ) : vcData.lead_source === "website" ? (
+                              <a
+                                href={vcData.lead_source_value.startsWith("http") ? vcData.lead_source_value : `https://${vcData.lead_source_value}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {vcData.lead_source_value}
+                              </a>
+                            ) : (
+                              vcData.lead_source_value
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Status:</span>
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-500">Status</div>
                       <Badge
                         className={
                           statusColors[
@@ -640,14 +627,11 @@ export default function FundRaiseDetails() {
                           ]
                         }
                       >
-                        {vcData.status?.charAt(0).toUpperCase() +
-                          vcData.status?.slice(1).replace("-", " ")}
+                        {vcData.status?.charAt(0).toUpperCase() + vcData.status?.slice(1).replace("-", " ")}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Priority:
-                      </span>
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-500">Priority</div>
                       <Badge
                         className={
                           priorityColors[
@@ -655,17 +639,12 @@ export default function FundRaiseDetails() {
                           ]
                         }
                       >
-                        {vcData.priority_level?.charAt(0).toUpperCase() +
-                          vcData.priority_level?.slice(1)}
+                        {vcData.priority_level?.charAt(0).toUpperCase() + vcData.priority_level?.slice(1)}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Investor:
-                      </span>
-                      <span className="text-gray-900">
-                        {vcData.investor_name}
-                      </span>
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-500">Investor</div>
+                      <div className="text-gray-900">{vcData.investor_name}</div>
                     </div>
                   </div>
                 </div>
