@@ -585,7 +585,7 @@ export default function FundRaiseDetails() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500">Lead Source</div>
                       <div className="flex items-center gap-2">
