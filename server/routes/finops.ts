@@ -593,6 +593,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
 
         await client.query("COMMIT");
 
+        console.log(`FinOps task ${taskId} updated with preserved subtask statuses`);
+
         // Log activity
         await logActivity(taskId, null, "updated", "User", "Task updated");
 
