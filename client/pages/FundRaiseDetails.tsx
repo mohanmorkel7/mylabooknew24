@@ -590,18 +590,9 @@ export default function FundRaiseDetails() {
                       <span className="font-medium text-gray-600">
                         Lead Source:
                       </span>
-                      <div
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full border ${
-                          (sourceIcons as any)[vcData.lead_source]
-                            ? "border-blue-200 bg-blue-50 text-blue-700"
-                            : "border-gray-200 bg-gray-50 text-gray-700"
-                        }`}
-                      >
-                        <SourceIcon className="w-3 h-3 mr-1.5" />
-                        <span className="capitalize font-medium">
-                          {getSourceLabel(vcData.lead_source)}
-                        </span>
-                      </div>
+                      <Badge variant="secondary" className="capitalize">
+                        {getSourceLabel(vcData.lead_source)}
+                      </Badge>
                       {vcData.lead_source_value && (
                         <span className="text-gray-900">
                           {vcData.lead_source === "email" ||
