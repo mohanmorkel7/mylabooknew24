@@ -5,6 +5,33 @@ import finopsScheduler from "../services/finopsScheduler";
 
 const router = Router();
 
+// FinOps settings storage (single-row settings table)
+async function ensureFinOpsSettings() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finops_settings (
+      id SERIAL PRIMARY KEY,
+      initial_overdue_call_delay_minutes INTEGER DEFAULT 0,
+      repeat_overdue_call_interval_minutes INTEGER DEFAULT 10,
+      only_repeat_when_single_overdue BOOLEAN DEFAULT false,
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  const row = await pool.query(`SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`);
+  if (row.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO finops_settings (initial_overdue_call_delay_minutes, repeat_overdue_call_interval_minutes, only_repeat_when_single_overdue)
+       VALUES ($1, $2, $3)`,
+      [0, 10, false],
+    );
+  }
+}
+
+async function getFinOpsSettings() {
+  await ensureFinOpsSettings();
+  const res = await pool.query(`SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`);
+  return res.rows[0];
+}
+
 // Database availability check
 async function isDatabaseAvailable() {
   try {
