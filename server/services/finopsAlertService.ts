@@ -267,6 +267,31 @@ class FinOpsAlertService {
    */
   private async checkOverdueRepeatAlerts(): Promise<void> {
     try {
+      // Load config (create defaults if missing)
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS finops_settings (
+          id SERIAL PRIMARY KEY,
+          initial_overdue_call_delay_minutes INTEGER DEFAULT 0,
+          repeat_overdue_call_interval_minutes INTEGER DEFAULT 10,
+          only_repeat_when_single_overdue BOOLEAN DEFAULT false,
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      const cfgRes = await pool.query(
+        `SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`,
+      );
+      const cfg = cfgRes.rows[0] || {
+        initial_overdue_call_delay_minutes: 0,
+        repeat_overdue_call_interval_minutes: 10,
+        only_repeat_when_single_overdue: false,
+      };
+      const initialDelay = Number(cfg.initial_overdue_call_delay_minutes || 0);
+      const repeatInterval = Math.max(
+        1,
+        Number(cfg.repeat_overdue_call_interval_minutes || 10),
+      );
+      const onlySingle = Boolean(cfg.only_repeat_when_single_overdue || false);
+
       const result = await pool.query(
         `
         SELECT
@@ -304,69 +329,134 @@ class FinOpsAlertService {
         const since = row.overdue_since ? new Date(row.overdue_since) : null;
         if (!since) continue;
         const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
-        if (minutes < 10) continue; // start repeats after 10 minutes overdue
 
-        const bucket = Math.floor(minutes / 10); // 10-min buckets: 1,2,3...
-        const alertKey = `replica_down_overdue_${bucket}`;
-
-        const exists = await pool.query(
-          `SELECT id FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
-          [row.task_id, row.subtask_id, alertKey],
-        );
-        if (exists.rows.length) continue; // already sent for this bucket
-
-        const names = Array.from(
-          new Set([
-            ...this.parseManagers(row.reporting_managers),
-            ...this.parseManagers(row.escalation_managers),
-            ...this.parseManagers(row.assigned_to),
-          ]),
-        );
-        const userIds = await this.getUserIdsFromNames(names);
-
-        const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
-
-        console.log("Direct-call payload (service repeat)", {
-          taskId: row.task_id,
-          subtaskId: row.subtask_id,
-          title,
-          minutes_overdue: minutes,
-          bucket,
-          user_ids: userIds,
-        });
-
-        const response = await fetch(
-          "https://pulsealerts.mylapay.com/direct-call",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              receiver: "CRM_Switch",
-              title,
-              user_ids: userIds,
-            }),
-          },
-        );
-
-        if (!response.ok) {
-          console.warn("Replica-down repeat alert failed:", response.status);
-          continue;
+        // Enforce optional single-overdue condition per task
+        if (onlySingle) {
+          const c = await pool.query(
+            `SELECT COUNT(*)::int AS cnt FROM finops_subtasks WHERE task_id = $1 AND status = 'overdue'`,
+            [row.task_id],
+          );
+          if ((c.rows[0]?.cnt ?? 0) !== 1) continue;
         }
 
-        await pool.query(
-          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
-          [row.task_id, row.subtask_id, alertKey, title],
-        );
+        // Initial delayed call
+        if (minutes >= initialDelay) {
+          const initialKey = `replica_down_overdue_initial`;
+          const doneInitial = await pool.query(
+            `SELECT 1 FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
+            [row.task_id, row.subtask_id, initialKey],
+          );
+          if (doneInitial.rows.length === 0) {
+            const names = Array.from(
+              new Set([
+                ...this.parseManagers(row.reporting_managers),
+                ...this.parseManagers(row.escalation_managers),
+                ...this.parseManagers(row.assigned_to),
+              ]),
+            );
+            const userIds = await this.getUserIdsFromNames(names);
+            const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
 
-        await this.logAlert(
-          row.task_id,
-          String(row.subtask_id),
-          "sla_overdue_repeat",
-          "all",
-          minutes,
-        );
+            console.log("Direct-call payload (service initial)", {
+              taskId: row.task_id,
+              subtaskId: row.subtask_id,
+              title,
+              minutes_overdue: minutes,
+              user_ids: userIds,
+            });
+
+            const response = await fetch(
+              "https://pulsealerts.mylapay.com/direct-call",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: userIds }),
+              },
+            );
+
+            if (response.ok) {
+              await pool.query(
+                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+                [row.task_id, row.subtask_id, initialKey, title],
+              );
+              await this.logAlert(
+                row.task_id,
+                String(row.subtask_id),
+                "sla_overdue_initial",
+                "all",
+                minutes,
+              );
+            } else {
+              console.warn("Replica-down initial alert failed:", response.status);
+            }
+          }
+        }
+
+        // Repeat calls with configured interval
+        if (minutes >= initialDelay + repeatInterval) {
+          const bucket = Math.floor(
+            (minutes - initialDelay) / repeatInterval,
+          ); // 1,2,3...
+          const alertKey = `replica_down_overdue_${bucket}`;
+
+          const exists = await pool.query(
+            `SELECT id FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
+            [row.task_id, row.subtask_id, alertKey],
+          );
+          if (exists.rows.length) continue; // already sent for this bucket
+
+          const names = Array.from(
+            new Set([
+              ...this.parseManagers(row.reporting_managers),
+              ...this.parseManagers(row.escalation_managers),
+              ...this.parseManagers(row.assigned_to),
+            ]),
+          );
+          const userIds = await this.getUserIdsFromNames(names);
+
+          const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+
+          console.log("Direct-call payload (service repeat)", {
+            taskId: row.task_id,
+            subtaskId: row.subtask_id,
+            title,
+            minutes_overdue: minutes,
+            bucket,
+            repeat_interval: repeatInterval,
+            user_ids: userIds,
+          });
+
+          const response = await fetch(
+            "https://pulsealerts.mylapay.com/direct-call",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: userIds }),
+            },
+          );
+
+          if (!response.ok) {
+            console.warn("Replica-down repeat alert failed:", response.status);
+            continue;
+          }
+
+          await pool.query(
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+            [row.task_id, row.subtask_id, alertKey, title],
+          );
+
+          await this.logAlert(
+            row.task_id,
+            String(row.subtask_id),
+            "sla_overdue_repeat",
+            "all",
+            minutes,
+          );
+        }
       }
     } catch (e) {
       console.warn("Error in overdue repeat alerts:", (e as Error).message);
