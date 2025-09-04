@@ -708,14 +708,41 @@ function parseManagerNames(val: any): string[] {
 
 async function getUserIdsFromNames(names: string[]): Promise<string[]> {
   if (!names.length) return [];
-  const lowered = names.map((n) => n.toLowerCase());
+  const normalized = names
+    .map((n) => (n || "").toLowerCase().replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
+
   const result = await pool.query(
-    `SELECT azure_object_id, first_name, last_name FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
-    [lowered],
+    `
+    SELECT azure_object_id, first_name, last_name
+    FROM users
+    WHERE azure_object_id IS NOT NULL AND (
+      LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
+      OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
+    )
+  `,
+    [normalized, collapsed],
   );
-  return result.rows
+
+  const ids = result.rows
     .map((r: any) => r.azure_object_id)
     .filter((id: string | null) => !!id) as string[];
+
+  // Visibility for names that didn't resolve to a user id
+  try {
+    const foundNames = new Set(
+      result.rows.map((r: any) =>
+        `${String(r.first_name || "").toLowerCase().replace(/\s+/g, " ").trim()} ${String(r.last_name || "").toLowerCase().replace(/\s+/g, " ").trim()}`,
+      ),
+    );
+    const missing = normalized.filter((n) => !foundNames.has(n));
+    if (missing.length) {
+      console.warn("Missing Azure IDs for names (no user match):", missing);
+    }
+  } catch {}
+
+  return Array.from(new Set(ids));
 }
 
 async function sendReplicaDownAlertOnce(
