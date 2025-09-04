@@ -742,7 +742,8 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
         )
       ORDER BY st.id DESC
       LIMIT 100
-    `);
+    `,
+    );
 
     let sent = 0;
     for (const row of overdue.rows) {
@@ -761,15 +762,32 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
       // Build manager/user list
       const parseManagers = (val: any): string[] => {
         if (!val) return [];
-        if (Array.isArray(val)) return val.map(String).map(s => s.trim()).filter(Boolean);
-        try { const p = JSON.parse(val); return Array.isArray(p) ? p.map(String).map((s)=>s.trim()).filter(Boolean) : []; } catch {}
-        return String(val).split(',').map((s)=>s.trim()).filter(Boolean);
+        if (Array.isArray(val))
+          return val
+            .map(String)
+            .map((s) => s.trim())
+            .filter(Boolean);
+        try {
+          const p = JSON.parse(val);
+          return Array.isArray(p)
+            ? p
+                .map(String)
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : [];
+        } catch {}
+        return String(val)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
       };
-      const names = Array.from(new Set([
-        ...parseManagers(row.reporting_managers),
-        ...parseManagers(row.escalation_managers),
-        ...(row.assigned_to ? [String(row.assigned_to)] : []),
-      ]));
+      const names = Array.from(
+        new Set([
+          ...parseManagers(row.reporting_managers),
+          ...parseManagers(row.escalation_managers),
+          ...(row.assigned_to ? [String(row.assigned_to)] : []),
+        ]),
+      );
 
       // Resolve azure_object_id user ids for Pulse
       const lowered = names.map((n) => n.toLowerCase());
@@ -777,15 +795,20 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
         `SELECT azure_object_id FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
         [lowered],
       );
-      const user_ids = users.rows.map((r) => r.azure_object_id).filter((id) => !!id);
+      const user_ids = users.rows
+        .map((r) => r.azure_object_id)
+        .filter((id) => !!id);
 
       // Call Pulse Alerts
       try {
-        const resp = await fetch("https://pulsealerts.mylapay.com/direct-call", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
-        });
+        const resp = await fetch(
+          "https://pulsealerts.mylapay.com/direct-call",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+          },
+        );
         if (!resp.ok) {
           console.warn("Pulse call failed:", resp.status);
         } else {
