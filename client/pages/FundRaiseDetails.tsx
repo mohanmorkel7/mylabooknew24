@@ -1,7 +1,7 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
-import { getSourceLabel } from "@/lib/constants";
+import { getSourceLabel, formatPhoneDisplay, formatPhoneHref } from "@/lib/constants";
 import { apiClient } from "@/lib/api";
 import { useUpdateFundRaiseStep } from "@/hooks/useApi";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
@@ -49,6 +49,14 @@ import {
   Zap,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -404,6 +412,23 @@ export default function FundRaiseDetails() {
 
   return (
     <div className="p-6">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/fundraise">Fund Raises</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href={`/fundraise/${id}`}>
+              {vcData.round_title || vcData.investor_name || `#${id}`}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Overview</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <Button
@@ -729,6 +754,71 @@ export default function FundRaiseDetails() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Investor Information</CardTitle>
+              <CardDescription>Primary contact and investor details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="space-y-2">
+                {vcData.investor_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Investor</span>
+                    <span className="text-gray-900">{vcData.investor_name}</span>
+                  </div>
+                )}
+                {getPrimaryContact(vcData)?.contact_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Contact</span>
+                    <span className="text-gray-900">{getPrimaryContact(vcData)?.contact_name}</span>
+                  </div>
+                )}
+                {getPrimaryContact(vcData)?.email && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Email</span>
+                    <a
+                      href={`mailto:${getPrimaryContact(vcData)?.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {getPrimaryContact(vcData)?.email}
+                    </a>
+                  </div>
+                )}
+                {getPrimaryContact(vcData)?.phone && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Phone</span>
+                    <a
+                      href={`tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone)}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {formatPhoneDisplay(getPrimaryContact(vcData)?.phone)}
+                    </a>
+                  </div>
+                )}
+              </div>
+              {Array.isArray(vcData.investors) && vcData.investors.length > 0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <div className="text-xs font-medium text-gray-600 mb-2">Investor Status Queue</div>
+                    <div className="space-y-2">
+                      {vcData.investors.map((inv: any, idx: number) => (
+                        <div key={idx} className="flex items-center justify-between">
+                          <div className="text-gray-900 truncate pr-2">{inv.investor_name || inv.vc_id}</div>
+                          {inv.investor_status && (
+                            <Badge variant="secondary" className="text-xs">
+                              {String(inv.investor_status)}
+                            </Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Fund Raise Summary</CardTitle>
