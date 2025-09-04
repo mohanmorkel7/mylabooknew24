@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -561,11 +562,13 @@ export default function VCEdit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vc", id] });
       queryClient.invalidateQueries({ queryKey: ["vcs"] });
+      toast({ title: "VC updated", description: "Changes saved successfully." });
       navigate(`/vc/${id}`);
     },
     onError: (error: any) => {
       console.error("Update failed:", error);
       setErrors({ submit: "Failed to update VC. Please try again." });
+      toast({ title: "Update failed", description: "Failed to update VC. Please try again.", variant: "destructive" });
     },
   });
 
@@ -813,9 +816,6 @@ export default function VCEdit() {
     if (!vcData.maximum_size) {
       newErrors.maximum_size = "Max.Chq Size is required";
     }
-    if (!vcData.address.trim()) {
-      newErrors.address = "Address is required";
-    }
     if (!vcData.country) {
       newErrors.country = "Country is required";
     }
@@ -879,7 +879,7 @@ export default function VCEdit() {
       await updateVCMutation.mutateAsync(submitData);
     } catch (error) {
       console.error("Failed to update VC:", error);
-      alert("Failed to update VC. Please try again.");
+      toast({ title: "Update failed", description: "Failed to update VC. Please try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -1326,7 +1326,7 @@ export default function VCEdit() {
             <CardContent className="space-y-4">
               {/* Address, Country, State/Province, City */}
               <div className="md:col-span-2">
-                <Label htmlFor="address">Address *</Label>
+                <Label htmlFor="address">Address</Label>
                 <Input
                   id="address"
                   placeholder="Street address"
