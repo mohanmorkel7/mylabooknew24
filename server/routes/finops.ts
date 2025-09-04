@@ -761,7 +761,9 @@ async function sendReplicaDownAlertOnce(
 
     const assigned_to_parsed = parseManagerNames(assigned_to_raw);
     const reporting_managers_parsed = parseManagerNames(reporting_managers_raw);
-    const escalation_managers_parsed = parseManagerNames(escalation_managers_raw);
+    const escalation_managers_parsed = parseManagerNames(
+      escalation_managers_raw,
+    );
 
     console.log("Direct-call payload (finops.ts)", {
       taskId,
