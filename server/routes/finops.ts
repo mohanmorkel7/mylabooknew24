@@ -280,7 +280,7 @@ const mockActivityLog = [
 // Get all FinOps tasks with enhanced error handling
 router.get("/tasks", async (req: Request, res: Response) => {
   try {
-    console.log("📋 FinOps tasks requested");
+    console.log("�� FinOps tasks requested");
 
     // Add CORS headers for FullStory compatibility
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -295,6 +295,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     if (await isDatabaseAvailable()) {
       console.log("✅ Database is available, fetching real data");
+
+      // Optional date filter (YYYY-MM-DD) to view historical daily statuses
+      const dateParam = (req.query.date as string) || null;
 
       // Simplified query with better error handling
       const query = `
@@ -312,19 +315,21 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'order_position', st.order_position,
                 'status', st.status,
                 'started_at', st.started_at,
-                'completed_at', st.completed_at
+                'completed_at', st.completed_at,
+                'scheduled_date', st.scheduled_date
               ) ORDER BY st.order_position
             ) FILTER (WHERE st.id IS NOT NULL),
             '[]'::json
           ) as subtasks
         FROM finops_tasks t
         LEFT JOIN finops_subtasks st ON t.id = st.task_id
+          ${dateParam ? "AND st.scheduled_date = $1::date" : ""}
         WHERE t.deleted_at IS NULL
         GROUP BY t.id
         ORDER BY t.created_at DESC
       `;
 
-      const result = await pool.query(query);
+      const result = await pool.query(query, dateParam ? [dateParam] : []);
       const tasks = result.rows.map((row) => ({
         ...row,
         subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
