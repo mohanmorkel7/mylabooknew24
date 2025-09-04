@@ -261,23 +261,17 @@ router.post("/", async (req: Request, res: Response) => {
         ? body.items.map((it: any) => ({ ...body.base, ...it }))
         : null;
 
+    // Batch create from explicit items[] or from multiple investors in body
     if (items && items.length) {
       await pool.query("BEGIN");
       try {
         const created: any[] = [];
         for (const raw of items) {
-          // Optional FK check
           if (raw.vc_id) {
             try {
-              const check = await pool.query(
-                "SELECT 1 FROM vcs WHERE id = $1",
-                [Number(raw.vc_id)],
-              );
+              const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [Number(raw.vc_id)]);
               if (check.rowCount === 0) {
-                created.push({
-                  warning: "VC not found; skipped",
-                  vc_id: raw.vc_id,
-                });
+                created.push({ warning: "VC not found; skipped", vc_id: raw.vc_id });
                 continue;
               }
             } catch {}
@@ -288,9 +282,40 @@ router.post("/", async (req: Request, res: Response) => {
         await pool.query("COMMIT");
         return res.status(201).json(created);
       } catch (e) {
-        try {
-          await pool.query("ROLLBACK");
-        } catch {}
+        try { await pool.query("ROLLBACK"); } catch {}
+        throw e;
+      }
+    } else if (Array.isArray(body.investors) && body.investors.length > 1) {
+      // Expand into multiple fund raises, one per investor row
+      await pool.query("BEGIN");
+      try {
+        const base = { ...body };
+        const created: any[] = [];
+        for (const inv of body.investors) {
+          const payload = {
+            ...base,
+            vc_id: inv.vc_id ?? base.vc_id ?? null,
+            investor_name: inv.investor_name ?? null,
+            fund_mn: inv.fund_mn ?? null,
+            investor_status: inv.investor_status ?? null,
+            investors: [inv],
+          };
+          if (payload.vc_id) {
+            try {
+              const check = await pool.query("SELECT 1 FROM vcs WHERE id = $1", [Number(payload.vc_id)]);
+              if (check.rowCount === 0) {
+                created.push({ warning: "VC not found; skipped", vc_id: payload.vc_id });
+                continue;
+              }
+            } catch {}
+          }
+          const row = await FundRaiseRepository.createFull(normalize(payload));
+          created.push(row);
+        }
+        await pool.query("COMMIT");
+        return res.status(201).json(created);
+      } catch (e) {
+        try { await pool.query("ROLLBACK"); } catch {}
         throw e;
       }
     }
