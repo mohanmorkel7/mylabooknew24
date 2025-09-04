@@ -707,14 +707,28 @@ class FinOpsAlertService {
         [task.id],
       );
 
-      // Reset all subtasks to pending status for daily execution
+      // Ensure datewise columns exist
+      await pool.query(`
+        ALTER TABLE finops_subtasks
+          ADD COLUMN IF NOT EXISTS scheduled_date DATE,
+          ADD COLUMN IF NOT EXISTS auto_notify BOOLEAN DEFAULT true,
+          ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
+      `);
+
+      // Reset all subtasks to pending status for daily execution (IST date)
       for (const subtask of subtasks.rows) {
         await pool.query(
           `
-          UPDATE finops_subtasks 
-          SET status = 'pending', 
-              started_at = NULL, 
+          UPDATE finops_subtasks
+          SET status = 'pending',
+              started_at = NULL,
               completed_at = NULL,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date,
+              notification_sent_15min = false,
+              notification_sent_start = false,
+              notification_sent_escalation = false,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = $1
         `,
