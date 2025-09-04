@@ -48,7 +48,6 @@ import {
   Zap,
   Timer,
   Target,
-  BarChart3,
 } from "lucide-react";
 import React from "react";
 import { format } from "date-fns";
