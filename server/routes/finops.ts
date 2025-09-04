@@ -510,29 +510,84 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
           taskId,
         ]);
 
-        // Delete existing subtasks and recreate
-        await client.query("DELETE FROM finops_subtasks WHERE task_id = $1", [
-          taskId,
-        ]);
+        // Upsert subtasks while preserving existing status/timestamps
+        const existingRes = await client.query(
+          `SELECT id FROM finops_subtasks WHERE task_id = $1`,
+          [taskId],
+        );
+        const existingIds = new Set<number>(
+          existingRes.rows.map((r: any) => Number(r.id)),
+        );
 
-        // Insert updated subtasks
-        if (subtasks && subtasks.length > 0) {
-          for (const subtask of subtasks) {
-            const subtaskQuery = `
-              INSERT INTO finops_subtasks (
-                task_id, name, description, start_time, sla_hours, sla_minutes, order_position
-              ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            `;
+        const incoming = Array.isArray(subtasks) ? subtasks : [];
+        const incomingIds = new Set<number>();
 
-            await client.query(subtaskQuery, [
-              taskId,
-              subtask.name,
-              subtask.description || null,
-              subtask.start_time || null,
-              subtask.sla_hours,
-              subtask.sla_minutes,
-              subtask.order_position,
-            ]);
+        for (const subtask of incoming) {
+          const rawId = (subtask as any).id;
+          const numericId = rawId !== undefined && rawId !== null && !isNaN(Number(rawId))
+            ? Number(rawId)
+            : NaN;
+
+          if (!isNaN(numericId) && existingIds.has(numericId)) {
+            incomingIds.add(numericId);
+            // Update only editable fields; preserve status/started_at/completed_at
+            await client.query(
+              `UPDATE finops_subtasks
+               SET name = $1,
+                   description = $2,
+                   start_time = $3,
+                   sla_hours = COALESCE($4, sla_hours),
+                   sla_minutes = COALESCE($5, sla_minutes),
+                   order_position = $6,
+                   updated_at = CURRENT_TIMESTAMP
+               WHERE task_id = $7 AND id = $8`,
+              [
+                subtask.name,
+                subtask.description || null,
+                subtask.start_time || null,
+                (subtask as any).sla_hours ?? null,
+                (subtask as any).sla_minutes ?? null,
+                subtask.order_position ?? 0,
+                taskId,
+                numericId,
+              ],
+            );
+          } else {
+            // Insert new subtask; allow optional status from payload, default to 'pending'
+            await client.query(
+              `INSERT INTO finops_subtasks (
+                 task_id, name, description, start_time, sla_hours, sla_minutes, order_position, status
+               ) VALUES ($1, $2, $3, $4, $5, $6, $7, COALESCE($8, 'pending'))`,
+              [
+                taskId,
+                subtask.name,
+                subtask.description || null,
+                subtask.start_time || null,
+                (subtask as any).sla_hours ?? null,
+                (subtask as any).sla_minutes ?? null,
+                subtask.order_position ?? 0,
+                (subtask as any).status || null,
+              ],
+            );
+          }
+        }
+
+        // Delete subtasks removed by user (present in DB but not in incoming list)
+        if (existingIds.size > 0) {
+          const idsToKeep = Array.from(incomingIds);
+          if (idsToKeep.length > 0) {
+            await client.query(
+              `DELETE FROM finops_subtasks WHERE task_id = $1 AND id NOT IN (${idsToKeep
+                .map((_, i) => `$${i + 2}`)
+                .join(", ")})`,
+              [taskId, ...idsToKeep],
+            );
+          } else {
+            // All removed
+            await client.query(
+              `DELETE FROM finops_subtasks WHERE task_id = $1`,
+              [taskId],
+            );
           }
         }
 
