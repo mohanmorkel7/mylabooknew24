@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1359,10 +1360,11 @@ export default function CreateVC() {
         }
       }
 
+      toast({ title: "VC created", description: "New VC created successfully." });
       navigate(`/vc/${result.data?.id || result.id}`);
     } catch (error) {
       console.error("Failed to create VC:", error);
-      alert("Failed to create VC. Please try again.");
+      toast({ title: "Create failed", description: "Failed to create VC. Please try again.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
     }
@@ -1448,14 +1450,13 @@ export default function CreateVC() {
         activeTab,
       );
 
-      alert(
-        currentDraftId
-          ? "Draft updated successfully!"
-          : "VC data saved as draft!",
-      );
+      toast({
+        title: currentDraftId ? "Draft updated" : "Draft saved",
+        description: currentDraftId ? "Draft updated successfully." : "VC data saved as draft.",
+      });
     } catch (error) {
       console.error("Failed to save partial VC:", error);
-      alert("Failed to save draft. Please try again.");
+      toast({ title: "Save failed", description: "Failed to save draft. Please try again.", variant: "destructive" });
     }
   };
 
