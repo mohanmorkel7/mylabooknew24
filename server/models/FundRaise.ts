@@ -99,6 +99,7 @@ export class FundRaiseRepository {
         v.round_title,
         v.round_description,
         v.billing_currency,
+        v.country,
         v.contacts,
         v.notes
       FROM fund_raises fr
