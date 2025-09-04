@@ -340,7 +340,11 @@ class FinOpsAlertService {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: userIds }),
+            body: JSON.stringify({
+              receiver: "CRM_Switch",
+              title,
+              user_ids: userIds,
+            }),
           },
         );
 
