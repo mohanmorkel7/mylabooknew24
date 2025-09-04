@@ -11,7 +11,10 @@ ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
 
--- Create or replace the enhanced SLA notification function
+-- Ensure old versions are removed to avoid return type conflicts
+DROP FUNCTION IF EXISTS check_subtask_sla_notifications_ist() CASCADE;
+
+-- Create the enhanced SLA notification function
 CREATE OR REPLACE FUNCTION check_subtask_sla_notifications_ist()
 RETURNS TABLE(
   notification_type TEXT,
@@ -139,6 +142,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to reset daily tasks and notifications
+DROP FUNCTION IF EXISTS reset_daily_finops_tasks() CASCADE;
 CREATE OR REPLACE FUNCTION reset_daily_finops_tasks()
 RETURNS void AS $$
 DECLARE
@@ -188,6 +192,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to mark notifications as sent
+DROP FUNCTION IF EXISTS mark_notification_sent(INTEGER, TEXT) CASCADE;
 CREATE OR REPLACE FUNCTION mark_notification_sent(
   p_subtask_id INTEGER,
   p_notification_type TEXT
@@ -212,6 +217,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to move completed notifications to activity log
+DROP FUNCTION IF EXISTS archive_completed_notifications() CASCADE;
 CREATE OR REPLACE FUNCTION archive_completed_notifications()
 RETURNS void AS $$
 BEGIN
