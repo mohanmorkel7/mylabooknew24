@@ -69,7 +69,6 @@ interface ProcessStep {
   automation_config?: any;
 }
 
-
 export default function FinOpsAutomation() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
