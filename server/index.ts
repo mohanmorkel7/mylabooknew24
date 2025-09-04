@@ -49,6 +49,15 @@ export function createServer() {
     });
   }, 1000); // Delay initialization to prevent blocking server startup
 
+  // Start FinOps Scheduler for local/dev runtime (idempotent)
+  try {
+    setTimeout(() => {
+      finopsScheduler.initialize();
+    }, 500);
+  } catch (e) {
+    console.error("Failed to initialize FinOps Scheduler:", (e as any)?.message);
+  }
+
   // Middleware
   app.use(cors());
 
