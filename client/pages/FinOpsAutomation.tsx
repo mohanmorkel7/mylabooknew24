@@ -177,7 +177,6 @@ function FinOpsConfigButton() {
 
 export default function FinOpsAutomation() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch workflow projects for FinOps
