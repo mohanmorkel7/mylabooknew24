@@ -150,15 +150,23 @@ class FinOpsAlertService {
 
   constructor() {
     // Initialize email transporter
-    this.emailTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "localhost",
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER || "",
-        pass: process.env.SMTP_PASS || "",
-      },
-    });
+    const host = process.env.SMTP_HOST || "localhost";
+    const port = parseInt(process.env.SMTP_PORT || "587", 10);
+    const user = process.env.SMTP_USER || "";
+    const pass = process.env.SMTP_PASS || "";
+    const disabled = String(process.env.SMTP_DISABLED || "").toLowerCase() === "true";
+
+    if (disabled || host === "localhost") {
+      this.emailTransporter = nodemailer.createTransport({ jsonTransport: true });
+      console.log("Email transport: jsonTransport (development/no SMTP)");
+    } else {
+      this.emailTransporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: user && pass ? { user, pass } : undefined,
+      });
+    }
   }
 
   /**
