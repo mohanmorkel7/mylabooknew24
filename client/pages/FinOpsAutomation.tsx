@@ -12,7 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Switch } from "@/components/ui/switch";
 import {
   Clock,
   CheckCircle,
@@ -289,7 +288,7 @@ export default function FinOpsAutomation() {
                   <div>• Automations API: {automationsError.message}</div>
                 )}
                 {notificationsError && (
-                  <div>• Notifications API: {notificationsError.message}</div>
+                  <div>�� Notifications API: {notificationsError.message}</div>
                 )}
               </div>
             </details>
