@@ -2294,6 +2294,60 @@ router.get("/invoices", async (req: Request, res: Response) => {
   }
 });
 
+// FinOps configuration endpoints
+router.get("/config", async (_req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable())) {
+      return res.json({
+        initial_overdue_call_delay_minutes: 0,
+        repeat_overdue_call_interval_minutes: 10,
+        only_repeat_when_single_overdue: false,
+      });
+    }
+    const settings = await getFinOpsSettings();
+    res.json({
+      initial_overdue_call_delay_minutes: Number(settings.initial_overdue_call_delay_minutes || 0),
+      repeat_overdue_call_interval_minutes: Number(settings.repeat_overdue_call_interval_minutes || 10),
+      only_repeat_when_single_overdue: Boolean(settings.only_repeat_when_single_overdue || false),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.put("/config", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable())) {
+      return res.status(503).json({ error: "Database unavailable" });
+    }
+    await ensureFinOpsSettings();
+    const body = req.body || {};
+    const initialDelay = Math.max(0, parseInt(body.initial_overdue_call_delay_minutes ?? 0));
+    const repeatInterval = Math.max(1, parseInt(body.repeat_overdue_call_interval_minutes ?? 10));
+    const onlySingle = Boolean(body.only_repeat_when_single_overdue ?? false);
+
+    const row = await pool.query(`SELECT id FROM finops_settings ORDER BY id ASC LIMIT 1`);
+    const id = row.rows[0]?.id || 1;
+    await pool.query(
+      `UPDATE finops_settings
+       SET initial_overdue_call_delay_minutes = $1,
+           repeat_overdue_call_interval_minutes = $2,
+           only_repeat_when_single_overdue = $3,
+           updated_at = NOW()
+       WHERE id = $4`,
+      [initialDelay, repeatInterval, onlySingle, id],
+    );
+
+    res.json({
+      initial_overdue_call_delay_minutes: initialDelay,
+      repeat_overdue_call_interval_minutes: repeatInterval,
+      only_repeat_when_single_overdue: onlySingle,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Debug endpoint for troubleshooting FinOps API issues
 router.get("/debug/status", async (req: Request, res: Response) => {
   try {
