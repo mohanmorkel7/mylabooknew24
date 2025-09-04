@@ -594,17 +594,30 @@ export default function FundRaiseDetails() {
                         </Badge>
                         {vcData.lead_source_value && (
                           <span className="text-gray-900">
-                            {vcData.lead_source === "email" || vcData.lead_source?.startsWith("email_") ? (
-                              <a href={`mailto:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                            {vcData.lead_source === "email" ||
+                            vcData.lead_source?.startsWith("email_") ? (
+                              <a
+                                href={`mailto:${vcData.lead_source_value}`}
+                                className="text-blue-600 hover:underline"
+                              >
                                 {vcData.lead_source_value}
                               </a>
-                            ) : vcData.lead_source === "phone" || vcData.lead_source === "cold-call" || vcData.lead_source?.startsWith("call_") ? (
-                              <a href={`tel:${vcData.lead_source_value}`} className="text-blue-600 hover:underline">
+                            ) : vcData.lead_source === "phone" ||
+                              vcData.lead_source === "cold-call" ||
+                              vcData.lead_source?.startsWith("call_") ? (
+                              <a
+                                href={`tel:${vcData.lead_source_value}`}
+                                className="text-blue-600 hover:underline"
+                              >
                                 {vcData.lead_source_value}
                               </a>
                             ) : vcData.lead_source === "website" ? (
                               <a
-                                href={vcData.lead_source_value.startsWith("http") ? vcData.lead_source_value : `https://${vcData.lead_source_value}`}
+                                href={
+                                  vcData.lead_source_value.startsWith("http")
+                                    ? vcData.lead_source_value
+                                    : `https://${vcData.lead_source_value}`
+                                }
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-600 hover:underline"
@@ -627,7 +640,8 @@ export default function FundRaiseDetails() {
                           ]
                         }
                       >
-                        {vcData.status?.charAt(0).toUpperCase() + vcData.status?.slice(1).replace("-", " ")}
+                        {vcData.status?.charAt(0).toUpperCase() +
+                          vcData.status?.slice(1).replace("-", " ")}
                       </Badge>
                     </div>
                     <div className="space-y-1">
@@ -639,12 +653,15 @@ export default function FundRaiseDetails() {
                           ]
                         }
                       >
-                        {vcData.priority_level?.charAt(0).toUpperCase() + vcData.priority_level?.slice(1)}
+                        {vcData.priority_level?.charAt(0).toUpperCase() +
+                          vcData.priority_level?.slice(1)}
                       </Badge>
                     </div>
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500">Investor</div>
-                      <div className="text-gray-900">{vcData.investor_name}</div>
+                      <div className="text-gray-900">
+                        {vcData.investor_name}
+                      </div>
                     </div>
                   </div>
                 </div>
