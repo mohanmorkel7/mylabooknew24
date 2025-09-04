@@ -8,6 +8,14 @@
   node_bundler = "esbuild"
   timeout = 30
 
+# Schedule FinOps cron every 5 minutes (UTC); service uses IST internally
+[functions."finops-cron"]
+  schedule = "*/5 * * * *"
+
+# Schedule Pulse sync every 5 minutes (unauthenticated)
+[functions."pulse-sync"]
+  schedule = "*/5 * * * *"
+
 [[headers]]
   for = "/api/*"
   [headers.values]

@@ -28,7 +28,7 @@ class FinOpsScheduler {
       },
     );
 
-cron.schedule(
+    cron.schedule(
       "*/5 * * * *",
       async () => {
         console.log("Running SLA monitoring check...");
@@ -115,7 +115,7 @@ cron.schedule(
         WHERE is_active = true 
         AND duration = 'weekly'
         AND effective_from <= $1
-        AND (last_run IS NULL OR last_run < (CURRENT_TIMESTAMP - INTERVAL '6 days'))
+        AND (last_run_at IS NULL OR last_run_at < (CURRENT_TIMESTAMP - INTERVAL '6 days'))
         AND deleted_at IS NULL
       `,
         [today],
@@ -146,7 +146,7 @@ cron.schedule(
         WHERE is_active = true 
         AND duration = 'monthly'
         AND effective_from <= $1
-        AND (last_run IS NULL OR last_run < (CURRENT_TIMESTAMP - INTERVAL '28 days'))
+        AND (last_run_at IS NULL OR last_run_at < (CURRENT_TIMESTAMP - INTERVAL '28 days'))
         AND deleted_at IS NULL
       `,
         [today],
@@ -207,9 +207,9 @@ cron.schedule(
       // Update task last run time and next run
       await pool.query(
         `
-        UPDATE finops_tasks 
-        SET last_run = CURRENT_TIMESTAMP,
-            next_run = CURRENT_TIMESTAMP + INTERVAL '${nextRunInterval}',
+        UPDATE finops_tasks
+        SET last_run_at = CURRENT_TIMESTAMP,
+            next_run_at = CURRENT_TIMESTAMP + INTERVAL '${nextRunInterval}',
             status = 'active'
         WHERE id = $1
       `,

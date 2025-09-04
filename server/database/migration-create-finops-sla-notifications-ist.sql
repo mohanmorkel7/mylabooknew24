@@ -11,7 +11,10 @@ ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
 ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
 
--- Create or replace the enhanced SLA notification function
+-- Ensure old versions are removed to avoid return type conflicts
+DROP FUNCTION IF EXISTS check_subtask_sla_notifications_ist() CASCADE;
+
+-- Create the enhanced SLA notification function
 CREATE OR REPLACE FUNCTION check_subtask_sla_notifications_ist()
 RETURNS TABLE(
   notification_type TEXT,
@@ -45,11 +48,11 @@ BEGIN
     'pre_start_alert'::TEXT as notification_type,
     fs.id as subtask_id,
     fs.task_id,
-    ft.task_name,
-    fs.name as subtask_name,
-    COALESCE(fs.assigned_to, ft.assigned_to) as assigned_to,
-    COALESCE(fc.company_name, 'Unknown Client') as client_name,
-    EXTRACT(EPOCH FROM (fs.start_time_ist - current_time_only))/60 as time_diff_minutes,
+    ft.task_name::TEXT as task_name,
+    fs.name::TEXT as subtask_name,
+    COALESCE(fs.assigned_to, ft.assigned_to)::TEXT as assigned_to,
+    COALESCE(fc.company_name, 'Unknown Client')::TEXT as client_name,
+    ROUND(EXTRACT(EPOCH FROM (fs.start_time_ist - current_time_only))/60)::INT as time_diff_minutes,
     format('📋 Task Starting Soon: %s starts in 15 minutes (%s IST). Client: %s',
            fs.name, fs.start_time_ist, COALESCE(fc.company_name, 'N/A')) as message,
     'medium'::TEXT as priority,
@@ -76,11 +79,11 @@ BEGIN
     'sla_warning'::TEXT as notification_type,
     fs.id as subtask_id,
     fs.task_id,
-    ft.task_name,
-    fs.name as subtask_name,
-    COALESCE(fs.assigned_to, ft.assigned_to) as assigned_to,
-    COALESCE(fc.company_name, 'Unknown Client') as client_name,
-    EXTRACT(EPOCH FROM (current_time_only - fs.start_time_ist))/60 as time_diff_minutes,
+    ft.task_name::TEXT as task_name,
+    fs.name::TEXT as subtask_name,
+    COALESCE(fs.assigned_to, ft.assigned_to)::TEXT as assigned_to,
+    COALESCE(fc.company_name, 'Unknown Client')::TEXT as client_name,
+    ROUND(EXTRACT(EPOCH FROM (current_time_only - fs.start_time_ist))/60)::INT as time_diff_minutes,
     format('⚠️ SLA Warning: %s was scheduled to start at %s IST. Currently %s minutes late. Client: %s',
            fs.name, fs.start_time_ist, 
            ROUND(EXTRACT(EPOCH FROM (current_time_only - fs.start_time_ist))/60),
@@ -109,11 +112,11 @@ BEGIN
     'escalation_alert'::TEXT as notification_type,
     fs.id as subtask_id,
     fs.task_id,
-    ft.task_name,
-    fs.name as subtask_name,
-    COALESCE(fs.assigned_to, ft.assigned_to) as assigned_to,
-    COALESCE(fc.company_name, 'Unknown Client') as client_name,
-    EXTRACT(EPOCH FROM (current_time_only - fs.start_time_ist))/60 as time_diff_minutes,
+    ft.task_name::TEXT as task_name,
+    fs.name::TEXT as subtask_name,
+    COALESCE(fs.assigned_to, ft.assigned_to)::TEXT as assigned_to,
+    COALESCE(fc.company_name, 'Unknown Client')::TEXT as client_name,
+    ROUND(EXTRACT(EPOCH FROM (current_time_only - fs.start_time_ist))/60)::INT as time_diff_minutes,
     format('🚨 ESCALATION: %s missed start time (%s IST) by %s minutes. Immediate action required. Client: %s',
            fs.name, fs.start_time_ist,
            ROUND(EXTRACT(EPOCH FROM (current_time_only - fs.start_time_ist))/60),
@@ -139,6 +142,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to reset daily tasks and notifications
+DROP FUNCTION IF EXISTS reset_daily_finops_tasks() CASCADE;
 CREATE OR REPLACE FUNCTION reset_daily_finops_tasks()
 RETURNS void AS $$
 DECLARE
@@ -188,6 +192,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to mark notifications as sent
+DROP FUNCTION IF EXISTS mark_notification_sent(INTEGER, TEXT) CASCADE;
 CREATE OR REPLACE FUNCTION mark_notification_sent(
   p_subtask_id INTEGER,
   p_notification_type TEXT
@@ -212,6 +217,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create function to move completed notifications to activity log
+DROP FUNCTION IF EXISTS archive_completed_notifications() CASCADE;
 CREATE OR REPLACE FUNCTION archive_completed_notifications()
 RETURNS void AS $$
 BEGIN

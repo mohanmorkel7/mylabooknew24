@@ -1,7 +1,11 @@
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
-import { getSourceLabel } from "@/lib/constants";
+import {
+  getSourceLabel,
+  formatPhoneDisplay,
+  formatPhoneHref,
+} from "@/lib/constants";
 import { apiClient } from "@/lib/api";
 import { useUpdateFundRaiseStep } from "@/hooks/useApi";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
@@ -49,6 +53,14 @@ import {
   Zap,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -404,6 +416,23 @@ export default function FundRaiseDetails() {
 
   return (
     <div className="p-6">
+      <Breadcrumb className="mb-4">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink href="/fundraise">Fund Raises</BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink href={`/fundraise/${id}`}>
+              {vcData.round_title || vcData.investor_name || `#${id}`}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>Overview</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <Button
@@ -429,7 +458,7 @@ export default function FundRaiseDetails() {
               </Badge>
             </div>
             <p className="text-gray-600 mt-1">Fund Raise Details & Pipeline</p>
-            <div className="mt-3">
+            <div className="hidden">
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-medium text-gray-700">
                   Progress:
@@ -520,61 +549,90 @@ export default function FundRaiseDetails() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="rounded-md border bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">Round Stage</div>
+                  <div className="mt-1">
+                    <Badge
+                      className={
+                        roundStageColors[
+                          vcData.round_stage as keyof typeof roundStageColors
+                        ]
+                      }
+                    >
+                      {getRoundStageDisplay(vcData.round_stage)}
+                    </Badge>
+                  </div>
+                </div>
+                <div className="rounded-md border bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">Round Size</div>
+                  <div className="mt-1 font-semibold text-slate-900">
+                    {formatCurrency(
+                      vcData.round_size,
+                      vcData.billing_currency,
+                    ) || "TBD"}
+                  </div>
+                </div>
+                <div className="rounded-md border bg-slate-50 p-3">
+                  <div className="text-xs text-slate-500">Valuation</div>
+                  <div className="mt-1 font-semibold text-slate-900">
+                    {formatCurrency(
+                      vcData.valuation,
+                      vcData.billing_currency,
+                    ) || "TBD"}
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-4">
                 <div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-slate-500">
                         Lead Source:
                       </span>
-                      <div className="flex items-center space-x-2">
-                        <div
-                          className={`p-1 rounded ${(sourceIcons as any)[vcData.lead_source] ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"}`}
-                        >
-                          <SourceIcon className="w-3 h-3" />
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="capitalize">
-                            {getSourceLabel(vcData.lead_source)}
-                          </span>
-                          {vcData.lead_source_value && (
-                            <span
-                              className="text-sm text-blue-600 hover:underline cursor-pointer"
-                              title={vcData.lead_source_value}
+                      <Badge variant="secondary" className="capitalize">
+                        {getSourceLabel(vcData.lead_source)}
+                      </Badge>
+                      {vcData.lead_source_value && (
+                        <span className="text-gray-900">
+                          {vcData.lead_source === "email" ||
+                          vcData.lead_source?.startsWith("email_") ? (
+                            <a
+                              href={`mailto:${vcData.lead_source_value}`}
+                              className="text-blue-600 hover:underline"
                             >
-                              {vcData.lead_source === "email" ||
-                              vcData.lead_source?.startsWith("email_") ? (
-                                <a href={`mailto:${vcData.lead_source_value}`}>
-                                  {vcData.lead_source_value}
-                                </a>
-                              ) : vcData.lead_source === "phone" ||
-                                vcData.lead_source === "cold-call" ||
-                                vcData.lead_source?.startsWith("call_") ? (
-                                <a href={`tel:${vcData.lead_source_value}`}>
-                                  {vcData.lead_source_value}
-                                </a>
-                              ) : vcData.lead_source === "website" ? (
-                                <a
-                                  href={
-                                    vcData.lead_source_value.startsWith("http")
-                                      ? vcData.lead_source_value
-                                      : `https://${vcData.lead_source_value}`
-                                  }
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  {vcData.lead_source_value}
-                                </a>
-                              ) : (
-                                vcData.lead_source_value
-                              )}
-                            </span>
+                              {vcData.lead_source_value}
+                            </a>
+                          ) : vcData.lead_source === "phone" ||
+                            vcData.lead_source === "cold-call" ||
+                            vcData.lead_source?.startsWith("call_") ? (
+                            <a
+                              href={`tel:${vcData.lead_source_value}`}
+                              className="text-blue-600 hover:underline"
+                            >
+                              {vcData.lead_source_value}
+                            </a>
+                          ) : vcData.lead_source === "website" ? (
+                            <a
+                              href={
+                                vcData.lead_source_value.startsWith("http")
+                                  ? vcData.lead_source_value
+                                  : `https://${vcData.lead_source_value}`
+                              }
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {vcData.lead_source_value}
+                            </a>
+                          ) : (
+                            vcData.lead_source_value
                           )}
-                        </div>
-                      </div>
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Status:</span>
+                    <div className="flex items-center gap-2 justify-end">
+                      <span className="text-xs text-slate-500">Status:</span>
                       <Badge
                         className={
                           statusColors[
@@ -586,10 +644,8 @@ export default function FundRaiseDetails() {
                           vcData.status?.slice(1).replace("-", " ")}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Priority:
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Priority:</span>
                       <Badge
                         className={
                           priorityColors[
@@ -601,10 +657,8 @@ export default function FundRaiseDetails() {
                           vcData.priority_level?.slice(1)}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Investor:
-                      </span>
+                    <div className="flex items-center gap-2 justify-end">
+                      <span className="text-xs text-slate-500">Investor:</span>
                       <span className="text-gray-900">
                         {vcData.investor_name}
                       </span>
@@ -613,47 +667,6 @@ export default function FundRaiseDetails() {
                 </div>
                 <div>
                   <div className="space-y-3">
-                    <h4 className="font-medium text-gray-900">
-                      Funding Information
-                    </h4>
-                    <div className="space-y-2">
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Round Stage:{" "}
-                        </span>
-                        <Badge
-                          className={
-                            roundStageColors[
-                              vcData.round_stage as keyof typeof roundStageColors
-                            ]
-                          }
-                        >
-                          {getRoundStageDisplay(vcData.round_stage)}
-                        </Badge>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Round Size:{" "}
-                        </span>
-                        <span className="text-gray-900">
-                          {formatCurrency(
-                            vcData.round_size,
-                            vcData.billing_currency,
-                          ) || "TBD"}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="font-medium text-gray-600">
-                          Valuation:{" "}
-                        </span>
-                        <span className="text-gray-900">
-                          {formatCurrency(
-                            vcData.valuation,
-                            vcData.billing_currency,
-                          ) || "TBD"}
-                        </span>
-                      </div>
-                    </div>
                     {vcData.round_description && (
                       <div className="mt-1">
                         <span className="font-medium text-gray-600">
@@ -689,7 +702,7 @@ export default function FundRaiseDetails() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Funding Pipeline</CardTitle>
+                  <CardTitle>{`${vcData.investor_name || "Investor"} Funding Pipeline`}</CardTitle>
                   <CardDescription>Manage steps and team chat</CardDescription>
                 </div>
               </div>
@@ -729,6 +742,88 @@ export default function FundRaiseDetails() {
         </div>
 
         <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Investor Information</CardTitle>
+              <CardDescription>
+                Primary contact and investor details
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm">
+              <div className="space-y-2">
+                {vcData.investor_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Investor</span>
+                    <span className="text-gray-900">
+                      {vcData.investor_name}
+                    </span>
+                  </div>
+                )}
+                {getPrimaryContact(vcData)?.contact_name && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Contact</span>
+                    <span className="text-gray-900">
+                      {getPrimaryContact(vcData)?.contact_name}
+                    </span>
+                  </div>
+                )}
+                {getPrimaryContact(vcData)?.email && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Email</span>
+                    <a
+                      href={`mailto:${getPrimaryContact(vcData)?.email}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {getPrimaryContact(vcData)?.email}
+                    </a>
+                  </div>
+                )}
+                {getPrimaryContact(vcData)?.phone && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Phone</span>
+                    <a
+                      href={`tel:${formatPhoneHref(getPrimaryContact(vcData)?.phone, vcData.country)}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {formatPhoneDisplay(
+                        getPrimaryContact(vcData)?.phone,
+                        vcData.country,
+                      )}
+                    </a>
+                  </div>
+                )}
+              </div>
+              {Array.isArray(vcData.investors) &&
+                vcData.investors.length > 0 && (
+                  <>
+                    <Separator />
+                    <div>
+                      <div className="text-xs font-medium text-gray-600 mb-2">
+                        Investor Status Queue
+                      </div>
+                      <div className="space-y-2">
+                        {vcData.investors.map((inv: any, idx: number) => (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between"
+                          >
+                            <div className="text-gray-900 truncate pr-2">
+                              {inv.investor_name || inv.vc_id}
+                            </div>
+                            {inv.investor_status && (
+                              <Badge variant="secondary" className="text-xs">
+                                {String(inv.investor_status)}
+                              </Badge>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </>
+                )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Fund Raise Summary</CardTitle>

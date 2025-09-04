@@ -129,7 +129,7 @@ export default function FinOpsAutomation() {
 
   // Fetch notifications
   const {
-    data: notifications = [],
+    data: notificationsRaw = [],
     isLoading: notificationsLoading,
     error: notificationsError,
   } = useQuery({
@@ -151,6 +151,13 @@ export default function FinOpsAutomation() {
     retry: 1,
     retryDelay: 2000,
   });
+
+  // Normalize notifications to always be an array
+  const notifications = Array.isArray(notificationsRaw)
+    ? notificationsRaw
+    : Array.isArray((notificationsRaw as any)?.notifications)
+      ? (notificationsRaw as any).notifications
+      : [];
 
   const triggerAutomationMutation = useMutation({
     mutationFn: (automationId: number) =>

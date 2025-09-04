@@ -20,21 +20,21 @@ BEGIN
         END;
         $$ LANGUAGE 'plpgsql';
     END IF;
-END $$;
+END $$ LANGUAGE plpgsql;
 
 -- Apply trigger to fund_raises table
 DO $$
 BEGIN
     IF NOT EXISTS (
-        SELECT 1 FROM information_schema.triggers 
-        WHERE event_object_table = 'fund_raises' 
+        SELECT 1 FROM information_schema.triggers
+        WHERE event_object_table = 'fund_raises'
           AND trigger_name = 'update_fund_raises_updated_at'
     ) THEN
         CREATE TRIGGER update_fund_raises_updated_at
         BEFORE UPDATE ON fund_raises
         FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
     END IF;
-END $$;
+END $$ LANGUAGE plpgsql;
 
 -- Helpful indexes
 CREATE INDEX IF NOT EXISTS idx_fund_raises_vc_id ON fund_raises(vc_id);

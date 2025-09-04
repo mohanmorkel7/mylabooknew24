@@ -147,7 +147,7 @@ class FinOpsAlertService {
         WHERE is_active = true 
         AND duration = 'daily'
         AND effective_from <= $1
-        AND (last_run IS NULL OR DATE(last_run AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') < $1)
+        AND (last_run_at IS NULL OR DATE(last_run_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Kolkata') < $1)
         AND deleted_at IS NULL
       `,
         [today],
@@ -477,9 +477,9 @@ class FinOpsAlertService {
       // Update task last run time
       await pool.query(
         `
-        UPDATE finops_tasks 
-        SET last_run = CURRENT_TIMESTAMP,
-            next_run = CURRENT_TIMESTAMP + INTERVAL '1 day'
+        UPDATE finops_tasks
+        SET last_run_at = CURRENT_TIMESTAMP,
+            next_run_at = CURRENT_TIMESTAMP + INTERVAL '1 day'
         WHERE id = $1
       `,
         [task.id],

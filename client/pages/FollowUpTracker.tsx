@@ -230,6 +230,19 @@ export default function FollowUpTracker() {
   const [activeTab, setActiveTab] = useState("all");
   const [typeFilter, setTypeFilter] = useState<string>("all"); // Filter for lead vs VC follow-ups
 
+  // Default date filters to today on initial load
+  useEffect(() => {
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = pad(today.getMonth() + 1);
+    const dd = pad(today.getDate());
+    const iso = `${yyyy}-${mm}-${dd}`;
+    setDateFrom(iso);
+    setDateTo(iso);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Check user role for follow-up visibility
   const isAdmin = user?.role === "admin";
   const isSales = user?.role === "sales";
@@ -276,8 +289,7 @@ export default function FollowUpTracker() {
 
         // Only update state if the request wasn't aborted
         if (!controller.signal.aborted) {
-          const useMock =
-            apiClient.isOffline() || !Array.isArray(data) || data.length === 0;
+          const useMock = apiClient.isOffline() || !Array.isArray(data);
           const source = useMock ? mockFollowUps : data;
 
           // Convert to expected format and ensure IST timestamps
@@ -285,7 +297,7 @@ export default function FollowUpTracker() {
             ...f,
             created_at: new Date(f.created_at).toISOString(),
             updated_at: new Date(f.updated_at || f.created_at).toISOString(),
-            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            due_date: f.due_date,
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
@@ -312,7 +324,14 @@ export default function FollowUpTracker() {
             );
           }
 
-          setFollowUps(formattedFollowUps);
+          const uniqueMap = new Map<string | number, FollowUp>();
+          formattedFollowUps.forEach((f: any) => {
+            const compositeKey =
+              f.id ??
+              `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+            uniqueMap.set(compositeKey, f);
+          });
+          setFollowUps(Array.from(uniqueMap.values()));
         }
       } catch (error) {
         // Only handle non-abort errors
@@ -324,13 +343,20 @@ export default function FollowUpTracker() {
             ...f,
             created_at: new Date(f.created_at).toISOString(),
             updated_at: new Date(f.updated_at || f.created_at).toISOString(),
-            due_date: f.due_date || new Date().toISOString().split("T")[0],
+            due_date: f.due_date,
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
               (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
           }));
-          setFollowUps(formattedMockFollowUps);
+          const uniqueMockMap = new Map<string | number, FollowUp>();
+          formattedMockFollowUps.forEach((f: any) => {
+            const compositeKey =
+              f.id ??
+              `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+            uniqueMockMap.set(compositeKey, f);
+          });
+          setFollowUps(Array.from(uniqueMockMap.values()));
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -724,7 +750,7 @@ export default function FollowUpTracker() {
                 <p className="text-yellow-600 text-sm font-medium">Pending</p>
                 <p className="text-2xl font-bold text-yellow-900">
                   {
-                    followUps.filter(
+                    filteredFollowUps.filter(
                       (f) => f.status === "pending" && canViewFollowUp(f),
                     ).length
                   }
@@ -742,7 +768,7 @@ export default function FollowUpTracker() {
                 <p className="text-blue-600 text-sm font-medium">In Progress</p>
                 <p className="text-2xl font-bold text-blue-900">
                   {
-                    followUps.filter(
+                    filteredFollowUps.filter(
                       (f) => f.status === "in_progress" && canViewFollowUp(f),
                     ).length
                   }
@@ -760,7 +786,7 @@ export default function FollowUpTracker() {
                 <p className="text-green-600 text-sm font-medium">Completed</p>
                 <p className="text-2xl font-bold text-green-900">
                   {
-                    followUps.filter(
+                    filteredFollowUps.filter(
                       (f) => f.status === "completed" && canViewFollowUp(f),
                     ).length
                   }
@@ -778,7 +804,7 @@ export default function FollowUpTracker() {
                 <p className="text-red-600 text-sm font-medium">Overdue</p>
                 <p className="text-2xl font-bold text-red-900">
                   {
-                    followUps.filter((f) => {
+                    filteredFollowUps.filter((f) => {
                       const isOverdueStatus =
                         f.status === "overdue" ||
                         (f.status !== "completed" &&
@@ -958,7 +984,10 @@ export default function FollowUpTracker() {
 
                 return (
                   <Card
-                    key={followUp.id}
+                    key={
+                      followUp.id ??
+                      `${followUp.type || (followUp.vc_id || followUp.vc_round_title || followUp.investor_name ? "vc" : "lead")}-${followUp.lead_id ?? ""}-${(followUp as any).vc_id ?? ""}-${followUp.step_id ?? followUp.message_id ?? ""}-${followUp.created_at}`
+                    }
                     className={`hover:shadow-md transition-shadow border-l-4 ${
                       isAssignedToMe
                         ? isFollowUpOverdue
@@ -1178,57 +1207,6 @@ export default function FollowUpTracker() {
                               </SelectItem>
                             </SelectContent>
                           </Select>
-
-                          {followUpType === "lead" ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                navigate(`/leads/${followUp.lead_id}`)
-                              }
-                              className="text-gray-600 hover:text-gray-700"
-                            >
-                              <Target className="w-3 h-3 mr-1" />
-                              Go to Lead
-                            </Button>
-                          ) : (
-                            (() => {
-                              // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
-                              const isFundRaise =
-                                followUp.message_id &&
-                                (followUp as any).fund_raise_stage;
-                              const fundRaiseId = (followUp as any)
-                                .fund_raise_id;
-                              return (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => {
-                                    if (isFundRaise && fundRaiseId) {
-                                      const stepId =
-                                        (followUp as any).message_id ||
-                                        (followUp as any).step_id ||
-                                        (followUp as any).vc_step_id;
-                                      navigate(`/fundraise/${fundRaiseId}`, {
-                                        state: {
-                                          openStepId: stepId,
-                                          focusFollowUpId: followUp.id,
-                                        },
-                                      });
-                                    } else {
-                                      navigate(`/vc/${followUp.vc_id}`);
-                                    }
-                                  }}
-                                  className="text-gray-600 hover:text-gray-700"
-                                >
-                                  <Target className="w-3 h-3 mr-1" />
-                                  {isFundRaise
-                                    ? "Go to Fund Raise"
-                                    : "Go to VC"}
-                                </Button>
-                              );
-                            })()
-                          )}
                         </div>
                       </div>
                     </CardContent>
