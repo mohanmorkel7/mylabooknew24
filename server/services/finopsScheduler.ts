@@ -29,7 +29,7 @@ class FinOpsScheduler {
     );
 
     cron.schedule(
-      "*/5 * * * *",
+      "* * * * *",
       async () => {
         console.log("Running SLA monitoring check...");
         await finopsAlertService.checkSLAAlerts();
@@ -354,7 +354,7 @@ class FinOpsScheduler {
   public getStatus(): { initialized: boolean; activeJobs: string[] } {
     const activeJobs = [
       "Daily Task Execution (5:00 AM)",
-      "SLA Monitoring (Every 5 minutes)",
+      "SLA Monitoring (Every minute)",
       "Incomplete Subtask Check (Every 30 minutes)",
       "Weekly Task Execution (Mondays 5:00 AM)",
       "Monthly Task Execution (1st of month 5:00 AM)",
