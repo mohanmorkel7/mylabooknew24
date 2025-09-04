@@ -3,16 +3,6 @@ import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
   Card,
   CardContent,
   CardDescription,
@@ -23,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   Clock,
   CheckCircle,
@@ -40,7 +29,6 @@ import {
   DollarSign,
   Users,
   Activity,
-  Settings,
   ArrowRight,
   ExternalLink,
   ChevronRight,
@@ -83,113 +71,6 @@ interface ProcessStep {
   automation_config?: any;
 }
 
-function FinOpsConfigButton() {
-  const [open, setOpen] = useState(false);
-  const [initialDelay, setInitialDelay] = useState(0);
-  const [repeatInterval, setRepeatInterval] = useState(10);
-  const [onlySingle, setOnlySingle] = useState(false);
-  const queryClient = useQueryClient();
-
-  const { data: config } = useQuery({
-    queryKey: ["finops-config"],
-    queryFn: async () => apiClient.getFinOpsConfig(),
-    enabled: open,
-  });
-
-  useEffect(() => {
-    if (config) {
-      setInitialDelay(
-        Number((config as any).initial_overdue_call_delay_minutes || 0),
-      );
-      setRepeatInterval(
-        Number((config as any).repeat_overdue_call_interval_minutes || 10),
-      );
-      setOnlySingle(
-        Boolean((config as any).only_repeat_when_single_overdue || false),
-      );
-    }
-  }, [config]);
-
-  const saveMutation = useMutation({
-    mutationFn: () =>
-      apiClient.updateFinOpsConfig({
-        initial_overdue_call_delay_minutes: Number(initialDelay) || 0,
-        repeat_overdue_call_interval_minutes: Math.max(
-          1,
-          Number(repeatInterval) || 10,
-        ),
-        only_repeat_when_single_overdue: Boolean(onlySingle),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["finops-config"] });
-      setOpen(false);
-    },
-  });
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Settings className="w-4 h-4 mr-2" /> Config
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Overdue Alert Settings</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="initialDelay">
-              Initial overdue call delay (minutes)
-            </Label>
-            <Input
-              id="initialDelay"
-              type="number"
-              min={0}
-              value={initialDelay}
-              onChange={(e) => setInitialDelay(parseInt(e.target.value || "0"))}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="repeatInterval">
-              Repeat call interval (minutes)
-            </Label>
-            <Input
-              id="repeatInterval"
-              type="number"
-              min={1}
-              value={repeatInterval}
-              onChange={(e) =>
-                setRepeatInterval(parseInt(e.target.value || "10"))
-              }
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="onlySingle"
-              checked={onlySingle}
-              onCheckedChange={(v) => setOnlySingle(Boolean(v))}
-            />
-            <Label htmlFor="onlySingle">
-              Only send repeats when exactly one subtask is overdue in the task
-            </Label>
-          </div>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
-          >
-            Save
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
 
 export default function FinOpsAutomation() {
   const { user } = useAuth();
@@ -387,9 +268,7 @@ export default function FinOpsAutomation() {
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <FinOpsConfigButton />
-        </div>
+        <div className="flex gap-2"></div>
       </div>
 
       {/* Database Status Alert */}
