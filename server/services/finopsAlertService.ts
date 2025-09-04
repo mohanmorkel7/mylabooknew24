@@ -113,8 +113,15 @@ class FinOpsAlertService {
     // Visibility for names that didn't resolve to a user id
     try {
       const foundNames = new Set(
-        result.rows.map((r: any) =>
-          `${String(r.first_name || "").toLowerCase().replace(/\s+/g, " ").trim()} ${String(r.last_name || "").toLowerCase().replace(/\s+/g, " ").trim()}`,
+        result.rows.map(
+          (r: any) =>
+            `${String(r.first_name || "")
+              .toLowerCase()
+              .replace(/\s+/g, " ")
+              .trim()} ${String(r.last_name || "")
+              .toLowerCase()
+              .replace(/\s+/g, " ")
+              .trim()}`,
         ),
       );
       const missing = normalized.filter((n) => !foundNames.has(n));
