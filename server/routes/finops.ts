@@ -939,16 +939,24 @@ router.patch(
 
         // External alert: trigger only when marked overdue
         if (status === "overdue") {
-          const title = `Take immediate action on the overdue subtask ${subtaskName}`;
-          const managerNames = Array.from(
-            new Set([
-              ...parseManagerNames(subtaskData.reporting_managers),
-              ...parseManagerNames(subtaskData.escalation_managers),
-              ...parseManagerNames(subtaskData.assigned_to),
-            ]),
-          );
-          const userIds = await getUserIdsFromNames(managerNames);
-          await sendReplicaDownAlertOnce(taskId, subtaskId, title, userIds);
+          const settings = await getFinOpsSettings();
+          const initialDelay = Number(settings?.initial_overdue_call_delay_minutes || 0);
+          if (initialDelay === 0) {
+            const title = `Take immediate action on the overdue subtask ${subtaskName}`;
+            const managerNames = Array.from(
+              new Set([
+                ...parseManagerNames(subtaskData.reporting_managers),
+                ...parseManagerNames(subtaskData.escalation_managers),
+                ...parseManagerNames(subtaskData.assigned_to),
+              ]),
+            );
+            const userIds = await getUserIdsFromNames(managerNames);
+            await sendReplicaDownAlertOnce(taskId, subtaskId, title, userIds);
+          } else {
+            console.log(
+              `Skipping immediate direct-call due to configured initial delay (${initialDelay} min); scheduler will handle initial alert`,
+            );
+          }
         }
 
         // Log user activity and update task status
