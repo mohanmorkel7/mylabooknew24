@@ -154,10 +154,13 @@ class FinOpsAlertService {
     const port = parseInt(process.env.SMTP_PORT || "587", 10);
     const user = process.env.SMTP_USER || "";
     const pass = process.env.SMTP_PASS || "";
-    const disabled = String(process.env.SMTP_DISABLED || "").toLowerCase() === "true";
+    const disabled =
+      String(process.env.SMTP_DISABLED || "").toLowerCase() === "true";
 
     if (disabled || host === "localhost") {
-      this.emailTransporter = nodemailer.createTransport({ jsonTransport: true });
+      this.emailTransporter = nodemailer.createTransport({
+        jsonTransport: true,
+      });
       console.log("Email transport: jsonTransport (development/no SMTP)");
     } else {
       this.emailTransporter = nodemailer.createTransport({
