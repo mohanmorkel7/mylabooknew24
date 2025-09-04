@@ -701,4 +701,105 @@ router.post("/tasks/overdue-reason", async (req: Request, res: Response) => {
   }
 });
 
+// Public endpoint to scan overdue subtasks and call Pulse Alerts (no auth)
+router.post("/public/pulse-sync", async (req: Request, res: Response) => {
+  try {
+    // Ensure DB reachable
+    await requireDatabase();
+
+    // Ensure idempotency table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_external_alerts (
+        id SERIAL PRIMARY KEY,
+        task_id INTEGER NOT NULL,
+        subtask_id INTEGER NOT NULL,
+        alert_key TEXT NOT NULL,
+        title TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(task_id, subtask_id, alert_key)
+      )
+    `);
+
+    // Find overdue subtasks that haven't been sent to Pulse yet
+    const overdue = await pool.query(
+      `
+      SELECT
+        t.id as task_id,
+        t.task_name,
+        t.assigned_to,
+        t.reporting_managers,
+        t.escalation_managers,
+        st.id as subtask_id,
+        st.name as subtask_name
+      FROM finops_subtasks st
+      JOIN finops_tasks t ON t.id = st.task_id
+      WHERE st.status = 'overdue'
+        AND t.is_active = true
+        AND t.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM finops_external_alerts fea
+          WHERE fea.task_id = t.id AND fea.subtask_id = st.id AND fea.alert_key = 'replica_down_overdue'
+        )
+      ORDER BY st.id DESC
+      LIMIT 100
+    `);
+
+    let sent = 0;
+    for (const row of overdue.rows) {
+      const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+
+      // Reserve to avoid duplicates
+      const reserve = await pool.query(
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
+         VALUES ($1, $2, 'replica_down_overdue', $3)
+         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+         RETURNING id`,
+        [row.task_id, row.subtask_id, title],
+      );
+      if (reserve.rows.length === 0) continue;
+
+      // Build manager/user list
+      const parseManagers = (val: any): string[] => {
+        if (!val) return [];
+        if (Array.isArray(val)) return val.map(String).map(s => s.trim()).filter(Boolean);
+        try { const p = JSON.parse(val); return Array.isArray(p) ? p.map(String).map((s)=>s.trim()).filter(Boolean) : []; } catch {}
+        return String(val).split(',').map((s)=>s.trim()).filter(Boolean);
+      };
+      const names = Array.from(new Set([
+        ...parseManagers(row.reporting_managers),
+        ...parseManagers(row.escalation_managers),
+        ...(row.assigned_to ? [String(row.assigned_to)] : []),
+      ]));
+
+      // Resolve azure_object_id user ids for Pulse
+      const lowered = names.map((n) => n.toLowerCase());
+      const users = await pool.query(
+        `SELECT azure_object_id FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
+        [lowered],
+      );
+      const user_ids = users.rows.map((r) => r.azure_object_id).filter((id) => !!id);
+
+      // Call Pulse Alerts
+      try {
+        const resp = await fetch("https://pulsealerts.mylapay.com/direct-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+        });
+        if (!resp.ok) {
+          console.warn("Pulse call failed:", resp.status);
+        } else {
+          sent++;
+        }
+      } catch (err) {
+        console.warn("Pulse call error:", (err as Error).message);
+      }
+    }
+
+    res.json({ success: true, checked: overdue.rowCount, sent });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 export default router;
