@@ -138,10 +138,16 @@ async function sendReplicaDownAlertOnce(
       }),
     });
     if (!resp.ok) {
-      console.warn("[finops-production] Replica-down alert failed:", resp.status);
+      console.warn(
+        "[finops-production] Replica-down alert failed:",
+        resp.status,
+      );
     }
   } catch (e) {
-    console.warn("[finops-production] Replica-down alert error:", (e as Error).message);
+    console.warn(
+      "[finops-production] Replica-down alert error:",
+      (e as Error).message,
+    );
   }
 }
 
@@ -437,7 +443,12 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
           ]),
         );
         const userIds = await getUserIdsFromNames(managerNames);
-        await sendReplicaDownAlertOnce(subtask.task_id, subtaskId, title, userIds);
+        await sendReplicaDownAlertOnce(
+          subtask.task_id,
+          subtaskId,
+          title,
+          userIds,
+        );
       }
 
       await client.query("COMMIT");
