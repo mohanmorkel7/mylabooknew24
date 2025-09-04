@@ -16,7 +16,9 @@ async function ensureFinOpsSettings() {
       updated_at TIMESTAMP DEFAULT NOW()
     )
   `);
-  const row = await pool.query(`SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`);
+  const row = await pool.query(
+    `SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`,
+  );
   if (row.rows.length === 0) {
     await pool.query(
       `INSERT INTO finops_settings (initial_overdue_call_delay_minutes, repeat_overdue_call_interval_minutes, only_repeat_when_single_overdue)
@@ -28,7 +30,9 @@ async function ensureFinOpsSettings() {
 
 async function getFinOpsSettings() {
   await ensureFinOpsSettings();
-  const res = await pool.query(`SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`);
+  const res = await pool.query(
+    `SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`,
+  );
   return res.rows[0];
 }
 
@@ -940,7 +944,9 @@ router.patch(
         // External alert: trigger only when marked overdue
         if (status === "overdue") {
           const settings = await getFinOpsSettings();
-          const initialDelay = Number(settings?.initial_overdue_call_delay_minutes || 0);
+          const initialDelay = Number(
+            settings?.initial_overdue_call_delay_minutes || 0,
+          );
           if (initialDelay === 0) {
             const title = `Take immediate action on the overdue subtask ${subtaskName}`;
             const managerNames = Array.from(
@@ -2306,9 +2312,15 @@ router.get("/config", async (_req: Request, res: Response) => {
     }
     const settings = await getFinOpsSettings();
     res.json({
-      initial_overdue_call_delay_minutes: Number(settings.initial_overdue_call_delay_minutes || 0),
-      repeat_overdue_call_interval_minutes: Number(settings.repeat_overdue_call_interval_minutes || 10),
-      only_repeat_when_single_overdue: Boolean(settings.only_repeat_when_single_overdue || false),
+      initial_overdue_call_delay_minutes: Number(
+        settings.initial_overdue_call_delay_minutes || 0,
+      ),
+      repeat_overdue_call_interval_minutes: Number(
+        settings.repeat_overdue_call_interval_minutes || 10,
+      ),
+      only_repeat_when_single_overdue: Boolean(
+        settings.only_repeat_when_single_overdue || false,
+      ),
     });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -2322,11 +2334,19 @@ router.put("/config", async (req: Request, res: Response) => {
     }
     await ensureFinOpsSettings();
     const body = req.body || {};
-    const initialDelay = Math.max(0, parseInt(body.initial_overdue_call_delay_minutes ?? 0));
-    const repeatInterval = Math.max(1, parseInt(body.repeat_overdue_call_interval_minutes ?? 10));
+    const initialDelay = Math.max(
+      0,
+      parseInt(body.initial_overdue_call_delay_minutes ?? 0),
+    );
+    const repeatInterval = Math.max(
+      1,
+      parseInt(body.repeat_overdue_call_interval_minutes ?? 10),
+    );
     const onlySingle = Boolean(body.only_repeat_when_single_overdue ?? false);
 
-    const row = await pool.query(`SELECT id FROM finops_settings ORDER BY id ASC LIMIT 1`);
+    const row = await pool.query(
+      `SELECT id FROM finops_settings ORDER BY id ASC LIMIT 1`,
+    );
     const id = row.rows[0]?.id || 1;
     await pool.query(
       `UPDATE finops_settings

@@ -98,9 +98,15 @@ function FinOpsConfigButton() {
 
   useEffect(() => {
     if (config) {
-      setInitialDelay(Number((config as any).initial_overdue_call_delay_minutes || 0));
-      setRepeatInterval(Number((config as any).repeat_overdue_call_interval_minutes || 10));
-      setOnlySingle(Boolean((config as any).only_repeat_when_single_overdue || false));
+      setInitialDelay(
+        Number((config as any).initial_overdue_call_delay_minutes || 0),
+      );
+      setRepeatInterval(
+        Number((config as any).repeat_overdue_call_interval_minutes || 10),
+      );
+      setOnlySingle(
+        Boolean((config as any).only_repeat_when_single_overdue || false),
+      );
     }
   }, [config]);
 
@@ -108,7 +114,10 @@ function FinOpsConfigButton() {
     mutationFn: () =>
       apiClient.updateFinOpsConfig({
         initial_overdue_call_delay_minutes: Number(initialDelay) || 0,
-        repeat_overdue_call_interval_minutes: Math.max(1, Number(repeatInterval) || 10),
+        repeat_overdue_call_interval_minutes: Math.max(
+          1,
+          Number(repeatInterval) || 10,
+        ),
         only_repeat_when_single_overdue: Boolean(onlySingle),
       }),
     onSuccess: () => {
@@ -130,7 +139,9 @@ function FinOpsConfigButton() {
         </DialogHeader>
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="initialDelay">Initial overdue call delay (minutes)</Label>
+            <Label htmlFor="initialDelay">
+              Initial overdue call delay (minutes)
+            </Label>
             <Input
               id="initialDelay"
               type="number"
@@ -140,13 +151,17 @@ function FinOpsConfigButton() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="repeatInterval">Repeat call interval (minutes)</Label>
+            <Label htmlFor="repeatInterval">
+              Repeat call interval (minutes)
+            </Label>
             <Input
               id="repeatInterval"
               type="number"
               min={1}
               value={repeatInterval}
-              onChange={(e) => setRepeatInterval(parseInt(e.target.value || "10"))}
+              onChange={(e) =>
+                setRepeatInterval(parseInt(e.target.value || "10"))
+              }
             />
           </div>
           <div className="flex items-center space-x-2">
@@ -164,7 +179,10 @@ function FinOpsConfigButton() {
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          <Button
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+          >
             Save
           </Button>
         </DialogFooter>

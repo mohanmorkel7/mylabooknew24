@@ -370,7 +370,11 @@ class FinOpsAlertService {
               {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: userIds }),
+                body: JSON.stringify({
+                  receiver: "CRM_Switch",
+                  title,
+                  user_ids: userIds,
+                }),
               },
             );
 
@@ -389,16 +393,17 @@ class FinOpsAlertService {
                 minutes,
               );
             } else {
-              console.warn("Replica-down initial alert failed:", response.status);
+              console.warn(
+                "Replica-down initial alert failed:",
+                response.status,
+              );
             }
           }
         }
 
         // Repeat calls with configured interval
         if (minutes >= initialDelay + repeatInterval) {
-          const bucket = Math.floor(
-            (minutes - initialDelay) / repeatInterval,
-          ); // 1,2,3...
+          const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
           const alertKey = `replica_down_overdue_${bucket}`;
 
           const exists = await pool.query(
@@ -433,7 +438,11 @@ class FinOpsAlertService {
             {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: userIds }),
+              body: JSON.stringify({
+                receiver: "CRM_Switch",
+                title,
+                user_ids: userIds,
+              }),
             },
           );
 
