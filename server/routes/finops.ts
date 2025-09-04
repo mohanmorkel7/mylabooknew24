@@ -749,11 +749,31 @@ async function sendReplicaDownAlertOnce(
       return;
     }
 
+    // Fetch task meta for richer visibility in logs
+    const metaRes = await pool.query(
+      `SELECT assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
+      [taskId],
+    );
+    const meta = metaRes.rows[0] || {};
+    const assigned_to_raw = meta.assigned_to ?? null;
+    const reporting_managers_raw = meta.reporting_managers ?? null;
+    const escalation_managers_raw = meta.escalation_managers ?? null;
+
+    const assigned_to_parsed = parseManagerNames(assigned_to_raw);
+    const reporting_managers_parsed = parseManagerNames(reporting_managers_raw);
+    const escalation_managers_parsed = parseManagerNames(escalation_managers_raw);
+
     console.log("Direct-call payload (finops.ts)", {
       taskId,
       subtaskId,
       title,
       user_ids: userIds,
+      assigned_to_raw,
+      reporting_managers_raw,
+      escalation_managers_raw,
+      assigned_to_parsed,
+      reporting_managers_parsed,
+      escalation_managers_parsed,
     });
 
     const resp = await fetch("https://pulsealerts.mylapay.com/direct-call", {
