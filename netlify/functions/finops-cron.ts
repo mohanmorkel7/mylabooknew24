@@ -11,7 +11,10 @@ export const handler: Handler = async () => {
       await initializeDatabase();
       console.log("[finops-cron] Database initialized");
     } catch (dbErr: any) {
-      console.warn("[finops-cron] Database init warning:", dbErr?.message || dbErr);
+      console.warn(
+        "[finops-cron] Database init warning:",
+        dbErr?.message || dbErr,
+      );
     }
 
     await finopsAlertService.checkDailyTaskExecution();
@@ -27,7 +30,10 @@ export const handler: Handler = async () => {
 
     const finishedAt = new Date().toISOString();
     console.log(`[finops-cron] END ${finishedAt}`);
-    return { statusCode: 200, body: JSON.stringify({ ok: true, startedAt, finishedAt }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, startedAt, finishedAt }),
+    };
   } catch (e: any) {
     console.error("[finops-cron] ERROR:", e?.stack || e?.message || String(e));
     return {
