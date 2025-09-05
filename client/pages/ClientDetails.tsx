@@ -438,6 +438,39 @@ export default function ClientDetails() {
                 </>
               )}
 
+              <Separator />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2"><span className="font-medium text-gray-600">Source:</span><span className="text-gray-900">{meta.source || "-"}</span></div>
+                  <div className="flex items-center space-x-2"><span className="font-medium text-gray-600">Source Info:</span><span className="text-gray-900">{meta.source_value || "-"}</span></div>
+                  <div className="flex items-center space-x-2"><span className="font-medium text-gray-600">Client Type:</span><span className="text-gray-900">{meta.client_type || "-"}</span></div>
+                  <div className="flex items-center space-x-2"><span className="font-medium text-gray-600">Geography:</span><span className="text-gray-900">{meta.geography || "-"}</span></div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2"><span className="font-medium text-gray-600">Txn Volume:</span><span className="text-gray-900">{meta.txn_volume || "-"}</span></div>
+                  <div className="flex items-center space-x-2"><span className="font-medium text-gray-600">Product Tags:</span><span className="text-gray-900">{meta.product_tag_info || "-"}</span></div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">Website:</span>
+                    {(clientData.website || meta.website) ? (
+                      <a className="text-blue-600 hover:underline" href={clientData.website || meta.website} target="_blank" rel="noopener noreferrer">{clientData.website || meta.website}</a>
+                    ) : (
+                      <span className="text-gray-900">-</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {Array.isArray(meta.payment_offerings) && meta.payment_offerings.length > 0 && (
+                <div className="mt-4">
+                  <div className="font-medium text-gray-600 mb-2">Payment Offerings:</div>
+                  <div className="flex flex-wrap gap-2">
+                    {meta.payment_offerings.map((p: string) => (
+                      <Badge key={p} variant="secondary">{p}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </CardContent>
           </Card>
 
@@ -445,6 +478,7 @@ export default function ClientDetails() {
 
         {/* Right Column */}
         <div className="space-y-6">
+          {false && (
           <Card>
             <CardHeader>
               <CardTitle>Follow-up Tracker</CardTitle>
@@ -494,6 +528,7 @@ export default function ClientDetails() {
               </div>
             </CardContent>
           </Card>
+          )}
 
           {/* Quick Actions */}
           <Card>
