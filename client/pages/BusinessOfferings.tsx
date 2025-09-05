@@ -127,6 +127,29 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    if (initial) {
+      setFormA({
+        clientId: initial.client_id ? String(initial.client_id) : "",
+        solution: initial.solution || "",
+        product: initial.product || "",
+        avgFee: initial.avg_fee_value != null ? String(initial.avg_fee_value) : "",
+        mmgf: initial.mmgf_value != null ? String(initial.mmgf_value) : "",
+      });
+      setFormB({
+        clientStatus: initial.client_status || "",
+        offeringDescription: initial.offering_description || "",
+        currentDailyVolume: initial.current_daily_volume_bucket || "",
+        projectedDailyVolume: initial.projected_daily_volume_bucket || "",
+        potentialMMGF: initial.potential_mmgf_value != null ? String(initial.potential_mmgf_value) : "",
+        potentialFee: initial.potential_fee_value != null ? String(initial.potential_fee_value) : "",
+        potentialMRR: initial.potential_mrr_lacs != null ? String(initial.potential_mrr_lacs) : "",
+        currentPotentialARR: initial.current_potential_arr_usd_mn != null ? String(initial.current_potential_arr_usd_mn) : "",
+        projectedPotentialARR: initial.projected_potential_arr_usd_mn != null ? String(initial.projected_potential_arr_usd_mn) : "",
+      });
+    }
+  }, [initial]);
+
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients-all"],
     queryFn: async () => {
