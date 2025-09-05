@@ -581,7 +581,6 @@ export default function VCDetails() {
 
         {/* Right Column - Quick Actions & Info */}
         <div className="space-y-6">
-
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
