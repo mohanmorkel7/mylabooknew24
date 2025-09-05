@@ -101,6 +101,8 @@ import VCDashboard from "@/pages/VCDashboard";
 import CreateVC from "@/pages/CreateVC";
 import VCDetails from "@/pages/VCDetails";
 import VCEdit from "@/pages/VCEdit";
+import ClientDashboard from "@/pages/ClientDashboard";
+import CreateClient from "@/pages/CreateClient";
 import FundRaiseDashboard from "@/pages/FundRaiseDashboard";
 import CreateFundRaise from "@/pages/CreateFundRaise";
 import FundRaiseDetails from "@/pages/FundRaiseDetails";
@@ -582,6 +584,28 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={["admin", "sales"]}>
             <DashboardLayout>
               <LeadEdit />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Clients Routes */}
+      <Route
+        path="/clients"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <ClientDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/clients/create"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales"]}>
+            <DashboardLayout>
+              <CreateClient />
             </DashboardLayout>
           </ProtectedRoute>
         }
