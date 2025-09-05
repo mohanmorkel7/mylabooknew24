@@ -249,14 +249,13 @@ export default function CreateClient() {
         phone_prefix: "+91",
         designation: "",
       };
-      if (!primary.contact_name || !isValidEmail(primary.email)) {
+      if (primary.email && !isValidEmail(primary.email)) {
         toast({
-          title: "Missing contact",
-          description:
-            "Contact name and email are currently required to create a client. We can make them optional if backend validation is updated.",
+          title: "Invalid email",
+          description: "Please enter a valid contact email or leave it blank.",
           variant: "destructive",
         });
-        throw new Error("Contact details required by backend");
+        throw new Error("Invalid contact email");
       }
 
       const cityName = addressInfo.city
@@ -264,8 +263,6 @@ export default function CreateClient() {
         : "";
       const payload: any = {
         client_name: clientInfo.client_name.trim(),
-        contact_person: primary.contact_name.trim(),
-        email: primary.email.trim(),
         phone: primary.phone?.trim() || undefined,
         // Top-level fields expected by API/DB schema
         address: addressInfo.address || undefined,
@@ -286,6 +283,12 @@ export default function CreateClient() {
         }),
         status: "active",
       };
+      if (primary.contact_name && primary.contact_name.trim()) {
+        payload.contact_person = primary.contact_name.trim();
+      }
+      if (primary.email && primary.email.trim()) {
+        payload.email = primary.email.trim();
+      }
       const res = await apiClient.request("/clients", {
         method: "POST",
         body: JSON.stringify(payload),

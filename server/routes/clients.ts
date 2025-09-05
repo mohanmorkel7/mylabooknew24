@@ -168,8 +168,8 @@ router.post("/", async (req: Request, res: Response) => {
       });
     }
 
-    // Validate email format
-    if (!DatabaseValidator.isValidEmail(clientData.email)) {
+    // Validate email format only if provided
+    if (clientData.email && !DatabaseValidator.isValidEmail(clientData.email)) {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
