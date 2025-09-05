@@ -672,14 +672,6 @@ export default function FundRaiseDetails() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">
-                        Investor Status:
-                      </span>
-                      <Badge variant="secondary" className="capitalize">
-                        {vcData.investor_status || "N/A"}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2">
                       <span className="text-xs text-slate-500">Fund $ Mn:</span>
                       <span className="text-gray-900">
                         {formatCurrency(
