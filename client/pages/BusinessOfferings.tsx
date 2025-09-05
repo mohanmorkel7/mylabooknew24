@@ -574,33 +574,16 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                       : "Potential Fee per Txn USD"}{" "}
                     *
                   </Label>
-                  <Select
+                  <Combobox
+                    items={(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => ({ label: v, value: v }))}
                     value={formB.potentialFee}
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       setFormB((p) => ({ ...p, potentialFee: v }));
                       setErrors((e) => ({ ...e, potentialFee: "" }));
                     }}
+                    placeholder={formA.clientId ? "Search or select" : "Select client in Offering Details"}
                     disabled={!formA.clientId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          formA.clientId
-                            ? "Select value"
-                            : "Select client in Offering Details"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map(
-                        (v) => (
-                          <SelectItem key={v} value={v}>
-                            {v}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
+                  />
                   {errors.potentialFee && (
                     <div className="text-sm text-red-600 mt-1">
                       {errors.potentialFee}
