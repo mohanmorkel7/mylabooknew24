@@ -2262,6 +2262,18 @@ export default function CreateVC() {
             </CardContent>
           </Card>
 
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addContact}
+              disabled={vcData.contacts.length >= 3}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add Contact
+            </Button>
+          </div>
+
           {/* Navigation Buttons */}
           <div className="flex justify-between">
             <Button
