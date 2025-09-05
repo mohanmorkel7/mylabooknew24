@@ -905,8 +905,9 @@ export default function ClientEdit() {
           </Button>
           {activeTab === "client-info" ? (
             <div className="flex gap-2">
-              <Button type="button" onClick={handleNext}>
-                Next
+              <Button type="button" onClick={handleNext}>Next</Button>
+              <Button type="submit">
+                <Save className="w-4 h-4 mr-2" /> Save Changes
               </Button>
             </div>
           ) : (
