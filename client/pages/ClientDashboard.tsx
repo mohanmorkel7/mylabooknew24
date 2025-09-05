@@ -40,7 +40,7 @@ export default function ClientDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const openClient = (id: number) => navigate(`/sales/client/${id}`);
+  const openClient = (id: number) => navigate(`/clients/${id}`);
 
   // Fetch Clients
   const {
