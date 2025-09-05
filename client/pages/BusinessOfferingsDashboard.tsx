@@ -11,11 +11,40 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Briefcase, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Briefcase, Plus, Trash2 } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
+import { toast } from "@/components/ui/use-toast";
 
 export default function BusinessOfferingsDashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+
+  const { data = [], isLoading, error } = useQuery({
+    queryKey: ["business-offerings"],
+    queryFn: () => apiClient.getBusinessOfferings(),
+    staleTime: 10000,
+  });
+
+  const filtered = (data as any[]).filter((o) => {
+    const term = search.toLowerCase();
+    const fields = [o.solution, o.product, o.offering_description];
+    return fields.some((f) => (f || "").toLowerCase().includes(term));
+  });
+
+  const stats = { total: (data as any[]).length };
+
+  const handleDelete = async (id: number) => {
+    try {
+      await apiClient.deleteBusinessOffering(id);
+      toast({ title: "Deleted", description: "Business Offering removed" });
+      queryClient.invalidateQueries({ queryKey: ["business-offerings"] });
+    } catch (e: any) {
+      toast({ title: "Delete failed", description: e?.message || "Failed", variant: "destructive" });
+    }
+  };
 
   return (
     <div className="p-6">
