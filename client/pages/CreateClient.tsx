@@ -167,6 +167,7 @@ export default function CreateClient() {
         throw new Error("Contact details required by backend");
       }
 
+      const cityName = addressInfo.city ? addressInfo.city.split("__")[0] : "";
       const payload: any = {
         client_name: clientInfo.client_name.trim(),
         contact_person: primary.contact_name.trim(),
@@ -184,7 +185,7 @@ export default function CreateClient() {
           address: addressInfo.address || undefined,
           country: addressInfo.country,
           state: addressInfo.state,
-          city: addressInfo.city,
+          city: cityName,
         }),
         status: "active",
       };
