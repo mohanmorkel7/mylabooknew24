@@ -551,8 +551,8 @@ export default function CreateClient() {
                         <SelectValue placeholder="Select city" />
                       </SelectTrigger>
                       <SelectContent>
-                        {cities.map((ct) => (
-                          <SelectItem key={`${ct.name}-${ct.stateCode || ""}`} value={ct.name}>
+                        {uniqueCities.map((ct, idx) => (
+                          <SelectItem key={`${ct.name}-${ct.stateCode || ""}-${idx}`} value={`${ct.name}__${ct.stateCode || ""}`}>
                             {ct.name}
                           </SelectItem>
                         ))}
