@@ -316,7 +316,7 @@ class FinOpsAlertService {
         WHERE st.status = 'overdue'
           AND t.is_active = true
           AND t.deleted_at IS NULL
-          AND st.scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+          AND (st.scheduled_date IS NULL OR st.scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
       `,
       );
 
