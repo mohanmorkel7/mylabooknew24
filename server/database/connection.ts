@@ -402,6 +402,26 @@ export async function initializeDatabase() {
       );
     }
 
+    // Ensure finops_alerts has minutes_data column (compatibility)
+    try {
+      const finopsAlertsMinutesPath = path.join(
+        __dirname,
+        "alter-finops-alerts-add-minutes-data.sql",
+      );
+      if (fs.existsSync(finopsAlertsMinutesPath)) {
+        const sql = fs.readFileSync(finopsAlertsMinutesPath, "utf8");
+        await client.query(sql);
+        console.log(
+          "FinOps alerts minutes_data column migration applied successfully",
+        );
+      }
+    } catch (finopsAlertsMinutesError) {
+      console.log(
+        "FinOps alerts minutes_data migration already applied or error:",
+        (finopsAlertsMinutesError as any).message,
+      );
+    }
+
     // Always try to apply Fund Raises table migration
     try {
       const fundRaisesMigrationPath = path.join(

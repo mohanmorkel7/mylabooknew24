@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1359,10 +1360,18 @@ export default function CreateVC() {
         }
       }
 
+      toast({
+        title: "VC created",
+        description: "New VC created successfully.",
+      });
       navigate(`/vc/${result.data?.id || result.id}`);
     } catch (error) {
       console.error("Failed to create VC:", error);
-      alert("Failed to create VC. Please try again.");
+      toast({
+        title: "Create failed",
+        description: "Failed to create VC. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -1448,14 +1457,19 @@ export default function CreateVC() {
         activeTab,
       );
 
-      alert(
-        currentDraftId
-          ? "Draft updated successfully!"
-          : "VC data saved as draft!",
-      );
+      toast({
+        title: currentDraftId ? "Draft updated" : "Draft saved",
+        description: currentDraftId
+          ? "Draft updated successfully."
+          : "VC data saved as draft.",
+      });
     } catch (error) {
       console.error("Failed to save partial VC:", error);
-      alert("Failed to save draft. Please try again.");
+      toast({
+        title: "Save failed",
+        description: "Failed to save draft. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -2121,15 +2135,6 @@ export default function CreateVC() {
               <div className="border-t pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addContact}
-                    disabled={vcData.contacts.length >= 3}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add Contact
-                  </Button>
                 </div>
 
                 <div className="space-y-4">
@@ -2256,6 +2261,18 @@ export default function CreateVC() {
               </div>
             </CardContent>
           </Card>
+
+          <div className="mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addContact}
+              disabled={vcData.contacts.length >= 3}
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add Contact
+            </Button>
+          </div>
 
           {/* Navigation Buttons */}
           <div className="flex justify-between">

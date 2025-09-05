@@ -230,19 +230,6 @@ export default function FollowUpTracker() {
   const [activeTab, setActiveTab] = useState("all");
   const [typeFilter, setTypeFilter] = useState<string>("all"); // Filter for lead vs VC follow-ups
 
-  // Default date filters to today on initial load
-  useEffect(() => {
-    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = pad(today.getMonth() + 1);
-    const dd = pad(today.getDate());
-    const iso = `${yyyy}-${mm}-${dd}`;
-    setDateFrom(iso);
-    setDateTo(iso);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Check user role for follow-up visibility
   const isAdmin = user?.role === "admin";
   const isSales = user?.role === "sales";

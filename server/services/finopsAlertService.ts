@@ -89,27 +89,87 @@ class FinOpsAlertService {
 
   private async getUserIdsFromNames(names: string[]): Promise<string[]> {
     if (!names.length) return [];
-    const lowered = names.map((n) => n.toLowerCase());
+    const normalized = names
+      .map((n) => (n || "").toLowerCase().replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+    const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
+
     const result = await pool.query(
-      `SELECT azure_object_id, first_name, last_name FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
-      [lowered],
+      `
+      SELECT azure_object_id, sso_id, first_name, last_name, email
+      FROM users
+      WHERE (
+        LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
+        OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
+        OR LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))) = ANY($1)
+        OR REPLACE(LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))),' ','') = ANY($2)
+        OR LOWER(SPLIT_PART(COALESCE(email,''),'@',1)) = ANY($1)
+        OR REPLACE(LOWER(SPLIT_PART(COALESCE(email,''),'@',1)),'.','') = ANY($2)
+      )
+    `,
+      [normalized, collapsed],
     );
-    return result.rows
-      .map((r: any) => r.azure_object_id)
+
+    const ids = result.rows
+      .map((r: any) => r.azure_object_id || r.sso_id)
       .filter((id: string | null) => !!id) as string[];
+
+    // Visibility for names that didn't resolve to a user id
+    try {
+      const foundNames = new Set<string>();
+      for (const r of result.rows) {
+        const fn = String(r.first_name || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+        const ln = String(r.last_name || "")
+          .toLowerCase()
+          .replace(/\s+/g, " ")
+          .trim();
+        const full = `${fn}${ln ? " " + ln : ""}`.trim();
+        const initial = `${fn}${ln ? " " + ln.charAt(0) : ""}`.trim();
+        const emailLocal =
+          String(r.email || "")
+            .toLowerCase()
+            .split("@")[0] || "";
+        foundNames.add(full);
+        if (initial) foundNames.add(initial);
+        if (emailLocal) {
+          foundNames.add(emailLocal);
+          foundNames.add(emailLocal.replace(/\./g, ""));
+        }
+      }
+      const missing = normalized.filter((n) => !foundNames.has(n));
+      if (missing.length) {
+        console.warn("Missing Azure IDs for names (no user match):", missing);
+      }
+    } catch {}
+
+    return Array.from(new Set(ids));
   }
 
   constructor() {
     // Initialize email transporter
-    this.emailTransporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || "localhost",
-      port: parseInt(process.env.SMTP_PORT || "587"),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER || "",
-        pass: process.env.SMTP_PASS || "",
-      },
-    });
+    const host = process.env.SMTP_HOST || "localhost";
+    const port = parseInt(process.env.SMTP_PORT || "587", 10);
+    const user = process.env.SMTP_USER || "";
+    const pass = process.env.SMTP_PASS || "";
+    const disabled =
+      String(process.env.SMTP_DISABLED || "").toLowerCase() === "true";
+
+    if (disabled || host === "localhost") {
+      this.emailTransporter = nodemailer.createTransport({
+        jsonTransport: true,
+      });
+      console.log("Email transport: jsonTransport (development/no SMTP)");
+    } else {
+      this.emailTransporter = nodemailer.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: user && pass ? { user, pass } : undefined,
+      });
+    }
   }
 
   /**
@@ -117,6 +177,8 @@ class FinOpsAlertService {
    */
   async checkSLAAlerts(): Promise<void> {
     try {
+      const { isDatabaseAvailable } = await import("../database/connection");
+      if (!(await isDatabaseAvailable())) return;
       console.log("Starting SLA alert check...");
 
       // Get all active tasks with their subtasks
@@ -125,6 +187,9 @@ class FinOpsAlertService {
       for (const task of activeTasks) {
         await this.processTaskAlerts(task);
       }
+
+      // Additionally, trigger repeat escalations for items that remain overdue
+      await this.checkOverdueRepeatAlerts();
 
       console.log("SLA alert check completed");
     } catch (error) {
@@ -222,6 +287,187 @@ class FinOpsAlertService {
       console.log(
         `Subtask ${subtask.id} has no start_time defined, cannot check for overdue status`,
       );
+    }
+  }
+
+  /**
+   * For subtasks that remain overdue, send repeat external alerts every 10 minutes
+   */
+  private async checkOverdueRepeatAlerts(): Promise<void> {
+    try {
+      // Default behavior: check every minute, no initial delay, no single-overdue constraint
+      const initialDelay = 0;
+      const repeatInterval = 1;
+
+      const result = await pool.query(
+        `
+        SELECT
+          t.id as task_id,
+          t.task_name,
+          t.reporting_managers,
+          t.escalation_managers,
+          t.assigned_to,
+          st.id as subtask_id,
+          st.name as subtask_name,
+          st.updated_at as overdue_since,
+          st.status
+        FROM finops_subtasks st
+        JOIN finops_tasks t ON t.id = st.task_id
+        WHERE st.status = 'overdue'
+          AND t.is_active = true
+          AND t.deleted_at IS NULL
+          AND (st.scheduled_date IS NULL OR st.scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
+      `,
+      );
+
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS finops_external_alerts (
+          id SERIAL PRIMARY KEY,
+          task_id INTEGER NOT NULL,
+          subtask_id INTEGER NOT NULL,
+          alert_key TEXT NOT NULL,
+          title TEXT,
+          created_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(task_id, subtask_id, alert_key)
+        )
+      `);
+
+      const now = new Date();
+      for (const row of result.rows) {
+        const since = row.overdue_since ? new Date(row.overdue_since) : null;
+        if (!since) continue;
+        const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
+
+        // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
+        if (minutes >= initialDelay) {
+          const initialKey = `replica_down_overdue_initial`;
+          const doneInitial = await pool.query(
+            `SELECT 1 FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
+            [row.task_id, row.subtask_id, initialKey],
+          );
+          if (doneInitial.rows.length === 0) {
+            const names = Array.from(
+              new Set([
+                ...this.parseManagers(row.reporting_managers),
+                ...this.parseManagers(row.escalation_managers),
+                ...this.parseManagers(row.assigned_to),
+              ]),
+            );
+            const userIds = await this.getUserIdsFromNames(names);
+            const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+
+            console.log("Direct-call payload (service initial)", {
+              taskId: row.task_id,
+              subtaskId: row.subtask_id,
+              title,
+              minutes_overdue: minutes,
+              user_ids: userIds,
+            });
+
+            const response = await fetch(
+              "https://pulsealerts.mylapay.com/direct-call",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  receiver: "CRM_Switch",
+                  title,
+                  user_ids: userIds,
+                }),
+              },
+            );
+
+            if (response.ok) {
+              await pool.query(
+                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
+                 VALUES ($1, $2, $3, $4)
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+                [row.task_id, row.subtask_id, initialKey, title],
+              );
+              await this.logAlert(
+                row.task_id,
+                String(row.subtask_id),
+                "sla_overdue_initial",
+                "all",
+                minutes,
+              );
+            } else {
+              console.warn(
+                "Replica-down initial alert failed:",
+                response.status,
+              );
+            }
+          }
+        }
+
+        // Repeat calls with configured interval
+        if (minutes >= initialDelay + repeatInterval) {
+          const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
+          const alertKey = `replica_down_overdue_${bucket}`;
+
+          const exists = await pool.query(
+            `SELECT id FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
+            [row.task_id, row.subtask_id, alertKey],
+          );
+          if (exists.rows.length) continue; // already sent for this bucket
+
+          const names = Array.from(
+            new Set([
+              ...this.parseManagers(row.reporting_managers),
+              ...this.parseManagers(row.escalation_managers),
+              ...this.parseManagers(row.assigned_to),
+            ]),
+          );
+          const userIds = await this.getUserIdsFromNames(names);
+
+          const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+
+          console.log("Direct-call payload (service repeat)", {
+            taskId: row.task_id,
+            subtaskId: row.subtask_id,
+            title,
+            minutes_overdue: minutes,
+            bucket,
+            repeat_interval: repeatInterval,
+            user_ids: userIds,
+          });
+
+          const response = await fetch(
+            "https://pulsealerts.mylapay.com/direct-call",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                receiver: "CRM_Switch",
+                title,
+                user_ids: userIds,
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            console.warn("Replica-down repeat alert failed:", response.status);
+            continue;
+          }
+
+          await pool.query(
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+            [row.task_id, row.subtask_id, alertKey, title],
+          );
+
+          await this.logAlert(
+            row.task_id,
+            String(row.subtask_id),
+            "sla_overdue_repeat",
+            "all",
+            minutes,
+          );
+        }
+      }
+    } catch (e) {
+      console.warn("Error in overdue repeat alerts:", (e as Error).message);
     }
   }
 
@@ -459,14 +705,28 @@ class FinOpsAlertService {
         [task.id],
       );
 
-      // Reset all subtasks to pending status for daily execution
+      // Ensure datewise columns exist
+      await pool.query(`
+        ALTER TABLE finops_subtasks
+          ADD COLUMN IF NOT EXISTS scheduled_date DATE,
+          ADD COLUMN IF NOT EXISTS auto_notify BOOLEAN DEFAULT true,
+          ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
+      `);
+
+      // Reset all subtasks to pending status for daily execution (IST date)
       for (const subtask of subtasks.rows) {
         await pool.query(
           `
-          UPDATE finops_subtasks 
-          SET status = 'pending', 
-              started_at = NULL, 
+          UPDATE finops_subtasks
+          SET status = 'pending',
+              started_at = NULL,
               completed_at = NULL,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date,
+              notification_sent_15min = false,
+              notification_sent_start = false,
+              notification_sent_escalation = false,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = $1
         `,
@@ -517,7 +777,8 @@ class FinOpsAlertService {
             'order_position', st.order_position,
             'status', st.status,
             'started_at', st.started_at,
-            'completed_at', st.completed_at
+            'completed_at', st.completed_at,
+            'start_time', st.start_time
           ) ORDER BY st.order_position
         ) FILTER (WHERE st.id IS NOT NULL) as subtasks
       FROM finops_tasks t
@@ -570,12 +831,31 @@ class FinOpsAlertService {
     minutesData: number,
   ): Promise<void> {
     try {
+      const level = alertType.includes("overdue")
+        ? "critical"
+        : alertType.includes("warning")
+          ? "warning"
+          : "info";
+      const message = `${alertType} • ${minutesData} min`;
+      const recipsArray = recipients
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+      const metadata = { minutes_data: minutesData } as any;
       await pool.query(
         `
-        INSERT INTO finops_alerts (task_id, subtask_id, alert_type, recipients, minutes_data, status)
-        VALUES ($1, $2, $3, $4, $5, 'sent')
+        INSERT INTO finops_alerts (task_id, subtask_id, alert_type, alert_level, message, recipients, metadata, sent_at, is_active)
+        VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, NOW(), true)
       `,
-        [taskId, subtaskId, alertType, recipients, minutesData],
+        [
+          taskId,
+          subtaskId,
+          alertType,
+          level,
+          message,
+          JSON.stringify(recipsArray),
+          JSON.stringify(metadata),
+        ],
       );
     } catch (error) {
       console.error("Error logging alert:", error);

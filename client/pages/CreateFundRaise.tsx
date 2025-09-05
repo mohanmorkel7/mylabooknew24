@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Popover,
@@ -235,9 +236,17 @@ export default function CreateFundRaise() {
       });
 
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
+      toast({
+        title: "Fund Raise created",
+        description: "New fund raise created successfully.",
+      });
       navigate("/fundraise");
     } catch (e) {
-      alert("Failed to create fund raise. Please try again.");
+      toast({
+        title: "Create failed",
+        description: "Failed to create fund raise. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }

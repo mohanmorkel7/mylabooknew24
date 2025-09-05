@@ -29,6 +29,7 @@ import databaseFixRouter from "./routes/database-fix";
 import ssoAuthRouter from "./routes/sso-auth";
 import azureSyncRouter from "./routes/azure-sync";
 import fundRaisesRouter from "./routes/fund-raises";
+import finopsScheduler from "./services/finopsScheduler";
 
 // Production routes (database-only, no mock fallback)
 import templatesProductionRouter from "./routes/templates-production";
@@ -47,6 +48,18 @@ export function createServer() {
       console.log("Server will continue with mock data fallback");
     });
   }, 1000); // Delay initialization to prevent blocking server startup
+
+  // Start FinOps Scheduler for local/dev runtime (idempotent)
+  try {
+    setTimeout(() => {
+      finopsScheduler.initialize();
+    }, 500);
+  } catch (e) {
+    console.error(
+      "Failed to initialize FinOps Scheduler:",
+      (e as any)?.message,
+    );
+  }
 
   // Middleware
   app.use(cors());

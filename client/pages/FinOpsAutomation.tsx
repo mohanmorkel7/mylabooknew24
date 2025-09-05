@@ -1,8 +1,6 @@
-import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,8 +12,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import {
   Clock,
   CheckCircle,
@@ -32,14 +28,12 @@ import {
   DollarSign,
   Users,
   Activity,
-  Settings,
   ArrowRight,
   ExternalLink,
   ChevronRight,
   Zap,
   Timer,
   Target,
-  BarChart3,
 } from "lucide-react";
 import { format } from "date-fns";
 import ClientBasedFinOpsTaskManager from "@/components/ClientBasedFinOpsTaskManager";
@@ -77,7 +71,6 @@ interface ProcessStep {
 
 export default function FinOpsAutomation() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   // Fetch workflow projects for FinOps
@@ -272,15 +265,7 @@ export default function FinOpsAutomation() {
           </p>
         </div>
 
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/finops/dashboard")}
-          >
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Dashboard
-          </Button>
-        </div>
+        <div className="flex gap-2"></div>
       </div>
 
       {/* Database Status Alert */}
@@ -302,7 +287,7 @@ export default function FinOpsAutomation() {
                   <div>• Automations API: {automationsError.message}</div>
                 )}
                 {notificationsError && (
-                  <div>• Notifications API: {notificationsError.message}</div>
+                  <div>�� Notifications API: {notificationsError.message}</div>
                 )}
               </div>
             </details>

@@ -5,6 +5,37 @@ import finopsScheduler from "../services/finopsScheduler";
 
 const router = Router();
 
+// FinOps settings storage (single-row settings table)
+async function ensureFinOpsSettings() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finops_settings (
+      id SERIAL PRIMARY KEY,
+      initial_overdue_call_delay_minutes INTEGER DEFAULT 0,
+      repeat_overdue_call_interval_minutes INTEGER DEFAULT 10,
+      only_repeat_when_single_overdue BOOLEAN DEFAULT false,
+      updated_at TIMESTAMP DEFAULT NOW()
+    )
+  `);
+  const row = await pool.query(
+    `SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`,
+  );
+  if (row.rows.length === 0) {
+    await pool.query(
+      `INSERT INTO finops_settings (initial_overdue_call_delay_minutes, repeat_overdue_call_interval_minutes, only_repeat_when_single_overdue)
+       VALUES ($1, $2, $3)`,
+      [0, 10, false],
+    );
+  }
+}
+
+async function getFinOpsSettings() {
+  await ensureFinOpsSettings();
+  const res = await pool.query(
+    `SELECT * FROM finops_settings ORDER BY id ASC LIMIT 1`,
+  );
+  return res.rows[0];
+}
+
 // Database availability check
 async function isDatabaseAvailable() {
   try {
@@ -249,7 +280,7 @@ const mockActivityLog = [
 // Get all FinOps tasks with enhanced error handling
 router.get("/tasks", async (req: Request, res: Response) => {
   try {
-    console.log("📋 FinOps tasks requested");
+    console.log("�� FinOps tasks requested");
 
     // Add CORS headers for FullStory compatibility
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -264,6 +295,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     if (await isDatabaseAvailable()) {
       console.log("✅ Database is available, fetching real data");
+
+      // Optional date filter (YYYY-MM-DD) to view historical daily statuses
+      const dateParam = (req.query.date as string) || null;
 
       // Simplified query with better error handling
       const query = `
@@ -281,19 +315,21 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'order_position', st.order_position,
                 'status', st.status,
                 'started_at', st.started_at,
-                'completed_at', st.completed_at
+                'completed_at', st.completed_at,
+                'scheduled_date', st.scheduled_date
               ) ORDER BY st.order_position
             ) FILTER (WHERE st.id IS NOT NULL),
             '[]'::json
           ) as subtasks
         FROM finops_tasks t
         LEFT JOIN finops_subtasks st ON t.id = st.task_id
+          ${dateParam ? "AND st.scheduled_date = $1::date" : ""}
         WHERE t.deleted_at IS NULL
         GROUP BY t.id
         ORDER BY t.created_at DESC
       `;
 
-      const result = await pool.query(query);
+      const result = await pool.query(query, dateParam ? [dateParam] : []);
       const tasks = result.rows.map((row) => ({
         ...row,
         subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
@@ -708,14 +744,48 @@ function parseManagerNames(val: any): string[] {
 
 async function getUserIdsFromNames(names: string[]): Promise<string[]> {
   if (!names.length) return [];
-  const lowered = names.map((n) => n.toLowerCase());
+  const normalized = names
+    .map((n) => (n || "").toLowerCase().replace(/\s+/g, " ").trim())
+    .filter(Boolean);
+  const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
+
   const result = await pool.query(
-    `SELECT azure_object_id, first_name, last_name FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
-    [lowered],
+    `
+    SELECT azure_object_id, first_name, last_name
+    FROM users
+    WHERE azure_object_id IS NOT NULL AND (
+      LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
+      OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
+    )
+  `,
+    [normalized, collapsed],
   );
-  return result.rows
+
+  const ids = result.rows
     .map((r: any) => r.azure_object_id)
     .filter((id: string | null) => !!id) as string[];
+
+  // Visibility for names that didn't resolve to a user id
+  try {
+    const foundNames = new Set(
+      result.rows.map(
+        (r: any) =>
+          `${String(r.first_name || "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim()} ${String(r.last_name || "")
+            .toLowerCase()
+            .replace(/\s+/g, " ")
+            .trim()}`,
+      ),
+    );
+    const missing = normalized.filter((n) => !foundNames.has(n));
+    if (missing.length) {
+      console.warn("Missing Azure IDs for names (no user match):", missing);
+    }
+  } catch {}
+
+  return Array.from(new Set(ids));
 }
 
 async function sendReplicaDownAlertOnce(
@@ -878,16 +948,26 @@ router.patch(
 
         // External alert: trigger only when marked overdue
         if (status === "overdue") {
-          const title = `Take immediate action on the overdue subtask ${subtaskName}`;
-          const managerNames = Array.from(
-            new Set([
-              ...parseManagerNames(subtaskData.reporting_managers),
-              ...parseManagerNames(subtaskData.escalation_managers),
-              ...parseManagerNames(subtaskData.assigned_to),
-            ]),
+          const settings = await getFinOpsSettings();
+          const initialDelay = Number(
+            settings?.initial_overdue_call_delay_minutes || 0,
           );
-          const userIds = await getUserIdsFromNames(managerNames);
-          await sendReplicaDownAlertOnce(taskId, subtaskId, title, userIds);
+          if (initialDelay === 0) {
+            const title = `Take immediate action on the overdue subtask ${subtaskName}`;
+            const managerNames = Array.from(
+              new Set([
+                ...parseManagerNames(subtaskData.reporting_managers),
+                ...parseManagerNames(subtaskData.escalation_managers),
+                ...parseManagerNames(subtaskData.assigned_to),
+              ]),
+            );
+            const userIds = await getUserIdsFromNames(managerNames);
+            await sendReplicaDownAlertOnce(taskId, subtaskId, title, userIds);
+          } else {
+            console.log(
+              `Skipping immediate direct-call due to configured initial delay (${initialDelay} min); scheduler will handle initial alert`,
+            );
+          }
         }
 
         // Log user activity and update task status
@@ -2222,6 +2302,74 @@ router.get("/invoices", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching invoices:", error);
     res.status(500).json({ error: "Failed to fetch invoices" });
+  }
+});
+
+// FinOps configuration endpoints
+router.get("/config", async (_req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable())) {
+      return res.json({
+        initial_overdue_call_delay_minutes: 0,
+        repeat_overdue_call_interval_minutes: 10,
+        only_repeat_when_single_overdue: false,
+      });
+    }
+    const settings = await getFinOpsSettings();
+    res.json({
+      initial_overdue_call_delay_minutes: Number(
+        settings.initial_overdue_call_delay_minutes || 0,
+      ),
+      repeat_overdue_call_interval_minutes: Number(
+        settings.repeat_overdue_call_interval_minutes || 10,
+      ),
+      only_repeat_when_single_overdue: Boolean(
+        settings.only_repeat_when_single_overdue || false,
+      ),
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+router.put("/config", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDatabaseAvailable())) {
+      return res.status(503).json({ error: "Database unavailable" });
+    }
+    await ensureFinOpsSettings();
+    const body = req.body || {};
+    const initialDelay = Math.max(
+      0,
+      parseInt(body.initial_overdue_call_delay_minutes ?? 0),
+    );
+    const repeatInterval = Math.max(
+      1,
+      parseInt(body.repeat_overdue_call_interval_minutes ?? 10),
+    );
+    const onlySingle = Boolean(body.only_repeat_when_single_overdue ?? false);
+
+    const row = await pool.query(
+      `SELECT id FROM finops_settings ORDER BY id ASC LIMIT 1`,
+    );
+    const id = row.rows[0]?.id || 1;
+    await pool.query(
+      `UPDATE finops_settings
+       SET initial_overdue_call_delay_minutes = $1,
+           repeat_overdue_call_interval_minutes = $2,
+           only_repeat_when_single_overdue = $3,
+           updated_at = NOW()
+       WHERE id = $4`,
+      [initialDelay, repeatInterval, onlySingle, id],
+    );
+
+    res.json({
+      initial_overdue_call_delay_minutes: initialDelay,
+      repeat_overdue_call_interval_minutes: repeatInterval,
+      only_repeat_when_single_overdue: onlySingle,
+    });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
   }
 });
 

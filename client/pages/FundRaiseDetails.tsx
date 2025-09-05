@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "@/components/ui/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -131,7 +132,18 @@ export default function FundRaiseDetails() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
       queryClient.invalidateQueries({ queryKey: ["fundraise", id] });
+      toast({
+        title: "Fund Raise deleted",
+        description: "The fund raise has been deleted.",
+      });
       navigate("/fundraise");
+    },
+    onError: () => {
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete fund raise.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -243,7 +255,14 @@ export default function FundRaiseDetails() {
   }, [id, stepsLoading, vcSteps, user?.id, refetchSteps, templateIdForVC]);
 
   const handleAddStep = async () => {
-    if (!newStep.name.trim() || !newStep.description.trim()) return;
+    if (!newStep.name.trim() || !newStep.description.trim()) {
+      toast({
+        title: "Missing fields",
+        description: "Step name and description are required.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       const stepData = {
         name: newStep.name.trim(),
@@ -287,8 +306,16 @@ export default function FundRaiseDetails() {
         method: "DELETE",
       });
       refetchSteps();
+      toast({
+        title: "Step deleted",
+        description: "The step was deleted successfully.",
+      });
     } catch (e) {
-      // ignore
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete step.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -645,17 +672,13 @@ export default function FundRaiseDetails() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">Priority:</span>
-                      <Badge
-                        className={
-                          priorityColors[
-                            vcData.priority_level as keyof typeof priorityColors
-                          ]
-                        }
-                      >
-                        {vcData.priority_level?.charAt(0).toUpperCase() +
-                          vcData.priority_level?.slice(1)}
-                      </Badge>
+                      <span className="text-xs text-slate-500">Fund $ Mn:</span>
+                      <span className="text-gray-900">
+                        {formatCurrency(
+                          vcData.fund_mn,
+                          vcData.billing_currency,
+                        ) || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 justify-end">
                       <span className="text-xs text-slate-500">Investor:</span>

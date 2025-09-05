@@ -65,7 +65,8 @@ import {
   Activity,
 } from "lucide-react";
 import { formatToIST } from "@/lib/dateUtils";
-import { getSectorLabel } from "@/lib/constants";
+import { getSectorLabel, VC_TYPES } from "@/lib/constants";
+import { toast } from "@/components/ui/use-toast";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -215,7 +216,6 @@ export default function VCDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -253,10 +253,9 @@ export default function VCDashboard() {
     error: vcError,
     refetch: refetchVCs,
   } = useQuery({
-    queryKey: ["vcs", statusFilter, categoryFilter],
+    queryKey: ["vcs", categoryFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter);
       if (categoryFilter !== "all")
         params.append("investor_category", categoryFilter);
 
@@ -368,9 +367,17 @@ export default function VCDashboard() {
       queryClient.invalidateQueries({ queryKey: ["vc-stats"] });
       queryClient.invalidateQueries({ queryKey: ["my-vc-partial-saves"] });
       console.log("VC deleted successfully and queries invalidated");
+      toast({
+        title: "VC deleted",
+        description: "The VC has been deleted successfully.",
+      });
     } catch (error) {
       console.error("Failed to delete VC:", error);
-      alert("Failed to delete VC. Please try again.");
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete VC. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -394,11 +401,19 @@ export default function VCDashboard() {
     try {
       await deleteVC.mutateAsync(partialSaveId);
       console.log(`Draft ${partialSaveName} deleted successfully`);
+      toast({
+        title: "Draft deleted",
+        description: `${partialSaveName} has been deleted.`,
+      });
       // Refresh partial saves
       refetchVCPartialSaves();
     } catch (error) {
       console.error("Failed to delete draft:", error);
-      alert("Failed to delete draft. Please try again.");
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete draft. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -609,32 +624,17 @@ export default function VCDashboard() {
                 </div>
               </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
-
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by investor type" />
+                  <SelectValue placeholder="Filter by VC Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Investors</SelectItem>
-                  <SelectItem value="angel">Angel</SelectItem>
-                  <SelectItem value="vc">VC</SelectItem>
-                  <SelectItem value="private_equity">Private Equity</SelectItem>
-                  <SelectItem value="family_office">Family Office</SelectItem>
-                  <SelectItem value="merchant_banker">
-                    Merchant Banker
-                  </SelectItem>
+                  <SelectItem value="all">All VC Types</SelectItem>
+                  {VC_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
@@ -845,9 +845,7 @@ export default function VCDashboard() {
                   No VCs Found
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {searchTerm ||
-                  statusFilter !== "all" ||
-                  categoryFilter !== "all"
+                  {searchTerm || categoryFilter !== "all"
                     ? "Try adjusting your filters or search terms."
                     : "Get started by creating your first VC round."}
                 </p>
@@ -970,9 +968,12 @@ export default function VCDashboard() {
                             "Error resuming VC partial save:",
                             error,
                           );
-                          alert(
-                            "Error resuming draft. Please try again or create a new VC.",
-                          );
+                          toast({
+                            title: "Resume failed",
+                            description:
+                              "Error resuming draft. Please try again or create a new VC.",
+                            variant: "destructive",
+                          });
                         }
                       }}
                     >

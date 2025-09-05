@@ -65,6 +65,7 @@ import {
   formatPhoneDisplay,
   formatPhoneHref,
 } from "@/lib/constants";
+import { toast } from "@/components/ui/use-toast";
 
 const statusColors = {
   "in-progress": "bg-blue-100 text-blue-700",
@@ -318,11 +319,19 @@ export default function VCDetails() {
 
   const handleAddStep = async () => {
     if (!newStep.name.trim()) {
-      alert("Step name is required");
+      toast({
+        title: "Missing name",
+        description: "Step name is required.",
+        variant: "destructive",
+      });
       return;
     }
     if (!newStep.description.trim()) {
-      alert("Step description is required");
+      toast({
+        title: "Missing description",
+        description: "Step description is required.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -340,7 +349,11 @@ export default function VCDetails() {
       await createStepMutation.mutateAsync(stepData);
     } catch (error) {
       console.error("Failed to create step:", error);
-      alert("Failed to create step. Please try again.");
+      toast({
+        title: "Create failed",
+        description: "Failed to create step. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -364,10 +377,17 @@ export default function VCDetails() {
     try {
       await deleteVCStepMutation.mutateAsync(stepId);
       refetchSteps();
-      alert("Step deleted successfully!");
+      toast({
+        title: "Step deleted",
+        description: "The step was deleted successfully.",
+      });
     } catch (error) {
       console.error("Failed to delete step:", error);
-      alert("Failed to delete step. Please try again.");
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete step. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -561,48 +581,6 @@ export default function VCDetails() {
 
         {/* Right Column - Quick Actions & Info */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>VC Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="text-sm text-gray-500">
-                  {completionPercentage}% complete
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2 text-sm">
-                {vcData.start_date && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Started:</span>
-                    <span className="text-gray-900">
-                      {new Date(vcData.start_date).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                {vcData.targeted_end_date && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Target Close:</span>
-                    <span className="text-gray-900">
-                      {new Date(vcData.targeted_end_date).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                {vcData.potential_lead_investor !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Lead Investor:</span>
-                    <span className="text-gray-900">
-                      {vcData.potential_lead_investor ? "Yes" : "No"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>

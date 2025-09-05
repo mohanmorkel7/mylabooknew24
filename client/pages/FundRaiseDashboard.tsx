@@ -105,7 +105,6 @@ export default function FundRaiseDashboard() {
     queryKey: ["vcs", statusFilter, categoryFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter);
       if (categoryFilter !== "all")
         params.append("investor_category", categoryFilter);
       const queryString = params.toString();
@@ -160,6 +159,16 @@ export default function FundRaiseDashboard() {
 
   const filteredFundRaises = (fundRaises || [])
     .filter((fr: any) => {
+      // Status filter using UI values mapped to internal
+      if (statusFilter !== "all") {
+        const internalStatus =
+          fr.status ||
+          UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
+          "in-progress";
+        const targetInternal =
+          UI_STATUS_TO_INTERNAL[statusFilter] || statusFilter.toLowerCase();
+        if (internalStatus !== targetInternal) return false;
+      }
       if (!searchTerm) return true;
       const s = searchTerm.toLowerCase();
       return (
@@ -419,10 +428,9 @@ export default function FundRaiseDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="WIP">WIP</SelectItem>
+                  <SelectItem value="Closed">Closed</SelectItem>
+                  <SelectItem value="Dropped">Dropped</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -1334,7 +1342,7 @@ export default function FundRaiseDashboard() {
                                   UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
                                   "in-progress";
                                 const pd = (vcProgressData || []).find(
-                                  (p: any) => p.vc_id === fr.vc_id,
+                                  (p: any) => p.fr_id === fr.id,
                                 );
                                 const completedProb =
                                   pd?.total_completed_probability || 0;

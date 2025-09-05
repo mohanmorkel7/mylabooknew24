@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import finopsAlertService from "./finopsAlertService";
-import { pool } from "../database/connection";
+import { pool, isDatabaseAvailable } from "../database/connection";
 
 class FinOpsScheduler {
   private isInitialized = false;
@@ -29,8 +29,9 @@ class FinOpsScheduler {
     );
 
     cron.schedule(
-      "*/5 * * * *",
+      "* * * * *",
       async () => {
+        if (!(await isDatabaseAvailable())) return;
         console.log("Running SLA monitoring check...");
         await finopsAlertService.checkSLAAlerts();
       },
@@ -43,6 +44,7 @@ class FinOpsScheduler {
     cron.schedule(
       "*/30 * * * *",
       async () => {
+        if (!(await isDatabaseAvailable())) return;
         console.log("Checking for incomplete subtasks...");
         await finopsAlertService.checkIncompleteSubtasks();
       },
@@ -79,6 +81,7 @@ class FinOpsScheduler {
     cron.schedule(
       "* * * * *",
       async () => {
+        if (!(await isDatabaseAvailable())) return;
         await this.syncTaskStatuses();
       },
       {
@@ -354,7 +357,7 @@ class FinOpsScheduler {
   public getStatus(): { initialized: boolean; activeJobs: string[] } {
     const activeJobs = [
       "Daily Task Execution (5:00 AM)",
-      "SLA Monitoring (Every 5 minutes)",
+      "SLA Monitoring (Every minute)",
       "Incomplete Subtask Check (Every 30 minutes)",
       "Weekly Task Execution (Mondays 5:00 AM)",
       "Monthly Task Execution (1st of month 5:00 AM)",

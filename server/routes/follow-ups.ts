@@ -489,9 +489,14 @@ router.get("/", async (req: Request, res: Response) => {
           LEFT JOIN users c ON f.created_by = c.id
           LEFT JOIN clients cl ON f.client_id = cl.id
           LEFT JOIN leads l ON f.lead_id = l.id
-          LEFT JOIN vcs v ON f.vc_id = v.id AND f.vc_step_id IS NOT NULL
-          LEFT JOIN fund_raises fr ON f.vc_id = fr.vc_id AND f.message_id IS NOT NULL
+          LEFT JOIN vcs v ON f.vc_id = v.id
           LEFT JOIN vc_steps vs ON f.vc_step_id = vs.id
+          LEFT JOIN fund_raise_steps frs ON (
+            f.vc_step_id IS NULL
+            AND f.message_id IS NOT NULL
+            AND frs.id = f.message_id
+          )
+          LEFT JOIN fund_raises fr ON fr.id = frs.fund_raise_id
           ${whereClause}
           ORDER BY f.created_at DESC
         `;

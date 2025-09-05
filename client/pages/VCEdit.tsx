@@ -44,6 +44,7 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -210,7 +211,7 @@ const MAX_CHQ_SIZE_OPTIONS = [
 ];
 
 const TABS = [
-  { value: "lead-info", label: "Lead Information", icon: "📋" },
+  { value: "lead-info", label: "Lead Information", icon: "��" },
   { value: "investor-contact", label: "Investor Information", icon: "🏢" },
 ];
 
@@ -561,11 +562,20 @@ export default function VCEdit() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vc", id] });
       queryClient.invalidateQueries({ queryKey: ["vcs"] });
+      toast({
+        title: "VC updated",
+        description: "Changes saved successfully.",
+      });
       navigate(`/vc/${id}`);
     },
     onError: (error: any) => {
       console.error("Update failed:", error);
       setErrors({ submit: "Failed to update VC. Please try again." });
+      toast({
+        title: "Update failed",
+        description: "Failed to update VC. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -813,9 +823,6 @@ export default function VCEdit() {
     if (!vcData.maximum_size) {
       newErrors.maximum_size = "Max.Chq Size is required";
     }
-    if (!vcData.address.trim()) {
-      newErrors.address = "Address is required";
-    }
     if (!vcData.country) {
       newErrors.country = "Country is required";
     }
@@ -879,7 +886,11 @@ export default function VCEdit() {
       await updateVCMutation.mutateAsync(submitData);
     } catch (error) {
       console.error("Failed to update VC:", error);
-      alert("Failed to update VC. Please try again.");
+      toast({
+        title: "Update failed",
+        description: "Failed to update VC. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -927,29 +938,6 @@ export default function VCEdit() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="currency" className="text-sm font-medium">
-              Currency:
-            </Label>
-            <Select
-              value={selectedCurrency}
-              onValueChange={(value) => {
-                setSelectedCurrency(value);
-                handleInputChange("billing_currency", value);
-              }}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || updateVCMutation.isPending}
@@ -1299,7 +1287,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1308,9 +1296,17 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
@@ -1326,7 +1322,7 @@ export default function VCEdit() {
             <CardContent className="space-y-4">
               {/* Address, Country, State/Province, City */}
               <div className="md:col-span-2">
-                <Label htmlFor="address">Address *</Label>
+                <Label htmlFor="address">Address</Label>
                 <Input
                   id="address"
                   placeholder="Street address"
@@ -1508,15 +1504,6 @@ export default function VCEdit() {
               <div className="border-t pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addContact}
-                    disabled={vcData.contacts.length >= 3}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add Contact
-                  </Button>
                 </div>
 
                 <div className="space-y-4">
@@ -1640,11 +1627,22 @@ export default function VCEdit() {
                     </Card>
                   ))}
                 </div>
+                <div className="mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addContact}
+                    disabled={vcData.contacts.length >= 3}
+                  >
+                    <Plus className="w-4 h-4 mr-2" /> Add Contact
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1653,9 +1651,17 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
@@ -1902,7 +1908,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1911,9 +1917,17 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
@@ -1959,7 +1973,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1968,9 +1982,17 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
