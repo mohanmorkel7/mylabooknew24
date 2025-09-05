@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useClient, useUpdateClient } from "@/hooks/useApi";
+import { useQueryClient } from "@tanstack/react-query";
+import { apiClient } from "@/lib/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -9,9 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -19,139 +22,308 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/components/ui/use-toast";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Country, State, City } from "country-state-city";
 import {
-  ArrowLeft,
+  Plus,
+  Minus,
   Save,
-  Building,
+  ArrowLeft,
+  Building2,
+  User,
   Mail,
   Phone,
+  Globe,
   MapPin,
-  Calendar,
-  DollarSign,
-  User,
-  Info,
+  ChevronsUpDown,
+  Check,
 } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+
+const SOURCES = [
+  "LinkedIn - Outbound",
+  "LinkedIn - Inbound",
+  "Email - Outbound",
+  "Email - Inbound",
+  "Call - Outbound",
+  "Call - Inbound",
+  "Existing Client",
+  "Business Team",
+  "Reference",
+  "General List",
+];
+
+const CLIENT_TYPES = [
+  "PA-PG",
+  "POS Provider",
+  "PG-Bank",
+  "BIN-Bank",
+  "Strategic Partnership",
+  "Other Acquirers",
+];
+
+const PAYMENT_OFFERINGS = [
+  "Online Payments",
+  "Offline Payment",
+  "UPI Payments",
+];
+
+const GEOGRAPHY = ["Domestic", "International"] as const;
+
+const TXN_VOLUMES = [
+  "< 0.05",
+  "0.05 <> 0.10",
+  "0.10 <> 0.25",
+  "0.25 <> 0.50",
+  "0.50 <> 0.75",
+  "0.75 <> 1.00",
+  "1.00 <> 1.50",
+  "1.50 <> 2.00",
+  "2.00 <> 3.00",
+  "> 3.00",
+];
+
+const PHONE_PREFIXES = [
+  { code: "+1", label: "+1 (US)" },
+  { code: "+44", label: "+44 (UK)" },
+  { code: "+91", label: "+91 (IN)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+61", label: "+61 (AU)" },
+  { code: "+65", label: "+65 (SG)" },
+  { code: "+81", label: "+81 (JP)" },
+  { code: "+49", label: "+49 (DE)" },
+];
+
+function isValidEmail(email: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+}
+
+function parseNotesMeta(notes?: string | null): any {
+  if (!notes) return {};
+  try {
+    const obj = JSON.parse(notes);
+    return obj && typeof obj === "object" ? obj : {};
+  } catch {
+    return {};
+  }
+}
 
 export default function ClientEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const updateMutation = useUpdateClient();
+
   const {
     data: originalClient,
     isLoading,
     error,
   } = useClient(parseInt(id || "0"));
-  const updateMutation = useUpdateClient();
 
-  const [client, setClient] = useState({
+  const [activeTab, setActiveTab] = useState("client-info");
+  const [showClientErrors, setShowClientErrors] = useState(false);
+  const [showContactErrors, setShowContactErrors] = useState(false);
+
+  const [clientInfo, setClientInfo] = useState({
+    source: "",
     client_name: "",
-    contact_person: "",
-    email: "",
-    phone: "",
-    status: "active",
-    priority: "medium",
-    industry: "",
-    company_size: "",
-    expected_value: "",
-    start_date: "",
-    address: "",
-    city: "",
-    state: "",
-    zip_code: "",
-    country: "",
-    notes: "",
+    client_type: "",
+    payment_offerings: [] as string[],
+    website: "",
+    geography: "" as "" | (typeof GEOGRAPHY)[number],
+    txn_volume: "",
+    product_tag_info: "",
+    source_value: "",
   });
 
-  const [hasChanges, setHasChanges] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [contacts, setContacts] = useState<
+    { contact_name: string; designation: string; phone_prefix: string; phone: string; email: string }[]
+  >([{ contact_name: "", designation: "", phone_prefix: "+91", phone: "", email: "" }]);
 
-  // Update state when client data is loaded
-  React.useEffect(() => {
-    if (originalClient) {
-      setClient({
-        client_name: originalClient.client_name || "",
-        contact_person: originalClient.contact_person || "",
-        email: originalClient.email || "",
-        phone: originalClient.phone || "",
-        status: originalClient.status || "active",
-        priority: originalClient.priority || "medium",
-        industry: originalClient.industry || "",
-        company_size: originalClient.company_size || "",
-        expected_value: originalClient.expected_value || "",
-        start_date: originalClient.start_date || "",
-        address: originalClient.address || "",
-        city: originalClient.city || "",
-        state: originalClient.state || "",
-        zip_code: originalClient.zip_code || "",
-        country: originalClient.country || "",
-        notes: originalClient.notes || "",
-      });
-    }
+  const [addressInfo, setAddressInfo] = useState({
+    address: "",
+    country: "",
+    state: "",
+    city: "",
+  });
+
+  // Populate initial data from existing client
+  useEffect(() => {
+    if (!originalClient) return;
+    const meta = parseNotesMeta(originalClient.notes);
+    setClientInfo({
+      source: meta.source || "",
+      client_name: originalClient.client_name || "",
+      client_type: meta.client_type || "",
+      payment_offerings: Array.isArray(meta.payment_offerings) ? meta.payment_offerings : [],
+      website: originalClient.website || meta.website || "",
+      geography: (meta.geography as any) || "",
+      txn_volume: meta.txn_volume || "",
+      product_tag_info: meta.product_tag_info || "",
+      source_value: meta.source_value || "",
+    });
+
+    // Contacts
+    const primary = {
+      contact_name: originalClient.contact_person || meta.contacts?.[0]?.contact_name || "",
+      designation: meta.contacts?.[0]?.designation || "",
+      phone_prefix: meta.contacts?.[0]?.phone_prefix || "+91",
+      phone: originalClient.phone || meta.contacts?.[0]?.phone || "",
+      email: originalClient.email || meta.contacts?.[0]?.email || "",
+    };
+    const others = Array.isArray(meta.contacts) ? meta.contacts.slice(1) : [];
+    setContacts([primary, ...others]);
+
+    // Address
+    setAddressInfo({
+      address: originalClient.address || meta.address || "",
+      country: originalClient.country || meta.country || "",
+      state: originalClient.state || meta.state || "",
+      city: originalClient.city || meta.city || "",
+    });
   }, [originalClient]);
 
-  const updateField = (field: string, value: any) => {
-    setClient((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-    setHasChanges(true);
-  };
+  const countries = Country.getAllCountries();
+  const selectedCountry = countries.find((c) => c.name === addressInfo.country);
+  const states = selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+  const selectedState = states.find((s) => s.name === addressInfo.state);
+  const cities = selectedCountry
+    ? selectedState
+      ? City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
+      : City.getCitiesOfCountry(selectedCountry.isoCode)
+    : [];
+  const uniqueCities = React.useMemo(() => {
+    const seen = new Set<string>();
+    const out: { name: string; stateCode?: string }[] = [];
+    for (const ct of cities as any[]) {
+      const val = `${ct.name}__${ct.stateCode || ""}`;
+      if (!seen.has(val)) {
+        seen.add(val);
+        out.push({ name: ct.name, stateCode: ct.stateCode });
+      }
+    }
+    return out;
+  }, [JSON.stringify(cities)]);
 
-  const handleSave = async () => {
-    if (!id) return;
-    setSaving(true);
-    try {
-      const payload: any = {
-        client_name: client.client_name.trim(),
-        contact_person: client.contact_person.trim(),
-        email: client.email.trim(),
-        phone: client.phone || undefined,
-        status: client.status as any,
-        priority: client.priority as any,
-        industry: client.industry || undefined,
-        company_size: client.company_size || undefined,
-        expected_value:
-          client.expected_value !== "" && client.expected_value !== null
-            ? Number(client.expected_value)
-            : undefined,
-        start_date: client.start_date || undefined,
-        address: client.address || undefined,
-        city: client.city || undefined,
-        state: client.state || undefined,
-        zip_code: client.zip_code || undefined,
-        country: client.country || undefined,
-        notes: client.notes || undefined,
-      };
+  // Validation
+  const errors = useMemo(() => {
+    const e: Record<string, string> = {};
+    if (!clientInfo.source) e.source = "Required";
+    if (!clientInfo.client_name.trim()) e.client_name = "Required";
+    if (!clientInfo.client_type) e.client_type = "Required";
+    if (clientInfo.payment_offerings.length === 0) e.payment_offerings = "Select at least one";
+    if (!clientInfo.geography) e.geography = "Required";
+    if (!clientInfo.txn_volume) e.txn_volume = "Required";
+    if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
+    if (!addressInfo.country) e.country = "Required";
+    if (!addressInfo.state) e.state = "Required";
+    if (!addressInfo.city) e.city = "Required";
+    return e;
+  }, [clientInfo, addressInfo]);
 
-      await updateMutation.mutateAsync({
-        id: parseInt(id),
-        clientData: payload,
-      });
-      setHasChanges(false);
-      toast({
-        title: "Client updated",
-        description: "Changes saved successfully",
-      });
-      navigate(`/clients/${id}`);
-    } catch (error: any) {
-      console.error("Failed to save client:", error);
-      toast({
-        title: "Update failed",
-        description: error?.message || "Unable to update client",
-        variant: "destructive",
-      });
-    } finally {
-      setSaving(false);
+  const clientInfoErrors = useMemo(() => {
+    const { source, client_name, client_type, payment_offerings, geography, txn_volume, product_tag_info } = errors;
+    const filtered: Record<string, string> = {};
+    if (source) filtered.source = source;
+    if (client_name) filtered.client_name = client_name;
+    if (client_type) filtered.client_type = client_type;
+    if (payment_offerings) filtered.payment_offerings = payment_offerings;
+    if (geography) filtered.geography = geography;
+    if (txn_volume) filtered.txn_volume = txn_volume;
+    if (product_tag_info) filtered.product_tag_info = product_tag_info;
+    return filtered;
+  }, [errors]);
+
+  const contactTabErrors = useMemo(() => {
+    const { country, state, city } = errors;
+    const filtered: Record<string, string> = {};
+    if (country) filtered.country = country;
+    if (state) filtered.state = state;
+    if (city) filtered.city = city;
+    return filtered;
+  }, [errors]);
+
+  const handleNext = () => {
+    setShowClientErrors(true);
+    if (Object.keys(clientInfoErrors).length === 0) {
+      setActiveTab("contact-info");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+    } else {
+      toast({ title: "Missing details", description: "Please complete the required fields", variant: "destructive" });
     }
   };
 
-  const handleCancel = () => {
-    navigate(`/clients/${id}`);
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!id) return;
+    setShowContactErrors(true);
+    if (Object.keys(contactTabErrors).length > 0) {
+      toast({ title: "Missing address", description: "Country, State and City are required", variant: "destructive" });
+      setActiveTab("contact-info");
+      return;
+    }
+
+    try {
+      const primary = contacts[0] || { contact_name: "", email: "", phone: "", phone_prefix: "+91", designation: "" };
+      const cityName = addressInfo.city ? addressInfo.city.split("__")[0].split("-")[0] : "";
+      const payload: any = {
+        client_name: clientInfo.client_name.trim(),
+        contact_person: primary.contact_name.trim(),
+        email: primary.email.trim(),
+        phone: primary.phone?.trim() || undefined,
+        address: addressInfo.address || undefined,
+        country: addressInfo.country || undefined,
+        state: addressInfo.state || undefined,
+        city: cityName || undefined,
+        notes: JSON.stringify({
+          source: clientInfo.source,
+          client_type: clientInfo.client_type || undefined,
+          payment_offerings: clientInfo.payment_offerings,
+          website: clientInfo.website || undefined,
+          geography: clientInfo.geography,
+          txn_volume: clientInfo.txn_volume,
+          product_tag_info: clientInfo.product_tag_info,
+          source_value: clientInfo.source_value || undefined,
+          contacts,
+        }),
+      };
+
+      await updateMutation.mutateAsync({ id: parseInt(id), clientData: payload });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["client-stats"] });
+      toast({ title: "Client updated", description: "Changes saved successfully" });
+      navigate(`/clients/${id}`);
+    } catch (err: any) {
+      toast({ title: "Update failed", description: err?.message || "Unable to update client", variant: "destructive" });
+    }
   };
 
-  if (isLoading) {
+  const updateContact = (idx: number, key: string, value: string) => {
+    setContacts((prev) => prev.map((c, i) => (i === idx ? { ...c, [key]: value } : c)));
+  };
+
+  const addContact = () =>
+    setContacts((prev) => [
+      ...prev,
+      { contact_name: "", designation: "", phone_prefix: "+91", phone: "", email: "" },
+    ]);
+  const removeContact = (idx: number) => setContacts((prev) => prev.filter((_, i) => i !== idx));
+
+  if (isLoading || !originalClient) {
     return (
       <div className="p-6">
         <div className="text-center">Loading client details...</div>
@@ -159,363 +331,397 @@ export default function ClientEdit() {
     );
   }
 
-  if (error || !originalClient) {
+  if (error) {
     return (
       <div className="p-6">
-        <div className="text-center text-red-600">
-          Error loading client details
-        </div>
+        <div className="text-center text-red-600">Error loading client details</div>
       </div>
     );
   }
 
-  const isFormValid =
-    client.client_name.trim() &&
-    client.contact_person.trim() &&
-    client.email.trim();
-
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={handleCancel}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Client Details
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Edit Client</h1>
-            <p className="text-gray-600">{client.client_name}</p>
-          </div>
-        </div>
-        <div className="flex items-center space-x-3">
-          {hasChanges && (
-            <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-              Unsaved changes
-            </span>
-          )}
-          <Button variant="outline" onClick={handleCancel}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={!isFormValid || saving}
-            className="min-w-20"
-          >
-            {saving ? (
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <>
-                <Save className="w-4 h-4 mr-2" />
-                Save
-              </>
-            )}
-          </Button>
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="outline" size="sm" onClick={() => navigate(`/clients/${id}`)}>
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Client
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Edit Client</h1>
+          <p className="text-gray-600 mt-1">Update company and contact details</p>
         </div>
       </div>
 
-      {/* Form Validation Alert */}
-      {!isFormValid && (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertDescription>
-            Please fill in all required fields: Client Name, Contact Person, and
-            Email.
-          </AlertDescription>
-        </Alert>
-      )}
+      <form onSubmit={onSubmit} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="client-info">Client Info</TabsTrigger>
+            <TabsTrigger value="contact-info">Contact & Address</TabsTrigger>
+          </TabsList>
 
-      {/* Main Content */}
-      <Tabs defaultValue="basic" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="basic">Basic Information</TabsTrigger>
-          <TabsTrigger value="business">Business Details</TabsTrigger>
-          <TabsTrigger value="address">Address & Location</TabsTrigger>
-          <TabsTrigger value="notes">Notes & Comments</TabsTrigger>
-        </TabsList>
+          <TabsContent value="client-info" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Building2 className="w-5 h-5" /> Client Information
+                </CardTitle>
+                <CardDescription>Update basic client details</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div>
+                    <Label>Source *</Label>
+                    <Select
+                      value={clientInfo.source}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, source: v, source_value: "" }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOURCES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {showClientErrors && errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
+                  </div>
+                  {clientInfo.source && (() => {
+                    const src = clientInfo.source;
+                    const meta = (() => {
+                      if (src.startsWith("Email"))
+                        return { label: "Email ID", placeholder: "name@company.com", type: "email" as const };
+                      if (src.startsWith("Call"))
+                        return { label: "Phone Number", placeholder: "+91 98765 43210", type: "tel" as const };
+                      if (src.startsWith("LinkedIn"))
+                        return { label: "LinkedIn Profile URL", placeholder: "https://linkedin.com/in/...", type: "url" as const };
+                      if (src === "Existing Client")
+                        return { label: "Existing Client Name/ID", placeholder: "Enter client name or ID", type: "text" as const };
+                      if (src === "Business Team")
+                        return { label: "Team Member Name", placeholder: "Enter internal team member name", type: "text" as const };
+                      if (src === "Reference")
+                        return { label: "Reference Person", placeholder: "Enter reference person's name or contact", type: "text" as const };
+                      if (src === "General List")
+                        return { label: "List Name/Link", placeholder: "Enter list name or link", type: "text" as const };
+                      return { label: "Source Information", placeholder: "Provide details for the selected source", type: "text" as const };
+                    })();
+                    return (
+                      <div>
+                        <Label>{meta.label}</Label>
+                        <Input
+                          type={meta.type}
+                          value={clientInfo.source_value}
+                          onChange={(e) => setClientInfo((p) => ({ ...p, source_value: e.target.value }))}
+                          placeholder={meta.placeholder}
+                        />
+                      </div>
+                    );
+                  })()}
+                </div>
 
-        <TabsContent value="basic" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Basic Client Information</CardTitle>
-              <CardDescription>
-                Essential client details and contact information
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="client_name">Client Name *</Label>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Client Name *</Label>
                     <Input
-                      id="client_name"
-                      value={client.client_name}
-                      onChange={(e) =>
-                        updateField("client_name", e.target.value)
-                      }
-                      className="pl-10"
-                      placeholder="Enter client/company name"
+                      value={clientInfo.client_name}
+                      onChange={(e) => setClientInfo((p) => ({ ...p, client_name: e.target.value }))}
+                      placeholder="Enter client name"
                     />
+                    {showClientErrors && errors.client_name && <p className="text-red-600 text-xs mt-1">{errors.client_name}</p>}
+                  </div>
+                  <div>
+                    <Label>Client Type *</Label>
+                    <Select
+                      value={clientInfo.client_type}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, client_type: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CLIENT_TYPES.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {showClientErrors && errors.client_type && <p className="text-red-600 text-xs mt-1">{errors.client_type}</p>}
                   </div>
                 </div>
+
                 <div>
-                  <Label htmlFor="contact_person">Contact Person *</Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="contact_person"
-                      value={client.contact_person}
-                      onChange={(e) =>
-                        updateField("contact_person", e.target.value)
-                      }
-                      className="pl-10"
-                      placeholder="Primary contact name"
-                    />
+                  <Label>Payment Offering (multi-select) *</Label>
+                  <MultiSelect
+                    options={PAYMENT_OFFERINGS}
+                    value={clientInfo.payment_offerings}
+                    onChange={(val) => setClientInfo((p) => ({ ...p, payment_offerings: val }))}
+                    placeholder="Select payment offerings"
+                    className="mt-1"
+                  />
+                  {showClientErrors && errors.payment_offerings && (
+                    <p className="text-red-600 text-xs mt-1">{errors.payment_offerings}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Website</Label>
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        className="pl-10"
+                        value={clientInfo.website}
+                        onChange={(e) => setClientInfo((p) => ({ ...p, website: e.target.value }))}
+                        placeholder="https://example.com"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Client Geography *</Label>
+                    <Select
+                      value={clientInfo.geography}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, geography: v as any }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select geography" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GEOGRAPHY.map((g) => (
+                          <SelectItem key={g} value={g}>
+                            {g}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {showClientErrors && errors.geography && <p className="text-red-600 text-xs mt-1">{errors.geography}</p>}
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">Email Address *</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label>Txn Volume / per day in million *</Label>
+                    <Select
+                      value={clientInfo.txn_volume}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, txn_volume: v }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select volume" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TXN_VOLUMES.map((v) => (
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {showClientErrors && errors.txn_volume && <p className="text-red-600 text-xs mt-1">{errors.txn_volume}</p>}
+                  </div>
+                  <div>
+                    <Label>Product Tag Info *</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      value={client.email}
-                      onChange={(e) => updateField("email", e.target.value)}
-                      className="pl-10"
-                      placeholder="contact@company.com"
+                      value={clientInfo.product_tag_info}
+                      onChange={(e) => setClientInfo((p) => ({ ...p, product_tag_info: e.target.value }))}
+                      placeholder="Enter product tags"
                     />
+                    {showClientErrors && errors.product_tag_info && (
+                      <p className="text-red-600 text-xs mt-1">{errors.product_tag_info}</p>
+                    )}
                   </div>
                 </div>
-                <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="phone"
-                      value={client.phone}
-                      onChange={(e) => updateField("phone", e.target.value)}
-                      className="pl-10"
-                      placeholder="+1 (555) 000-0000"
-                    />
-                  </div>
-                </div>
-              </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-              <div className="grid grid-cols-2 gap-4">
+          <TabsContent value="contact-info" className="mt-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" /> Address
+                </CardTitle>
+                <CardDescription>Address is optional, Country/State/City are mandatory</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="status">Client Status</Label>
-                  <Select
-                    value={client.status}
-                    onValueChange={(value) => updateField("status", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="onboarding">Onboarding</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="priority">Priority Level</Label>
-                  <Select
-                    value={client.priority}
-                    onValueChange={(value) => updateField("priority", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="urgent">Urgent</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="business" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Business Information</CardTitle>
-              <CardDescription>
-                Industry, company size, and project details
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="industry">Industry</Label>
+                  <Label>Street Address</Label>
                   <Input
-                    id="industry"
-                    value={client.industry}
-                    onChange={(e) => updateField("industry", e.target.value)}
-                    placeholder="e.g., Technology, Healthcare, Finance"
+                    value={addressInfo.address}
+                    onChange={(e) => setAddressInfo((p) => ({ ...p, address: e.target.value }))}
+                    placeholder="Building, street, area"
                   />
                 </div>
-                <div>
-                  <Label htmlFor="company_size">Company Size</Label>
-                  <Select
-                    value={client.company_size}
-                    onValueChange={(value) =>
-                      updateField("company_size", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select company size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1-10">1-10 employees</SelectItem>
-                      <SelectItem value="11-50">11-50 employees</SelectItem>
-                      <SelectItem value="51-200">51-200 employees</SelectItem>
-                      <SelectItem value="201-500">201-500 employees</SelectItem>
-                      <SelectItem value="501-1000">
-                        501-1000 employees
-                      </SelectItem>
-                      <SelectItem value="1000+">1000+ employees</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="expected_value">Expected Project Value</Label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="expected_value"
-                      type="number"
-                      value={client.expected_value}
-                      onChange={(e) =>
-                        updateField("expected_value", e.target.value)
-                      }
-                      className="pl-10"
-                      placeholder="0"
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Country *</Label>
+                    <Combobox
+                      placeholder="Search country..."
+                      value={addressInfo.country}
+                      onChange={(val) => setAddressInfo((p) => ({ ...p, country: val, state: "", city: "" }))}
+                      options={countries.map((c) => c.name)}
                     />
+                    {showContactErrors && errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+                  </div>
+                  <div>
+                    <Label>State *</Label>
+                    <Combobox
+                      placeholder="Search state..."
+                      value={addressInfo.state}
+                      onChange={(val) => setAddressInfo((p) => ({ ...p, state: val, city: "" }))}
+                      options={states.map((s) => s.name)}
+                      disabled={!addressInfo.country}
+                    />
+                    {showContactErrors && errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
+                  </div>
+                  <div>
+                    <Label>City *</Label>
+                    <Combobox
+                      placeholder="Search city..."
+                      value={addressInfo.city}
+                      onChange={(val) => setAddressInfo((p) => ({ ...p, city: val }))}
+                      options={uniqueCities.map((c) => `${c.name}${c.stateCode ? `-${c.stateCode}` : ""}`)}
+                      disabled={!addressInfo.state}
+                    />
+                    {showContactErrors && errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
                   </div>
                 </div>
+
                 <div>
-                  <Label htmlFor="start_date">Project Start Date</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      id="start_date"
-                      type="date"
-                      value={client.start_date}
-                      onChange={(e) =>
-                        updateField("start_date", e.target.value)
-                      }
-                      className="pl-10"
-                    />
+                  <div className="flex items-center justify-between">
+                    <Label>Contacts</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addContact}>
+                      <Plus className="w-4 h-4 mr-1" /> Add Contact
+                    </Button>
+                  </div>
+                  <div className="space-y-3 mt-2">
+                    {contacts.map((c, idx) => (
+                      <div key={idx} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                        <Input
+                          placeholder="Name"
+                          value={c.contact_name}
+                          onChange={(e) => updateContact(idx, "contact_name", e.target.value)}
+                        />
+                        <Input
+                          placeholder="Designation"
+                          value={c.designation}
+                          onChange={(e) => updateContact(idx, "designation", e.target.value)}
+                        />
+                        <Select
+                          value={c.phone_prefix}
+                          onValueChange={(v) => updateContact(idx, "phone_prefix", v)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {PHONE_PREFIXES.map((p) => (
+                              <SelectItem key={p.code} value={p.code}>
+                                {p.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          placeholder="Phone"
+                          value={c.phone}
+                          onChange={(e) => updateContact(idx, "phone", e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Email"
+                            value={c.email}
+                            onChange={(e) => updateContact(idx, "email", e.target.value)}
+                          />
+                          {contacts.length > 1 && (
+                            <Button type="button" variant="destructive" size="icon" onClick={() => removeContact(idx)}>
+                              <Minus className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
-        <TabsContent value="address" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Address Information</CardTitle>
-              <CardDescription>
-                Physical location and mailing address
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="address">Street Address</Label>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="address"
-                    value={client.address}
-                    onChange={(e) => updateField("address", e.target.value)}
-                    className="pl-10"
-                    placeholder="123 Main Street"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={client.city}
-                    onChange={(e) => updateField("city", e.target.value)}
-                    placeholder="New York"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="state">State/Province</Label>
-                  <Input
-                    id="state"
-                    value={client.state}
-                    onChange={(e) => updateField("state", e.target.value)}
-                    placeholder="NY"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="zip_code">ZIP/Postal Code</Label>
-                  <Input
-                    id="zip_code"
-                    value={client.zip_code}
-                    onChange={(e) => updateField("zip_code", e.target.value)}
-                    placeholder="10001"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="country">Country</Label>
-                <Input
-                  id="country"
-                  value={client.country}
-                  onChange={(e) => updateField("country", e.target.value)}
-                  placeholder="United States"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="notes" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Notes & Comments</CardTitle>
-              <CardDescription>
-                Additional information and internal notes about this client
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label htmlFor="notes">Internal Notes</Label>
-                <Textarea
-                  id="notes"
-                  value={client.notes}
-                  onChange={(e) => updateField("notes", e.target.value)}
-                  rows={6}
-                  placeholder="Add any additional notes, requirements, or important information about this client..."
-                />
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+        <div className="flex items-center justify-between pt-6 border-t">
+          <Button type="button" variant="outline" onClick={() => navigate(`/clients/${id}`)}>Cancel</Button>
+          {activeTab === "client-info" ? (
+            <div className="flex gap-2">
+              <Button type="button" onClick={handleNext}>Next</Button>
+            </div>
+          ) : (
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setActiveTab("client-info")}>Previous</Button>
+              <Button type="submit">
+                <Save className="w-4 h-4 mr-2" /> Save Changes
+              </Button>
+            </div>
+          )}
+        </div>
+      </form>
     </div>
+  );
+}
+
+function Combobox({
+  value,
+  onChange,
+  options,
+  placeholder,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = options.find((o) => o === value) || "";
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("w-full justify-between", disabled && "opacity-60 cursor-not-allowed")}
+          disabled={disabled}
+        >
+          {selected ? selected : (placeholder || "Select option")}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0">
+        <Command>
+          <CommandInput placeholder={placeholder || "Search..."} />
+          <CommandList>
+            <CommandEmpty>No option found.</CommandEmpty>
+            <CommandGroup>
+              {options.map((opt) => (
+                <CommandItem
+                  key={opt}
+                  value={opt}
+                  onSelect={(currentValue) => {
+                    onChange(currentValue);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", value === opt ? "opacity-100" : "opacity-0")} />
+                  {opt}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
