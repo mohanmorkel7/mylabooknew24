@@ -1310,7 +1310,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1319,9 +1319,14 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
@@ -1646,7 +1651,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1655,9 +1660,14 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
@@ -1904,7 +1914,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1913,9 +1923,14 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
 
@@ -1961,7 +1976,7 @@ export default function VCEdit() {
             </CardContent>
           </Card>
 
-          {/* Navigation buttons */}
+          {/* Navigation & Update */}
           <div className="flex justify-between pt-6">
             <Button
               variant="outline"
@@ -1970,9 +1985,14 @@ export default function VCEdit() {
             >
               Previous
             </Button>
-            <Button onClick={handleNextTab} disabled={isLastTab}>
-              Next
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={handleNextTab} disabled={isLastTab}>
+                Next
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+                {isSubmitting ? "Updating..." : "Update VC"}
+              </Button>
+            </div>
           </div>
         </TabsContent>
       </Tabs>
