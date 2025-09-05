@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   useClient,
   useClientOnboardingSteps,
   useCreateOnboardingStep,
   useUpdateOnboardingStep,
-  useDeleteOnboardingStep
+  useDeleteOnboardingStep,
 } from "@/hooks/useApi";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -114,16 +114,16 @@ const mockFollowUps = [
   },
 ];
 
-
-
 export default function ClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const clientId = parseInt(id || "0");
 
   const { data: client, isLoading, error } = useClient(clientId);
-  const { data: onboardingSteps = [], isLoading: stepsLoading } = useClientOnboardingSteps(clientId);
+  const { data: onboardingSteps = [], isLoading: stepsLoading } =
+    useClientOnboardingSteps(clientId);
 
   // Mutations
   const createStepMutation = useCreateOnboardingStep();
@@ -137,15 +137,17 @@ export default function ClientDetails() {
     name: "",
     description: "",
     estimated_days: 1,
-    due_date: ""
+    due_date: "",
   });
 
   const handleBack = () => {
-    navigate("/sales");
+    navigate("/clients");
   };
 
   const handleEdit = () => {
-    navigate(`/sales/client/${id}/edit`);
+    const inClients = location.pathname.startsWith("/clients");
+    const base = inClients ? "/clients" : "/sales/client";
+    navigate(`${base}/${id}/edit`);
   };
 
   const handleAddFollowUp = () => {
@@ -165,10 +167,10 @@ export default function ClientDetails() {
   };
 
   const toggleStepExpansion = (stepId: number) => {
-    setExpandedSteps(prev => 
-      prev.includes(stepId) 
-        ? prev.filter(id => id !== stepId)
-        : [...prev, stepId]
+    setExpandedSteps((prev) =>
+      prev.includes(stepId)
+        ? prev.filter((id) => id !== stepId)
+        : [...prev, stepId],
     );
   };
 
@@ -177,9 +179,14 @@ export default function ClientDetails() {
       try {
         await createStepMutation.mutateAsync({
           clientId,
-          stepData: newStep
+          stepData: newStep,
         });
-        setNewStep({ name: "", description: "", estimated_days: 1, due_date: "" });
+        setNewStep({
+          name: "",
+          description: "",
+          estimated_days: 1,
+          due_date: "",
+        });
         setNewStepDialog(false);
       } catch (error) {
         console.error("Failed to create step:", error);
@@ -206,16 +213,19 @@ export default function ClientDetails() {
           message: comment,
           user_name: `${user.first_name} ${user.last_name}`,
           user_id: parseInt(user.id),
-          comment_type: "note"
-        }
+          comment_type: "note",
+        },
       });
-      setNewComment(prev => ({ ...prev, [stepId]: "" }));
+      setNewComment((prev) => ({ ...prev, [stepId]: "" }));
     } catch (error) {
       console.error("Failed to add comment:", error);
     }
   };
 
-  const handleFileUpload = async (stepId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    stepId: number,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !user) return;
 
@@ -229,7 +239,7 @@ export default function ClientDetails() {
         file_path: `/uploads/${file.name}`,
         file_size: file.size,
         file_type: file.type,
-        uploaded_by: `${user.first_name} ${user.last_name}`
+        uploaded_by: `${user.first_name} ${user.last_name}`,
       };
 
       await uploadDocumentMutation.mutateAsync({ stepId, documentData });
@@ -260,6 +270,29 @@ export default function ClientDetails() {
   }
 
   const clientData = client as any;
+  const meta = (() => {
+    if (!clientData?.notes) return {} as any;
+    try {
+      const obj = JSON.parse(clientData.notes);
+      return obj && typeof obj === "object" ? obj : ({} as any);
+    } catch {
+      return {} as any;
+    }
+  })();
+  const primaryContact = Array.isArray((meta as any).contacts)
+    ? (meta as any).contacts[0]
+    : undefined;
+  const phoneDisplay = primaryContact?.phone
+    ? `${primaryContact.phone_prefix || ""} ${primaryContact.phone}`
+    : clientData.phone || "Not provided";
+  const telHref = primaryContact?.phone
+    ? `tel:${primaryContact.phone_prefix || ""}${primaryContact.phone}`.replace(
+        /\s+/g,
+        "",
+      )
+    : clientData.phone
+      ? `tel:${String(clientData.phone).replace(/\s+/g, "")}`
+      : "";
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -274,16 +307,10 @@ export default function ClientDetails() {
             <h1 className="text-2xl font-bold text-gray-900">
               {clientData.client_name}
             </h1>
-            <p className="text-gray-600 mt-1">
-              Client Details & Custom Onboarding Workflow
-            </p>
+            <p className="text-gray-600 mt-1">Client Overview</p>
           </div>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" onClick={handleAddFollowUp}>
-            <Calendar className="w-4 h-4 mr-2" />
-            Add Follow-up
-          </Button>
           <Button onClick={handleEdit}>
             <Edit className="w-4 h-4 mr-2" />
             Edit Client
@@ -303,110 +330,164 @@ export default function ClientDetails() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Client Name:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.client_name}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">Status:</span>
-                      <Badge className={statusColors[clientData.status]}>
-                        {clientData.status.charAt(0).toUpperCase() +
-                          clientData.status.slice(1)}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Priority:
-                      </span>
-                      <Badge className={priorityColors[clientData.priority]}>
-                        {clientData.priority.charAt(0).toUpperCase() +
-                          clientData.priority.slice(1)}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Industry:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.industry || "Not specified"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Company Size:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.company_size || "Not specified"}
-                      </span>
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <span className="font-medium text-gray-600">
+                    Client Name:
+                  </span>
+                  <span className="text-gray-900">
+                    {clientData.client_name}
+                  </span>
                 </div>
-
-                <div>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Contact Person:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.contact_person}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Email:</span>
-                      <a
-                        href={`mailto:${clientData.email}`}
-                        className="text-blue-600 hover:underline"
-                      >
-                        {clientData.email}
-                      </a>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Phone className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Phone:</span>
-                      <span className="text-gray-900">
-                        {clientData.phone || "Not provided"}
-                      </span>
-                    </div>
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium text-gray-600">
+                    Contact Person:
+                  </span>
+                  <span className="text-gray-900">
+                    {clientData.contact_person}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Mail className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium text-gray-600">Email:</span>
+                  <a
+                    href={`mailto:${clientData.email}`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    {clientData.email}
+                  </a>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Phone className="w-4 h-4 text-gray-400" />
+                  <span className="font-medium text-gray-600">Phone:</span>
+                  <span className="text-gray-900">{phoneDisplay}</span>
+                </div>
+                {clientData.industry && (
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">Industry:</span>
+                    <span className="text-gray-900">{clientData.industry}</span>
+                  </div>
+                )}
+                {clientData.company_size && (
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">
+                      Company Size:
+                    </span>
+                    <span className="text-gray-900">
+                      {clientData.company_size}
+                    </span>
+                  </div>
+                )}
+                {clientData.expected_value !== undefined &&
+                  clientData.expected_value !== null && (
                     <div className="flex items-center space-x-2">
                       <DollarSign className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">
                         Expected Value:
                       </span>
-                      <span className="text-gray-900">
-                        {clientData.expected_value
-                          ? `$${clientData.expected_value.toLocaleString()}`
-                          : "Not specified"}
-                      </span>
+                      <span className="text-gray-900">{`$${Number(clientData.expected_value).toLocaleString()}`}</span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Start Date:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.start_date
-                          ? new Date(clientData.start_date).toLocaleDateString()
-                          : "Not set"}
-                      </span>
-                    </div>
+                  )}
+                {clientData.start_date && (
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium text-gray-600">
+                      Start Date:
+                    </span>
+                    <span className="text-gray-900">
+                      {new Date(clientData.start_date).toLocaleDateString()}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <Separator />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">Source:</span>
+                    <span className="text-gray-900">{meta.source || "-"}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">
+                      Source Info:
+                    </span>
+                    <span className="text-gray-900">
+                      {meta.source_value || "-"}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">
+                      Client Type:
+                    </span>
+                    <span className="text-gray-900">
+                      {meta.client_type || "-"}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">
+                      Geography:
+                    </span>
+                    <span className="text-gray-900">
+                      {meta.geography || "-"}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">
+                      Txn Volume:
+                    </span>
+                    <span className="text-gray-900">
+                      {meta.txn_volume || "-"}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">
+                      Product Tags:
+                    </span>
+                    <span className="text-gray-900">
+                      {meta.product_tag_info || "-"}
+                    </span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="font-medium text-gray-600">Website:</span>
+                    {clientData.website || meta.website ? (
+                      <a
+                        className="text-blue-600 hover:underline"
+                        href={clientData.website || meta.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {clientData.website || meta.website}
+                      </a>
+                    ) : (
+                      <span className="text-gray-900">-</span>
+                    )}
                   </div>
                 </div>
               </div>
 
+              {Array.isArray(meta.payment_offerings) &&
+                meta.payment_offerings.length > 0 && (
+                  <div className="mt-4">
+                    <div className="font-medium text-gray-600 mb-2">
+                      Payment Offerings:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {meta.payment_offerings.map((p: string) => (
+                        <Badge key={p} variant="secondary">
+                          {p}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
               {clientData.address && (
                 <>
-                  <Separator />
-                  <div>
+                  <Separator className="mt-4" />
+                  <div className="mt-4">
                     <div className="flex items-center space-x-2 mb-2">
                       <MapPin className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">
@@ -416,211 +497,97 @@ export default function ClientDetails() {
                     <div className="pl-6 text-gray-900">
                       <div>{clientData.address}</div>
                       <div>
-                        {clientData.city}, {clientData.state}{" "}
-                        {clientData.zip_code}
+                        {clientData.city}
+                        {clientData.state ? `, ${clientData.state}` : ""}{" "}
+                        {clientData.zip_code || ""}
                       </div>
                       <div>{clientData.country}</div>
                     </div>
                   </div>
                 </>
               )}
-
-              {clientData.notes && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Notes:</span>
-                    </div>
-                    <div className="pl-6 text-gray-900 whitespace-pre-wrap">
-                      {clientData.notes}
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Custom Onboarding Workflow */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Custom Onboarding Workflow</CardTitle>
-                  <CardDescription>
-                    Manage client-specific onboarding steps, documents, and communication
-                  </CardDescription>
-                </div>
-                <Dialog open={newStepDialog} onOpenChange={setNewStepDialog}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add Step
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Add New Onboarding Step</DialogTitle>
-                      <DialogDescription>
-                        Create a custom step for this client's onboarding process
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="stepName">Step Name</Label>
-                        <Input
-                          id="stepName"
-                          value={newStep.name}
-                          onChange={(e) => setNewStep(prev => ({ ...prev, name: e.target.value }))}
-                          placeholder="e.g., Technical Setup"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="stepDescription">Description</Label>
-                        <Textarea
-                          id="stepDescription"
-                          value={newStep.description}
-                          onChange={(e) => setNewStep(prev => ({ ...prev, description: e.target.value }))}
-                          placeholder="Describe what needs to be done in this step"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="estimatedDays">Estimated Days</Label>
-                          <Input
-                            id="estimatedDays"
-                            type="number"
-                            min="1"
-                            value={newStep.estimated_days}
-                            onChange={(e) => setNewStep(prev => ({ ...prev, estimated_days: parseInt(e.target.value) || 1 }))}
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="dueDate">Due Date</Label>
-                          <Input
-                            id="dueDate"
-                            type="date"
-                            value={newStep.due_date}
-                            onChange={(e) => setNewStep(prev => ({ ...prev, due_date: e.target.value }))}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setNewStepDialog(false)}>
-                        Cancel
-                      </Button>
-                      <Button onClick={handleAddStep}>Add Step</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Array.isArray(onboardingSteps) && onboardingSteps.length > 0 ? (
-                  onboardingSteps.map((step) => (
-                    step ? (
-                      <StepItem
-                        key={step.id || `temp-${Math.random()}`}
-                        step={step}
-                        isExpanded={expandedSteps.includes(step.id)}
-                        onToggleExpansion={() => toggleStepExpansion(step.id)}
-                        onUpdateStatus={updateStepStatus}
-                        onDeleteStep={handleDeleteStep}
-                      />
-                    ) : null
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-gray-500">
-                    <p>No onboarding steps found. Add a step to get started.</p>
-                  </div>
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right Column - Follow-up Tracker */}
+        {/* Right Column */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Follow-up Tracker</CardTitle>
-              <CardDescription>Manage client follow-up tasks</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {mockFollowUps.map((followUp) => (
-                  <div key={followUp.id} className="border rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-2">
-                      <div className="flex-1">
-                        <p className="font-medium text-gray-900 text-sm">
-                          {followUp.description}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Due:{" "}
-                          {new Date(followUp.due_date).toLocaleDateString()}
-                        </p>
+          {false && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Follow-up Tracker</CardTitle>
+                <CardDescription>Manage client follow-up tasks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {mockFollowUps.map((followUp) => (
+                    <div key={followUp.id} className="border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-gray-900 text-sm">
+                            {followUp.description}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            Due:{" "}
+                            {new Date(followUp.due_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <Badge
+                          className={
+                            followUp.status === "overdue"
+                              ? "bg-red-100 text-red-700"
+                              : followUp.status === "pending"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-blue-100 text-blue-700"
+                          }
+                        >
+                          {followUp.status}
+                        </Badge>
                       </div>
-                      <Badge
-                        className={
-                          followUp.status === "overdue"
-                            ? "bg-red-100 text-red-700"
-                            : followUp.status === "pending"
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-blue-100 text-blue-700"
-                        }
-                      >
-                        {followUp.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="text-xs text-gray-500">
-                        Assigned to: {followUp.assigned_to}
-                      </p>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm">
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                        <Button variant="ghost" size="sm">
-                          <CheckCircle className="w-3 h-3" />
-                        </Button>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-gray-500">
+                          Assigned to: {followUp.assigned_to}
+                        </p>
+                        <div className="flex space-x-2">
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-3 h-3" />
+                          </Button>
+                          <Button variant="ghost" size="sm">
+                            <CheckCircle className="w-3 h-3" />
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Quick Actions */}
           <Card>
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Button className="w-full justify-start" variant="outline">
+            <CardContent className="space-y-2">
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() =>
+                  (window.location.href = `mailto:${clientData.email}`)
+                }
+              >
                 <Mail className="w-4 h-4 mr-2" />
                 Send Email
               </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Calendar className="w-4 h-4 mr-2" />
-                Schedule Meeting
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <FileText className="w-4 h-4 mr-2" />
-                Generate Report
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Building className="w-4 h-4 mr-2" />
-                View Company Profile
-              </Button>
-              <Separator />
-              <Button className="w-full justify-start" variant="outline">
-                <Settings className="w-4 h-4 mr-2" />
-                Workflow Settings
+              <Button
+                className="w-full justify-start"
+                variant="outline"
+                onClick={() => telHref && (window.location.href = telHref)}
+                disabled={!telHref}
+              >
+                <Phone className="w-4 h-4 mr-2" />
+                Call Phone
               </Button>
             </CardContent>
           </Card>

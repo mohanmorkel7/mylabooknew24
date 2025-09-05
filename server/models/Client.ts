@@ -26,8 +26,8 @@ export interface Client {
 
 export interface CreateClientData {
   client_name: string;
-  contact_person: string;
-  email: string;
+  contact_person?: string;
+  email?: string;
   phone?: string;
   company_size?: string;
   industry?: string;
@@ -112,8 +112,8 @@ export class ClientRepository {
 
     const values = [
       clientData.client_name,
-      clientData.contact_person,
-      clientData.email,
+      clientData.contact_person || "",
+      clientData.email || "",
       clientData.phone || null,
       clientData.company_size || null,
       clientData.industry || null,

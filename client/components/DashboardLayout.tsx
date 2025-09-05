@@ -28,6 +28,7 @@ import {
   ChevronRight,
   Megaphone,
   HandCoins,
+  Building,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api";
@@ -66,6 +67,13 @@ const navigationItems: NavigationItem[] = [
     name: "Sales",
     href: "/leads",
     icon: Target,
+    roles: ["admin", "sales", "product"],
+    permissions: ["leads"],
+  },
+  {
+    name: "Clients",
+    href: "/clients",
+    icon: Building,
     roles: ["admin", "sales", "product"],
     permissions: ["leads"],
   },

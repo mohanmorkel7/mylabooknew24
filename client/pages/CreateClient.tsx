@@ -1,13 +1,13 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useClient, useUpdateClient } from "@/hooks/useApi";
-import { useQueryClient } from "@tanstack/react-query";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -15,7 +15,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -113,52 +112,33 @@ function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
 
-function parseNotesMeta(notes?: string | null): any {
-  if (!notes) return {};
-  try {
-    const obj = JSON.parse(notes);
-    return obj && typeof obj === "object" ? obj : {};
-  } catch {
-    return {};
-  }
-}
-
-export default function ClientEdit() {
-  const { id } = useParams();
+export default function CreateClient() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const updateMutation = useUpdateClient();
-
-  const {
-    data: originalClient,
-    isLoading,
-    error,
-  } = useClient(parseInt(id || "0"));
-
   const [activeTab, setActiveTab] = useState("client-info");
   const [showClientErrors, setShowClientErrors] = useState(false);
   const [showContactErrors, setShowContactErrors] = useState(false);
 
   const [clientInfo, setClientInfo] = useState({
     source: "",
+    source_value: "",
     client_name: "",
     client_type: "",
     payment_offerings: [] as string[],
     website: "",
-    geography: "" as "" | (typeof GEOGRAPHY)[number],
+    geography: "" as "Domestic" | "International" | "",
     txn_volume: "",
     product_tag_info: "",
-    source_value: "",
   });
 
   const [contacts, setContacts] = useState<
-    {
+    Array<{
       contact_name: string;
       designation: string;
-      phone_prefix: string;
+      phone_prefix?: string;
       phone: string;
       email: string;
-    }[]
+    }>
   >([
     {
       contact_name: "",
@@ -175,45 +155,6 @@ export default function ClientEdit() {
     state: "",
     city: "",
   });
-
-  // Populate initial data from existing client
-  useEffect(() => {
-    if (!originalClient) return;
-    const meta = parseNotesMeta(originalClient.notes);
-    setClientInfo({
-      source: meta.source || "",
-      client_name: originalClient.client_name || "",
-      client_type: meta.client_type || "",
-      payment_offerings: Array.isArray(meta.payment_offerings)
-        ? meta.payment_offerings
-        : [],
-      website: originalClient.website || meta.website || "",
-      geography: (meta.geography as any) || "",
-      txn_volume: meta.txn_volume || "",
-      product_tag_info: meta.product_tag_info || "",
-      source_value: meta.source_value || "",
-    });
-
-    // Contacts
-    const primary = {
-      contact_name:
-        originalClient.contact_person || meta.contacts?.[0]?.contact_name || "",
-      designation: meta.contacts?.[0]?.designation || "",
-      phone_prefix: meta.contacts?.[0]?.phone_prefix || "+91",
-      phone: originalClient.phone || meta.contacts?.[0]?.phone || "",
-      email: originalClient.email || meta.contacts?.[0]?.email || "",
-    };
-    const others = Array.isArray(meta.contacts) ? meta.contacts.slice(1) : [];
-    setContacts([primary, ...others]);
-
-    // Address
-    setAddressInfo({
-      address: originalClient.address || meta.address || "",
-      country: originalClient.country || meta.country || "",
-      state: originalClient.state || meta.state || "",
-      city: originalClient.city || meta.city || "",
-    });
-  }, [originalClient]);
 
   const countries = Country.getAllCountries();
   const selectedCountry = countries.find((c) => c.name === addressInfo.country);
@@ -239,24 +180,6 @@ export default function ClientEdit() {
     return out;
   }, [JSON.stringify(cities)]);
 
-  // Normalize city value to match options format (e.g., "City" -> "City-STATE") so it shows as selected
-  useEffect(() => {
-    if (!addressInfo.city) return;
-    const optionValues = uniqueCities.map(
-      (c) => `${c.name}${c.stateCode ? `-${c.stateCode}` : ""}`,
-    );
-    const hasExact = optionValues.includes(addressInfo.city);
-    if (!hasExact) {
-      const match = optionValues.find(
-        (opt) => opt.split("-")[0] === addressInfo.city,
-      );
-      if (match) {
-        setAddressInfo((p) => ({ ...p, city: match }));
-      }
-    }
-  }, [addressInfo.city, JSON.stringify(uniqueCities)]);
-
-  // Validation
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
     if (!clientInfo.source) e.source = "Required";
@@ -267,9 +190,6 @@ export default function ClientEdit() {
     if (!clientInfo.geography) e.geography = "Required";
     if (!clientInfo.txn_volume) e.txn_volume = "Required";
     if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
-    if (!addressInfo.country) e.country = "Required";
-    if (!addressInfo.state) e.state = "Required";
-    if (!addressInfo.city) e.city = "Required";
     return e;
   }, [clientInfo, addressInfo]);
 
@@ -317,21 +237,8 @@ export default function ClientEdit() {
     }
   };
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!id) return;
-    setShowContactErrors(true);
-    if (Object.keys(contactTabErrors).length > 0) {
-      toast({
-        title: "Missing address",
-        description: "Country, State and City are required",
-        variant: "destructive",
-      });
-      setActiveTab("contact-info");
-      return;
-    }
-
-    try {
+  const createMutation = useMutation({
+    mutationFn: async () => {
       const primary = contacts[0] || {
         contact_name: "",
         email: "",
@@ -339,18 +246,27 @@ export default function ClientEdit() {
         phone_prefix: "+91",
         designation: "",
       };
+      if (primary.email && !isValidEmail(primary.email)) {
+        toast({
+          title: "Invalid email",
+          description: "Please enter a valid contact email or leave it blank.",
+          variant: "destructive",
+        });
+        throw new Error("Invalid contact email");
+      }
+
       const cityName = addressInfo.city
         ? addressInfo.city.split("__")[0].split("-")[0]
         : "";
       const payload: any = {
         client_name: clientInfo.client_name.trim(),
-        contact_person: primary.contact_name.trim(),
-        email: primary.email.trim(),
         phone: primary.phone?.trim() || undefined,
+        // Top-level fields expected by API/DB schema
         address: addressInfo.address || undefined,
         country: addressInfo.country || undefined,
         state: addressInfo.state || undefined,
         city: cityName || undefined,
+        // Extra structured info preserved in notes JSON
         notes: JSON.stringify({
           source: clientInfo.source,
           client_type: clientInfo.client_type || undefined,
@@ -362,26 +278,43 @@ export default function ClientEdit() {
           source_value: clientInfo.source_value || undefined,
           contacts,
         }),
+        status: "active",
       };
-
-      await updateMutation.mutateAsync({
-        id: parseInt(id),
-        clientData: payload,
+      if (primary.contact_name && primary.contact_name.trim()) {
+        payload.contact_person = primary.contact_name.trim();
+      }
+      if (primary.email && primary.email.trim()) {
+        payload.email = primary.email.trim();
+      }
+      const res = await apiClient.request("/clients", {
+        method: "POST",
+        body: JSON.stringify(payload),
       });
+      return res;
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["client-stats"] });
       toast({
-        title: "Client updated",
-        description: "Changes saved successfully",
+        title: "Client created",
+        description: "Client has been created successfully.",
       });
-      navigate(`/clients/${id}`);
-    } catch (err: any) {
-      toast({
-        title: "Update failed",
-        description: err?.message || "Unable to update client",
-        variant: "destructive",
-      });
-    }
+      navigate("/clients");
+    },
+    onError: (err: any) => {
+      if (err?.message) {
+        toast({
+          title: "Create failed",
+          description: err.message,
+          variant: "destructive",
+        });
+      }
+    },
+  });
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate();
   };
 
   const updateContact = (idx: number, key: string, value: string) => {
@@ -404,51 +337,95 @@ export default function ClientEdit() {
   const removeContact = (idx: number) =>
     setContacts((prev) => prev.filter((_, i) => i !== idx));
 
-  if (isLoading || !originalClient) {
+  // Simple searchable combobox component
+  function Combobox({
+    items,
+    value,
+    onChange,
+    placeholder,
+    disabled,
+  }: {
+    items: { label: string; value: string }[];
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    disabled?: boolean;
+  }) {
+    const [open, setOpen] = React.useState(false);
+    const selected = items.find((i) => i.value === value);
     return (
-      <div className="p-6">
-        <div className="text-center">Loading client details...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="text-center text-red-600">
-          Error loading client details
-        </div>
-      </div>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between",
+              disabled && "opacity-50 cursor-not-allowed",
+            )}
+            disabled={disabled}
+          >
+            {selected ? selected.label : placeholder || "Select..."}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+          <Command>
+            <CommandInput placeholder={placeholder || "Search..."} />
+            <CommandEmpty>No results</CommandEmpty>
+            <CommandList>
+              <CommandGroup>
+                {items.map((item) => (
+                  <CommandItem
+                    key={`${item.value}`}
+                    value={item.label}
+                    onSelect={() => {
+                      onChange(item.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        item.value === value ? "opacity-100" : "opacity-0",
+                      )}
+                    />
+                    {item.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/clients/${id}`)}
+          onClick={() => navigate("/clients")}
         >
-          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Client
+          <ArrowLeft className="w-4 h-4 mr-2" /> Back to Clients
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Edit Client</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Create Client</h1>
           <p className="text-gray-600 mt-1">
-            Update company and contact details
+            Add a new client with company and contact details
           </p>
         </div>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-4"
-        >
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList>
             <TabsTrigger value="client-info">Client Info</TabsTrigger>
-            <TabsTrigger value="contact-info">Contact & Address</TabsTrigger>
+            <TabsTrigger value="contact-info">Client Contact Info</TabsTrigger>
           </TabsList>
 
           <TabsContent value="client-info" className="mt-4">
@@ -457,7 +434,7 @@ export default function ClientEdit() {
                 <CardTitle className="flex items-center gap-2">
                   <Building2 className="w-5 h-5" /> Client Information
                 </CardTitle>
-                <CardDescription>Update basic client details</CardDescription>
+                <CardDescription>Fill basic client details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -728,7 +705,7 @@ export default function ClientEdit() {
                   <MapPin className="w-5 h-5" /> Address
                 </CardTitle>
                 <CardDescription>
-                  Address is optional, Country/State/City are mandatory
+                  All address and contact fields are optional
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -745,19 +722,22 @@ export default function ClientEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Country *</Label>
+                    <Label>Country</Label>
                     <Combobox
                       placeholder="Search country..."
+                      items={countries.map((c) => ({
+                        label: c.name,
+                        value: c.name,
+                      }))}
                       value={addressInfo.country}
-                      onChange={(val) =>
+                      onChange={(v) =>
                         setAddressInfo((p) => ({
                           ...p,
-                          country: val,
+                          country: v,
                           state: "",
                           city: "",
                         }))
                       }
-                      options={countries.map((c) => c.name)}
                     />
                     {showContactErrors && errors.country && (
                       <p className="text-red-600 text-xs mt-1">
@@ -766,15 +746,18 @@ export default function ClientEdit() {
                     )}
                   </div>
                   <div>
-                    <Label>State *</Label>
+                    <Label>State</Label>
                     <Combobox
                       placeholder="Search state..."
+                      items={states.map((s) => ({
+                        label: s.name,
+                        value: s.name,
+                      }))}
                       value={addressInfo.state}
-                      onChange={(val) =>
-                        setAddressInfo((p) => ({ ...p, state: val, city: "" }))
+                      onChange={(v) =>
+                        setAddressInfo((p) => ({ ...p, state: v, city: "" }))
                       }
-                      options={states.map((s) => s.name)}
-                      disabled={!addressInfo.country}
+                      disabled={!selectedCountry}
                     />
                     {showContactErrors && errors.state && (
                       <p className="text-red-600 text-xs mt-1">
@@ -783,18 +766,18 @@ export default function ClientEdit() {
                     )}
                   </div>
                   <div>
-                    <Label>City *</Label>
+                    <Label>City</Label>
                     <Combobox
                       placeholder="Search city..."
+                      items={uniqueCities.map((ct, idx) => ({
+                        label: ct.name,
+                        value: `${ct.name}__${ct.stateCode || ""}-${idx}`,
+                      }))}
                       value={addressInfo.city}
-                      onChange={(val) =>
-                        setAddressInfo((p) => ({ ...p, city: val }))
+                      onChange={(v) =>
+                        setAddressInfo((p) => ({ ...p, city: v }))
                       }
-                      options={uniqueCities.map(
-                        (c) =>
-                          `${c.name}${c.stateCode ? `-${c.stateCode}` : ""}`,
-                      )}
-                      disabled={!addressInfo.state}
+                      disabled={!selectedCountry}
                     />
                     {showContactErrors && errors.city && (
                       <p className="text-red-600 text-xs mt-1">{errors.city}</p>
@@ -916,21 +899,18 @@ export default function ClientEdit() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate(`/clients/${id}`)}
+            onClick={() => navigate("/clients")}
           >
             Cancel
           </Button>
           {activeTab === "client-info" ? (
-            <div className="flex gap-2">
+            <div className="space-x-3">
               <Button type="button" onClick={handleNext}>
                 Next
               </Button>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" /> Save Changes
-              </Button>
             </div>
           ) : (
-            <div className="flex gap-2">
+            <div className="space-x-3">
               <Button
                 type="button"
                 variant="outline"
@@ -938,78 +918,11 @@ export default function ClientEdit() {
               >
                 Previous
               </Button>
-              <Button type="submit">
-                <Save className="w-4 h-4 mr-2" /> Save Changes
-              </Button>
+              <Button type="submit">Submit</Button>
             </div>
           )}
         </div>
       </form>
     </div>
-  );
-}
-
-function Combobox({
-  value,
-  onChange,
-  options,
-  placeholder,
-  disabled,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  options: string[];
-  placeholder?: string;
-  disabled?: boolean;
-}) {
-  const [open, setOpen] = useState(false);
-  const selected = options.find((o) => o === value) || "";
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          className={cn(
-            "w-full justify-between",
-            disabled && "opacity-60 cursor-not-allowed",
-          )}
-          disabled={disabled}
-        >
-          {selected ? selected : placeholder || "Select option"}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-full p-0">
-        <Command>
-          <CommandInput placeholder={placeholder || "Search..."} />
-          <CommandList>
-            <CommandEmpty>No option found.</CommandEmpty>
-            <CommandGroup>
-              {options.map((opt) => (
-                <CommandItem
-                  key={opt}
-                  value={opt}
-                  onSelect={(currentValue) => {
-                    onChange(currentValue);
-                    setOpen(false);
-                  }}
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value === opt ? "opacity-100" : "opacity-0",
-                    )}
-                  />
-                  {opt}
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
   );
 }
