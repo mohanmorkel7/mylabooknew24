@@ -161,8 +161,12 @@ export default function FundRaiseDashboard() {
     .filter((fr: any) => {
       // Status filter using UI values mapped to internal
       if (statusFilter !== "all") {
-        const internalStatus = fr.status || UI_STATUS_TO_INTERNAL[fr.ui_status || ""] || "in-progress";
-        const targetInternal = UI_STATUS_TO_INTERNAL[statusFilter] || statusFilter.toLowerCase();
+        const internalStatus =
+          fr.status ||
+          UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
+          "in-progress";
+        const targetInternal =
+          UI_STATUS_TO_INTERNAL[statusFilter] || statusFilter.toLowerCase();
         if (internalStatus !== targetInternal) return false;
       }
       if (!searchTerm) return true;

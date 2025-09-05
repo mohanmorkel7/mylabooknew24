@@ -624,7 +624,6 @@ export default function VCDashboard() {
                 </div>
               </div>
 
-
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="Filter by VC Type" />
@@ -635,7 +634,9 @@ export default function VCDashboard() {
                   <SelectItem value="vc">VC</SelectItem>
                   <SelectItem value="private_equity">Private Equity</SelectItem>
                   <SelectItem value="family_office">Family Office</SelectItem>
-                  <SelectItem value="merchant_banker">Merchant Banker</SelectItem>
+                  <SelectItem value="merchant_banker">
+                    Merchant Banker
+                  </SelectItem>
                 </SelectContent>
               </Select>
 
