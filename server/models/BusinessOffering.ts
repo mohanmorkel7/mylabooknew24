@@ -36,13 +36,16 @@ export class BusinessOfferingRepository {
   }
 
   static async findById(id: number): Promise<BusinessOffering | null> {
-    const r = await pool.query(`SELECT * FROM business_offerings WHERE id = $1`, [
-      id,
-    ]);
+    const r = await pool.query(
+      `SELECT * FROM business_offerings WHERE id = $1`,
+      [id],
+    );
     return r.rows[0] || null;
-    }
+  }
 
-  static async create(data: Partial<BusinessOffering>): Promise<BusinessOffering> {
+  static async create(
+    data: Partial<BusinessOffering>,
+  ): Promise<BusinessOffering> {
     const r = await pool.query(
       `INSERT INTO business_offerings (
         client_id, solution, product, avg_fee_value, avg_fee_currency, mmgf_value, mmgf_unit,

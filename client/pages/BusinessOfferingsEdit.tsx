@@ -10,12 +10,14 @@ export default function BusinessOfferingsEdit() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["business-offering", id],
-    queryFn: async () => (id ? apiClient.getBusinessOffering(Number(id)) : null),
+    queryFn: async () =>
+      id ? apiClient.getBusinessOffering(Number(id)) : null,
     enabled: !!id,
   });
 
   if (isLoading) return <div className="p-6">Loading...</div>;
-  if (error || !data) return <div className="p-6 text-red-600">Failed to load</div>;
+  if (error || !data)
+    return <div className="p-6 text-red-600">Failed to load</div>;
 
   return <BusinessOfferings initial={data} offeringId={Number(id)} />;
 }

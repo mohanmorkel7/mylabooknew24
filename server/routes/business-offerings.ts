@@ -36,7 +36,8 @@ router.get("/:id", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const created = await BusinessOfferingRepository.create(req.body || {});
     res.status(201).json(created);
   } catch (e: any) {
@@ -46,7 +47,8 @@ router.post("/", async (req: Request, res: Response) => {
 
 router.put("/:id", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const id = parseInt(req.params.id);
     const updated = await BusinessOfferingRepository.update(id, req.body || {});
     if (!updated) return res.status(404).json({ error: "Not found" });
@@ -58,7 +60,8 @@ router.put("/:id", async (req: Request, res: Response) => {
 
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const id = parseInt(req.params.id);
     const ok = await BusinessOfferingRepository.delete(id);
     res.json({ success: ok });

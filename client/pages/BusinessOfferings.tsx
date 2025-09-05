@@ -23,8 +23,19 @@ import {
 } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/lib/auth-context";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { ArrowLeft, Briefcase, Check, ChevronsUpDown } from "lucide-react";
 
@@ -99,7 +110,10 @@ function isDomesticByGeography(client?: any): boolean {
   return String(geography).toLowerCase() === "domestic";
 }
 
-interface Props { initial?: any; offeringId?: number }
+interface Props {
+  initial?: any;
+  offeringId?: number;
+}
 export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -133,7 +147,8 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
         clientId: initial.client_id ? String(initial.client_id) : "",
         solution: initial.solution || "",
         product: initial.product || "",
-        avgFee: initial.avg_fee_value != null ? String(initial.avg_fee_value) : "",
+        avgFee:
+          initial.avg_fee_value != null ? String(initial.avg_fee_value) : "",
         mmgf: initial.mmgf_value != null ? String(initial.mmgf_value) : "",
       });
       setFormB({
@@ -141,11 +156,26 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
         offeringDescription: initial.offering_description || "",
         currentDailyVolume: initial.current_daily_volume_bucket || "",
         projectedDailyVolume: initial.projected_daily_volume_bucket || "",
-        potentialMMGF: initial.potential_mmgf_value != null ? String(initial.potential_mmgf_value) : "",
-        potentialFee: initial.potential_fee_value != null ? String(initial.potential_fee_value) : "",
-        potentialMRR: initial.potential_mrr_lacs != null ? String(initial.potential_mrr_lacs) : "",
-        currentPotentialARR: initial.current_potential_arr_usd_mn != null ? String(initial.current_potential_arr_usd_mn) : "",
-        projectedPotentialARR: initial.projected_potential_arr_usd_mn != null ? String(initial.projected_potential_arr_usd_mn) : "",
+        potentialMMGF:
+          initial.potential_mmgf_value != null
+            ? String(initial.potential_mmgf_value)
+            : "",
+        potentialFee:
+          initial.potential_fee_value != null
+            ? String(initial.potential_fee_value)
+            : "",
+        potentialMRR:
+          initial.potential_mrr_lacs != null
+            ? String(initial.potential_mrr_lacs)
+            : "",
+        currentPotentialARR:
+          initial.current_potential_arr_usd_mn != null
+            ? String(initial.current_potential_arr_usd_mn)
+            : "",
+        projectedPotentialARR:
+          initial.projected_potential_arr_usd_mn != null
+            ? String(initial.projected_potential_arr_usd_mn)
+            : "",
       });
     }
   }, [initial]);
@@ -228,13 +258,23 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       offering_description: formB.offeringDescription || null,
       current_daily_volume_bucket: formB.currentDailyVolume || null,
       projected_daily_volume_bucket: formB.projectedDailyVolume || null,
-      potential_mmgf_value: formB.potentialMMGF ? Number(formB.potentialMMGF) : null,
+      potential_mmgf_value: formB.potentialMMGF
+        ? Number(formB.potentialMMGF)
+        : null,
       potential_mmgf_unit: unit,
-      potential_fee_value: formB.potentialFee ? Number(formB.potentialFee) : null,
+      potential_fee_value: formB.potentialFee
+        ? Number(formB.potentialFee)
+        : null,
       potential_fee_currency: currency,
-      potential_mrr_lacs: formB.potentialMRR ? Number(formB.potentialMRR) : null,
-      current_potential_arr_usd_mn: formB.currentPotentialARR ? Number(formB.currentPotentialARR) : null,
-      projected_potential_arr_usd_mn: formB.projectedPotentialARR ? Number(formB.projectedPotentialARR) : null,
+      potential_mrr_lacs: formB.potentialMRR
+        ? Number(formB.potentialMRR)
+        : null,
+      current_potential_arr_usd_mn: formB.currentPotentialARR
+        ? Number(formB.currentPotentialARR)
+        : null,
+      projected_potential_arr_usd_mn: formB.projectedPotentialARR
+        ? Number(formB.projectedPotentialARR)
+        : null,
       template_id: 6,
       created_by: user ? Number(user.id) : null,
       updated_by: user ? Number(user.id) : null,
@@ -249,7 +289,11 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       toast({ title: "Saved", description: "Business Offerings saved." });
       navigate("/business-offerings");
     } catch (e: any) {
-      toast({ title: "Save failed", description: e?.message || "Failed", variant: "destructive" });
+      toast({
+        title: "Save failed",
+        description: e?.message || "Failed",
+        variant: "destructive",
+      });
     }
   };
 
@@ -388,13 +432,19 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     *
                   </Label>
                   <Combobox
-                    items={(domesticA ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => ({ label: v, value: v }))}
+                    items={(domesticA ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map(
+                      (v) => ({ label: v, value: v }),
+                    )}
                     value={formA.avgFee}
                     onChange={(v) => {
                       setFormA((p) => ({ ...p, avgFee: v }));
                       setErrors((e) => ({ ...e, avgFee: "" }));
                     }}
-                    placeholder={formA.clientId ? "Search or select" : "Select client first"}
+                    placeholder={
+                      formA.clientId
+                        ? "Search or select"
+                        : "Select client first"
+                    }
                     disabled={!formA.clientId}
                   />
                   {errors.avgFee && (
@@ -409,13 +459,19 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     {domesticA ? "MMGF INR in Lacs" : "MMGF USD in K"} *
                   </Label>
                   <Combobox
-                    items={(domesticA ? INR_MMGF_LACS : USD_MMGF_K).map((v) => ({ label: v, value: v }))}
+                    items={(domesticA ? INR_MMGF_LACS : USD_MMGF_K).map(
+                      (v) => ({ label: v, value: v }),
+                    )}
                     value={formA.mmgf}
                     onChange={(v) => {
                       setFormA((p) => ({ ...p, mmgf: v }));
                       setErrors((e) => ({ ...e, mmgf: "" }));
                     }}
-                    placeholder={formA.clientId ? "Search or select" : "Select client first"}
+                    placeholder={
+                      formA.clientId
+                        ? "Search or select"
+                        : "Select client first"
+                    }
                     disabled={!formA.clientId}
                   />
                   {errors.mmgf && (
@@ -551,13 +607,19 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     *
                   </Label>
                   <Combobox
-                    items={(domesticB ? INR_MMGF_LACS : USD_MMGF_K).map((v) => ({ label: v, value: v }))}
+                    items={(domesticB ? INR_MMGF_LACS : USD_MMGF_K).map(
+                      (v) => ({ label: v, value: v }),
+                    )}
                     value={formB.potentialMMGF}
                     onChange={(v) => {
                       setFormB((p) => ({ ...p, potentialMMGF: v }));
                       setErrors((e) => ({ ...e, potentialMMGF: "" }));
                     }}
-                    placeholder={formA.clientId ? "Search or select" : "Select client in Offering Details"}
+                    placeholder={
+                      formA.clientId
+                        ? "Search or select"
+                        : "Select client in Offering Details"
+                    }
                     disabled={!formA.clientId}
                   />
                   {errors.potentialMMGF && (
@@ -575,13 +637,19 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     *
                   </Label>
                   <Combobox
-                    items={(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => ({ label: v, value: v }))}
+                    items={(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map(
+                      (v) => ({ label: v, value: v }),
+                    )}
                     value={formB.potentialFee}
                     onChange={(v) => {
                       setFormB((p) => ({ ...p, potentialFee: v }));
                       setErrors((e) => ({ ...e, potentialFee: "" }));
                     }}
-                    placeholder={formA.clientId ? "Search or select" : "Select client in Offering Details"}
+                    placeholder={
+                      formA.clientId
+                        ? "Search or select"
+                        : "Select client in Offering Details"
+                    }
                     disabled={!formA.clientId}
                   />
                   {errors.potentialFee && (
@@ -659,7 +727,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
             </CardContent>
           </Card>
           <div className="flex justify-between">
-            <Button variant="outline" onClick={() => setActiveTab("offerings")}>Previous</Button>
+            <Button variant="outline" onClick={() => setActiveTab("offerings")}>
+              Previous
+            </Button>
             <Button onClick={onSubmit}>Save</Button>
           </div>
         </TabsContent>
@@ -691,10 +761,13 @@ function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between", disabled && "opacity-50 cursor-not-allowed")}
+          className={cn(
+            "w-full justify-between",
+            disabled && "opacity-50 cursor-not-allowed",
+          )}
           disabled={disabled}
         >
-          {selected ? selected.label : (placeholder || "Select...")}
+          {selected ? selected.label : placeholder || "Select..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -713,7 +786,12 @@ function Combobox({
                     setOpen(false);
                   }}
                 >
-                  <Check className={cn("mr-2 h-4 w-4", item.value === value ? "opacity-100" : "opacity-0")} />
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      item.value === value ? "opacity-100" : "opacity-0",
+                    )}
+                  />
                   {item.label}
                 </CommandItem>
               ))}
