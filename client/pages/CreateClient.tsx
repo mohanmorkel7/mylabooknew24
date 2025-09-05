@@ -22,7 +22,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Minus, Save, ArrowLeft, Building2, User, Mail, Phone, Globe } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { Country, State, City } from "country-state-city";
+import { Plus, Minus, Save, ArrowLeft, Building2, User, Mail, Phone, Globe, MapPin } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 const SOURCES = [
@@ -68,6 +70,17 @@ const TXN_VOLUMES = [
   "> 3.00",
 ];
 
+const PHONE_PREFIXES = [
+  { code: "+1", label: "+1 (US)" },
+  { code: "+44", label: "+44 (UK)" },
+  { code: "+91", label: "+91 (IN)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+61", label: "+61 (AU)" },
+  { code: "+65", label: "+65 (SG)" },
+  { code: "+81", label: "+81 (JP)" },
+  { code: "+49", label: "+49 (DE)" },
+];
+
 function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
 }
@@ -91,12 +104,29 @@ export default function CreateClient() {
   const [contacts, setContacts] = useState<Array<{
     contact_name: string;
     designation: string;
+    phone_prefix?: string;
     phone: string;
     email: string;
-    linkedin: string;
   }>>([
-    { contact_name: "", designation: "", phone: "", email: "", linkedin: "" },
+    { contact_name: "", designation: "", phone_prefix: "+91", phone: "", email: "" },
   ]);
+
+  const [addressInfo, setAddressInfo] = useState({
+    address: "",
+    country: "",
+    state: "",
+    city: "",
+  });
+
+  const countries = Country.getAllCountries();
+  const selectedCountry = countries.find((c) => c.name === addressInfo.country);
+  const states = selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+  const selectedState = states.find((s) => s.name === addressInfo.state);
+  const cities = selectedCountry
+    ? selectedState
+      ? City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
+      : City.getCitiesOfCountry(selectedCountry.isoCode)
+    : [];
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -106,16 +136,25 @@ export default function CreateClient() {
     if (!clientInfo.geography) e.geography = "Required";
     if (!clientInfo.txn_volume) e.txn_volume = "Required";
     if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
-    // contact required for POST schema
-    const primary = contacts[0];
-    if (!primary || !primary.contact_name.trim()) e.primary_contact_name = "Required";
-    if (!primary || !isValidEmail(primary.email)) e.primary_contact_email = "Valid email required";
+    if (!addressInfo.country) e.country = "Required";
+    if (!addressInfo.state) e.state = "Required";
+    if (!addressInfo.city) e.city = "Required";
     return e;
-  }, [clientInfo, contacts]);
+  }, [clientInfo, addressInfo]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const primary = contacts[0];
+      const primary = contacts[0] || { contact_name: "", email: "", phone: "", phone_prefix: "+91", designation: "" };
+      if (!primary.contact_name || !isValidEmail(primary.email)) {
+        toast({
+          title: "Missing contact",
+          description:
+            "Contact name and email are currently required to create a client. We can make them optional if backend validation is updated.",
+          variant: "destructive",
+        });
+        throw new Error("Contact details required by backend");
+      }
+
       const payload: any = {
         client_name: clientInfo.client_name.trim(),
         contact_person: primary.contact_name.trim(),
@@ -130,6 +169,10 @@ export default function CreateClient() {
           txn_volume: clientInfo.txn_volume,
           product_tag_info: clientInfo.product_tag_info,
           contacts,
+          address: addressInfo.address || undefined,
+          country: addressInfo.country,
+          state: addressInfo.state,
+          city: addressInfo.city,
         }),
         status: "active",
       };
@@ -146,7 +189,9 @@ export default function CreateClient() {
       navigate("/clients");
     },
     onError: (err: any) => {
-      toast({ title: "Create failed", description: err?.message || "Failed to create client", variant: "destructive" });
+      if (err?.message) {
+        toast({ title: "Create failed", description: err.message, variant: "destructive" });
+      }
     },
   });
 
@@ -154,37 +199,28 @@ export default function CreateClient() {
     e.preventDefault();
     if (Object.keys(errors).length > 0) {
       toast({ title: "Validation error", description: "Please fill all required fields", variant: "destructive" });
-      // move to the tab with first error
-      if (errors.primary_contact_email || errors.primary_contact_name) setActiveTab("contact-info");
+      if (errors.country || errors.state || errors.city) setActiveTab("contact-info");
       else setActiveTab("client-info");
       return;
     }
     createMutation.mutate();
   };
 
-  const toggleOffering = (value: string) => {
-    setClientInfo((prev) => {
-      const exists = prev.payment_offerings.includes(value);
-      return {
-        ...prev,
-        payment_offerings: exists
-          ? prev.payment_offerings.filter((v) => v !== value)
-          : [...prev.payment_offerings, value],
-      };
-    });
-  };
-
   const updateContact = (idx: number, key: string, value: string) => {
     setContacts((prev) => prev.map((c, i) => (i === idx ? { ...c, [key]: value } : c)));
   };
 
-  const addContact = () => setContacts((prev) => [...prev, { contact_name: "", designation: "", phone: "", email: "", linkedin: "" }]);
+  const addContact = () =>
+    setContacts((prev) => [
+      ...prev,
+      { contact_name: "", designation: "", phone_prefix: "+91", phone: "", email: "" },
+    ]);
   const removeContact = (idx: number) => setContacts((prev) => prev.filter((_, i) => i !== idx));
 
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" size="sm" onClick={() => navigate("/clients")}> 
+        <Button variant="outline" size="sm" onClick={() => navigate("/clients")}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Clients
         </Button>
         <div>
@@ -211,13 +247,18 @@ export default function CreateClient() {
               <CardContent className="space-y-4">
                 <div>
                   <Label>Source *</Label>
-                  <Select value={clientInfo.source} onValueChange={(v) => setClientInfo((p) => ({ ...p, source: v }))}>
+                  <Select
+                    value={clientInfo.source}
+                    onValueChange={(v) => setClientInfo((p) => ({ ...p, source: v }))}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
                     <SelectContent>
                       {SOURCES.map((s) => (
-                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -227,18 +268,27 @@ export default function CreateClient() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Client Name *</Label>
-                    <Input value={clientInfo.client_name} onChange={(e) => setClientInfo((p) => ({ ...p, client_name: e.target.value }))} placeholder="Enter client name" />
+                    <Input
+                      value={clientInfo.client_name}
+                      onChange={(e) => setClientInfo((p) => ({ ...p, client_name: e.target.value }))}
+                      placeholder="Enter client name"
+                    />
                     {errors.client_name && <p className="text-red-600 text-xs mt-1">{errors.client_name}</p>}
                   </div>
                   <div>
                     <Label>Client Type</Label>
-                    <Select value={clientInfo.client_type} onValueChange={(v) => setClientInfo((p) => ({ ...p, client_type: v }))}>
+                    <Select
+                      value={clientInfo.client_type}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, client_type: v }))}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
                       <SelectContent>
                         {CLIENT_TYPES.map((t) => (
-                          <SelectItem key={t} value={t}>{t}</SelectItem>
+                          <SelectItem key={t} value={t}>
+                            {t}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -247,17 +297,16 @@ export default function CreateClient() {
 
                 <div>
                   <Label>Payment Offering (multi-select) *</Label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {PAYMENT_OFFERINGS.map((opt) => {
-                      const active = clientInfo.payment_offerings.includes(opt);
-                      return (
-                        <Button key={opt} type="button" variant={active ? "default" : "outline"} onClick={() => toggleOffering(opt)}>
-                          {opt}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                  {errors.payment_offerings && <p className="text-red-600 text-xs mt-1">{errors.payment_offerings}</p>}
+                  <MultiSelect
+                    options={PAYMENT_OFFERINGS}
+                    value={clientInfo.payment_offerings}
+                    onChange={(val) => setClientInfo((p) => ({ ...p, payment_offerings: val }))}
+                    placeholder="Select payment offerings"
+                    className="mt-1"
+                  />
+                  {errors.payment_offerings && (
+                    <p className="text-red-600 text-xs mt-1">{errors.payment_offerings}</p>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -265,18 +314,28 @@ export default function CreateClient() {
                     <Label>Website</Label>
                     <div className="relative">
                       <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                      <Input className="pl-10" value={clientInfo.website} onChange={(e) => setClientInfo((p) => ({ ...p, website: e.target.value }))} placeholder="https://example.com" />
+                      <Input
+                        className="pl-10"
+                        value={clientInfo.website}
+                        onChange={(e) => setClientInfo((p) => ({ ...p, website: e.target.value }))}
+                        placeholder="https://example.com"
+                      />
                     </div>
                   </div>
                   <div>
                     <Label>Client Geography *</Label>
-                    <Select value={clientInfo.geography} onValueChange={(v) => setClientInfo((p) => ({ ...p, geography: v as any }))}>
+                    <Select
+                      value={clientInfo.geography}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, geography: v as any }))}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select geography" />
                       </SelectTrigger>
                       <SelectContent>
                         {GEOGRAPHY.map((g) => (
-                          <SelectItem key={g} value={g}>{g}</SelectItem>
+                          <SelectItem key={g} value={g}>
+                            {g}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -287,13 +346,18 @@ export default function CreateClient() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label>Txn Volume / per day in million *</Label>
-                    <Select value={clientInfo.txn_volume} onValueChange={(v) => setClientInfo((p) => ({ ...p, txn_volume: v }))}>
+                    <Select
+                      value={clientInfo.txn_volume}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, txn_volume: v }))}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select volume" />
                       </SelectTrigger>
                       <SelectContent>
                         {TXN_VOLUMES.map((v) => (
-                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -301,8 +365,14 @@ export default function CreateClient() {
                   </div>
                   <div>
                     <Label>Product Tag Info *</Label>
-                    <Input value={clientInfo.product_tag_info} onChange={(e) => setClientInfo((p) => ({ ...p, product_tag_info: e.target.value }))} placeholder="Enter product tags" />
-                    {errors.product_tag_info && <p className="text-red-600 text-xs mt-1">{errors.product_tag_info}</p>}
+                    <Input
+                      value={clientInfo.product_tag_info}
+                      onChange={(e) => setClientInfo((p) => ({ ...p, product_tag_info: e.target.value }))}
+                      placeholder="Enter product tags"
+                    />
+                    {errors.product_tag_info && (
+                      <p className="text-red-600 text-xs mt-1">{errors.product_tag_info}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -315,7 +385,7 @@ export default function CreateClient() {
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" /> Client Contact Information
                 </CardTitle>
-                <CardDescription>Same layout as investor contact info</CardDescription>
+                <CardDescription>Primary and additional contacts</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {contacts.map((c, idx) => (
@@ -330,37 +400,65 @@ export default function CreateClient() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label>Contact Name {idx === 0 ? "*" : ""}</Label>
-                        <Input value={c.contact_name} onChange={(e) => updateContact(idx, "contact_name", e.target.value)} placeholder="Full name" />
-                        {idx === 0 && errors.primary_contact_name && <p className="text-red-600 text-xs mt-1">{errors.primary_contact_name}</p>}
+                        <Label>Contact Name</Label>
+                        <Input
+                          value={c.contact_name}
+                          onChange={(e) => updateContact(idx, "contact_name", e.target.value)}
+                          placeholder="Full name"
+                        />
                       </div>
                       <div>
                         <Label>Designation</Label>
-                        <Input value={c.designation} onChange={(e) => updateContact(idx, "designation", e.target.value)} placeholder="Job title" />
+                        <Input
+                          value={c.designation}
+                          onChange={(e) => updateContact(idx, "designation", e.target.value)}
+                          placeholder="Job title"
+                        />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label>Email {idx === 0 ? "*" : ""}</Label>
+                        <Label>Email</Label>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input className="pl-10" value={c.email} onChange={(e) => updateContact(idx, "email", e.target.value)} placeholder="name@company.com" />
+                          <Input
+                            className="pl-10"
+                            value={c.email}
+                            onChange={(e) => updateContact(idx, "email", e.target.value)}
+                            placeholder="name@company.com"
+                          />
                         </div>
-                        {idx === 0 && errors.primary_contact_email && <p className="text-red-600 text-xs mt-1">{errors.primary_contact_email}</p>}
                       </div>
                       <div>
                         <Label>Phone</Label>
-                        <div className="relative">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input className="pl-10" value={c.phone} onChange={(e) => updateContact(idx, "phone", e.target.value)} placeholder="+91 98765 43210" />
+                        <div className="flex gap-2">
+                          <Select
+                            value={c.phone_prefix || "+91"}
+                            onValueChange={(v) => updateContact(idx, "phone_prefix", v)}
+                          >
+                            <SelectTrigger className="w-[140px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {PHONE_PREFIXES.map((p) => (
+                                <SelectItem key={p.code} value={p.code}>
+                                  {p.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <div className="relative flex-1">
+                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                            <Input
+                              className="pl-10"
+                              value={c.phone}
+                              onChange={(e) => updateContact(idx, "phone", e.target.value)}
+                              placeholder="98765 43210"
+                            />
+                          </div>
                         </div>
                       </div>
-                    </div>
-
-                    <div>
-                      <Label>LinkedIn or Other Contact Links</Label>
-                      <Input value={c.linkedin} onChange={(e) => updateContact(idx, "linkedin", e.target.value)} placeholder="https://linkedin.com/in/..." />
                     </div>
                   </div>
                 ))}
@@ -368,6 +466,89 @@ export default function CreateClient() {
                 <Button type="button" variant="outline" onClick={addContact}>
                   <Plus className="w-4 h-4 mr-1" /> Add Another Contact
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" /> Address
+                </CardTitle>
+                <CardDescription>Address is optional, Country/State/City are mandatory</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Street Address</Label>
+                  <Input
+                    value={addressInfo.address}
+                    onChange={(e) => setAddressInfo((p) => ({ ...p, address: e.target.value }))}
+                    placeholder="Building, street, area"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Country *</Label>
+                    <Select
+                      value={addressInfo.country}
+                      onValueChange={(v) =>
+                        setAddressInfo((p) => ({ ...p, country: v, state: "", city: "" }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {countries.map((c) => (
+                          <SelectItem key={c.isoCode} value={c.name}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+                  </div>
+                  <div>
+                    <Label>State *</Label>
+                    <Select
+                      value={addressInfo.state}
+                      onValueChange={(v) => setAddressInfo((p) => ({ ...p, state: v, city: "" }))}
+                      disabled={!selectedCountry}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select state" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {states.map((s) => (
+                          <SelectItem key={s.isoCode} value={s.name}>
+                            {s.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
+                  </div>
+                  <div>
+                    <Label>City *</Label>
+                    <Select
+                      value={addressInfo.city}
+                      onValueChange={(v) => setAddressInfo((p) => ({ ...p, city: v }))}
+                      disabled={!selectedCountry}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select city" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cities.map((ct) => (
+                          <SelectItem key={`${ct.name}-${ct.stateCode || ""}`} value={ct.name}>
+                            {ct.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
