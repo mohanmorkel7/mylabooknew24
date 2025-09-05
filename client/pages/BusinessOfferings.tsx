@@ -427,6 +427,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
               </div>
             </CardContent>
           </Card>
+          <div className="flex justify-end">
+            <Button onClick={() => setActiveTab("queue")}>Next</Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="queue" className="space-y-4">
