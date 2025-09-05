@@ -17,8 +17,21 @@ import {
   Search,
   Target,
   User,
+  Trash,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { useDeleteClient } from "@/hooks/useApi";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 function getInitials(name?: string) {
   if (!name) return "CL";
@@ -41,6 +54,26 @@ export default function ClientDashboard() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const openClient = (id: number) => navigate(`/clients/${id}`);
+  const deleteMutation = useDeleteClient();
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+  const handleDelete = async (id: number, name?: string) => {
+    setDeletingId(id);
+    try {
+      await deleteMutation.mutateAsync(id);
+      toast({
+        title: "Client deleted",
+        description: `${name || "Client"} has been removed.`,
+      });
+    } catch (e: any) {
+      toast({
+        title: "Delete failed",
+        description: e?.message || "Failed to delete client",
+        variant: "destructive",
+      } as any);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   // Fetch Clients
   const {
@@ -270,8 +303,42 @@ export default function ClientDashboard() {
                         openClient(c.id);
                       }
                     }}
-                    className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
                   >
+                    <div className="absolute top-3 right-3" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            aria-label={`Delete ${c.client_name || "client"}`}
+                            disabled={deletingId === c.id}
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete client?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone. This will permanently delete {c.client_name || "this client"} and remove related data.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(c.id, c.client_name);
+                              }}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start gap-3">
