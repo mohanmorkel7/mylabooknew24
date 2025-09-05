@@ -144,7 +144,7 @@ export default function BusinessOfferings() {
     const okB = validateB();
     if (!okA || !okB) return;
     toast({ title: "Saved", description: "Business Offerings captured." });
-    navigate(-1);
+    navigate("/business-offerings");
   };
 
   return (
