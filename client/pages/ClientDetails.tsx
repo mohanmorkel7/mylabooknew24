@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
   useClient,
   useClientOnboardingSteps,
@@ -119,6 +119,7 @@ const mockFollowUps = [
 export default function ClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const clientId = parseInt(id || "0");
 
@@ -141,11 +142,13 @@ export default function ClientDetails() {
   });
 
   const handleBack = () => {
-    navigate("/sales");
+    navigate("/clients");
   };
 
   const handleEdit = () => {
-    navigate(`/sales/client/${id}/edit`);
+    const inClients = location.pathname.startsWith("/clients");
+    const base = inClients ? "/clients" : "/sales/client";
+    navigate(`${base}/${id}/edit`);
   };
 
   const handleAddFollowUp = () => {
