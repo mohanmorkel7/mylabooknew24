@@ -630,13 +630,11 @@ export default function VCDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All VC Types</SelectItem>
-                  <SelectItem value="angel">Angel</SelectItem>
-                  <SelectItem value="vc">VC</SelectItem>
-                  <SelectItem value="private_equity">Private Equity</SelectItem>
-                  <SelectItem value="family_office">Family Office</SelectItem>
-                  <SelectItem value="merchant_banker">
-                    Merchant Banker
-                  </SelectItem>
+                  {VC_TYPES.map((t) => (
+                    <SelectItem key={t.value} value={t.value}>
+                      {t.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
