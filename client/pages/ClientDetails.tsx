@@ -600,11 +600,8 @@ export default function ClientDetails() {
               <Button
                 className="w-full justify-start"
                 variant="outline"
-                onClick={() =>
-                  clientData.phone &&
-                  (window.location.href = `tel:${clientData.phone}`)
-                }
-                disabled={!clientData.phone}
+                onClick={() => telHref && (window.location.href = telHref)}
+                disabled={!telHref}
               >
                 <Phone className="w-4 h-4 mr-2" />
                 Call Phone
