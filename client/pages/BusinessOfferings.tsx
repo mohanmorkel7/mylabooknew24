@@ -210,7 +210,7 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     return Object.keys(n).length === 0;
   };
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
     const okA = validateA();
     const okB = validateB();
     if (!okA || !okB) return;
