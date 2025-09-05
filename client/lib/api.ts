@@ -673,6 +673,34 @@ export class ApiClient {
     });
   }
 
+  // Business Offering Steps
+  async getBusinessOfferingSteps(boId: number) {
+    return this.request(`/business-offerings/${boId}/steps`);
+  }
+  async createBusinessOfferingStep(boId: number, data: any) {
+    return this.request(`/business-offerings/${boId}/steps`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+  async updateBusinessOfferingStep(stepId: number, data: any) {
+    return this.request(`/business-offerings/steps/${stepId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+  async deleteBusinessOfferingStep(stepId: number) {
+    return this.request(`/business-offerings/steps/${stepId}`, {
+      method: "DELETE",
+    });
+  }
+  async reorderBusinessOfferingSteps(boId: number, stepOrders: { id: number; order?: number; order_index?: number }[]) {
+    return this.request(`/business-offerings/${boId}/steps/reorder`, {
+      method: "PUT",
+      body: JSON.stringify({ stepOrders }),
+    });
+  }
+
   // Template methods
   async getTemplates() {
     return this.request("/templates");
@@ -966,7 +994,7 @@ export class ApiClient {
       return result || [];
     } catch (error) {
       console.error(
-        "�� Failed to fetch FinOps tasks after all retries:",
+        "❌ Failed to fetch FinOps tasks after all retries:",
         error,
       );
 
