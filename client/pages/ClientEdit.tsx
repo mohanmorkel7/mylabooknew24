@@ -148,7 +148,7 @@ export default function ClientEdit() {
   };
 
   const handleCancel = () => {
-    navigate(`/sales/client/${id}`);
+    navigate(`/clients/${id}`);
   };
 
   if (isLoading) {
