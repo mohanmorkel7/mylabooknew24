@@ -212,6 +212,12 @@ export default function CreateClient() {
         contact_person: primary.contact_name.trim(),
         email: primary.email.trim(),
         phone: primary.phone?.trim() || undefined,
+        // Top-level fields expected by API/DB schema
+        address: addressInfo.address || undefined,
+        country: addressInfo.country || undefined,
+        state: addressInfo.state || undefined,
+        city: cityName || undefined,
+        // Extra structured info preserved in notes JSON
         notes: JSON.stringify({
           source: clientInfo.source,
           client_type: clientInfo.client_type || undefined,
@@ -222,10 +228,6 @@ export default function CreateClient() {
           product_tag_info: clientInfo.product_tag_info,
           source_value: clientInfo.source_value || undefined,
           contacts,
-          address: addressInfo.address || undefined,
-          country: addressInfo.country,
-          state: addressInfo.state,
-          city: cityName,
         }),
         status: "active",
       };
