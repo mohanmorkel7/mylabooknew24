@@ -190,9 +190,6 @@ export default function CreateClient() {
     if (!clientInfo.geography) e.geography = "Required";
     if (!clientInfo.txn_volume) e.txn_volume = "Required";
     if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
-    if (!addressInfo.country) e.country = "Required";
-    if (!addressInfo.state) e.state = "Required";
-    if (!addressInfo.city) e.city = "Required";
     return e;
   }, [clientInfo, addressInfo]);
 
@@ -317,16 +314,6 @@ export default function CreateClient() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setShowContactErrors(true);
-    if (Object.keys(contactTabErrors).length > 0) {
-      toast({
-        title: "Missing address",
-        description: "Country, State and City are required",
-        variant: "destructive",
-      });
-      setActiveTab("contact-info");
-      return;
-    }
     createMutation.mutate();
   };
 
@@ -718,7 +705,7 @@ export default function CreateClient() {
                   <MapPin className="w-5 h-5" /> Address
                 </CardTitle>
                 <CardDescription>
-                  Address is optional, Country/State/City are mandatory
+                  All address and contact fields are optional
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -735,7 +722,7 @@ export default function CreateClient() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <Label>Country *</Label>
+                    <Label>Country</Label>
                     <Combobox
                       placeholder="Search country..."
                       items={countries.map((c) => ({
@@ -759,7 +746,7 @@ export default function CreateClient() {
                     )}
                   </div>
                   <div>
-                    <Label>State *</Label>
+                    <Label>State</Label>
                     <Combobox
                       placeholder="Search state..."
                       items={states.map((s) => ({
@@ -779,7 +766,7 @@ export default function CreateClient() {
                     )}
                   </div>
                   <div>
-                    <Label>City *</Label>
+                    <Label>City</Label>
                     <Combobox
                       placeholder="Search city..."
                       items={uniqueCities.map((ct, idx) => ({
