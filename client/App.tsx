@@ -109,6 +109,7 @@ import FundRaiseDetails from "@/pages/FundRaiseDetails";
 import BusinessOfferings from "@/pages/BusinessOfferings";
 import BusinessOfferingsDashboard from "@/pages/BusinessOfferingsDashboard";
 import BusinessOfferingsEdit from "@/pages/BusinessOfferingsEdit";
+import BusinessOfferingsDetails from "@/pages/BusinessOfferingsDetails";
 import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
