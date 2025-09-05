@@ -18,6 +18,7 @@ import {
   Target,
   User,
   Trash,
+  Trash2,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useDeleteClient } from "@/hooks/useApi";
@@ -306,7 +307,7 @@ export default function ClientDashboard() {
                     className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
                   >
                     <div
-                      className="absolute top-3 right-3"
+                      className="hidden"
                       onClick={(e) => e.stopPropagation()}
                       onKeyDown={(e) => e.stopPropagation()}
                     >
@@ -407,9 +408,43 @@ export default function ClientDashboard() {
                                 </a>
                               )}
                             </div>
-                          </div>
-                        </div>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Client</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{c.client_name || "this client"}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDelete(c.id, c.client_name);
+                                }}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    </div>
+                  </div>
                     </div>
                   </div>
                 );
