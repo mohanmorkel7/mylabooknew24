@@ -658,8 +658,69 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
               </div>
             </CardContent>
           </Card>
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={() => setActiveTab("offerings")}>Previous</Button>
+            <Button onClick={onSubmit}>Save</Button>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+function Combobox({
+  items,
+  value,
+  onChange,
+  placeholder,
+  disabled,
+}: {
+  items: { label: string; value: string }[];
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const selected = items.find((i) => i.value === value);
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className={cn("w-full justify-between", disabled && "opacity-50 cursor-not-allowed")}
+          disabled={disabled}
+        >
+          {selected ? selected.label : (placeholder || "Select...")}
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+          <CommandInput placeholder={placeholder || "Search..."} />
+          <CommandEmpty>No results</CommandEmpty>
+          <CommandList>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem
+                  key={item.value}
+                  value={item.label}
+                  onSelect={() => {
+                    onChange(item.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check className={cn("mr-2 h-4 w-4", item.value === value ? "opacity-100" : "opacity-0")} />
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
