@@ -330,9 +330,9 @@ export default function ClientDetails() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <span className="font-medium text-gray-600">
                         Client Name:
@@ -365,7 +365,7 @@ export default function ClientDetails() {
                 </div>
 
                 <div>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <div className="flex items-center space-x-2">
                       <User className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">
@@ -416,7 +416,7 @@ export default function ClientDetails() {
               </div>
 
               <Separator />
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <span className="font-medium text-gray-600">Source:</span>
@@ -582,7 +582,7 @@ export default function ClientDetails() {
             <CardHeader>
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-2">
               <Button
                 className="w-full justify-start"
                 variant="outline"
