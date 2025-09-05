@@ -93,6 +93,13 @@ const navigationItems: NavigationItem[] = [
     permissions: ["vc"],
   },
   {
+    name: "Business Offerings",
+    href: "/business-offerings",
+    icon: Briefcase,
+    roles: ["admin", "sales", "product"],
+    permissions: ["vc"],
+  },
+  {
     name: "Follow-ups",
     href: "/follow-ups",
     icon: MessageCircle,
