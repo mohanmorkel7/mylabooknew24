@@ -77,10 +77,22 @@ const USD_FEE_OPTIONS = rangeSteps(0.001, 0.05, 0.001, 3);
 const INR_MMGF_LACS = rangeSteps(1, 10, 0.25, 2);
 const USD_MMGF_K = Array.from({ length: 48 }, (_, i) => String(3 + i)); // 3..50
 
-function isDomestic(country?: string | null): boolean {
-  if (!country) return true; // default to domestic if unknown
-  const c = country.trim().toLowerCase();
-  return c === "india" || c === "in" || c === "bharat";
+function parseNotesMeta(notes?: string | null): any {
+  if (!notes) return {};
+  try {
+    const obj = JSON.parse(notes);
+    return obj && typeof obj === "object" ? obj : {};
+  } catch {
+    return {};
+  }
+}
+
+function isDomesticByGeography(client?: any): boolean {
+  if (!client) return true;
+  const meta = parseNotesMeta(client.notes);
+  const geography: string | undefined = meta.geography || meta.client_geography;
+  if (!geography) return true;
+  return String(geography).toLowerCase() === "domestic";
 }
 
 export default function BusinessOfferings() {
@@ -124,8 +136,8 @@ export default function BusinessOfferings() {
     return m;
   }, [clients]);
 
-  const domesticA = isDomestic(clientMap.get(formA.clientId)?.country);
-  const domesticB = isDomestic(clientMap.get(formA.clientId)?.country);
+  const domesticA = isDomesticByGeography(clientMap.get(formA.clientId));
+  const domesticB = isDomesticByGeography(clientMap.get(formA.clientId));
 
   const validateA = () => {
     const n: Record<string, string> = {};
