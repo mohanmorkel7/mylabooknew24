@@ -279,9 +279,20 @@ export default function ClientDetails() {
       return {} as any;
     }
   })();
-  const primaryContact = Array.isArray((meta as any).contacts) ? (meta as any).contacts[0] : undefined;
-  const phoneDisplay = primaryContact?.phone ? `${primaryContact.phone_prefix || ""} ${primaryContact.phone}` : (clientData.phone || "Not provided");
-  const telHref = primaryContact?.phone ? `tel:${(primaryContact.phone_prefix || "")}${primaryContact.phone}`.replace(/\s+/g, "") : (clientData.phone ? `tel:${String(clientData.phone).replace(/\s+/g, "")}` : "");
+  const primaryContact = Array.isArray((meta as any).contacts)
+    ? (meta as any).contacts[0]
+    : undefined;
+  const phoneDisplay = primaryContact?.phone
+    ? `${primaryContact.phone_prefix || ""} ${primaryContact.phone}`
+    : clientData.phone || "Not provided";
+  const telHref = primaryContact?.phone
+    ? `tel:${primaryContact.phone_prefix || ""}${primaryContact.phone}`.replace(
+        /\s+/g,
+        "",
+      )
+    : clientData.phone
+      ? `tel:${String(clientData.phone).replace(/\s+/g, "")}`
+      : "";
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
