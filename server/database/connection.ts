@@ -463,11 +463,16 @@ export async function initializeDatabase() {
 
     // Business Offer Steps table migration
     try {
-      const boStepsPath = path.join(__dirname, "create-business-offer-steps.sql");
+      const boStepsPath = path.join(
+        __dirname,
+        "create-business-offer-steps.sql",
+      );
       if (fs.existsSync(boStepsPath)) {
         const sql = fs.readFileSync(boStepsPath, "utf8");
         await client.query(sql);
-        console.log("Business Offer Steps table migration applied successfully");
+        console.log(
+          "Business Offer Steps table migration applied successfully",
+        );
       }
     } catch (boStepsErr) {
       console.log(

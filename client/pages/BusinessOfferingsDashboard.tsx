@@ -22,7 +22,11 @@ export default function BusinessOfferingsDashboard() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
 
-  const { data = [], isLoading, error } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["business-offerings"],
     queryFn: () => apiClient.getBusinessOfferings(),
     staleTime: 10000,
@@ -42,7 +46,11 @@ export default function BusinessOfferingsDashboard() {
       toast({ title: "Deleted", description: "Business Offering removed" });
       queryClient.invalidateQueries({ queryKey: ["business-offerings"] });
     } catch (e: any) {
-      toast({ title: "Delete failed", description: e?.message || "Failed", variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: e?.message || "Failed",
+        variant: "destructive",
+      });
     }
   };
 
@@ -123,18 +131,25 @@ export default function BusinessOfferingsDashboard() {
                   tabIndex={0}
                   onClick={() => navigate(`/business-offerings/${o.id}`)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") navigate(`/business-offerings/${o.id}`);
+                    if (e.key === "Enter" || e.key === " ")
+                      navigate(`/business-offerings/${o.id}`);
                   }}
                   className="rounded border p-4 hover:shadow cursor-pointer flex items-start justify-between"
                 >
                   <div>
-                    <div className="font-medium text-gray-900">{o.product || o.solution || "Offering"}</div>
+                    <div className="font-medium text-gray-900">
+                      {o.product || o.solution || "Offering"}
+                    </div>
                     <div className="text-sm text-gray-600 mt-1">
                       {o.offering_description || "No description"}
                     </div>
                     <div className="mt-2 flex gap-2">
-                      {o.solution && <Badge variant="secondary">{o.solution}</Badge>}
-                      {o.product && <Badge variant="outline">{o.product}</Badge>}
+                      {o.solution && (
+                        <Badge variant="secondary">{o.solution}</Badge>
+                      )}
+                      {o.product && (
+                        <Badge variant="outline">{o.product}</Badge>
+                      )}
                     </div>
                   </div>
                   <Button

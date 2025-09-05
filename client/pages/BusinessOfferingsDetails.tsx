@@ -3,8 +3,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
 import { ArrowLeft, Edit } from "lucide-react";
 
@@ -14,7 +27,11 @@ export default function BusinessOfferingsDetails() {
   const queryClient = useQueryClient();
   const boId = Number(id);
 
-  const { data: offering, isLoading, error } = useQuery({
+  const {
+    data: offering,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["business-offering", boId],
     queryFn: () => apiClient.getBusinessOffering(boId),
     enabled: !!boId,
@@ -53,21 +70,31 @@ export default function BusinessOfferingsDetails() {
   };
 
   if (isLoading) return <div className="p-6">Loading...</div>;
-  if (error || !offering) return <div className="p-6 text-red-600">Failed to load</div>;
+  if (error || !offering)
+    return <div className="p-6 text-red-600">Failed to load</div>;
 
   return (
     <div className="p-6 space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" size="sm" onClick={() => navigate("/business-offerings")}> 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/business-offerings")}
+          >
             <ArrowLeft className="w-4 h-4 mr-2" /> Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Business Offering</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Business Offering
+            </h1>
             <p className="text-gray-600">Overview & Steps</p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => navigate(`/business-offerings/${boId}/edit`)}>
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/business-offerings/${boId}/edit`)}
+        >
           <Edit className="w-4 h-4 mr-2" /> Edit
         </Button>
       </div>
@@ -75,7 +102,9 @@ export default function BusinessOfferingsDetails() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/business-offerings">Business Offerings</BreadcrumbLink>
+            <BreadcrumbLink href="/business-offerings">
+              Business Offerings
+            </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
@@ -92,19 +121,21 @@ export default function BusinessOfferingsDetails() {
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <div className="text-sm text-gray-500">Solution</div>
-            <div className="font-medium">{offering.solution || '-'}</div>
+            <div className="font-medium">{offering.solution || "-"}</div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Product</div>
-            <div className="font-medium">{offering.product || '-'}</div>
+            <div className="font-medium">{offering.product || "-"}</div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Client Status</div>
-            <div className="font-medium">{offering.client_status || '-'}</div>
+            <div className="font-medium">{offering.client_status || "-"}</div>
           </div>
           <div>
             <div className="text-sm text-gray-500">Potential MRR (Lacs)</div>
-            <div className="font-medium">{offering.potential_mrr_lacs ?? '-'}</div>
+            <div className="font-medium">
+              {offering.potential_mrr_lacs ?? "-"}
+            </div>
           </div>
         </CardContent>
       </Card>

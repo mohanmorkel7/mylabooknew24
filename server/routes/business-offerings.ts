@@ -77,7 +77,9 @@ router.get("/:id/steps", async (req: Request, res: Response) => {
     const boId = parseInt(req.params.id);
     if (isNaN(boId)) return res.status(400).json({ error: "Invalid id" });
 
-    let stepsResult = await (await import("../database/connection")).pool.query(
+    let stepsResult = await (
+      await import("../database/connection")
+    ).pool.query(
       `SELECT * FROM business_offer_steps WHERE business_offering_id = $1 ORDER BY order_index ASC, created_at ASC`,
       [boId],
     );
@@ -101,7 +103,14 @@ router.get("/:id/steps", async (req: Request, res: Response) => {
           await pool.query(
             `INSERT INTO business_offer_steps (business_offering_id, name, description, status, priority, assigned_to, due_date, completed_date, order_index, probability_percent, created_by)
              VALUES ($1,$2,$3,'pending','medium',NULL,NULL,NULL,$4,$5,$6)`,
-            [boId, t.name, t.description, t.step_order ?? idx + 1, t.probability_percent ?? 0, createdBy],
+            [
+              boId,
+              t.name,
+              t.description,
+              t.step_order ?? idx + 1,
+              t.probability_percent ?? 0,
+              createdBy,
+            ],
           );
         }
         stepsResult = await pool.query(
@@ -120,7 +129,8 @@ router.get("/:id/steps", async (req: Request, res: Response) => {
 
 router.post("/:id/steps", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const boId = parseInt(req.params.id);
     if (isNaN(boId)) return res.status(400).json({ error: "Invalid id" });
     const b = req.body || {};
@@ -149,9 +159,11 @@ router.post("/:id/steps", async (req: Request, res: Response) => {
 
 router.put("/steps/:stepId", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const stepId = parseInt(req.params.stepId);
-    if (isNaN(stepId)) return res.status(400).json({ error: "Invalid step id" });
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
     const data = req.body || {};
     const fields: string[] = [];
     const values: any[] = [];
@@ -185,12 +197,17 @@ router.put("/steps/:stepId", async (req: Request, res: Response) => {
 
 router.put("/:id/steps/reorder", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const boId = parseInt(req.params.id);
     if (isNaN(boId)) return res.status(400).json({ error: "Invalid id" });
-    const stepOrders: Array<{ id: number; order_index?: number; order?: number }>
-      = Array.isArray(req.body?.stepOrders) ? req.body.stepOrders : [];
-    if (!stepOrders.length) return res.status(400).json({ error: "No step orders provided" });
+    const stepOrders: Array<{
+      id: number;
+      order_index?: number;
+      order?: number;
+    }> = Array.isArray(req.body?.stepOrders) ? req.body.stepOrders : [];
+    if (!stepOrders.length)
+      return res.status(400).json({ error: "No step orders provided" });
     const { pool } = await import("../database/connection");
     await pool.query("BEGIN");
     for (let i = 0; i < stepOrders.length; i++) {
@@ -204,18 +221,25 @@ router.put("/:id/steps/reorder", async (req: Request, res: Response) => {
     await pool.query("COMMIT");
     res.json({ success: true });
   } catch (e: any) {
-    try { (await import("../database/connection")).pool.query("ROLLBACK"); } catch {}
+    try {
+      (await import("../database/connection")).pool.query("ROLLBACK");
+    } catch {}
     res.status(500).json({ error: "Failed" });
   }
 });
 
 router.delete("/steps/:stepId", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const stepId = parseInt(req.params.stepId);
-    if (isNaN(stepId)) return res.status(400).json({ error: "Invalid step id" });
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
     const { pool } = await import("../database/connection");
-    const r = await pool.query(`DELETE FROM business_offer_steps WHERE id = $1`, [stepId]);
+    const r = await pool.query(
+      `DELETE FROM business_offer_steps WHERE id = $1`,
+      [stepId],
+    );
     res.json({ success: r.rowCount > 0 });
   } catch (e: any) {
     res.status(500).json({ error: "Failed" });

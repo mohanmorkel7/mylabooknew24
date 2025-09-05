@@ -694,7 +694,10 @@ export class ApiClient {
       method: "DELETE",
     });
   }
-  async reorderBusinessOfferingSteps(boId: number, stepOrders: { id: number; order?: number; order_index?: number }[]) {
+  async reorderBusinessOfferingSteps(
+    boId: number,
+    stepOrders: { id: number; order?: number; order_index?: number }[],
+  ) {
     return this.request(`/business-offerings/${boId}/steps/reorder`, {
       method: "PUT",
       body: JSON.stringify({ stepOrders }),
