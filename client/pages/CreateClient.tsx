@@ -610,11 +610,16 @@ export default function CreateClient() {
 
         <div className="flex items-center justify-between pt-6 border-t">
           <Button type="button" variant="outline" onClick={() => navigate("/clients")}>Cancel</Button>
-          <div className="space-x-3">
-            <Button type="submit">
-              <Save className="w-4 h-4 mr-2" /> Create Client
-            </Button>
-          </div>
+          {activeTab === "client-info" ? (
+            <div className="space-x-3">
+              <Button type="button" onClick={handleNext}>Next</Button>
+            </div>
+          ) : (
+            <div className="space-x-3">
+              <Button type="button" variant="outline" onClick={() => setActiveTab("client-info")}>Previous</Button>
+              <Button type="submit">Submit</Button>
+            </div>
+          )}
         </div>
       </form>
     </div>
