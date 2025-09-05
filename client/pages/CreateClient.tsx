@@ -24,8 +24,11 @@ import {
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Country, State, City } from "country-state-city";
-import { Plus, Minus, Save, ArrowLeft, Building2, User, Mail, Phone, Globe, MapPin } from "lucide-react";
+import { Plus, Minus, Save, ArrowLeft, Building2, User, Mail, Phone, Globe, MapPin, ChevronsUpDown, Check } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 
 const SOURCES = [
   "LinkedIn - Outbound",
@@ -92,6 +95,7 @@ export default function CreateClient() {
 
   const [clientInfo, setClientInfo] = useState({
     source: "",
+    source_value: "",
     client_name: "",
     client_type: "",
     payment_offerings: [] as string[],
@@ -167,7 +171,7 @@ export default function CreateClient() {
         throw new Error("Contact details required by backend");
       }
 
-      const cityName = addressInfo.city ? addressInfo.city.split("__")[0] : "";
+      const cityName = addressInfo.city ? addressInfo.city.split("__")[0].split("-")[0] : "";
       const payload: any = {
         client_name: clientInfo.client_name.trim(),
         contact_person: primary.contact_name.trim(),
@@ -181,6 +185,7 @@ export default function CreateClient() {
           geography: clientInfo.geography,
           txn_volume: clientInfo.txn_volume,
           product_tag_info: clientInfo.product_tag_info,
+          source_value: clientInfo.source_value || undefined,
           contacts,
           address: addressInfo.address || undefined,
           country: addressInfo.country,
@@ -230,6 +235,38 @@ export default function CreateClient() {
     ]);
   const removeContact = (idx: number) => setContacts((prev) => prev.filter((_, i) => i !== idx));
 
+  // Simple searchable combobox component
+  function Combobox({ items, value, onChange, placeholder, disabled }: { items: { label: string; value: string }[]; value: string; onChange: (v: string) => void; placeholder?: string; disabled?: boolean }) {
+    const [open, setOpen] = React.useState(false);
+    const selected = items.find((i) => i.value === value);
+    return (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className={cn("w-full justify-between", disabled && "opacity-50 cursor-not-allowed")} disabled={disabled}>
+            {selected ? selected.label : (placeholder || "Select...")}
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+          <Command>
+            <CommandInput placeholder={placeholder || "Search..."} />
+            <CommandEmpty>No results</CommandEmpty>
+            <CommandList>
+              <CommandGroup>
+                {items.map((item) => (
+                  <CommandItem key={`${item.value}`} value={item.label} onSelect={() => { onChange(item.value); setOpen(false); }}>
+                    <Check className={cn("mr-2 h-4 w-4", item.value === value ? "opacity-100" : "opacity-0")} />
+                    {item.label}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+    );
+  }
+
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
@@ -258,24 +295,36 @@ export default function CreateClient() {
                 <CardDescription>Fill basic client details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div>
-                  <Label>Source *</Label>
-                  <Select
-                    value={clientInfo.source}
-                    onValueChange={(v) => setClientInfo((p) => ({ ...p, source: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select source" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SOURCES.map((s) => (
-                        <SelectItem key={s} value={s}>
-                          {s}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
+                <div className="space-y-2">
+                  <div>
+                    <Label>Source *</Label>
+                    <Select
+                      value={clientInfo.source}
+                      onValueChange={(v) => setClientInfo((p) => ({ ...p, source: v, source_value: "" }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select source" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {SOURCES.map((s) => (
+                          <SelectItem key={s} value={s}>
+                            {s}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
+                  </div>
+                  {clientInfo.source && (
+                    <div>
+                      <Label>Source Information</Label>
+                      <Input
+                        value={clientInfo.source_value}
+                        onChange={(e) => setClientInfo((p) => ({ ...p, source_value: e.target.value }))}
+                        placeholder="Provide link, email, phone or details for the selected source"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -396,6 +445,60 @@ export default function CreateClient() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5" /> Address
+                </CardTitle>
+                <CardDescription>Address is optional, Country/State/City are mandatory</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Street Address</Label>
+                  <Input
+                    value={addressInfo.address}
+                    onChange={(e) => setAddressInfo((p) => ({ ...p, address: e.target.value }))}
+                    placeholder="Building, street, area"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label>Country *</Label>
+                    <Combobox
+                      placeholder="Search country..."
+                      items={countries.map((c) => ({ label: c.name, value: c.name }))}
+                      value={addressInfo.country}
+                      onChange={(v) => setAddressInfo((p) => ({ ...p, country: v, state: "", city: "" }))}
+                    />
+                    {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+                  </div>
+                  <div>
+                    <Label>State *</Label>
+                    <Combobox
+                      placeholder="Search state..."
+                      items={states.map((s) => ({ label: s.name, value: s.name }))}
+                      value={addressInfo.state}
+                      onChange={(v) => setAddressInfo((p) => ({ ...p, state: v, city: "" }))}
+                      disabled={!selectedCountry}
+                    />
+                    {errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
+                  </div>
+                  <div>
+                    <Label>City *</Label>
+                    <Combobox
+                      placeholder="Search city..."
+                      items={uniqueCities.map((ct, idx) => ({ label: ct.name, value: `${ct.name}__${ct.stateCode || ""}-${idx}` }))}
+                      value={addressInfo.city}
+                      onChange={(v) => setAddressInfo((p) => ({ ...p, city: v }))}
+                      disabled={!selectedCountry}
+                    />
+                    {errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" /> Client Contact Information
                 </CardTitle>
                 <CardDescription>Primary and additional contacts</CardDescription>
@@ -479,89 +582,6 @@ export default function CreateClient() {
                 <Button type="button" variant="outline" onClick={addContact}>
                   <Plus className="w-4 h-4 mr-1" /> Add Another Contact
                 </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" /> Address
-                </CardTitle>
-                <CardDescription>Address is optional, Country/State/City are mandatory</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label>Street Address</Label>
-                  <Input
-                    value={addressInfo.address}
-                    onChange={(e) => setAddressInfo((p) => ({ ...p, address: e.target.value }))}
-                    placeholder="Building, street, area"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <Label>Country *</Label>
-                    <Select
-                      value={addressInfo.country}
-                      onValueChange={(v) =>
-                        setAddressInfo((p) => ({ ...p, country: v, state: "", city: "" }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select country" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {countries.map((c) => (
-                          <SelectItem key={c.isoCode} value={c.name}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
-                  </div>
-                  <div>
-                    <Label>State *</Label>
-                    <Select
-                      value={addressInfo.state}
-                      onValueChange={(v) => setAddressInfo((p) => ({ ...p, state: v, city: "" }))}
-                      disabled={!selectedCountry}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {states.map((s) => (
-                          <SelectItem key={s.isoCode} value={s.name}>
-                            {s.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
-                  </div>
-                  <div>
-                    <Label>City *</Label>
-                    <Select
-                      value={addressInfo.city}
-                      onValueChange={(v) => setAddressInfo((p) => ({ ...p, city: v }))}
-                      disabled={!selectedCountry}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select city" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {uniqueCities.map((ct, idx) => (
-                          <SelectItem key={`${ct.name}-${ct.stateCode || ""}-${idx}`} value={`${ct.name}__${ct.stateCode || ""}`}>
-                            {ct.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </TabsContent>
