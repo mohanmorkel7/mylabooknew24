@@ -443,6 +443,21 @@ export async function initializeDatabase() {
       );
     }
 
+    // Business Offerings table migration
+    try {
+      const boMigrationPath = path.join(__dirname, "create-business-offerings-table.sql");
+      if (fs.existsSync(boMigrationPath)) {
+        const sql = fs.readFileSync(boMigrationPath, "utf8");
+        await client.query(sql);
+        console.log("Business Offerings table migration applied successfully");
+      }
+    } catch (boErr) {
+      console.log(
+        "Business Offerings table migration already applied or error:",
+        (boErr as any).message,
+      );
+    }
+
     // Extend fund_raises with all fields
     try {
       const fundRaisesAlterPath = path.join(
