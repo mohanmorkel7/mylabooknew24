@@ -92,6 +92,8 @@ export default function CreateClient() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("client-info");
+  const [showClientErrors, setShowClientErrors] = useState(false);
+  const [showContactErrors, setShowContactErrors] = useState(false);
 
   const [clientInfo, setClientInfo] = useState({
     source: "",
@@ -158,6 +160,37 @@ export default function CreateClient() {
     return e;
   }, [clientInfo, addressInfo]);
 
+  const clientInfoErrors = useMemo(() => {
+    const { source, client_name, payment_offerings, geography, txn_volume, product_tag_info } = errors;
+    const filtered: Record<string, string> = {};
+    if (source) filtered.source = source;
+    if (client_name) filtered.client_name = client_name;
+    if (payment_offerings) filtered.payment_offerings = payment_offerings;
+    if (geography) filtered.geography = geography;
+    if (txn_volume) filtered.txn_volume = txn_volume;
+    if (product_tag_info) filtered.product_tag_info = product_tag_info;
+    return filtered;
+  }, [errors]);
+
+  const contactTabErrors = useMemo(() => {
+    const { country, state, city } = errors;
+    const filtered: Record<string, string> = {};
+    if (country) filtered.country = country;
+    if (state) filtered.state = state;
+    if (city) filtered.city = city;
+    return filtered;
+  }, [errors]);
+
+  const handleNext = () => {
+    setShowClientErrors(true);
+    if (Object.keys(clientInfoErrors).length === 0) {
+      setActiveTab("contact-info");
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
+    } else {
+      toast({ title: "Missing details", description: "Please complete the required fields", variant: "destructive" });
+    }
+  };
+
   const createMutation = useMutation({
     mutationFn: async () => {
       const primary = contacts[0] || { contact_name: "", email: "", phone: "", phone_prefix: "+91", designation: "" };
@@ -215,10 +248,10 @@ export default function CreateClient() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (Object.keys(errors).length > 0) {
-      toast({ title: "Validation error", description: "Please fill all required fields", variant: "destructive" });
-      if (errors.country || errors.state || errors.city) setActiveTab("contact-info");
-      else setActiveTab("client-info");
+    setShowContactErrors(true);
+    if (Object.keys(contactTabErrors).length > 0) {
+      toast({ title: "Missing address", description: "Country, State and City are required", variant: "destructive" });
+      setActiveTab("contact-info");
       return;
     }
     createMutation.mutate();
@@ -313,7 +346,7 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
+                    {showClientErrors && errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
                   </div>
                   {clientInfo.source && (() => {
                     const src = clientInfo.source;
@@ -356,7 +389,7 @@ export default function CreateClient() {
                       onChange={(e) => setClientInfo((p) => ({ ...p, client_name: e.target.value }))}
                       placeholder="Enter client name"
                     />
-                    {errors.client_name && <p className="text-red-600 text-xs mt-1">{errors.client_name}</p>}
+                    {showClientErrors && errors.client_name && <p className="text-red-600 text-xs mt-1">{errors.client_name}</p>}
                   </div>
                   <div>
                     <Label>Client Type</Label>
@@ -387,7 +420,7 @@ export default function CreateClient() {
                     placeholder="Select payment offerings"
                     className="mt-1"
                   />
-                  {errors.payment_offerings && (
+                  {showClientErrors && errors.payment_offerings && (
                     <p className="text-red-600 text-xs mt-1">{errors.payment_offerings}</p>
                   )}
                 </div>
@@ -422,7 +455,7 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.geography && <p className="text-red-600 text-xs mt-1">{errors.geography}</p>}
+                    {showClientErrors && errors.geography && <p className="text-red-600 text-xs mt-1">{errors.geography}</p>}
                   </div>
                 </div>
 
@@ -444,7 +477,7 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {errors.txn_volume && <p className="text-red-600 text-xs mt-1">{errors.txn_volume}</p>}
+                    {showClientErrors && errors.txn_volume && <p className="text-red-600 text-xs mt-1">{errors.txn_volume}</p>}
                   </div>
                   <div>
                     <Label>Product Tag Info *</Label>
@@ -453,7 +486,7 @@ export default function CreateClient() {
                       onChange={(e) => setClientInfo((p) => ({ ...p, product_tag_info: e.target.value }))}
                       placeholder="Enter product tags"
                     />
-                    {errors.product_tag_info && (
+                    {showClientErrors && errors.product_tag_info && (
                       <p className="text-red-600 text-xs mt-1">{errors.product_tag_info}</p>
                     )}
                   </div>
@@ -489,7 +522,7 @@ export default function CreateClient() {
                       value={addressInfo.country}
                       onChange={(v) => setAddressInfo((p) => ({ ...p, country: v, state: "", city: "" }))}
                     />
-                    {errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+                    {showContactErrors && errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
                   </div>
                   <div>
                     <Label>State *</Label>
@@ -500,7 +533,7 @@ export default function CreateClient() {
                       onChange={(v) => setAddressInfo((p) => ({ ...p, state: v, city: "" }))}
                       disabled={!selectedCountry}
                     />
-                    {errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
+                    {showContactErrors && errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
                   </div>
                   <div>
                     <Label>City *</Label>
@@ -511,7 +544,7 @@ export default function CreateClient() {
                       onChange={(v) => setAddressInfo((p) => ({ ...p, city: v }))}
                       disabled={!selectedCountry}
                     />
-                    {errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
+                    {showContactErrors && errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
                   </div>
                 </div>
               </CardContent>
