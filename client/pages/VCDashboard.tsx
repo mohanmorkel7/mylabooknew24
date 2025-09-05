@@ -216,7 +216,6 @@ export default function VCDashboard() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -254,10 +253,9 @@ export default function VCDashboard() {
     error: vcError,
     refetch: refetchVCs,
   } = useQuery({
-    queryKey: ["vcs", statusFilter, categoryFilter],
+    queryKey: ["vcs", categoryFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter);
       if (categoryFilter !== "all")
         params.append("investor_category", categoryFilter);
 
@@ -626,32 +624,18 @@ export default function VCDashboard() {
                 </div>
               </div>
 
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
 
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Filter by investor type" />
+                  <SelectValue placeholder="Filter by VC Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Investors</SelectItem>
+                  <SelectItem value="all">All VC Types</SelectItem>
                   <SelectItem value="angel">Angel</SelectItem>
                   <SelectItem value="vc">VC</SelectItem>
                   <SelectItem value="private_equity">Private Equity</SelectItem>
                   <SelectItem value="family_office">Family Office</SelectItem>
-                  <SelectItem value="merchant_banker">
-                    Merchant Banker
-                  </SelectItem>
+                  <SelectItem value="merchant_banker">Merchant Banker</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -862,9 +846,7 @@ export default function VCDashboard() {
                   No VCs Found
                 </h3>
                 <p className="text-gray-600 mb-4">
-                  {searchTerm ||
-                  statusFilter !== "all" ||
-                  categoryFilter !== "all"
+                  {searchTerm || categoryFilter !== "all"
                     ? "Try adjusting your filters or search terms."
                     : "Get started by creating your first VC round."}
                 </p>
