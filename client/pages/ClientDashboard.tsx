@@ -305,7 +305,11 @@ export default function ClientDashboard() {
                     }}
                     className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 relative"
                   >
-                    <div className="absolute top-3 right-3" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <div
+                      className="absolute top-3 right-3"
+                      onClick={(e) => e.stopPropagation()}
+                      onKeyDown={(e) => e.stopPropagation()}
+                    >
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
@@ -317,15 +321,24 @@ export default function ClientDashboard() {
                             <Trash className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                        <AlertDialogContent
+                          onClick={(e) => e.stopPropagation()}
+                        >
                           <AlertDialogHeader>
                             <AlertDialogTitle>Delete client?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              This action cannot be undone. This will permanently delete {c.client_name || "this client"} and remove related data.
+                              This action cannot be undone. This will
+                              permanently delete{" "}
+                              {c.client_name || "this client"} and remove
+                              related data.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>
-                            <AlertDialogCancel onClick={(e) => e.stopPropagation()}>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              Cancel
+                            </AlertDialogCancel>
                             <AlertDialogAction
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                               onClick={(e) => {
