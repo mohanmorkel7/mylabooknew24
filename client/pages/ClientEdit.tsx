@@ -134,7 +134,7 @@ export default function ClientEdit() {
         title: "Client updated",
         description: "Changes saved successfully",
       });
-      navigate(`/sales/client/${id}`);
+      navigate(`/clients/${id}`);
     } catch (error: any) {
       console.error("Failed to save client:", error);
       toast({
