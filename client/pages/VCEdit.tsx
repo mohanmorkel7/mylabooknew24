@@ -211,7 +211,7 @@ const MAX_CHQ_SIZE_OPTIONS = [
 ];
 
 const TABS = [
-  { value: "lead-info", label: "Lead Information", icon: "📋" },
+  { value: "lead-info", label: "Lead Information", icon: "��" },
   { value: "investor-contact", label: "Investor Information", icon: "🏢" },
 ];
 
@@ -938,29 +938,6 @@ export default function VCEdit() {
           </div>
         </div>
         <div className="flex items-center space-x-3">
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="currency" className="text-sm font-medium">
-              Currency:
-            </Label>
-            <Select
-              value={selectedCurrency}
-              onValueChange={(value) => {
-                setSelectedCurrency(value);
-                handleInputChange("billing_currency", value);
-              }}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {CURRENCIES.map((currency) => (
-                  <SelectItem key={currency.value} value={currency.value}>
-                    {currency.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || updateVCMutation.isPending}
