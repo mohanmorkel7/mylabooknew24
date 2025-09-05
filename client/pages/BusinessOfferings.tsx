@@ -102,6 +102,7 @@ function isDomesticByGeography(client?: any): boolean {
 interface Props { initial?: any; offeringId?: number }
 export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("offerings");
 
   const [formA, setFormA] = useState({
