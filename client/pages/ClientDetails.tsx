@@ -5,7 +5,7 @@ import {
   useClientOnboardingSteps,
   useCreateOnboardingStep,
   useUpdateOnboardingStep,
-  useDeleteOnboardingStep
+  useDeleteOnboardingStep,
 } from "@/hooks/useApi";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -114,8 +114,6 @@ const mockFollowUps = [
   },
 ];
 
-
-
 export default function ClientDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -124,7 +122,8 @@ export default function ClientDetails() {
   const clientId = parseInt(id || "0");
 
   const { data: client, isLoading, error } = useClient(clientId);
-  const { data: onboardingSteps = [], isLoading: stepsLoading } = useClientOnboardingSteps(clientId);
+  const { data: onboardingSteps = [], isLoading: stepsLoading } =
+    useClientOnboardingSteps(clientId);
 
   // Mutations
   const createStepMutation = useCreateOnboardingStep();
@@ -138,7 +137,7 @@ export default function ClientDetails() {
     name: "",
     description: "",
     estimated_days: 1,
-    due_date: ""
+    due_date: "",
   });
 
   const handleBack = () => {
@@ -168,10 +167,10 @@ export default function ClientDetails() {
   };
 
   const toggleStepExpansion = (stepId: number) => {
-    setExpandedSteps(prev => 
-      prev.includes(stepId) 
-        ? prev.filter(id => id !== stepId)
-        : [...prev, stepId]
+    setExpandedSteps((prev) =>
+      prev.includes(stepId)
+        ? prev.filter((id) => id !== stepId)
+        : [...prev, stepId],
     );
   };
 
@@ -180,9 +179,14 @@ export default function ClientDetails() {
       try {
         await createStepMutation.mutateAsync({
           clientId,
-          stepData: newStep
+          stepData: newStep,
         });
-        setNewStep({ name: "", description: "", estimated_days: 1, due_date: "" });
+        setNewStep({
+          name: "",
+          description: "",
+          estimated_days: 1,
+          due_date: "",
+        });
         setNewStepDialog(false);
       } catch (error) {
         console.error("Failed to create step:", error);
@@ -209,16 +213,19 @@ export default function ClientDetails() {
           message: comment,
           user_name: `${user.first_name} ${user.last_name}`,
           user_id: parseInt(user.id),
-          comment_type: "note"
-        }
+          comment_type: "note",
+        },
       });
-      setNewComment(prev => ({ ...prev, [stepId]: "" }));
+      setNewComment((prev) => ({ ...prev, [stepId]: "" }));
     } catch (error) {
       console.error("Failed to add comment:", error);
     }
   };
 
-  const handleFileUpload = async (stepId: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (
+    stepId: number,
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !user) return;
 
@@ -232,7 +239,7 @@ export default function ClientDetails() {
         file_path: `/uploads/${file.name}`,
         file_size: file.size,
         file_type: file.type,
-        uploaded_by: `${user.first_name} ${user.last_name}`
+        uploaded_by: `${user.first_name} ${user.last_name}`,
       };
 
       await uploadDocumentMutation.mutateAsync({ stepId, documentData });
@@ -452,7 +459,8 @@ export default function ClientDetails() {
                 <div>
                   <CardTitle>Custom Onboarding Workflow</CardTitle>
                   <CardDescription>
-                    Manage client-specific onboarding steps, documents, and communication
+                    Manage client-specific onboarding steps, documents, and
+                    communication
                   </CardDescription>
                 </div>
                 <Dialog open={newStepDialog} onOpenChange={setNewStepDialog}>
@@ -466,7 +474,8 @@ export default function ClientDetails() {
                     <DialogHeader>
                       <DialogTitle>Add New Onboarding Step</DialogTitle>
                       <DialogDescription>
-                        Create a custom step for this client's onboarding process
+                        Create a custom step for this client's onboarding
+                        process
                       </DialogDescription>
                     </DialogHeader>
                     <div className="space-y-4">
@@ -475,7 +484,12 @@ export default function ClientDetails() {
                         <Input
                           id="stepName"
                           value={newStep.name}
-                          onChange={(e) => setNewStep(prev => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            setNewStep((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
                           placeholder="e.g., Technical Setup"
                         />
                       </div>
@@ -484,7 +498,12 @@ export default function ClientDetails() {
                         <Textarea
                           id="stepDescription"
                           value={newStep.description}
-                          onChange={(e) => setNewStep(prev => ({ ...prev, description: e.target.value }))}
+                          onChange={(e) =>
+                            setNewStep((prev) => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
                           placeholder="Describe what needs to be done in this step"
                           rows={3}
                         />
@@ -497,7 +516,12 @@ export default function ClientDetails() {
                             type="number"
                             min="1"
                             value={newStep.estimated_days}
-                            onChange={(e) => setNewStep(prev => ({ ...prev, estimated_days: parseInt(e.target.value) || 1 }))}
+                            onChange={(e) =>
+                              setNewStep((prev) => ({
+                                ...prev,
+                                estimated_days: parseInt(e.target.value) || 1,
+                              }))
+                            }
                           />
                         </div>
                         <div>
@@ -506,13 +530,21 @@ export default function ClientDetails() {
                             id="dueDate"
                             type="date"
                             value={newStep.due_date}
-                            onChange={(e) => setNewStep(prev => ({ ...prev, due_date: e.target.value }))}
+                            onChange={(e) =>
+                              setNewStep((prev) => ({
+                                ...prev,
+                                due_date: e.target.value,
+                              }))
+                            }
                           />
                         </div>
                       </div>
                     </div>
                     <DialogFooter>
-                      <Button variant="outline" onClick={() => setNewStepDialog(false)}>
+                      <Button
+                        variant="outline"
+                        onClick={() => setNewStepDialog(false)}
+                      >
                         Cancel
                       </Button>
                       <Button onClick={handleAddStep}>Add Step</Button>
@@ -523,8 +555,9 @@ export default function ClientDetails() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {Array.isArray(onboardingSteps) && onboardingSteps.length > 0 ? (
-                  onboardingSteps.map((step) => (
+                {Array.isArray(onboardingSteps) &&
+                onboardingSteps.length > 0 ? (
+                  onboardingSteps.map((step) =>
                     step ? (
                       <StepItem
                         key={step.id || `temp-${Math.random()}`}
@@ -534,8 +567,8 @@ export default function ClientDetails() {
                         onUpdateStatus={updateStepStatus}
                         onDeleteStep={handleDeleteStep}
                       />
-                    ) : null
-                  ))
+                    ) : null,
+                  )
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <p>No onboarding steps found. Add a step to get started.</p>
