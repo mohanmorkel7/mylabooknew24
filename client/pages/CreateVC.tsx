@@ -2135,15 +2135,6 @@ export default function CreateVC() {
               <div className="border-t pt-6 mt-6">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold">Contact Information</h3>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addContact}
-                    disabled={vcData.contacts.length >= 3}
-                  >
-                    <Plus className="w-4 h-4 mr-2" /> Add Contact
-                  </Button>
                 </div>
 
                 <div className="space-y-4">
