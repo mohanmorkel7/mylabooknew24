@@ -79,7 +79,6 @@ export default function BusinessOfferings() {
   });
 
   const [formB, setFormB] = useState({
-    clientId: "",
     clientStatus: "",
     offeringDescription: "",
     currentDailyVolume: "",
@@ -109,7 +108,7 @@ export default function BusinessOfferings() {
   }, [clients]);
 
   const domesticA = isDomestic(clientMap.get(formA.clientId)?.country);
-  const domesticB = isDomestic(clientMap.get(formB.clientId)?.country);
+  const domesticB = isDomestic(clientMap.get(formA.clientId)?.country);
 
   const validateA = () => {
     const n: Record<string, string> = {};
@@ -125,7 +124,6 @@ export default function BusinessOfferings() {
 
   const validateB = () => {
     const n: Record<string, string> = {};
-    if (!formB.clientId) n.clientIdB = "Client is required";
     if (!formB.clientStatus) n.clientStatus = "Client Status is required";
     if (!formB.currentDailyVolume) n.currentDailyVolume = "Current Daily Volume is required";
     if (!formB.projectedDailyVolume) n.projectedDailyVolume = "Projected Daily Volume is required";
@@ -319,30 +317,6 @@ export default function BusinessOfferings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Client *</Label>
-                  <Select
-                    value={formB.clientId}
-                    onValueChange={(v) => {
-                      setFormB((p) => ({ ...p, clientId: v, potentialFee: "", potentialMMGF: "" }));
-                      setErrors((e) => ({ ...e, clientIdB: "" }));
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={clientsLoading ? "Loading..." : "Select client"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(clients || []).map((c: any) => (
-                        <SelectItem key={c.id} value={String(c.id)}>
-                          {c.client_name} {c.country ? `(${c.country})` : ""}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.clientIdB && (
-                    <div className="text-sm text-red-600 mt-1">{errors.clientIdB}</div>
-                  )}
-                </div>
 
                 <div>
                   <Label>Client Status *</Label>
@@ -444,10 +418,10 @@ export default function BusinessOfferings() {
                       setFormB((p) => ({ ...p, potentialMMGF: v }));
                       setErrors((e) => ({ ...e, potentialMMGF: "" }));
                     }}
-                    disabled={!formB.clientId}
+                    disabled={!formA.clientId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={formB.clientId ? "Select value" : "Select client first"} />
+                      <SelectValue placeholder={formA.clientId ? "Select value" : "Select client in Offering Details"} />
                     </SelectTrigger>
                     <SelectContent>
                       {(domesticB ? INR_MMGF_LACS : USD_MMGF_K).map((v) => (
@@ -472,10 +446,10 @@ export default function BusinessOfferings() {
                       setFormB((p) => ({ ...p, potentialFee: v }));
                       setErrors((e) => ({ ...e, potentialFee: "" }));
                     }}
-                    disabled={!formB.clientId}
+                    disabled={!formA.clientId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={formB.clientId ? "Select value" : "Select client first"} />
+                      <SelectValue placeholder={formA.clientId ? "Select value" : "Select client in Offering Details"} />
                     </SelectTrigger>
                     <SelectContent>
                       {(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => (
