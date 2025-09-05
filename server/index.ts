@@ -272,6 +272,13 @@ export function createServer() {
   }
 
   try {
+    app.use("/api/business-offerings", businessOfferingsRouter);
+    console.log("Business Offerings router loaded successfully");
+  } catch (error) {
+    console.error("Error loading Business Offerings router:", error);
+  }
+
+  try {
     app.use("/api/files", filesRouter);
     console.log("Files router loaded successfully");
   } catch (error) {
