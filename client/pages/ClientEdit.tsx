@@ -785,17 +785,7 @@ export default function ClientEdit() {
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between">
-                    <Label>Contacts</Label>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={addContact}
-                    >
-                      <Plus className="w-4 h-4 mr-1" /> Add Contact
-                    </Button>
-                  </div>
+                  <Label>Contacts</Label>
                   <div className="space-y-3 mt-2">
                     {contacts.map((c, idx) => (
                       <div
@@ -862,6 +852,10 @@ export default function ClientEdit() {
                       </div>
                     ))}
                   </div>
+
+                  <Button type="button" variant="outline" className="mt-3" onClick={addContact}>
+                    <Plus className="w-4 h-4 mr-1" /> Add Another Contact
+                  </Button>
                 </div>
               </CardContent>
             </Card>
