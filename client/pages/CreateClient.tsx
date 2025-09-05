@@ -150,6 +150,7 @@ export default function CreateClient() {
     const e: Record<string, string> = {};
     if (!clientInfo.source) e.source = "Required";
     if (!clientInfo.client_name.trim()) e.client_name = "Required";
+    if (!clientInfo.client_type) e.client_type = "Required";
     if (clientInfo.payment_offerings.length === 0) e.payment_offerings = "Select at least one";
     if (!clientInfo.geography) e.geography = "Required";
     if (!clientInfo.txn_volume) e.txn_volume = "Required";
@@ -161,10 +162,11 @@ export default function CreateClient() {
   }, [clientInfo, addressInfo]);
 
   const clientInfoErrors = useMemo(() => {
-    const { source, client_name, payment_offerings, geography, txn_volume, product_tag_info } = errors;
+    const { source, client_name, client_type, payment_offerings, geography, txn_volume, product_tag_info } = errors;
     const filtered: Record<string, string> = {};
     if (source) filtered.source = source;
     if (client_name) filtered.client_name = client_name;
+    if (client_type) filtered.client_type = client_type;
     if (payment_offerings) filtered.payment_offerings = payment_offerings;
     if (geography) filtered.geography = geography;
     if (txn_volume) filtered.txn_volume = txn_volume;
@@ -392,7 +394,7 @@ export default function CreateClient() {
                     {showClientErrors && errors.client_name && <p className="text-red-600 text-xs mt-1">{errors.client_name}</p>}
                   </div>
                   <div>
-                    <Label>Client Type</Label>
+                    <Label>Client Type *</Label>
                     <Select
                       value={clientInfo.client_type}
                       onValueChange={(v) => setClientInfo((p) => ({ ...p, client_type: v }))}
@@ -408,6 +410,7 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {showClientErrors && errors.client_type && <p className="text-red-600 text-xs mt-1">{errors.client_type}</p>}
                   </div>
                 </div>
 
