@@ -672,17 +672,16 @@ export default function FundRaiseDetails() {
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">Priority:</span>
-                      <Badge
-                        className={
-                          priorityColors[
-                            vcData.priority_level as keyof typeof priorityColors
-                          ]
-                        }
-                      >
-                        {vcData.priority_level?.charAt(0).toUpperCase() +
-                          vcData.priority_level?.slice(1)}
+                      <span className="text-xs text-slate-500">Investor Status:</span>
+                      <Badge variant="secondary" className="capitalize">
+                        {vcData.investor_status || "N/A"}
                       </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Fund $ Mn:</span>
+                      <span className="text-gray-900">
+                        {formatCurrency(vcData.fund_mn, vcData.billing_currency) || "N/A"}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 justify-end">
                       <span className="text-xs text-slate-500">Investor:</span>
