@@ -784,7 +784,6 @@ export default function ClientEdit() {
                     )}
                   </div>
                 </div>
-
               </CardContent>
             </Card>
 
@@ -803,7 +802,12 @@ export default function ClientEdit() {
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary">Contact #{idx + 1}</Badge>
                       {contacts.length > 1 && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => removeContact(idx)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeContact(idx)}
+                        >
                           <Minus className="w-4 h-4 mr-1" /> Remove
                         </Button>
                       )}
@@ -813,7 +817,9 @@ export default function ClientEdit() {
                         <Label>Contact Name</Label>
                         <Input
                           value={c.contact_name}
-                          onChange={(e) => updateContact(idx, "contact_name", e.target.value)}
+                          onChange={(e) =>
+                            updateContact(idx, "contact_name", e.target.value)
+                          }
                           placeholder="Full name"
                         />
                       </div>
@@ -821,7 +827,9 @@ export default function ClientEdit() {
                         <Label>Designation</Label>
                         <Input
                           value={c.designation}
-                          onChange={(e) => updateContact(idx, "designation", e.target.value)}
+                          onChange={(e) =>
+                            updateContact(idx, "designation", e.target.value)
+                          }
                           placeholder="Job title"
                         />
                       </div>
@@ -835,7 +843,9 @@ export default function ClientEdit() {
                           <Input
                             className="pl-10"
                             value={c.email}
-                            onChange={(e) => updateContact(idx, "email", e.target.value)}
+                            onChange={(e) =>
+                              updateContact(idx, "email", e.target.value)
+                            }
                             placeholder="name@company.com"
                           />
                         </div>
@@ -845,7 +855,9 @@ export default function ClientEdit() {
                         <div className="flex gap-2">
                           <Select
                             value={c.phone_prefix || "+91"}
-                            onValueChange={(v) => updateContact(idx, "phone_prefix", v)}
+                            onValueChange={(v) =>
+                              updateContact(idx, "phone_prefix", v)
+                            }
                           >
                             <SelectTrigger className="w-[140px]">
                               <SelectValue />
@@ -863,7 +875,9 @@ export default function ClientEdit() {
                             <Input
                               className="pl-10"
                               value={c.phone}
-                              onChange={(e) => updateContact(idx, "phone", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(idx, "phone", e.target.value)
+                              }
                               placeholder="98765 43210"
                             />
                           </div>
