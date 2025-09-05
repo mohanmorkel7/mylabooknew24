@@ -1323,7 +1323,10 @@ export default function VCEdit() {
               <Button onClick={handleNextTab} disabled={isLastTab}>
                 Next
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
                 {isSubmitting ? "Updating..." : "Update VC"}
               </Button>
             </div>
@@ -1675,7 +1678,10 @@ export default function VCEdit() {
               <Button onClick={handleNextTab} disabled={isLastTab}>
                 Next
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
                 {isSubmitting ? "Updating..." : "Update VC"}
               </Button>
             </div>
@@ -1938,7 +1944,10 @@ export default function VCEdit() {
               <Button onClick={handleNextTab} disabled={isLastTab}>
                 Next
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
                 {isSubmitting ? "Updating..." : "Update VC"}
               </Button>
             </div>
@@ -2000,7 +2009,10 @@ export default function VCEdit() {
               <Button onClick={handleNextTab} disabled={isLastTab}>
                 Next
               </Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || updateVCMutation.isPending}>
+              <Button
+                onClick={handleSubmit}
+                disabled={isSubmitting || updateVCMutation.isPending}
+              >
                 {isSubmitting ? "Updating..." : "Update VC"}
               </Button>
             </div>
