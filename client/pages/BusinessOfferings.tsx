@@ -550,31 +550,16 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                       : "Potential MMGF USD in K"}{" "}
                     *
                   </Label>
-                  <Select
+                  <Combobox
+                    items={(domesticB ? INR_MMGF_LACS : USD_MMGF_K).map((v) => ({ label: v, value: v }))}
                     value={formB.potentialMMGF}
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       setFormB((p) => ({ ...p, potentialMMGF: v }));
                       setErrors((e) => ({ ...e, potentialMMGF: "" }));
                     }}
+                    placeholder={formA.clientId ? "Search or select" : "Select client in Offering Details"}
                     disabled={!formA.clientId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          formA.clientId
-                            ? "Select value"
-                            : "Select client in Offering Details"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(domesticB ? INR_MMGF_LACS : USD_MMGF_K).map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                   {errors.potentialMMGF && (
                     <div className="text-sm text-red-600 mt-1">
                       {errors.potentialMMGF}
