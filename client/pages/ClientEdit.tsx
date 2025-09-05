@@ -125,13 +125,23 @@ export default function ClientEdit() {
         notes: client.notes || undefined,
       };
 
-      await updateMutation.mutateAsync({ id: parseInt(id), clientData: payload });
+      await updateMutation.mutateAsync({
+        id: parseInt(id),
+        clientData: payload,
+      });
       setHasChanges(false);
-      toast({ title: "Client updated", description: "Changes saved successfully" });
+      toast({
+        title: "Client updated",
+        description: "Changes saved successfully",
+      });
       navigate(`/sales/client/${id}`);
     } catch (error: any) {
       console.error("Failed to save client:", error);
-      toast({ title: "Update failed", description: error?.message || "Unable to update client", variant: "destructive" });
+      toast({
+        title: "Update failed",
+        description: error?.message || "Unable to update client",
+        variant: "destructive",
+      });
     } finally {
       setSaving(false);
     }

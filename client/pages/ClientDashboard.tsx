@@ -5,12 +5,19 @@ import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle, Building, Globe, Mail, Phone, Plus, Search, Target, User } from "lucide-react";
+import {
+  AlertCircle,
+  Building,
+  Globe,
+  Mail,
+  Phone,
+  Plus,
+  Search,
+  Target,
+  User,
+} from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
 function getInitials(name?: string) {
@@ -35,7 +42,12 @@ export default function ClientDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch Clients
-  const { data: clients = [], isLoading, error, refetch } = useQuery({
+  const {
+    data: clients = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["clients"],
     queryFn: async () => {
       try {
@@ -50,7 +62,11 @@ export default function ClientDashboard() {
   });
 
   // Fetch Stats
-  const { data: stats = { total: 0, active: 0, onboarding: 0, completed: 0 }, isLoading: statsLoading, error: statsError } = useQuery({
+  const {
+    data: stats = { total: 0, active: 0, onboarding: 0, completed: 0 },
+    isLoading: statsLoading,
+    error: statsError,
+  } = useQuery({
     queryKey: ["client-stats"],
     queryFn: async () => {
       try {
@@ -67,10 +83,11 @@ export default function ClientDashboard() {
   const filtered = useMemo(() => {
     if (!searchTerm) return clients;
     const s = searchTerm.toLowerCase();
-    return clients.filter((c: any) =>
-      (c.client_name || "").toLowerCase().includes(s) ||
-      (c.contact_person || "").toLowerCase().includes(s) ||
-      (c.email || "").toLowerCase().includes(s)
+    return clients.filter(
+      (c: any) =>
+        (c.client_name || "").toLowerCase().includes(s) ||
+        (c.contact_person || "").toLowerCase().includes(s) ||
+        (c.email || "").toLowerCase().includes(s),
     );
   }, [clients, searchTerm]);
 
@@ -80,8 +97,12 @@ export default function ClientDashboard() {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load Clients</h3>
-            <p className="text-gray-600 mb-4">There was an error loading the client dashboard.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Failed to Load Clients
+            </h3>
+            <p className="text-gray-600 mb-4">
+              There was an error loading the client dashboard.
+            </p>
             <Button onClick={() => refetch()}>Try Again</Button>
           </div>
         </div>
@@ -97,7 +118,7 @@ export default function ClientDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Client Dashboard</h1>
           <p className="text-gray-600 mt-1">Manage clients and onboarding</p>
         </div>
-        <Button onClick={() => navigate("/clients/create")}> 
+        <Button onClick={() => navigate("/clients/create")}>
           <Plus className="w-4 h-4 mr-2" />
           Create Client
         </Button>
@@ -106,8 +127,11 @@ export default function ClientDashboard() {
       {/* Stats */}
       {statsLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1,2,3,4].map((i) => (
-            <Card key={i} className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200">
+          {[1, 2, 3, 4].map((i) => (
+            <Card
+              key={i}
+              className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-200"
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
@@ -135,8 +159,12 @@ export default function ClientDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-blue-600 text-sm font-medium">Total Clients</p>
-                  <p className="text-2xl font-bold text-blue-900">{stats?.total || 0}</p>
+                  <p className="text-blue-600 text-sm font-medium">
+                    Total Clients
+                  </p>
+                  <p className="text-2xl font-bold text-blue-900">
+                    {stats?.total || 0}
+                  </p>
                 </div>
                 <div className="bg-blue-200 p-3 rounded-full">
                   <Target className="w-6 h-6 text-blue-600" />
@@ -150,7 +178,9 @@ export default function ClientDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-green-600 text-sm font-medium">Active</p>
-                  <p className="text-2xl font-bold text-green-900">{stats?.active || 0}</p>
+                  <p className="text-2xl font-bold text-green-900">
+                    {stats?.active || 0}
+                  </p>
                 </div>
                 <div className="bg-green-200 p-3 rounded-full">
                   <Building className="w-6 h-6 text-green-600" />
@@ -163,8 +193,12 @@ export default function ClientDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-orange-600 text-sm font-medium">Onboarding</p>
-                  <p className="text-2xl font-bold text-orange-900">{stats?.onboarding || 0}</p>
+                  <p className="text-orange-600 text-sm font-medium">
+                    Onboarding
+                  </p>
+                  <p className="text-2xl font-bold text-orange-900">
+                    {stats?.onboarding || 0}
+                  </p>
                 </div>
                 <div className="bg-orange-200 p-3 rounded-full">
                   <User className="w-6 h-6 text-orange-600" />
@@ -177,8 +211,12 @@ export default function ClientDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-purple-600 text-sm font-medium">Completed</p>
-                  <p className="text-2xl font-bold text-purple-900">{stats?.completed || 0}</p>
+                  <p className="text-purple-600 text-sm font-medium">
+                    Completed
+                  </p>
+                  <p className="text-2xl font-bold text-purple-900">
+                    {stats?.completed || 0}
+                  </p>
                 </div>
                 <div className="bg-purple-200 p-3 rounded-full">
                   <Target className="w-6 h-6 text-purple-600" />
@@ -194,7 +232,12 @@ export default function ClientDashboard() {
         <CardContent className="p-6">
           <div className="relative">
             <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input placeholder="Search clients by name, contact, or email..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10" />
+            <Input
+              placeholder="Search clients by name, contact, or email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </CardContent>
       </Card>
@@ -215,37 +258,61 @@ export default function ClientDashboard() {
                 const geography = meta.geography || meta.client_geography;
                 const website = c.website || meta.website;
                 return (
-                  <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow">
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow"
+                  >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start gap-3">
                           <Avatar className="h-10 w-10 bg-blue-100 text-blue-700">
-                            <AvatarFallback>{getInitials(c.client_name)}</AvatarFallback>
+                            <AvatarFallback>
+                              {getInitials(c.client_name)}
+                            </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-semibold text-lg">{c.client_name || "Unknown Client"}</h3>
-                              {source && <Badge variant="secondary">{String(source)}</Badge>}
+                              <h3 className="font-semibold text-lg">
+                                {c.client_name || "Unknown Client"}
+                              </h3>
+                              {source && (
+                                <Badge variant="secondary">
+                                  {String(source)}
+                                </Badge>
+                              )}
                             </div>
                             <div className="mt-1 text-sm text-gray-700 flex flex-wrap gap-4">
                               <span>
-                                Contact: <span className="font-medium">{c.contact_person || "N/A"}</span>
+                                Contact:{" "}
+                                <span className="font-medium">
+                                  {c.contact_person || "N/A"}
+                                </span>
                               </span>
                               <span className="flex items-center gap-1">
-                                <Mail className="w-4 h-4 text-gray-400" /> {c.email || "N/A"}
+                                <Mail className="w-4 h-4 text-gray-400" />{" "}
+                                {c.email || "N/A"}
                               </span>
                               {c.phone && (
                                 <span className="flex items-center gap-1">
-                                  <Phone className="w-4 h-4 text-gray-400" /> {c.phone}
+                                  <Phone className="w-4 h-4 text-gray-400" />{" "}
+                                  {c.phone}
                                 </span>
                               )}
                               {geography && (
                                 <span className="flex items-center gap-1">
-                                  <Globe className="w-4 h-4 text-gray-400" /> {String(geography)}
+                                  <Globe className="w-4 h-4 text-gray-400" />{" "}
+                                  {String(geography)}
                                 </span>
                               )}
                               {website && (
-                                <a href={website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium">Website</a>
+                                <a
+                                  href={website}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline font-medium"
+                                >
+                                  Website
+                                </a>
                               )}
                             </div>
                           </div>
@@ -259,8 +326,14 @@ export default function ClientDashboard() {
           ) : (
             <div className="text-center py-8">
               <Building className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Clients Found</h3>
-              <p className="text-gray-600 mb-4">{searchTerm ? "Try adjusting your search." : "Get started by creating your first client."}</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                No Clients Found
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {searchTerm
+                  ? "Try adjusting your search."
+                  : "Get started by creating your first client."}
+              </p>
               <Button onClick={() => navigate("/clients/create")}>
                 <Plus className="w-4 h-4 mr-2" />
                 Create Client

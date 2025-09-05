@@ -24,10 +24,34 @@ import {
 } from "@/components/ui/select";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { Country, State, City } from "country-state-city";
-import { Plus, Minus, Save, ArrowLeft, Building2, User, Mail, Phone, Globe, MapPin, ChevronsUpDown, Check } from "lucide-react";
+import {
+  Plus,
+  Minus,
+  Save,
+  ArrowLeft,
+  Building2,
+  User,
+  Mail,
+  Phone,
+  Globe,
+  MapPin,
+  ChevronsUpDown,
+  Check,
+} from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
 const SOURCES = [
@@ -107,14 +131,22 @@ export default function CreateClient() {
     product_tag_info: "",
   });
 
-  const [contacts, setContacts] = useState<Array<{
-    contact_name: string;
-    designation: string;
-    phone_prefix?: string;
-    phone: string;
-    email: string;
-  }>>([
-    { contact_name: "", designation: "", phone_prefix: "+91", phone: "", email: "" },
+  const [contacts, setContacts] = useState<
+    Array<{
+      contact_name: string;
+      designation: string;
+      phone_prefix?: string;
+      phone: string;
+      email: string;
+    }>
+  >([
+    {
+      contact_name: "",
+      designation: "",
+      phone_prefix: "+91",
+      phone: "",
+      email: "",
+    },
   ]);
 
   const [addressInfo, setAddressInfo] = useState({
@@ -126,7 +158,9 @@ export default function CreateClient() {
 
   const countries = Country.getAllCountries();
   const selectedCountry = countries.find((c) => c.name === addressInfo.country);
-  const states = selectedCountry ? State.getStatesOfCountry(selectedCountry.isoCode) : [];
+  const states = selectedCountry
+    ? State.getStatesOfCountry(selectedCountry.isoCode)
+    : [];
   const selectedState = states.find((s) => s.name === addressInfo.state);
   const cities = selectedCountry
     ? selectedState
@@ -151,7 +185,8 @@ export default function CreateClient() {
     if (!clientInfo.source) e.source = "Required";
     if (!clientInfo.client_name.trim()) e.client_name = "Required";
     if (!clientInfo.client_type) e.client_type = "Required";
-    if (clientInfo.payment_offerings.length === 0) e.payment_offerings = "Select at least one";
+    if (clientInfo.payment_offerings.length === 0)
+      e.payment_offerings = "Select at least one";
     if (!clientInfo.geography) e.geography = "Required";
     if (!clientInfo.txn_volume) e.txn_volume = "Required";
     if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
@@ -162,7 +197,15 @@ export default function CreateClient() {
   }, [clientInfo, addressInfo]);
 
   const clientInfoErrors = useMemo(() => {
-    const { source, client_name, client_type, payment_offerings, geography, txn_volume, product_tag_info } = errors;
+    const {
+      source,
+      client_name,
+      client_type,
+      payment_offerings,
+      geography,
+      txn_volume,
+      product_tag_info,
+    } = errors;
     const filtered: Record<string, string> = {};
     if (source) filtered.source = source;
     if (client_name) filtered.client_name = client_name;
@@ -189,13 +232,23 @@ export default function CreateClient() {
       setActiveTab("contact-info");
       setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 0);
     } else {
-      toast({ title: "Missing details", description: "Please complete the required fields", variant: "destructive" });
+      toast({
+        title: "Missing details",
+        description: "Please complete the required fields",
+        variant: "destructive",
+      });
     }
   };
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      const primary = contacts[0] || { contact_name: "", email: "", phone: "", phone_prefix: "+91", designation: "" };
+      const primary = contacts[0] || {
+        contact_name: "",
+        email: "",
+        phone: "",
+        phone_prefix: "+91",
+        designation: "",
+      };
       if (!primary.contact_name || !isValidEmail(primary.email)) {
         toast({
           title: "Missing contact",
@@ -206,7 +259,9 @@ export default function CreateClient() {
         throw new Error("Contact details required by backend");
       }
 
-      const cityName = addressInfo.city ? addressInfo.city.split("__")[0].split("-")[0] : "";
+      const cityName = addressInfo.city
+        ? addressInfo.city.split("__")[0].split("-")[0]
+        : "";
       const payload: any = {
         client_name: clientInfo.client_name.trim(),
         contact_person: primary.contact_name.trim(),
@@ -240,12 +295,19 @@ export default function CreateClient() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["client-stats"] });
-      toast({ title: "Client created", description: "Client has been created successfully." });
+      toast({
+        title: "Client created",
+        description: "Client has been created successfully.",
+      });
       navigate("/clients");
     },
     onError: (err: any) => {
       if (err?.message) {
-        toast({ title: "Create failed", description: err.message, variant: "destructive" });
+        toast({
+          title: "Create failed",
+          description: err.message,
+          variant: "destructive",
+        });
       }
     },
   });
@@ -254,7 +316,11 @@ export default function CreateClient() {
     e.preventDefault();
     setShowContactErrors(true);
     if (Object.keys(contactTabErrors).length > 0) {
-      toast({ title: "Missing address", description: "Country, State and City are required", variant: "destructive" });
+      toast({
+        title: "Missing address",
+        description: "Country, State and City are required",
+        variant: "destructive",
+      });
       setActiveTab("contact-info");
       return;
     }
@@ -262,25 +328,56 @@ export default function CreateClient() {
   };
 
   const updateContact = (idx: number, key: string, value: string) => {
-    setContacts((prev) => prev.map((c, i) => (i === idx ? { ...c, [key]: value } : c)));
+    setContacts((prev) =>
+      prev.map((c, i) => (i === idx ? { ...c, [key]: value } : c)),
+    );
   };
 
   const addContact = () =>
     setContacts((prev) => [
       ...prev,
-      { contact_name: "", designation: "", phone_prefix: "+91", phone: "", email: "" },
+      {
+        contact_name: "",
+        designation: "",
+        phone_prefix: "+91",
+        phone: "",
+        email: "",
+      },
     ]);
-  const removeContact = (idx: number) => setContacts((prev) => prev.filter((_, i) => i !== idx));
+  const removeContact = (idx: number) =>
+    setContacts((prev) => prev.filter((_, i) => i !== idx));
 
   // Simple searchable combobox component
-  function Combobox({ items, value, onChange, placeholder, disabled }: { items: { label: string; value: string }[]; value: string; onChange: (v: string) => void; placeholder?: string; disabled?: boolean }) {
+  function Combobox({
+    items,
+    value,
+    onChange,
+    placeholder,
+    disabled,
+  }: {
+    items: { label: string; value: string }[];
+    value: string;
+    onChange: (v: string) => void;
+    placeholder?: string;
+    disabled?: boolean;
+  }) {
     const [open, setOpen] = React.useState(false);
     const selected = items.find((i) => i.value === value);
     return (
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="outline" role="combobox" aria-expanded={open} className={cn("w-full justify-between", disabled && "opacity-50 cursor-not-allowed")} disabled={disabled}>
-            {selected ? selected.label : (placeholder || "Select...")}
+          <Button
+            type="button"
+            variant="outline"
+            role="combobox"
+            aria-expanded={open}
+            className={cn(
+              "w-full justify-between",
+              disabled && "opacity-50 cursor-not-allowed",
+            )}
+            disabled={disabled}
+          >
+            {selected ? selected.label : placeholder || "Select..."}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
@@ -291,8 +388,20 @@ export default function CreateClient() {
             <CommandList>
               <CommandGroup>
                 {items.map((item) => (
-                  <CommandItem key={`${item.value}`} value={item.label} onSelect={() => { onChange(item.value); setOpen(false); }}>
-                    <Check className={cn("mr-2 h-4 w-4", item.value === value ? "opacity-100" : "opacity-0")} />
+                  <CommandItem
+                    key={`${item.value}`}
+                    value={item.label}
+                    onSelect={() => {
+                      onChange(item.value);
+                      setOpen(false);
+                    }}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        item.value === value ? "opacity-100" : "opacity-0",
+                      )}
+                    />
                     {item.label}
                   </CommandItem>
                 ))}
@@ -307,12 +416,18 @@ export default function CreateClient() {
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <div className="flex items-center gap-4 mb-6">
-        <Button variant="outline" size="sm" onClick={() => navigate("/clients")}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/clients")}
+        >
           <ArrowLeft className="w-4 h-4 mr-2" /> Back to Clients
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Create Client</h1>
-          <p className="text-gray-600 mt-1">Add a new client with company and contact details</p>
+          <p className="text-gray-600 mt-1">
+            Add a new client with company and contact details
+          </p>
         </div>
       </div>
 
@@ -337,7 +452,13 @@ export default function CreateClient() {
                     <Label>Source *</Label>
                     <Select
                       value={clientInfo.source}
-                      onValueChange={(v) => setClientInfo((p) => ({ ...p, source: v, source_value: "" }))}
+                      onValueChange={(v) =>
+                        setClientInfo((p) => ({
+                          ...p,
+                          source: v,
+                          source_value: "",
+                        }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select source" />
@@ -350,39 +471,83 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {showClientErrors && errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
+                    {showClientErrors && errors.source && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.source}
+                      </p>
+                    )}
                   </div>
-                  {clientInfo.source && (() => {
-                    const src = clientInfo.source;
-                    const meta = (() => {
-                      if (src.startsWith("Email"))
-                        return { label: "Email ID", placeholder: "name@company.com", type: "email" as const };
-                      if (src.startsWith("Call"))
-                        return { label: "Phone Number", placeholder: "+91 98765 43210", type: "tel" as const };
-                      if (src.startsWith("LinkedIn"))
-                        return { label: "LinkedIn Profile URL", placeholder: "https://linkedin.com/in/...", type: "url" as const };
-                      if (src === "Existing Client")
-                        return { label: "Existing Client Name/ID", placeholder: "Enter client name or ID", type: "text" as const };
-                      if (src === "Business Team")
-                        return { label: "Team Member Name", placeholder: "Enter internal team member name", type: "text" as const };
-                      if (src === "Reference")
-                        return { label: "Reference Person", placeholder: "Enter reference person's name or contact", type: "text" as const };
-                      if (src === "General List")
-                        return { label: "List Name/Link", placeholder: "Enter list name or link", type: "text" as const };
-                      return { label: "Source Information", placeholder: "Provide details for the selected source", type: "text" as const };
-                    })();
-                    return (
-                      <div>
-                        <Label>{meta.label}</Label>
-                        <Input
-                          type={meta.type}
-                          value={clientInfo.source_value}
-                          onChange={(e) => setClientInfo((p) => ({ ...p, source_value: e.target.value }))}
-                          placeholder={meta.placeholder}
-                        />
-                      </div>
-                    );
-                  })()}
+                  {clientInfo.source &&
+                    (() => {
+                      const src = clientInfo.source;
+                      const meta = (() => {
+                        if (src.startsWith("Email"))
+                          return {
+                            label: "Email ID",
+                            placeholder: "name@company.com",
+                            type: "email" as const,
+                          };
+                        if (src.startsWith("Call"))
+                          return {
+                            label: "Phone Number",
+                            placeholder: "+91 98765 43210",
+                            type: "tel" as const,
+                          };
+                        if (src.startsWith("LinkedIn"))
+                          return {
+                            label: "LinkedIn Profile URL",
+                            placeholder: "https://linkedin.com/in/...",
+                            type: "url" as const,
+                          };
+                        if (src === "Existing Client")
+                          return {
+                            label: "Existing Client Name/ID",
+                            placeholder: "Enter client name or ID",
+                            type: "text" as const,
+                          };
+                        if (src === "Business Team")
+                          return {
+                            label: "Team Member Name",
+                            placeholder: "Enter internal team member name",
+                            type: "text" as const,
+                          };
+                        if (src === "Reference")
+                          return {
+                            label: "Reference Person",
+                            placeholder:
+                              "Enter reference person's name or contact",
+                            type: "text" as const,
+                          };
+                        if (src === "General List")
+                          return {
+                            label: "List Name/Link",
+                            placeholder: "Enter list name or link",
+                            type: "text" as const,
+                          };
+                        return {
+                          label: "Source Information",
+                          placeholder:
+                            "Provide details for the selected source",
+                          type: "text" as const,
+                        };
+                      })();
+                      return (
+                        <div>
+                          <Label>{meta.label}</Label>
+                          <Input
+                            type={meta.type}
+                            value={clientInfo.source_value}
+                            onChange={(e) =>
+                              setClientInfo((p) => ({
+                                ...p,
+                                source_value: e.target.value,
+                              }))
+                            }
+                            placeholder={meta.placeholder}
+                          />
+                        </div>
+                      );
+                    })()}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -390,16 +555,27 @@ export default function CreateClient() {
                     <Label>Client Name *</Label>
                     <Input
                       value={clientInfo.client_name}
-                      onChange={(e) => setClientInfo((p) => ({ ...p, client_name: e.target.value }))}
+                      onChange={(e) =>
+                        setClientInfo((p) => ({
+                          ...p,
+                          client_name: e.target.value,
+                        }))
+                      }
                       placeholder="Enter client name"
                     />
-                    {showClientErrors && errors.client_name && <p className="text-red-600 text-xs mt-1">{errors.client_name}</p>}
+                    {showClientErrors && errors.client_name && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.client_name}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label>Client Type *</Label>
                     <Select
                       value={clientInfo.client_type}
-                      onValueChange={(v) => setClientInfo((p) => ({ ...p, client_type: v }))}
+                      onValueChange={(v) =>
+                        setClientInfo((p) => ({ ...p, client_type: v }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
@@ -412,7 +588,11 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {showClientErrors && errors.client_type && <p className="text-red-600 text-xs mt-1">{errors.client_type}</p>}
+                    {showClientErrors && errors.client_type && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.client_type}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -421,12 +601,16 @@ export default function CreateClient() {
                   <MultiSelect
                     options={PAYMENT_OFFERINGS}
                     value={clientInfo.payment_offerings}
-                    onChange={(val) => setClientInfo((p) => ({ ...p, payment_offerings: val }))}
+                    onChange={(val) =>
+                      setClientInfo((p) => ({ ...p, payment_offerings: val }))
+                    }
                     placeholder="Select payment offerings"
                     className="mt-1"
                   />
                   {showClientErrors && errors.payment_offerings && (
-                    <p className="text-red-600 text-xs mt-1">{errors.payment_offerings}</p>
+                    <p className="text-red-600 text-xs mt-1">
+                      {errors.payment_offerings}
+                    </p>
                   )}
                 </div>
 
@@ -438,7 +622,12 @@ export default function CreateClient() {
                       <Input
                         className="pl-10"
                         value={clientInfo.website}
-                        onChange={(e) => setClientInfo((p) => ({ ...p, website: e.target.value }))}
+                        onChange={(e) =>
+                          setClientInfo((p) => ({
+                            ...p,
+                            website: e.target.value,
+                          }))
+                        }
                         placeholder="https://example.com"
                       />
                     </div>
@@ -447,7 +636,9 @@ export default function CreateClient() {
                     <Label>Client Geography *</Label>
                     <Select
                       value={clientInfo.geography}
-                      onValueChange={(v) => setClientInfo((p) => ({ ...p, geography: v as any }))}
+                      onValueChange={(v) =>
+                        setClientInfo((p) => ({ ...p, geography: v as any }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select geography" />
@@ -460,7 +651,11 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {showClientErrors && errors.geography && <p className="text-red-600 text-xs mt-1">{errors.geography}</p>}
+                    {showClientErrors && errors.geography && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.geography}
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -469,7 +664,9 @@ export default function CreateClient() {
                     <Label>Txn Volume / per day in million *</Label>
                     <Select
                       value={clientInfo.txn_volume}
-                      onValueChange={(v) => setClientInfo((p) => ({ ...p, txn_volume: v }))}
+                      onValueChange={(v) =>
+                        setClientInfo((p) => ({ ...p, txn_volume: v }))
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select volume" />
@@ -482,17 +679,28 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {showClientErrors && errors.txn_volume && <p className="text-red-600 text-xs mt-1">{errors.txn_volume}</p>}
+                    {showClientErrors && errors.txn_volume && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.txn_volume}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label>Product Tag Info *</Label>
                     <Input
                       value={clientInfo.product_tag_info}
-                      onChange={(e) => setClientInfo((p) => ({ ...p, product_tag_info: e.target.value }))}
+                      onChange={(e) =>
+                        setClientInfo((p) => ({
+                          ...p,
+                          product_tag_info: e.target.value,
+                        }))
+                      }
                       placeholder="Enter product tags"
                     />
                     {showClientErrors && errors.product_tag_info && (
-                      <p className="text-red-600 text-xs mt-1">{errors.product_tag_info}</p>
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.product_tag_info}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -506,14 +714,18 @@ export default function CreateClient() {
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="w-5 h-5" /> Address
                 </CardTitle>
-                <CardDescription>Address is optional, Country/State/City are mandatory</CardDescription>
+                <CardDescription>
+                  Address is optional, Country/State/City are mandatory
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Label>Street Address</Label>
                   <Input
                     value={addressInfo.address}
-                    onChange={(e) => setAddressInfo((p) => ({ ...p, address: e.target.value }))}
+                    onChange={(e) =>
+                      setAddressInfo((p) => ({ ...p, address: e.target.value }))
+                    }
                     placeholder="Building, street, area"
                   />
                 </div>
@@ -523,33 +735,63 @@ export default function CreateClient() {
                     <Label>Country *</Label>
                     <Combobox
                       placeholder="Search country..."
-                      items={countries.map((c) => ({ label: c.name, value: c.name }))}
+                      items={countries.map((c) => ({
+                        label: c.name,
+                        value: c.name,
+                      }))}
                       value={addressInfo.country}
-                      onChange={(v) => setAddressInfo((p) => ({ ...p, country: v, state: "", city: "" }))}
+                      onChange={(v) =>
+                        setAddressInfo((p) => ({
+                          ...p,
+                          country: v,
+                          state: "",
+                          city: "",
+                        }))
+                      }
                     />
-                    {showContactErrors && errors.country && <p className="text-red-600 text-xs mt-1">{errors.country}</p>}
+                    {showContactErrors && errors.country && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.country}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label>State *</Label>
                     <Combobox
                       placeholder="Search state..."
-                      items={states.map((s) => ({ label: s.name, value: s.name }))}
+                      items={states.map((s) => ({
+                        label: s.name,
+                        value: s.name,
+                      }))}
                       value={addressInfo.state}
-                      onChange={(v) => setAddressInfo((p) => ({ ...p, state: v, city: "" }))}
+                      onChange={(v) =>
+                        setAddressInfo((p) => ({ ...p, state: v, city: "" }))
+                      }
                       disabled={!selectedCountry}
                     />
-                    {showContactErrors && errors.state && <p className="text-red-600 text-xs mt-1">{errors.state}</p>}
+                    {showContactErrors && errors.state && (
+                      <p className="text-red-600 text-xs mt-1">
+                        {errors.state}
+                      </p>
+                    )}
                   </div>
                   <div>
                     <Label>City *</Label>
                     <Combobox
                       placeholder="Search city..."
-                      items={uniqueCities.map((ct, idx) => ({ label: ct.name, value: `${ct.name}__${ct.stateCode || ""}-${idx}` }))}
+                      items={uniqueCities.map((ct, idx) => ({
+                        label: ct.name,
+                        value: `${ct.name}__${ct.stateCode || ""}-${idx}`,
+                      }))}
                       value={addressInfo.city}
-                      onChange={(v) => setAddressInfo((p) => ({ ...p, city: v }))}
+                      onChange={(v) =>
+                        setAddressInfo((p) => ({ ...p, city: v }))
+                      }
                       disabled={!selectedCountry}
                     />
-                    {showContactErrors && errors.city && <p className="text-red-600 text-xs mt-1">{errors.city}</p>}
+                    {showContactErrors && errors.city && (
+                      <p className="text-red-600 text-xs mt-1">{errors.city}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -560,7 +802,9 @@ export default function CreateClient() {
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" /> Client Contact Information
                 </CardTitle>
-                <CardDescription>Primary and additional contacts</CardDescription>
+                <CardDescription>
+                  Primary and additional contacts
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 {contacts.map((c, idx) => (
@@ -568,7 +812,12 @@ export default function CreateClient() {
                     <div className="flex items-center justify-between">
                       <Badge variant="secondary">Contact #{idx + 1}</Badge>
                       {contacts.length > 1 && (
-                        <Button type="button" variant="outline" size="sm" onClick={() => removeContact(idx)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeContact(idx)}
+                        >
                           <Minus className="w-4 h-4 mr-1" /> Remove
                         </Button>
                       )}
@@ -578,7 +827,9 @@ export default function CreateClient() {
                         <Label>Contact Name</Label>
                         <Input
                           value={c.contact_name}
-                          onChange={(e) => updateContact(idx, "contact_name", e.target.value)}
+                          onChange={(e) =>
+                            updateContact(idx, "contact_name", e.target.value)
+                          }
                           placeholder="Full name"
                         />
                       </div>
@@ -586,7 +837,9 @@ export default function CreateClient() {
                         <Label>Designation</Label>
                         <Input
                           value={c.designation}
-                          onChange={(e) => updateContact(idx, "designation", e.target.value)}
+                          onChange={(e) =>
+                            updateContact(idx, "designation", e.target.value)
+                          }
                           placeholder="Job title"
                         />
                       </div>
@@ -600,7 +853,9 @@ export default function CreateClient() {
                           <Input
                             className="pl-10"
                             value={c.email}
-                            onChange={(e) => updateContact(idx, "email", e.target.value)}
+                            onChange={(e) =>
+                              updateContact(idx, "email", e.target.value)
+                            }
                             placeholder="name@company.com"
                           />
                         </div>
@@ -610,7 +865,9 @@ export default function CreateClient() {
                         <div className="flex gap-2">
                           <Select
                             value={c.phone_prefix || "+91"}
-                            onValueChange={(v) => updateContact(idx, "phone_prefix", v)}
+                            onValueChange={(v) =>
+                              updateContact(idx, "phone_prefix", v)
+                            }
                           >
                             <SelectTrigger className="w-[140px]">
                               <SelectValue />
@@ -628,7 +885,9 @@ export default function CreateClient() {
                             <Input
                               className="pl-10"
                               value={c.phone}
-                              onChange={(e) => updateContact(idx, "phone", e.target.value)}
+                              onChange={(e) =>
+                                updateContact(idx, "phone", e.target.value)
+                              }
                               placeholder="98765 43210"
                             />
                           </div>
@@ -647,14 +906,28 @@ export default function CreateClient() {
         </Tabs>
 
         <div className="flex items-center justify-between pt-6 border-t">
-          <Button type="button" variant="outline" onClick={() => navigate("/clients")}>Cancel</Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/clients")}
+          >
+            Cancel
+          </Button>
           {activeTab === "client-info" ? (
             <div className="space-x-3">
-              <Button type="button" onClick={handleNext}>Next</Button>
+              <Button type="button" onClick={handleNext}>
+                Next
+              </Button>
             </div>
           ) : (
             <div className="space-x-3">
-              <Button type="button" variant="outline" onClick={() => setActiveTab("client-info")}>Previous</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setActiveTab("client-info")}
+              >
+                Previous
+              </Button>
               <Button type="submit">Submit</Button>
             </div>
           )}
