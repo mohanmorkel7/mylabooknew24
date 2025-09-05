@@ -1334,8 +1334,7 @@ export default function FundRaiseDashboard() {
                                   UI_STATUS_TO_INTERNAL[fr.ui_status || ""] ||
                                   "in-progress";
                                 const pd = (vcProgressData || []).find(
-                                  (p: any) =>
-                                    p.fr_id === fr.id || p.vc_id === fr.vc_id,
+                                  (p: any) => p.fr_id === fr.id,
                                 );
                                 const completedProb =
                                   pd?.total_completed_probability || 0;
