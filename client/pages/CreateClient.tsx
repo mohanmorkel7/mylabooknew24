@@ -315,16 +315,37 @@ export default function CreateClient() {
                     </Select>
                     {errors.source && <p className="text-red-600 text-xs mt-1">{errors.source}</p>}
                   </div>
-                  {clientInfo.source && (
-                    <div>
-                      <Label>Source Information</Label>
-                      <Input
-                        value={clientInfo.source_value}
-                        onChange={(e) => setClientInfo((p) => ({ ...p, source_value: e.target.value }))}
-                        placeholder="Provide link, email, phone or details for the selected source"
-                      />
-                    </div>
-                  )}
+                  {clientInfo.source && (() => {
+                    const src = clientInfo.source;
+                    const meta = (() => {
+                      if (src.startsWith("Email"))
+                        return { label: "Email ID", placeholder: "name@company.com", type: "email" as const };
+                      if (src.startsWith("Call"))
+                        return { label: "Phone Number", placeholder: "+91 98765 43210", type: "tel" as const };
+                      if (src.startsWith("LinkedIn"))
+                        return { label: "LinkedIn Profile URL", placeholder: "https://linkedin.com/in/...", type: "url" as const };
+                      if (src === "Existing Client")
+                        return { label: "Existing Client Name/ID", placeholder: "Enter client name or ID", type: "text" as const };
+                      if (src === "Business Team")
+                        return { label: "Team Member Name", placeholder: "Enter internal team member name", type: "text" as const };
+                      if (src === "Reference")
+                        return { label: "Reference Person", placeholder: "Enter reference person's name or contact", type: "text" as const };
+                      if (src === "General List")
+                        return { label: "List Name/Link", placeholder: "Enter list name or link", type: "text" as const };
+                      return { label: "Source Information", placeholder: "Provide details for the selected source", type: "text" as const };
+                    })();
+                    return (
+                      <div>
+                        <Label>{meta.label}</Label>
+                        <Input
+                          type={meta.type}
+                          value={clientInfo.source_value}
+                          onChange={(e) => setClientInfo((p) => ({ ...p, source_value: e.target.value }))}
+                          placeholder={meta.placeholder}
+                        />
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
