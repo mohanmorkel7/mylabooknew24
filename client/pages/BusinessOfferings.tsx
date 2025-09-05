@@ -136,8 +136,18 @@ export default function BusinessOfferings() {
     return m;
   }, [clients]);
 
-  const domesticA = isDomesticByGeography(clientMap.get(formA.clientId));
-  const domesticB = isDomesticByGeography(clientMap.get(formA.clientId));
+  const { data: freshClient } = useQuery({
+    queryKey: ["client", formA.clientId],
+    queryFn: async () => (formA.clientId ? apiClient.getClient(Number(formA.clientId)) : null),
+    enabled: !!formA.clientId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+  });
+
+  const selectedClient = freshClient || clientMap.get(formA.clientId);
+  const domesticA = isDomesticByGeography(selectedClient);
+  const domesticB = isDomesticByGeography(selectedClient);
 
   const validateA = () => {
     const n: Record<string, string> = {};
