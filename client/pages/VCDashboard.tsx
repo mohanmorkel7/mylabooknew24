@@ -65,7 +65,7 @@ import {
   Activity,
 } from "lucide-react";
 import { formatToIST } from "@/lib/dateUtils";
-import { getSectorLabel } from "@/lib/constants";
+import { getSectorLabel, VC_TYPES } from "@/lib/constants";
 import { toast } from "@/components/ui/use-toast";
 
 const statusColors = {
