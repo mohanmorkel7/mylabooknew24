@@ -396,8 +396,10 @@ export const ValidationSchemas = {
   },
 
   client: {
-    required: ["client_name", "contact_person", "email"],
+    required: ["client_name"],
     optional: [
+      "contact_person",
+      "email",
       "phone",
       "company_size",
       "industry",
