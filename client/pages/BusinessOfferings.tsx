@@ -214,8 +214,43 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     const okA = validateA();
     const okB = validateB();
     if (!okA || !okB) return;
-    toast({ title: "Saved", description: "Business Offerings captured." });
-    navigate("/business-offerings");
+    const currency = domesticA ? "INR" : "USD";
+    const unit = domesticA ? "Lacs" : "K";
+    const payload = {
+      client_id: formA.clientId ? Number(formA.clientId) : null,
+      solution: formA.solution || null,
+      product: formA.product || null,
+      avg_fee_value: formA.avgFee ? Number(formA.avgFee) : null,
+      avg_fee_currency: currency,
+      mmgf_value: formA.mmgf ? Number(formA.mmgf) : null,
+      mmgf_unit: unit,
+      client_status: formB.clientStatus || null,
+      offering_description: formB.offeringDescription || null,
+      current_daily_volume_bucket: formB.currentDailyVolume || null,
+      projected_daily_volume_bucket: formB.projectedDailyVolume || null,
+      potential_mmgf_value: formB.potentialMMGF ? Number(formB.potentialMMGF) : null,
+      potential_mmgf_unit: unit,
+      potential_fee_value: formB.potentialFee ? Number(formB.potentialFee) : null,
+      potential_fee_currency: currency,
+      potential_mrr_lacs: formB.potentialMRR ? Number(formB.potentialMRR) : null,
+      current_potential_arr_usd_mn: formB.currentPotentialARR ? Number(formB.currentPotentialARR) : null,
+      projected_potential_arr_usd_mn: formB.projectedPotentialARR ? Number(formB.projectedPotentialARR) : null,
+      template_id: 6,
+      created_by: user ? Number(user.id) : null,
+      updated_by: user ? Number(user.id) : null,
+    } as any;
+
+    try {
+      if (offeringId) {
+        await apiClient.updateBusinessOffering(offeringId, payload);
+      } else {
+        await apiClient.createBusinessOffering(payload);
+      }
+      toast({ title: "Saved", description: "Business Offerings saved." });
+      navigate("/business-offerings");
+    } catch (e: any) {
+      toast({ title: "Save failed", description: e?.message || "Failed", variant: "destructive" });
+    }
   };
 
   return (
