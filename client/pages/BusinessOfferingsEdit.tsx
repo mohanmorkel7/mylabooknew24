@@ -17,6 +17,5 @@ export default function BusinessOfferingsEdit() {
   if (isLoading) return <div className="p-6">Loading...</div>;
   if (error || !data) return <div className="p-6 text-red-600">Failed to load</div>;
 
-  // Reuse create form by providing initial state via URL state not implemented; keep simple for now
-  return <BusinessOfferings />;
+  return <BusinessOfferings initial={data} offeringId={Number(id)} />;
 }
