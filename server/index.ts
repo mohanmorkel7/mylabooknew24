@@ -29,6 +29,7 @@ import databaseFixRouter from "./routes/database-fix";
 import ssoAuthRouter from "./routes/sso-auth";
 import azureSyncRouter from "./routes/azure-sync";
 import fundRaisesRouter from "./routes/fund-raises";
+import businessOfferingsRouter from "./routes/business-offerings";
 import finopsScheduler from "./services/finopsScheduler";
 
 // Production routes (database-only, no mock fallback)
