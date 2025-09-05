@@ -377,9 +377,7 @@ export default function ClientDetails() {
                     <div className="flex items-center space-x-2">
                       <Phone className="w-4 h-4 text-gray-400" />
                       <span className="font-medium text-gray-600">Phone:</span>
-                      <span className="text-gray-900">
-                        {clientData.phone || "Not provided"}
-                      </span>
+                      <span className="text-gray-900">{phoneDisplay}</span>
                     </div>
                     {clientData.expected_value !== undefined &&
                       clientData.expected_value !== null && (
