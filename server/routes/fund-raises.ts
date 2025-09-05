@@ -52,7 +52,8 @@ router.get("/progress", async (_req: Request, res: Response) => {
               null;
 
             progressData.push({
-              vc_id: fr.vc_id, // for click-through
+              fr_id: fr.fr_id,
+              vc_id: fr.vc_id,
               round_title: fr.round_stage || "Fund Raise",
               investor_name: fr.investor_name,
               status: fr.status || "in-progress",
