@@ -99,7 +99,8 @@ function isDomesticByGeography(client?: any): boolean {
   return String(geography).toLowerCase() === "domestic";
 }
 
-export default function BusinessOfferings() {
+interface Props { initial?: any; offeringId?: number }
+export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("offerings");
 
