@@ -853,7 +853,12 @@ export default function ClientEdit() {
                     ))}
                   </div>
 
-                  <Button type="button" variant="outline" className="mt-3" onClick={addContact}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="mt-3"
+                    onClick={addContact}
+                  >
                     <Plus className="w-4 h-4 mr-1" /> Add Another Contact
                   </Button>
                 </div>
