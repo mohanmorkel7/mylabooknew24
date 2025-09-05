@@ -108,7 +108,51 @@ export default function BusinessOfferingsDashboard() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="text-gray-600">No Business Offerings found.</div>
+          {isLoading ? (
+            <div className="text-gray-600">Loading...</div>
+          ) : error ? (
+            <div className="text-red-600">Failed to load</div>
+          ) : (filtered || []).length === 0 ? (
+            <div className="text-gray-600">No Business Offerings found.</div>
+          ) : (
+            <div className="grid gap-3">
+              {(filtered as any[]).map((o) => (
+                <div
+                  key={o.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/business-offerings/${o.id}`)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") navigate(`/business-offerings/${o.id}`);
+                  }}
+                  className="rounded border p-4 hover:shadow cursor-pointer flex items-start justify-between"
+                >
+                  <div>
+                    <div className="font-medium text-gray-900">{o.product || o.solution || "Offering"}</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      {o.offering_description || "No description"}
+                    </div>
+                    <div className="mt-2 flex gap-2">
+                      {o.solution && <Badge variant="secondary">{o.solution}</Badge>}
+                      {o.product && <Badge variant="outline">{o.product}</Badge>}
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="text-red-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(o.id);
+                    }}
+                    aria-label="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
