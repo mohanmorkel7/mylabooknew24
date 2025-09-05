@@ -239,6 +239,23 @@ export default function ClientEdit() {
     return out;
   }, [JSON.stringify(cities)]);
 
+  // Normalize city value to match options format (e.g., "City" -> "City-STATE") so it shows as selected
+  useEffect(() => {
+    if (!addressInfo.city) return;
+    const optionValues = uniqueCities.map(
+      (c) => `${c.name}${c.stateCode ? `-${c.stateCode}` : ""}`,
+    );
+    const hasExact = optionValues.includes(addressInfo.city);
+    if (!hasExact) {
+      const match = optionValues.find(
+        (opt) => opt.split("-")[0] === addressInfo.city,
+      );
+      if (match) {
+        setAddressInfo((p) => ({ ...p, city: match }));
+      }
+    }
+  }, [addressInfo.city, JSON.stringify(uniqueCities)]);
+
   // Validation
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
