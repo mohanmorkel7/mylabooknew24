@@ -107,6 +107,7 @@ import FundRaiseDashboard from "@/pages/FundRaiseDashboard";
 import CreateFundRaise from "@/pages/CreateFundRaise";
 import FundRaiseDetails from "@/pages/FundRaiseDetails";
 import BusinessOfferings from "@/pages/BusinessOfferings";
+import BusinessOfferingsDashboard from "@/pages/BusinessOfferingsDashboard";
 import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
@@ -679,6 +680,16 @@ function AppRoutes() {
 
       <Route
         path="/business-offerings"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <BusinessOfferingsDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business-offerings/create"
         element={
           <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
             <DashboardLayout>
