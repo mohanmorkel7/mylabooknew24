@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Briefcase, Plus } from "lucide-react";
@@ -17,9 +23,11 @@ export default function BusinessOfferingsDashboard() {
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
             <Briefcase className="w-7 h-7 text-blue-600" /> Business Offerings
           </h1>
-          <p className="text-gray-600 mt-1">Manage business offerings and pipeline</p>
+          <p className="text-gray-600 mt-1">
+            Manage business offerings and pipeline
+          </p>
         </div>
-        <Button onClick={() => navigate("/business-offerings/create")}> 
+        <Button onClick={() => navigate("/business-offerings/create")}>
           <Plus className="w-4 h-4 mr-2" /> Create Sales
         </Button>
       </div>

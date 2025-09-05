@@ -3,16 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { ArrowLeft, Briefcase } from "lucide-react";
 
-function rangeSteps(start: number, end: number, step: number, decimals = 2): string[] {
+function rangeSteps(
+  start: number,
+  end: number,
+  step: number,
+  decimals = 2,
+): string[] {
   const res: string[] = [];
   const scale = Math.pow(10, decimals);
   const s = Math.round(start * scale);
@@ -125,13 +142,17 @@ export default function BusinessOfferings() {
   const validateB = () => {
     const n: Record<string, string> = {};
     if (!formB.clientStatus) n.clientStatus = "Client Status is required";
-    if (!formB.currentDailyVolume) n.currentDailyVolume = "Current Daily Volume is required";
-    if (!formB.projectedDailyVolume) n.projectedDailyVolume = "Projected Daily Volume is required";
+    if (!formB.currentDailyVolume)
+      n.currentDailyVolume = "Current Daily Volume is required";
+    if (!formB.projectedDailyVolume)
+      n.projectedDailyVolume = "Projected Daily Volume is required";
     if (!formB.potentialMMGF) n.potentialMMGF = "Potential MMGF is required";
     if (!formB.potentialFee) n.potentialFee = "Potential Fee is required";
     if (!formB.potentialMRR) n.potentialMRR = "Potential MRR is required";
-    if (!formB.currentPotentialARR) n.currentPotentialARR = "Current Potential ARR is required";
-    if (!formB.projectedPotentialARR) n.projectedPotentialARR = "Projected Potential ARR is required";
+    if (!formB.currentPotentialARR)
+      n.currentPotentialARR = "Current Potential ARR is required";
+    if (!formB.projectedPotentialARR)
+      n.projectedPotentialARR = "Projected Potential ARR is required";
     setErrors((e) => ({ ...e, ...n }));
     if (Object.keys(n).length) setActiveTab("queue");
     return Object.keys(n).length === 0;
@@ -156,7 +177,9 @@ export default function BusinessOfferings() {
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
               <Briefcase className="w-7 h-7 text-blue-600" /> Business Offerings
             </h1>
-            <p className="text-gray-600">Record offerings and client pipeline</p>
+            <p className="text-gray-600">
+              Record offerings and client pipeline
+            </p>
           </div>
         </div>
         <Button onClick={onSubmit}>Save</Button>
@@ -164,7 +187,9 @@ export default function BusinessOfferings() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="offerings">Mylapay Business Offerings</TabsTrigger>
+          <TabsTrigger value="offerings">
+            Mylapay Business Offerings
+          </TabsTrigger>
           <TabsTrigger value="queue">Client Status Queue</TabsTrigger>
         </TabsList>
 
@@ -172,7 +197,9 @@ export default function BusinessOfferings() {
           <Card>
             <CardHeader>
               <CardTitle>Offering Details</CardTitle>
-              <CardDescription>Fill in the required information</CardDescription>
+              <CardDescription>
+                Fill in the required information
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,12 +208,21 @@ export default function BusinessOfferings() {
                   <Select
                     value={formA.clientId}
                     onValueChange={(v) => {
-                      setFormA((p) => ({ ...p, clientId: v, avgFee: "", mmgf: "" }));
+                      setFormA((p) => ({
+                        ...p,
+                        clientId: v,
+                        avgFee: "",
+                        mmgf: "",
+                      }));
                       setErrors((e) => ({ ...e, clientIdA: "" }));
                     }}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={clientsLoading ? "Loading..." : "Select client"} />
+                      <SelectValue
+                        placeholder={
+                          clientsLoading ? "Loading..." : "Select client"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {(clients || []).map((c: any) => (
@@ -197,7 +233,9 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.clientIdA && (
-                    <div className="text-sm text-red-600 mt-1">{errors.clientIdA}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.clientIdA}
+                    </div>
                   )}
                 </div>
 
@@ -222,7 +260,9 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.solution && (
-                    <div className="text-sm text-red-600 mt-1">{errors.solution}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.solution}
+                    </div>
                   )}
                 </div>
 
@@ -247,13 +287,18 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.product && (
-                    <div className="text-sm text-red-600 mt-1">{errors.product}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.product}
+                    </div>
                   )}
                 </div>
 
                 <div>
                   <Label>
-                    {domesticA ? "Avg. Per txn fee INR" : "Avg. Per txn fee USD"} *
+                    {domesticA
+                      ? "Avg. Per txn fee INR"
+                      : "Avg. Per txn fee USD"}{" "}
+                    *
                   </Label>
                   <Select
                     value={formA.avgFee}
@@ -264,23 +309,35 @@ export default function BusinessOfferings() {
                     disabled={!formA.clientId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={formA.clientId ? "Select value" : "Select client first"} />
+                      <SelectValue
+                        placeholder={
+                          formA.clientId
+                            ? "Select value"
+                            : "Select client first"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {(domesticA ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
+                      {(domesticA ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map(
+                        (v) => (
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.avgFee && (
-                    <div className="text-sm text-red-600 mt-1">{errors.avgFee}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.avgFee}
+                    </div>
                   )}
                 </div>
 
                 <div>
-                  <Label>{domesticA ? "MMGF INR in Lacs" : "MMGF USD in K"} *</Label>
+                  <Label>
+                    {domesticA ? "MMGF INR in Lacs" : "MMGF USD in K"} *
+                  </Label>
                   <Select
                     value={formA.mmgf}
                     onValueChange={(v) => {
@@ -290,7 +347,13 @@ export default function BusinessOfferings() {
                     disabled={!formA.clientId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={formA.clientId ? "Select value" : "Select client first"} />
+                      <SelectValue
+                        placeholder={
+                          formA.clientId
+                            ? "Select value"
+                            : "Select client first"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {(domesticA ? INR_MMGF_LACS : USD_MMGF_K).map((v) => (
@@ -301,7 +364,9 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.mmgf && (
-                    <div className="text-sm text-red-600 mt-1">{errors.mmgf}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.mmgf}
+                    </div>
                   )}
                 </div>
               </div>
@@ -313,11 +378,12 @@ export default function BusinessOfferings() {
           <Card>
             <CardHeader>
               <CardTitle>Client Status Queue</CardTitle>
-              <CardDescription>Capture client pipeline and projections</CardDescription>
+              <CardDescription>
+                Capture client pipeline and projections
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
                 <div>
                   <Label>Client Status *</Label>
                   <Select
@@ -345,7 +411,9 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.clientStatus && (
-                    <div className="text-sm text-red-600 mt-1">{errors.clientStatus}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.clientStatus}
+                    </div>
                   )}
                 </div>
 
@@ -353,7 +421,12 @@ export default function BusinessOfferings() {
                   <Label>Offering Description</Label>
                   <Textarea
                     value={formB.offeringDescription}
-                    onChange={(e) => setFormB((p) => ({ ...p, offeringDescription: e.target.value }))}
+                    onChange={(e) =>
+                      setFormB((p) => ({
+                        ...p,
+                        offeringDescription: e.target.value,
+                      }))
+                    }
                     placeholder="Describe the offering"
                   />
                 </div>
@@ -379,7 +452,9 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.currentDailyVolume && (
-                    <div className="text-sm text-red-600 mt-1">{errors.currentDailyVolume}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.currentDailyVolume}
+                    </div>
                   )}
                 </div>
 
@@ -404,13 +479,18 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.projectedDailyVolume && (
-                    <div className="text-sm text-red-600 mt-1">{errors.projectedDailyVolume}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.projectedDailyVolume}
+                    </div>
                   )}
                 </div>
 
                 <div>
                   <Label>
-                    {domesticB ? "Potential MMGF INR in Lacs" : "Potential MMGF USD in K"} *
+                    {domesticB
+                      ? "Potential MMGF INR in Lacs"
+                      : "Potential MMGF USD in K"}{" "}
+                    *
                   </Label>
                   <Select
                     value={formB.potentialMMGF}
@@ -421,7 +501,13 @@ export default function BusinessOfferings() {
                     disabled={!formA.clientId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={formA.clientId ? "Select value" : "Select client in Offering Details"} />
+                      <SelectValue
+                        placeholder={
+                          formA.clientId
+                            ? "Select value"
+                            : "Select client in Offering Details"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {(domesticB ? INR_MMGF_LACS : USD_MMGF_K).map((v) => (
@@ -432,13 +518,18 @@ export default function BusinessOfferings() {
                     </SelectContent>
                   </Select>
                   {errors.potentialMMGF && (
-                    <div className="text-sm text-red-600 mt-1">{errors.potentialMMGF}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.potentialMMGF}
+                    </div>
                   )}
                 </div>
 
                 <div>
                   <Label>
-                    {domesticB ? "Potential Fee per Txn INR" : "Potential Fee per Txn USD"} *
+                    {domesticB
+                      ? "Potential Fee per Txn INR"
+                      : "Potential Fee per Txn USD"}{" "}
+                    *
                   </Label>
                   <Select
                     value={formB.potentialFee}
@@ -449,18 +540,28 @@ export default function BusinessOfferings() {
                     disabled={!formA.clientId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={formA.clientId ? "Select value" : "Select client in Offering Details"} />
+                      <SelectValue
+                        placeholder={
+                          formA.clientId
+                            ? "Select value"
+                            : "Select client in Offering Details"
+                        }
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      {(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => (
-                        <SelectItem key={v} value={v}>
-                          {v}
-                        </SelectItem>
-                      ))}
+                      {(domesticB ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map(
+                        (v) => (
+                          <SelectItem key={v} value={v}>
+                            {v}
+                          </SelectItem>
+                        ),
+                      )}
                     </SelectContent>
                   </Select>
                   {errors.potentialFee && (
-                    <div className="text-sm text-red-600 mt-1">{errors.potentialFee}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.potentialFee}
+                    </div>
                   )}
                 </div>
 
@@ -477,7 +578,9 @@ export default function BusinessOfferings() {
                     placeholder="e.g., 1.25"
                   />
                   {errors.potentialMRR && (
-                    <div className="text-sm text-red-600 mt-1">{errors.potentialMRR}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.potentialMRR}
+                    </div>
                   )}
                 </div>
 
@@ -488,30 +591,42 @@ export default function BusinessOfferings() {
                     step="0.01"
                     value={formB.currentPotentialARR}
                     onChange={(e) => {
-                      setFormB((p) => ({ ...p, currentPotentialARR: e.target.value }));
+                      setFormB((p) => ({
+                        ...p,
+                        currentPotentialARR: e.target.value,
+                      }));
                       setErrors((er) => ({ ...er, currentPotentialARR: "" }));
                     }}
                     placeholder="e.g., 0.50"
                   />
                   {errors.currentPotentialARR && (
-                    <div className="text-sm text-red-600 mt-1">{errors.currentPotentialARR}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.currentPotentialARR}
+                    </div>
                   )}
                 </div>
 
                 <div>
-                  <Label>Projected Potential ARR (USD Mn) - next 2 years *</Label>
+                  <Label>
+                    Projected Potential ARR (USD Mn) - next 2 years *
+                  </Label>
                   <Input
                     type="number"
                     step="0.01"
                     value={formB.projectedPotentialARR}
                     onChange={(e) => {
-                      setFormB((p) => ({ ...p, projectedPotentialARR: e.target.value }));
+                      setFormB((p) => ({
+                        ...p,
+                        projectedPotentialARR: e.target.value,
+                      }));
                       setErrors((er) => ({ ...er, projectedPotentialARR: "" }));
                     }}
                     placeholder="e.g., 1.00"
                   />
                   {errors.projectedPotentialARR && (
-                    <div className="text-sm text-red-600 mt-1">{errors.projectedPotentialARR}</div>
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.projectedPotentialARR}
+                    </div>
                   )}
                 </div>
               </div>
