@@ -105,7 +105,6 @@ export default function FundRaiseDashboard() {
     queryKey: ["vcs", statusFilter, categoryFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (statusFilter !== "all") params.append("status", statusFilter);
       if (categoryFilter !== "all")
         params.append("investor_category", categoryFilter);
       const queryString = params.toString();
