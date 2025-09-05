@@ -581,47 +581,6 @@ export default function VCDetails() {
 
         {/* Right Column - Quick Actions & Info */}
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>VC Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="text-center">
-                <div className="text-sm text-gray-500">
-                  {completionPercentage}% complete
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-2 text-sm">
-                {vcData.start_date && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Started:</span>
-                    <span className="text-gray-900">
-                      {new Date(vcData.start_date).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                {vcData.targeted_end_date && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Target Close:</span>
-                    <span className="text-gray-900">
-                      {new Date(vcData.targeted_end_date).toLocaleDateString()}
-                    </span>
-                  </div>
-                )}
-                {vcData.potential_lead_investor !== undefined && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Lead Investor:</span>
-                    <span className="text-gray-900">
-                      {vcData.potential_lead_investor ? "Yes" : "No"}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
 
           <Card>
             <CardHeader>
