@@ -160,6 +160,12 @@ export default function FundRaiseDashboard() {
 
   const filteredFundRaises = (fundRaises || [])
     .filter((fr: any) => {
+      // Status filter using UI values mapped to internal
+      if (statusFilter !== "all") {
+        const internalStatus = fr.status || UI_STATUS_TO_INTERNAL[fr.ui_status || ""] || "in-progress";
+        const targetInternal = UI_STATUS_TO_INTERNAL[statusFilter] || statusFilter.toLowerCase();
+        if (internalStatus !== targetInternal) return false;
+      }
       if (!searchTerm) return true;
       const s = searchTerm.toLowerCase();
       return (
@@ -419,10 +425,9 @@ export default function FundRaiseDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="in-progress">In Progress</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="WIP">WIP</SelectItem>
+                  <SelectItem value="Closed">Closed</SelectItem>
+                  <SelectItem value="Dropped">Dropped</SelectItem>
                 </SelectContent>
               </Select>
 
