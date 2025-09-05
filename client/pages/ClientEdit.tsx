@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useClient } from "@/hooks/useApi";
+import { useClient, useUpdateClient } from "@/hooks/useApi";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "@/components/ui/use-toast";
 import {
   ArrowLeft,
   Save,
@@ -42,6 +43,7 @@ export default function ClientEdit() {
     isLoading,
     error,
   } = useClient(parseInt(id || "0"));
+  const updateMutation = useUpdateClient();
 
   const [client, setClient] = useState({
     client_name: "",
@@ -98,15 +100,38 @@ export default function ClientEdit() {
   };
 
   const handleSave = async () => {
+    if (!id) return;
     setSaving(true);
     try {
-      // Here you would make an API call to update the client
-      console.log("Saving client:", client);
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      const payload: any = {
+        client_name: client.client_name.trim(),
+        contact_person: client.contact_person.trim(),
+        email: client.email.trim(),
+        phone: client.phone || undefined,
+        status: client.status as any,
+        priority: client.priority as any,
+        industry: client.industry || undefined,
+        company_size: client.company_size || undefined,
+        expected_value:
+          client.expected_value !== "" && client.expected_value !== null
+            ? Number(client.expected_value)
+            : undefined,
+        start_date: client.start_date || undefined,
+        address: client.address || undefined,
+        city: client.city || undefined,
+        state: client.state || undefined,
+        zip_code: client.zip_code || undefined,
+        country: client.country || undefined,
+        notes: client.notes || undefined,
+      };
+
+      await updateMutation.mutateAsync({ id: parseInt(id), clientData: payload });
       setHasChanges(false);
+      toast({ title: "Client updated", description: "Changes saved successfully" });
       navigate(`/sales/client/${id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to save client:", error);
+      toast({ title: "Update failed", description: error?.message || "Unable to update client", variant: "destructive" });
     } finally {
       setSaving(false);
     }
