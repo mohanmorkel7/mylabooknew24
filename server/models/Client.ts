@@ -112,8 +112,8 @@ export class ClientRepository {
 
     const values = [
       clientData.client_name,
-      clientData.contact_person || null,
-      clientData.email || null,
+      clientData.contact_person || "",
+      clientData.email || "",
       clientData.phone || null,
       clientData.company_size || null,
       clientData.industry || null,
