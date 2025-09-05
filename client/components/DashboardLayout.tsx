@@ -29,6 +29,7 @@ import {
   Megaphone,
   HandCoins,
   Building,
+  Briefcase,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api";
