@@ -461,6 +461,21 @@ export async function initializeDatabase() {
       );
     }
 
+    // Business Offer Steps table migration
+    try {
+      const boStepsPath = path.join(__dirname, "create-business-offer-steps.sql");
+      if (fs.existsSync(boStepsPath)) {
+        const sql = fs.readFileSync(boStepsPath, "utf8");
+        await client.query(sql);
+        console.log("Business Offer Steps table migration applied successfully");
+      }
+    } catch (boStepsErr) {
+      console.log(
+        "Business Offer Steps table migration already applied or error:",
+        (boStepsErr as any).message,
+      );
+    }
+
     // Extend fund_raises with all fields
     try {
       const fundRaisesAlterPath = path.join(
