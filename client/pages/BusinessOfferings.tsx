@@ -138,7 +138,8 @@ export default function BusinessOfferings() {
 
   const { data: freshClient } = useQuery({
     queryKey: ["client", formA.clientId],
-    queryFn: async () => (formA.clientId ? apiClient.getClient(Number(formA.clientId)) : null),
+    queryFn: async () =>
+      formA.clientId ? apiClient.getClient(Number(formA.clientId)) : null,
     enabled: !!formA.clientId,
     staleTime: 0,
     refetchOnWindowFocus: false,
