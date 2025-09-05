@@ -40,6 +40,7 @@ export default function ClientDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const openClient = (id: number) => navigate(`/sales/client/${id}`);
 
   // Fetch Clients
   const {
@@ -260,7 +261,16 @@ export default function ClientDashboard() {
                 return (
                   <div
                     key={c.id}
-                    className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => openClient(c.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openClient(c.id);
+                      }
+                    }}
+                    className="rounded-xl border border-gray-200 bg-white p-5 hover:shadow-lg transition-shadow cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -310,6 +320,8 @@ export default function ClientDashboard() {
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="text-blue-600 hover:underline font-medium"
+                                  onClick={(e) => e.stopPropagation()}
+                                  onKeyDown={(e) => e.stopPropagation()}
                                 >
                                   Website
                                 </a>
