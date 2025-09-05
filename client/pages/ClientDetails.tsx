@@ -270,6 +270,15 @@ export default function ClientDetails() {
   }
 
   const clientData = client as any;
+  const meta = (() => {
+    if (!clientData?.notes) return {} as any;
+    try {
+      const obj = JSON.parse(clientData.notes);
+      return obj && typeof obj === "object" ? obj : ({} as any);
+    } catch {
+      return {} as any;
+    }
+  })();
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -284,16 +293,10 @@ export default function ClientDetails() {
             <h1 className="text-2xl font-bold text-gray-900">
               {clientData.client_name}
             </h1>
-            <p className="text-gray-600 mt-1">
-              Client Details & Custom Onboarding Workflow
-            </p>
+            <p className="text-gray-600 mt-1">Client Overview</p>
           </div>
         </div>
         <div className="flex space-x-3">
-          <Button variant="outline" onClick={handleAddFollowUp}>
-            <Calendar className="w-4 h-4 mr-2" />
-            Add Follow-up
-          </Button>
           <Button onClick={handleEdit}>
             <Edit className="w-4 h-4 mr-2" />
             Edit Client
@@ -435,20 +438,6 @@ export default function ClientDetails() {
                 </>
               )}
 
-              {clientData.notes && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <FileText className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">Notes:</span>
-                    </div>
-                    <div className="pl-6 text-gray-900 whitespace-pre-wrap">
-                      {clientData.notes}
-                    </div>
-                  </div>
-                </>
-              )}
             </CardContent>
           </Card>
 
@@ -579,7 +568,7 @@ export default function ClientDetails() {
           </Card>
         </div>
 
-        {/* Right Column - Follow-up Tracker */}
+        {/* Right Column */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
