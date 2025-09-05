@@ -387,33 +387,16 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                       : "Avg. Per txn fee USD"}{" "}
                     *
                   </Label>
-                  <Select
+                  <Combobox
+                    items={(domesticA ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map((v) => ({ label: v, value: v }))}
                     value={formA.avgFee}
-                    onValueChange={(v) => {
+                    onChange={(v) => {
                       setFormA((p) => ({ ...p, avgFee: v }));
                       setErrors((e) => ({ ...e, avgFee: "" }));
                     }}
+                    placeholder={formA.clientId ? "Search or select" : "Select client first"}
                     disabled={!formA.clientId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          formA.clientId
-                            ? "Select value"
-                            : "Select client first"
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(domesticA ? INR_FEE_OPTIONS : USD_FEE_OPTIONS).map(
-                        (v) => (
-                          <SelectItem key={v} value={v}>
-                            {v}
-                          </SelectItem>
-                        ),
-                      )}
-                    </SelectContent>
-                  </Select>
+                  />
                   {errors.avgFee && (
                     <div className="text-sm text-red-600 mt-1">
                       {errors.avgFee}
