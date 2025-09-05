@@ -127,6 +127,18 @@ export default function CreateClient() {
       ? City.getCitiesOfState(selectedCountry.isoCode, selectedState.isoCode)
       : City.getCitiesOfCountry(selectedCountry.isoCode)
     : [];
+  const uniqueCities = React.useMemo(() => {
+    const seen = new Set<string>();
+    const out: { name: string; stateCode?: string }[] = [];
+    for (const ct of cities as any[]) {
+      const val = `${ct.name}__${ct.stateCode || ""}`;
+      if (!seen.has(val)) {
+        seen.add(val);
+        out.push({ name: ct.name, stateCode: ct.stateCode });
+      }
+    }
+    return out;
+  }, [JSON.stringify(cities)]);
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
