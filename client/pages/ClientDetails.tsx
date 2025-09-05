@@ -343,22 +343,18 @@ export default function ClientDetails() {
                           clientData.priority.slice(1)}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Industry:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.industry || "Not specified"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-medium text-gray-600">
-                        Company Size:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.company_size || "Not specified"}
-                      </span>
-                    </div>
+                    {clientData.industry && (
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-gray-600">Industry:</span>
+                        <span className="text-gray-900">{clientData.industry}</span>
+                      </div>
+                    )}
+                    {clientData.company_size && (
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-gray-600">Company Size:</span>
+                        <span className="text-gray-900">{clientData.company_size}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -390,53 +386,23 @@ export default function ClientDetails() {
                         {clientData.phone || "Not provided"}
                       </span>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <DollarSign className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Expected Value:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.expected_value
-                          ? `$${clientData.expected_value.toLocaleString()}`
-                          : "Not specified"}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Start Date:
-                      </span>
-                      <span className="text-gray-900">
-                        {clientData.start_date
-                          ? new Date(clientData.start_date).toLocaleDateString()
-                          : "Not set"}
-                      </span>
-                    </div>
+                    {clientData.expected_value !== undefined && clientData.expected_value !== null && (
+                      <div className="flex items-center space-x-2">
+                        <DollarSign className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium text-gray-600">Expected Value:</span>
+                        <span className="text-gray-900">{`$${Number(clientData.expected_value).toLocaleString()}`}</span>
+                      </div>
+                    )}
+                    {clientData.start_date && (
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium text-gray-600">Start Date:</span>
+                        <span className="text-gray-900">{new Date(clientData.start_date).toLocaleDateString()}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-
-              {clientData.address && (
-                <>
-                  <Separator />
-                  <div>
-                    <div className="flex items-center space-x-2 mb-2">
-                      <MapPin className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium text-gray-600">
-                        Address:
-                      </span>
-                    </div>
-                    <div className="pl-6 text-gray-900">
-                      <div>{clientData.address}</div>
-                      <div>
-                        {clientData.city}, {clientData.state}{" "}
-                        {clientData.zip_code}
-                      </div>
-                      <div>{clientData.country}</div>
-                    </div>
-                  </div>
-                </>
-              )}
 
               <Separator />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
@@ -520,6 +486,24 @@ export default function ClientDetails() {
                     </div>
                   </div>
                 )}
+              {clientData.address && (
+                <>
+                  <Separator className="mt-4" />
+                  <div className="mt-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium text-gray-600">Address:</span>
+                    </div>
+                    <div className="pl-6 text-gray-900">
+                      <div>{clientData.address}</div>
+                      <div>
+                        {clientData.city}{clientData.state ? `, ${clientData.state}` : ""} {clientData.zip_code || ""}
+                      </div>
+                      <div>{clientData.country}</div>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -584,26 +568,13 @@ export default function ClientDetails() {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button className="w-full justify-start" variant="outline">
+              <Button className="w-full justify-start" variant="outline" onClick={() => (window.location.href = `mailto:${clientData.email}`)}>
                 <Mail className="w-4 h-4 mr-2" />
                 Send Email
               </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Calendar className="w-4 h-4 mr-2" />
-                Schedule Meeting
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <FileText className="w-4 h-4 mr-2" />
-                Generate Report
-              </Button>
-              <Button className="w-full justify-start" variant="outline">
-                <Building className="w-4 h-4 mr-2" />
-                View Company Profile
-              </Button>
-              <Separator />
-              <Button className="w-full justify-start" variant="outline">
-                <Settings className="w-4 h-4 mr-2" />
-                Workflow Settings
+              <Button className="w-full justify-start" variant="outline" onClick={() => clientData.phone && (window.location.href = `tel:${clientData.phone}`)} disabled={!clientData.phone}>
+                <Phone className="w-4 h-4 mr-2" />
+                Call Phone
               </Button>
             </CardContent>
           </Card>
