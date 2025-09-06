@@ -1074,15 +1074,6 @@ export default function FundRaiseDashboard() {
                                   {s}: {c}
                                 </Badge>
                               ))}
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-50 text-blue-700"
-                              >
-                                Total Fund Raise : $
-                                {Number.isFinite(totalFund)
-                                  ? totalFund.toFixed(3)
-                                  : "0.000"}
-                              </Badge>
                             </div>
 
                             <div className="space-y-2">
