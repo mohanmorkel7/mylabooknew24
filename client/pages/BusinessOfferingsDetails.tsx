@@ -28,8 +28,14 @@ export default function BusinessOfferingsDetails() {
   const boId = Number(id);
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const focusFollowUpId = ((location.state as any)?.focusFollowUpId ?? (searchParams.get("focusFollowUpId") ? Number(searchParams.get("focusFollowUpId")) : undefined)) as number | undefined;
-  const focusStepId = ((location.state as any)?.focusStepId ?? (searchParams.get("focusStepId") ? Number(searchParams.get("focusStepId")) : undefined)) as number | undefined;
+  const focusFollowUpId = ((location.state as any)?.focusFollowUpId ??
+    (searchParams.get("focusFollowUpId")
+      ? Number(searchParams.get("focusFollowUpId"))
+      : undefined)) as number | undefined;
+  const focusStepId = ((location.state as any)?.focusStepId ??
+    (searchParams.get("focusStepId")
+      ? Number(searchParams.get("focusStepId"))
+      : undefined)) as number | undefined;
 
   const {
     data: offering,

@@ -1234,8 +1234,12 @@ export default function FollowUpTracker() {
                                     (followUp as any).message_id ||
                                     (followUp as any).step_id;
                                   const params = new URLSearchParams();
-                                  if (stepId) params.set("focusStepId", String(stepId));
-                                  params.set("focusFollowUpId", String(followUp.id));
+                                  if (stepId)
+                                    params.set("focusStepId", String(stepId));
+                                  params.set(
+                                    "focusFollowUpId",
+                                    String(followUp.id),
+                                  );
                                   navigate(
                                     `/business-offerings/${businessOfferingId}?${params.toString()}`,
                                     {
