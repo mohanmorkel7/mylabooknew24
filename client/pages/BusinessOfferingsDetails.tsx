@@ -152,68 +152,6 @@ export default function BusinessOfferingsDetails() {
               </div>
             </div>
 
-            {(() => {
-              if ((steps || []).length === 0) return null;
-              let totalCompletedProbability = 0;
-              let totalStepProbability = 0;
-              (steps as any[]).forEach((s: any) => {
-                const prob = parseFloat(s.probability_percent) || 0;
-                totalStepProbability += prob;
-                if (s.status === "completed") totalCompletedProbability += prob;
-              });
-              const completionPercentage = totalStepProbability
-                ? Math.min(100, Math.round(totalCompletedProbability))
-                : (() => {
-                    const completedCount = (steps as any[]).filter(
-                      (s: any) => s.status === "completed",
-                    ).length;
-                    const inProgressCount = (steps as any[]).filter(
-                      (s: any) => s.status === "in_progress",
-                    ).length;
-                    const total = (steps as any[]).length;
-                    return total
-                      ? Math.round(
-                          ((completedCount + inProgressCount * 0.5) / total) *
-                            100,
-                        )
-                      : 0;
-                  })();
-              return (
-                <div className="mt-4">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 max-w-sm">
-                      <div className="w-full bg-gray-200 rounded-full h-3 relative">
-                        <div
-                          className={`h-3 rounded-full transition-all duration-500 ${
-                            completionPercentage === 100
-                              ? "bg-green-500"
-                              : completionPercentage >= 75
-                                ? "bg-blue-500"
-                                : completionPercentage >= 50
-                                  ? "bg-yellow-500"
-                                  : completionPercentage >= 25
-                                    ? "bg-orange-500"
-                                    : "bg-red-500"
-                          }`}
-                          style={{ width: `${completionPercentage}%` }}
-                        />
-                      </div>
-                    </div>
-                    <div className="text-sm font-bold text-blue-600 min-w-[48px] text-right">
-                      {completionPercentage}%
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {
-                      (steps as any[]).filter(
-                        (s: any) => s.status === "completed",
-                      ).length
-                    }{" "}
-                    of {(steps as any[]).length} steps
-                  </div>
-                </div>
-              );
-            })()}
           </CardContent>
         </Card>
 
