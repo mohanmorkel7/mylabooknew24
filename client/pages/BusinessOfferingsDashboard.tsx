@@ -229,6 +229,140 @@ export default function BusinessOfferingsDashboard() {
         </CardContent>
       </Card>
 
+      {/* Products wise accordion */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Products</CardTitle>
+          <CardDescription>Group by product with counts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const groups: Record<string, any[]> = {};
+            const source = (filtered as any[]).length
+              ? (filtered as any[])
+              : ((data as any[]) || []);
+            source.forEach((o: any) => {
+              const key = o.product || "Unknown";
+              if (!groups[key]) groups[key] = [];
+              groups[key].push(o);
+            });
+            const keys = Object.keys(groups).sort();
+            if (keys.length === 0)
+              return <div className="text-gray-600">No entries</div>;
+            return (
+              <Accordion type="single" collapsible className="w-full">
+                {keys.map((k) => {
+                  const list = groups[k] || [];
+                  return (
+                    <AccordionItem key={k} value={k}>
+                      <AccordionTrigger>
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">{k}</span>
+                          <Badge variant="secondary">{list.length}</Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2">
+                          {list.map((o: any) => {
+                            const percent = progressMap[o.id] || 0;
+                            const client = getClientForOffering(o);
+                            return (
+                              <div
+                                key={o.id}
+                                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:shadow-sm"
+                                onClick={() => navigate(`/business-offerings/${o.id}`)}
+                              >
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="font-medium text-gray-900">
+                                      {o.product || o.solution || "Offering"}
+                                    </div>
+                                    {o.client_status && (
+                                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                        {o.client_status}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-600 mb-2">
+                                    <div>
+                                      <span className="font-medium">Client:</span> {client?.client_name || "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Industry:</span> {client?.industry || "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Contact:</span> {client?.contact_person || "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Location:</span> {client?.city || client?.country || "-"}
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                                    <div>
+                                      <span className="font-medium">MRR:</span> {o.potential_mrr_lacs ? `${o.potential_mrr_lacs} Lacs` : "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">ARR:</span> {o.current_potential_arr_usd_mn ? `$${o.current_potential_arr_usd_mn}Mn` : "-"}
+                                    </div>
+                                  </div>
+
+                                  {o.offering_description && (
+                                    <div className="text-xs text-gray-500 mt-2 line-clamp-2">
+                                      {o.offering_description}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <div className="hidden md:flex items-center gap-3 ml-4">
+                                  <div className="w-32 bg-gray-200 rounded h-2">
+                                    <div
+                                      className={`${percent >= 100 ? "bg-green-500" : percent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
+                                      style={{ width: `${percent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-700 font-medium w-8 text-right">{percent}%</span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(o.id);
+                                    }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </div>
+
+                                <div className="md:hidden ml-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleDelete(o.id);
+                                    }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
       {/* Follow-up Status Cards for Business Offerings */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {(() => {
