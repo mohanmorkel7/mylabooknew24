@@ -8,7 +8,7 @@ export interface FollowUpStatusChangeData {
   userName: string;
   followUpTitle?: string;
   isVC?: boolean;
-  stepApiBase?: "vc" | "fund-raises" | "leads";
+  stepApiBase?: "vc" | "fund-raises" | "leads" | "business-offerings";
 }
 
 /**
