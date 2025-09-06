@@ -31,6 +31,8 @@ router.post("/", async (req: Request, res: Response) => {
       step_id,
       vc_id,
       vc_step_id,
+      business_offering_id,
+      business_offering_step_id,
       title,
       description,
       due_date,
