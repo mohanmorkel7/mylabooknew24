@@ -147,7 +147,7 @@ export default function BusinessOfferingsDashboard() {
       <Card>
         <CardHeader className="gap-2">
           <CardTitle>Offerings</CardTitle>
-          <CardDescription>Search and browse entries</CardDescription>
+          <CardDescription>Search your offerings (see product-wise list below)</CardDescription>
           <div className="flex gap-3 items-end w-full">
             <div className="flex-1">
               <Label className="text-sm">Search</Label>
@@ -167,61 +167,7 @@ export default function BusinessOfferingsDashboard() {
           ) : (filtered || []).length === 0 ? (
             <div className="text-gray-600">No Business Offerings found.</div>
           ) : (
-            <div className="grid gap-3">
-              {(filtered as any[]).map((o) => (
-                <div
-                  key={o.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => navigate(`/business-offerings/${o.id}`)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ")
-                      navigate(`/business-offerings/${o.id}`);
-                  }}
-                  className="rounded border p-4 hover:shadow cursor-pointer flex items-start justify-between"
-                >
-                  <div>
-                    <div className="font-medium text-gray-900">
-                      {o.product || o.solution || "Offering"}
-                    </div>
-                    <div className="text-sm text-gray-600 mt-1">
-                      {o.offering_description || "No description"}
-                    </div>
-                    <div className="mt-2 flex gap-2">
-                      {o.solution && (
-                        <Badge variant="secondary">{o.solution}</Badge>
-                      )}
-                      {o.product && (
-                        <Badge variant="outline">{o.product}</Badge>
-                      )}
-                    </div>
-                  </div>
-                  <div className="hidden md:flex items-center gap-3">
-                    <div className="w-32 bg-gray-200 rounded h-2">
-                      <div
-                        className={`${(progressMap[o.id] || 0) >= 100 ? "bg-green-500" : (progressMap[o.id] || 0) >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
-                        style={{ width: `${progressMap[o.id] || 0}%` }}
-                      />
-                    </div>
-                    <span className="text-xs text-gray-700 font-medium w-8 text-right">
-                      {progressMap[o.id] || 0}%
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      className="text-red-600"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(o.id);
-                      }}
-                      aria-label="Delete"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <div className="text-gray-500 text-sm">Use the Products accordion below to browse.</div>
           )}
         </CardContent>
       </Card>
