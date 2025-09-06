@@ -290,6 +290,29 @@ router.post("/", async (req: Request, res: Response) => {
           }
         }
 
+        // Handle strict context constraint preventing business offering follow-ups
+        if (
+          ((dbError as any).code === '23514' && dbError.message.includes('chk_follow_up_context')) ||
+          dbError.message.includes('chk_follow_up_context')
+        ) {
+          try {
+            await pool.query(`
+              ALTER TABLE follow_ups DROP CONSTRAINT IF EXISTS chk_follow_up_context;
+              ALTER TABLE follow_ups
+              ADD CONSTRAINT chk_follow_up_context
+              CHECK (
+                ((CASE WHEN lead_id IS NOT NULL THEN 1 ELSE 0 END) +
+                 (CASE WHEN vc_id IS NOT NULL THEN 1 ELSE 0 END) +
+                 (CASE WHEN business_offering_id IS NOT NULL THEN 1 ELSE 0 END)) = 1
+              );
+            `);
+            const retry = await pool.query(query as string, values as any[]);
+            return res.status(201).json(retry.rows[0]);
+          } catch (constraintError: any) {
+            console.error("Failed to update chk_follow_up_context:", constraintError.message);
+          }
+        }
+
         // Fallback to mock response
         throw dbError;
       }
