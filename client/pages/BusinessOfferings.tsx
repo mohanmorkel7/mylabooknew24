@@ -865,16 +865,37 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                       100,000
                     </div>
                     <div>
-                      <span className="font-medium">MRR (from field, INR Lacs):</span> {isNaN(calcDetails.mrrLacsField) ? "0.00" : calcDetails.mrrLacsField.toFixed(2)}
+                      <span className="font-medium">
+                        MRR (from field, INR Lacs):
+                      </span>{" "}
+                      {isNaN(calcDetails.mrrLacsField)
+                        ? "0.00"
+                        : calcDetails.mrrLacsField.toFixed(2)}
                     </div>
                     <div>
-                      <span className="font-medium">ARR Step 1 (INR Mn/mo):</span> {calcDetails.arrInrMnPerMonth.toFixed(2)} = {isNaN(calcDetails.mrrLacsField) ? "0.00" : calcDetails.mrrLacsField.toFixed(2)} / 10
+                      <span className="font-medium">
+                        ARR Step 1 (INR Mn/mo):
+                      </span>{" "}
+                      {calcDetails.arrInrMnPerMonth.toFixed(2)} ={" "}
+                      {isNaN(calcDetails.mrrLacsField)
+                        ? "0.00"
+                        : calcDetails.mrrLacsField.toFixed(2)}{" "}
+                      / 10
                     </div>
                     <div>
-                      <span className="font-medium">ARR Step 2 (INR Mn/yr):</span> {calcDetails.arrInrMnPerYear.toFixed(2)} = {calcDetails.arrInrMnPerMonth.toFixed(2)} * 12
+                      <span className="font-medium">
+                        ARR Step 2 (INR Mn/yr):
+                      </span>{" "}
+                      {calcDetails.arrInrMnPerYear.toFixed(2)} ={" "}
+                      {calcDetails.arrInrMnPerMonth.toFixed(2)} * 12
                     </div>
                     <div>
-                      <span className="font-medium">ARR Step 3 (USD Mn/yr):</span> {calcDetails.arrUsdMn.toFixed(3)} = {calcDetails.arrInrMnPerYear.toFixed(2)} / {calcDetails.usdRate}
+                      <span className="font-medium">
+                        ARR Step 3 (USD Mn/yr):
+                      </span>{" "}
+                      {calcDetails.arrUsdMn.toFixed(3)} ={" "}
+                      {calcDetails.arrInrMnPerYear.toFixed(2)} /{" "}
+                      {calcDetails.usdRate}
                     </div>
                   </div>
                 </div>
