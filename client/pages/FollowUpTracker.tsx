@@ -1228,11 +1228,16 @@ export default function FollowUpTracker() {
                                 const businessOfferingId = (followUp as any)
                                   .business_offering_id;
                                 if (businessOfferingId) {
+                                  const stepId =
+                                    (followUp as any).business_offering_step_id ||
+                                    (followUp as any).message_id ||
+                                    (followUp as any).step_id;
                                   navigate(
                                     `/business-offerings/${businessOfferingId}`,
                                     {
                                       state: {
                                         focusFollowUpId: followUp.id,
+                                        focusStepId: stepId,
                                       },
                                     },
                                   );
