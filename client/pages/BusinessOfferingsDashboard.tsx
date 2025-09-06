@@ -363,7 +363,8 @@ export default function BusinessOfferingsDashboard() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this Business Offering?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. All related steps and comments will be removed.
+              This action cannot be undone. All related steps and comments will
+              be removed.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
