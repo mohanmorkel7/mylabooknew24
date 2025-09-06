@@ -27,8 +27,12 @@ export default function BusinessOfferingsDetails() {
   const queryClient = useQueryClient();
   const boId = Number(id);
   const location = useLocation();
-  const focusFollowUpId = (location.state as any)?.focusFollowUpId as number | undefined;
-  const focusStepId = (location.state as any)?.focusStepId as number | undefined;
+  const focusFollowUpId = (location.state as any)?.focusFollowUpId as
+    | number
+    | undefined;
+  const focusStepId = (location.state as any)?.focusStepId as
+    | number
+    | undefined;
 
   const {
     data: offering,
