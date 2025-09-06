@@ -985,16 +985,12 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                   </Label>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="0.001"
                     value={formB.projectedPotentialARR}
-                    onChange={(e) => {
-                      setFormB((p) => ({
-                        ...p,
-                        projectedPotentialARR: e.target.value,
-                      }));
-                      setErrors((er) => ({ ...er, projectedPotentialARR: "" }));
-                    }}
-                    placeholder="e.g., 1.00"
+                    readOnly
+                    disabled
+                    className="bg-gray-50"
+                    placeholder="Auto-calculated"
                   />
                   {errors.projectedPotentialARR && (
                     <div className="text-sm text-red-600 mt-1">
