@@ -73,6 +73,7 @@ export async function notifyFollowUpStatusChange(
     const base = stepApiBase || (isVC ? "vc" : "leads");
 
     // For fund-raises, do not create follow-up chat notifications
+    // (fund-raises are handled specially in VCEnhancedStepItem)
     if (base === "fund-raises") {
       console.log(
         "Skipping follow-up chat notification in fund-raises context",
