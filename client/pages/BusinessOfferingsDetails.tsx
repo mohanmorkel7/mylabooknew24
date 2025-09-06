@@ -113,9 +113,10 @@ export default function BusinessOfferingsDetails() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Overview</CardTitle>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>Business Offering Overview</CardTitle>
           <CardDescription>Key information</CardDescription>
         </CardHeader>
         <CardContent>
@@ -268,6 +269,7 @@ export default function BusinessOfferingsDetails() {
             </CardContent>
           </Card>
         </div>
+      </div>
 
       <Card>
         <CardHeader>
