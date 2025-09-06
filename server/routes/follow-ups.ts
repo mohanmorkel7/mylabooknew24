@@ -538,7 +538,7 @@ router.get("/", async (req: Request, res: Response) => {
       let query;
       if (hasVCColumns) {
         // Build query based on available columns
-        const businessOfferingSelect = hasBusinessOfferingColumns
+        const businessOfferingSelect = finalHasBusinessOfferingColumns
           ? `, bo.solution as business_offering_solution,
                bo.product as business_offering_product,
                bos.name as business_offering_step_name,
@@ -548,7 +548,7 @@ router.get("/", async (req: Request, res: Response) => {
                NULL as business_offering_step_name,
                NULL as business_offering_id`;
 
-        const businessOfferingJoins = hasBusinessOfferingColumns
+        const businessOfferingJoins = finalHasBusinessOfferingColumns
           ? `LEFT JOIN business_offerings bo ON f.business_offering_id = bo.id
              LEFT JOIN business_offer_steps bos ON f.business_offering_step_id = bos.id`
           : '';
