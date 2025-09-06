@@ -143,20 +143,6 @@ export default function BusinessOfferingsDetails() {
                 </div>
               </div>
               <div>
-                <div className="text-sm text-gray-500">Industry</div>
-                <div className="font-medium">{client?.industry || "-"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Company Size</div>
-                <div className="font-medium">{client?.company_size || "-"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Contact Person</div>
-                <div className="font-medium">
-                  {client?.contact_person || "-"}
-                </div>
-              </div>
-              <div>
                 <div className="text-sm text-gray-500">Location</div>
                 <div className="font-medium">
                   {client?.city && client?.country
