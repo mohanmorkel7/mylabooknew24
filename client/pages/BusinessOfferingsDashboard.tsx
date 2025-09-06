@@ -37,6 +37,12 @@ export default function BusinessOfferingsDashboard() {
     staleTime: 10000,
   });
 
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: () => apiClient.getClients(),
+    staleTime: 30000,
+  });
+
   const filtered = (data as any[]).filter((o) => {
     const term = search.toLowerCase();
     const fields = [o.solution, o.product, o.offering_description];
