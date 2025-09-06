@@ -49,6 +49,11 @@ export default function BusinessOfferingsDashboard() {
     return fields.some((f) => (f || "").toLowerCase().includes(term));
   });
 
+  // Helper to get client for an offering
+  const getClientForOffering = (offering: any) => {
+    return (clients as any[]).find(c => c.id === offering.client_id) || null;
+  };
+
   const stats = { total: (data as any[]).length };
 
   // Fetch steps for offerings to compute progress (lightweight, capped by React Query cache)
