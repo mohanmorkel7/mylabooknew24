@@ -220,6 +220,7 @@ export default function BusinessOfferingsDashboard() {
                         <div className="space-y-2">
                           {list.map((o: any) => {
                             const percent = progressMap[o.id] || 0;
+                            const client = getClientForOffering(o);
                             return (
                               <div
                                 key={o.id}
@@ -228,15 +229,50 @@ export default function BusinessOfferingsDashboard() {
                                   navigate(`/business-offerings/${o.id}`)
                                 }
                               >
-                                <div>
-                                  <div className="font-medium text-gray-900">
-                                    {o.product || o.solution || "Offering"}
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="font-medium text-gray-900">
+                                      {o.product || o.solution || "Offering"}
+                                    </div>
+                                    {o.client_status && (
+                                      <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                        {o.client_status}
+                                      </span>
+                                    )}
                                   </div>
-                                  <div className="text-xs text-gray-600 mt-1">
-                                    {o.offering_description || "No description"}
+
+                                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-600 mb-2">
+                                    <div>
+                                      <span className="font-medium">Client:</span> {client?.client_name || "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Industry:</span> {client?.industry || "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Contact:</span> {client?.contact_person || "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">Location:</span> {client?.city || client?.country || "-"}
+                                    </div>
                                   </div>
+
+                                  <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
+                                    <div>
+                                      <span className="font-medium">MRR:</span> {o.potential_mrr_lacs ? `${o.potential_mrr_lacs} Lacs` : "-"}
+                                    </div>
+                                    <div>
+                                      <span className="font-medium">ARR:</span> {o.current_potential_arr_usd_mn ? `$${o.current_potential_arr_usd_mn}Mn` : "-"}
+                                    </div>
+                                  </div>
+
+                                  {o.offering_description && (
+                                    <div className="text-xs text-gray-500 mt-2 line-clamp-2">
+                                      {o.offering_description}
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="hidden md:flex items-center gap-2">
+
+                                <div className="hidden md:flex items-center gap-2 ml-4">
                                   <div className="w-32 bg-gray-200 rounded h-2">
                                     <div
                                       className={`${percent >= 100 ? "bg-green-500" : percent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
