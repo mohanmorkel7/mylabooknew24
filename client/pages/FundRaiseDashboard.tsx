@@ -1067,8 +1067,8 @@ export default function FundRaiseDashboard() {
                                 variant="outline"
                                 className="bg-blue-50 text-blue-700"
                               >
-                                <DollarSign className="w-3 h-3 mr-1 inline" />{" "}
-                                {totalFund.toFixed(2)} Mn
+                                <DollarSign className="w-3 h-3 mr-1 inline" />
+                                Total Fund Raise $ Mn: {totalFund.toFixed(2)}
                               </Badge>
                             </div>
 
@@ -1087,6 +1087,22 @@ export default function FundRaiseDashboard() {
                                   0,
                                   Math.min(100, completedProb),
                                 );
+                                // Per-card aggregates
+                                const investorList = (Array.isArray(fr.investors) && fr.investors.length
+                                  ? fr.investors
+                                  : [
+                                      {
+                                        investor_name: fr.investor_name,
+                                        fund_mn: fr.fund_mn,
+                                        investor_status: fr.investor_status,
+                                      },
+                                    ]);
+                                const closedCount = investorList.filter((iv: any) => (iv.investor_status || '').toLowerCase() === 'closed').length;
+                                const totalFundMn = investorList.reduce((sum: number, iv: any) => {
+                                  const v = parseFloat(iv.fund_mn);
+                                  return sum + (isNaN(v) ? 0 : v);
+                                }, 0);
+
                                 return (
                                   <div
                                     key={fr.id}
@@ -1170,6 +1186,13 @@ export default function FundRaiseDashboard() {
                                           ))}
                                         </div>
                                         <div className="text-[11px] text-gray-600 mt-1 flex flex-wrap gap-3">
+                                          <Badge variant="outline" className="text-[10px] bg-gray-50 text-gray-700 border-gray-200">
+                                            Closed: {closedCount}
+                                          </Badge>
+                                          <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200" variant="outline">
+                                            <DollarSign className="w-3 h-3 mr-1 inline" />
+                                            Total Fund Raise $ Mn: {totalFundMn.toFixed(2)}
+                                          </Badge>
                                           {fr.start_date && (
                                             <span className="inline-flex items-center gap-1">
                                               <Calendar className="w-3 h-3 text-gray-400" />
