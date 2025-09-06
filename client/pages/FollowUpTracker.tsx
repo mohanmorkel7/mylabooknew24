@@ -349,7 +349,7 @@ export default function FollowUpTracker() {
           formattedMockFollowUps.forEach((f: any) => {
             const compositeKey =
               f.id ??
-              `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+              `${f.type || (f.business_offering_id || f.business_offering_solution || f.business_offering_product ? "sales" : f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${(f as any).business_offering_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
             uniqueMockMap.set(compositeKey, f);
           });
           setFollowUps(Array.from(uniqueMockMap.values()));
