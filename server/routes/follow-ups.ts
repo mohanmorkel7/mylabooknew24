@@ -509,7 +509,7 @@ router.get("/", async (req: Request, res: Response) => {
 
       let query;
       if (hasVCColumns) {
-        // Full query with VC and Fund Raise support
+        // Full query with VC, Fund Raise and Business Offering support
         query = `
           SELECT f.*,
                  CONCAT(u.first_name, ' ', u.last_name) as assigned_user_name,
@@ -521,7 +521,11 @@ router.get("/", async (req: Request, res: Response) => {
                  COALESCE(fr.investor_name, v.investor_name) as investor_name,
                  vs.name as vc_step_name,
                  fr.round_stage as fund_raise_stage,
-                 fr.id as fund_raise_id
+                 fr.id as fund_raise_id,
+                 bo.solution as business_offering_solution,
+                 bo.product as business_offering_product,
+                 bos.name as business_offering_step_name,
+                 bo.id as business_offering_id
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
@@ -535,6 +539,8 @@ router.get("/", async (req: Request, res: Response) => {
             AND frs.id = f.message_id
           )
           LEFT JOIN fund_raises fr ON fr.id = frs.fund_raise_id
+          LEFT JOIN business_offerings bo ON f.business_offering_id = bo.id
+          LEFT JOIN business_offer_steps bos ON f.business_offering_step_id = bos.id
           ${whereClause}
           ORDER BY f.created_at DESC
         `;
