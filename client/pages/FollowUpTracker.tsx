@@ -1040,7 +1040,7 @@ export default function FollowUpTracker() {
                   <Card
                     key={
                       followUp.id ??
-                      `${followUp.type || (followUp.vc_id || followUp.vc_round_title || followUp.investor_name ? "vc" : "lead")}-${followUp.lead_id ?? ""}-${(followUp as any).vc_id ?? ""}-${followUp.step_id ?? followUp.message_id ?? ""}-${followUp.created_at}`
+                      `${followUp.type || ((followUp as any).business_offering_id || (followUp as any).business_offering_solution || (followUp as any).business_offering_product ? "sales" : followUp.vc_id || followUp.vc_round_title || followUp.investor_name ? "vc" : "lead")}-${followUp.lead_id ?? ""}-${(followUp as any).vc_id ?? ""}-${(followUp as any).business_offering_id ?? ""}-${followUp.step_id ?? followUp.message_id ?? ""}-${followUp.created_at}`
                     }
                     className={`hover:shadow-md transition-shadow border-l-4 ${
                       isAssignedToMe
