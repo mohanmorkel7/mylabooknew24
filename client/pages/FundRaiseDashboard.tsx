@@ -1078,7 +1078,10 @@ export default function FundRaiseDashboard() {
                                 variant="outline"
                                 className="bg-blue-50 text-blue-700"
                               >
-                                Total Fund Raise : ${Number.isFinite(totalFund) ? totalFund.toFixed(3) : "0.000"}
+                                Total Fund Raise : $
+                                {Number.isFinite(totalFund)
+                                  ? totalFund.toFixed(3)
+                                  : "0.000"}
                               </Badge>
                             </div>
 
@@ -1226,19 +1229,36 @@ export default function FundRaiseDashboard() {
                                             className="text-[10px] bg-blue-50 text-blue-700 border-blue-200"
                                             variant="outline"
                                           >
-                                            Total Fund Raise $ Mn: ${Number.isFinite(totalFundMn) ? totalFundMn.toFixed(3) : "0.000"}
+                                            Total Fund Raise $ Mn: $
+                                            {Number.isFinite(totalFundMn)
+                                              ? totalFundMn.toFixed(3)
+                                              : "0.000"}
                                           </Badge>
                                           <Badge
                                             className="text-[10px] bg-green-50 text-green-700 border-green-200"
                                             variant="outline"
                                           >
-                                            Valuation $ Mn: ${Number.isFinite(parseFloat(fr.valuation_mn)) ? parseFloat(fr.valuation_mn).toFixed(3) : "0.000"}
+                                            Valuation $ Mn: $
+                                            {Number.isFinite(
+                                              parseFloat(fr.valuation_mn),
+                                            )
+                                              ? parseFloat(
+                                                  fr.valuation_mn,
+                                                ).toFixed(3)
+                                              : "0.000"}
                                           </Badge>
                                           <Badge
                                             className="text-[10px] bg-purple-50 text-purple-700 border-purple-200"
                                             variant="outline"
                                           >
-                                            Fund $ Mn: ${Number.isFinite(parseFloat(fr.fund_mn)) ? parseFloat(fr.fund_mn).toFixed(3) : "0.000"}
+                                            Fund $ Mn: $
+                                            {Number.isFinite(
+                                              parseFloat(fr.fund_mn),
+                                            )
+                                              ? parseFloat(fr.fund_mn).toFixed(
+                                                  3,
+                                                )
+                                              : "0.000"}
                                           </Badge>
                                           {fr.start_date && (
                                             <span className="inline-flex items-center gap-1">
