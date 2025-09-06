@@ -44,15 +44,16 @@ router.post("/", async (req: Request, res: Response) => {
 
     if (await isDatabaseAvailable()) {
       try {
-        // Check if VC columns exist in follow_ups table
+        // Check if VC and business offering columns exist in follow_ups table
         const columnCheck = await pool.query(`
           SELECT column_name
           FROM information_schema.columns
           WHERE table_name = 'follow_ups'
-          AND column_name IN ('vc_id', 'vc_step_id')
+          AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id')
         `);
 
-        const hasVCColumns = columnCheck.rows.length === 2;
+        const hasVCColumns = columnCheck.rows.some(row => ['vc_id', 'vc_step_id'].includes(row.column_name));
+        const hasBusinessOfferingColumns = columnCheck.rows.some(row => ['business_offering_id', 'business_offering_step_id'].includes(row.column_name));
 
         let query, values;
 
