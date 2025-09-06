@@ -241,6 +241,31 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     setFormB((p) => ({ ...p, potentialMRR: value }));
   }, [formB.currentDailyVolume, formA.avgFee, domesticB]);
 
+  // Calculation details (testing)
+  const calcDetails = useMemo(() => {
+    const volMn = parseVolumeBucketToMn(formB.currentDailyVolume);
+    const feeRaw = parseFloat(formA.avgFee || "");
+    const valid = !!volMn && !isNaN(feeRaw);
+    const daily = valid ? volMn * 1_000_000 : 0;
+    const monthly = valid ? daily * 30 : 0;
+    const feeInINR = valid ? (domesticB ? feeRaw : feeRaw * USD_TO_INR_RATE) : 0;
+    const monthlyRevenueINR = valid ? monthly * feeInINR : 0;
+    const mrrLacs = valid ? monthlyRevenueINR / 100_000 : 0;
+    return {
+      domestic: domesticB,
+      bucket: formB.currentDailyVolume || "",
+      volMn: valid ? volMn : 0,
+      daily,
+      monthly,
+      feeRaw: isNaN(feeRaw) ? 0 : feeRaw,
+      feeInINR,
+      usdRate: USD_TO_INR_RATE,
+      monthlyRevenueINR,
+      mrrLacs,
+      valid,
+    };
+  }, [formB.currentDailyVolume, formA.avgFee, domesticB]);
+
   // Normalize fee/MMGF values to match combobox item formats on edit/view (depends on selectedClient)
   useEffect(() => {
     if (!initial) return;
@@ -745,6 +770,42 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                       {errors.potentialMRR}
                     </div>
                   )}
+                </div>
+
+                {/* Calculation details for testing */}
+                <div className="md:col-span-2">
+                  <div className="mt-2 p-3 border rounded bg-gray-50 text-xs text-gray-700 space-y-1">
+                    <div>
+                      <span className="font-medium">Geography:</span> {calcDetails.domestic ? "Domestic" : "International"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Bucket:</span> {calcDetails.bucket || "-"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Parsed Avg (Mn):</span> {calcDetails.volMn ? calcDetails.volMn.toFixed(2) : "0.00"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Daily Volume (units):</span> {calcDetails.daily.toLocaleString("en-IN")} = {calcDetails.volMn ? `${calcDetails.volMn.toFixed(2)} * 1,000,000` : "0 * 1,000,000"}
+                    </div>
+                    <div>
+                      <span className="font-medium">Monthly Volume (units):</span> {calcDetails.monthly.toLocaleString("en-IN")} = {calcDetails.daily.toLocaleString("en-IN")} * 30
+                    </div>
+                    {calcDetails.domestic ? (
+                      <div>
+                        <span className="font-medium">Fee (INR):</span> {calcDetails.feeInINR.toFixed(2)} = INR {calcDetails.feeRaw.toFixed(2)}
+                      </div>
+                    ) : (
+                      <div>
+                        <span className="font-medium">Fee (USD to INR):</span> {calcDetails.feeInINR.toFixed(2)} = USD {calcDetails.feeRaw.toFixed(3)} * {calcDetails.usdRate}
+                      </div>
+                    )}
+                    <div>
+                      <span className="font-medium">Monthly Revenue (INR):</span> {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} = {calcDetails.monthly.toLocaleString("en-IN")} * {calcDetails.feeInINR.toFixed(2)}
+                    </div>
+                    <div>
+                      <span className="font-medium">Potential MRR (INR Lacs):</span> {calcDetails.mrrLacs.toFixed(2)} = {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} / 100,000
+                    </div>
+                  </div>
                 </div>
 
                 <div>
