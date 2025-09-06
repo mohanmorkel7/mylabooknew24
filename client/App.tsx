@@ -62,7 +62,9 @@ class AuthErrorBoundary extends React.Component<
             <div className="flex items-center justify-center gap-2">
               <button
                 onClick={() => {
-                  try { sessionStorage.removeItem("__auth_error_reloaded"); } catch {}
+                  try {
+                    sessionStorage.removeItem("__auth_error_reloaded");
+                  } catch {}
                   this.setState({ hasError: false, error: undefined });
                 }}
                 className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
