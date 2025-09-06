@@ -190,18 +190,29 @@ export default function BusinessOfferingsDashboard() {
                       )}
                     </div>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="text-red-600"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(o.id);
-                    }}
-                    aria-label="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="hidden md:flex items-center gap-3">
+                    <div className="w-32 bg-gray-200 rounded h-2">
+                      <div
+                        className={`${(progressMap[o.id] || 0) >= 100 ? "bg-green-500" : (progressMap[o.id] || 0) >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
+                        style={{ width: `${progressMap[o.id] || 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-gray-700 font-medium w-8 text-right">
+                      {progressMap[o.id] || 0}%
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="text-red-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(o.id);
+                      }}
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
