@@ -147,7 +147,9 @@ export default function BusinessOfferingsDashboard() {
       <Card>
         <CardHeader className="gap-2">
           <CardTitle>Offerings</CardTitle>
-          <CardDescription>Search your offerings (see product-wise list below)</CardDescription>
+          <CardDescription>
+            Search your offerings (see product-wise list below)
+          </CardDescription>
           <div className="flex gap-3 items-end w-full">
             <div className="flex-1">
               <Label className="text-sm">Search</Label>
@@ -167,7 +169,9 @@ export default function BusinessOfferingsDashboard() {
           ) : (filtered || []).length === 0 ? (
             <div className="text-gray-600">No Business Offerings found.</div>
           ) : (
-            <div className="text-gray-500 text-sm">Use the Products accordion below to browse.</div>
+            <div className="text-gray-500 text-sm">
+              Use the Products accordion below to browse.
+            </div>
           )}
         </CardContent>
       </Card>
