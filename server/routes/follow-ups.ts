@@ -519,6 +519,7 @@ router.get("/", async (req: Request, res: Response) => {
       const hasBusinessOfferingColumns = columnCheck.rows.some(row => ['business_offering_id', 'business_offering_step_id'].includes(row.column_name));
 
       // If business offering columns are missing, add them
+      let finalHasBusinessOfferingColumns = hasBusinessOfferingColumns;
       if (!hasBusinessOfferingColumns) {
         try {
           console.log("Adding missing business offering columns to follow_ups table...");
@@ -528,6 +529,7 @@ router.get("/", async (req: Request, res: Response) => {
             ADD COLUMN IF NOT EXISTS business_offering_step_id INTEGER
           `);
           console.log("✅ Business offering columns added successfully");
+          finalHasBusinessOfferingColumns = true; // Update flag after successful migration
         } catch (migrationError) {
           console.error("❌ Failed to add business offering columns:", migrationError.message);
         }
