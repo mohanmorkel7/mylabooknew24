@@ -260,6 +260,26 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     setFormB((p) => ({ ...p, currentPotentialARR: valueArr }));
   }, [formB.potentialMRR, domesticB]);
 
+  // Auto-calc Projected Potential ARR (USD Mn) - next 2 years
+  useEffect(() => {
+    const avgMn = parseVolumeBucketToMn(formB.projectedDailyVolume);
+    const feeRaw = parseFloat(formB.potentialFee || "");
+    if (!avgMn || isNaN(feeRaw)) {
+      setFormB((p) => ({ ...p, projectedPotentialARR: "" }));
+      return;
+    }
+    const annualMn = avgMn * 365;
+    let usdMn: number;
+    if (domesticB) {
+      const inrMn = annualMn * feeRaw;
+      usdMn = inrMn / USD_TO_INR_RATE;
+    } else {
+      usdMn = annualMn * feeRaw;
+    }
+    const value = Number.isFinite(usdMn) ? Number(usdMn.toFixed(3)).toString() : "";
+    setFormB((p) => ({ ...p, projectedPotentialARR: value }));
+  }, [formB.projectedDailyVolume, formB.potentialFee, domesticB]);
+
   // Calculation details (testing)
   const calcDetails = useMemo(() => {
     const volMn = parseVolumeBucketToMn(formB.currentDailyVolume);
