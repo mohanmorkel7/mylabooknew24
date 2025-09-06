@@ -760,7 +760,7 @@ export default function FollowUpTracker() {
           </h1>
           <p className="text-gray-600 mt-1">
             Track and manage follow-up tasks from{" "}
-            {isAdmin ? "leads and VC rounds" : isVC ? "VC rounds" : "leads"}
+            {isAdmin ? "leads, business offerings, and VC rounds" : isVC ? "VC rounds" : "leads"}
           </p>
         </div>
         <div className="flex items-center space-x-2">
