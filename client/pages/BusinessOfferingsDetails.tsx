@@ -223,7 +223,7 @@ export default function BusinessOfferingsDetails() {
               <CardDescription>Primary client details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between"><span className="text-gray-500">Client</span><span className="font-medium">-</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Client</span><span className="font-medium">{client?.client_name || "-"}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">Status</span><span className="font-medium">{offering.client_status || "-"}</span></div>
             </CardContent>
           </Card>
