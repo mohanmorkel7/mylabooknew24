@@ -1034,7 +1034,10 @@ export default function FundRaiseDashboard() {
                       list.forEach((fr: any) => {
                         const s = (fr.investor_status || "").trim() || "N/A";
                         statusCount[s] = (statusCount[s] || 0) + 1;
-                        if (
+                        const tr = parseFloat(fr.total_raise_mn);
+                        if (!isNaN(tr)) {
+                          totalFund += tr;
+                        } else if (
                           Array.isArray(fr.investors) &&
                           fr.investors.length
                         ) {
