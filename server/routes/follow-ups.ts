@@ -316,7 +316,9 @@ router.post("/", async (req: Request, res: Response) => {
               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
               RETURNING *
             `;
-            const fallbackDueDate = (due_date as any) || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+            const fallbackDueDate =
+              (due_date as any) ||
+              new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
             const retryValues2 = [
               client_id || null,
               lead_id || null,
