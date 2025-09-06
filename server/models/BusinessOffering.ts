@@ -108,8 +108,8 @@ export class BusinessOfferingRepository {
     }
 
     values.push(id);
-    const q = `UPDATE business_offerings SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $$${idx} RETURNING *`;
-    const r = await pool.query(q.replace("$$$", ""), values);
+    const q = `UPDATE business_offerings SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = $${idx} RETURNING *`;
+    const r = await pool.query(q, values);
     return r.rows[0] || null;
   }
 
