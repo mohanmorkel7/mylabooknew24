@@ -200,7 +200,9 @@ router.post("/", async (req: Request, res: Response) => {
               ADD COLUMN IF NOT EXISTS lead_id INTEGER REFERENCES leads(id),
               ADD COLUMN IF NOT EXISTS step_id INTEGER REFERENCES lead_steps(id),
               ADD COLUMN IF NOT EXISTS message_id INTEGER,
-              ADD COLUMN IF NOT EXISTS follow_up_type VARCHAR(50) DEFAULT 'general'
+              ADD COLUMN IF NOT EXISTS follow_up_type VARCHAR(50) DEFAULT 'general',
+              ADD COLUMN IF NOT EXISTS business_offering_id INTEGER,
+              ADD COLUMN IF NOT EXISTS business_offering_step_id INTEGER
             `);
 
             // Drop and recreate constraints
