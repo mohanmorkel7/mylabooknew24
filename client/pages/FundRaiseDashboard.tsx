@@ -1075,11 +1075,7 @@ export default function FundRaiseDashboard() {
                                 variant="outline"
                                 className="bg-blue-50 text-blue-700"
                               >
-                                <DollarSign className="w-3 h-3 mr-1 inline" />
-                                Total Fund Raise $ Mn:{" "}
-                                {Number.isFinite(totalFund)
-                                  ? totalFund.toFixed(2)
-                                  : "0.00"}
+                                Total Fund Raise : ${Number.isFinite(totalFund) ? totalFund.toFixed(3) : "0.000"}
                               </Badge>
                             </div>
 
