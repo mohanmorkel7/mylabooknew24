@@ -498,7 +498,6 @@ export default function BusinessOfferingsDashboard() {
         })()}
       </div>
 
-
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
