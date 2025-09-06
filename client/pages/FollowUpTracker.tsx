@@ -1071,6 +1071,19 @@ export default function FollowUpTracker() {
                                     return `${stage} • ${investorName}`;
                                   })()}
                                 </>
+                              ) : followUpType === "sales" ? (
+                                <>
+                                  <Badge
+                                    variant="secondary"
+                                    className="mr-2 bg-green-100 text-green-700"
+                                  >
+                                    Business Offering
+                                  </Badge>
+                                  {(followUp as any).business_offering_solution ||
+                                    (followUp as any).business_offering_product ||
+                                    followUp.client_name ||
+                                    "Business Offering"}
+                                </>
                               ) : (
                                 <>
                                   <Badge
