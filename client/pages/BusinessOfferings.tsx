@@ -180,6 +180,42 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     }
   }, [initial]);
 
+  // Normalize fee/MMGF values to match combobox item formats on edit/view
+  useEffect(() => {
+    if (!initial) return;
+    const dom = isDomesticByGeography(selectedClient);
+    const fmt = (n: any, decimals: number) => {
+      const v = parseFloat(n);
+      return isNaN(v) ? "" : v.toFixed(decimals);
+    };
+    setFormA((p) => ({
+      ...p,
+      avgFee: p.avgFee
+        ? dom
+          ? fmt(p.avgFee, 2)
+          : fmt(p.avgFee, 3)
+        : p.avgFee,
+      mmgf: p.mmgf
+        ? dom
+          ? fmt(p.mmgf, 2)
+          : String(Math.round(parseFloat(p.mmgf)))
+        : p.mmgf,
+    }));
+    setFormB((p) => ({
+      ...p,
+      potentialMMGF: p.potentialMMGF
+        ? dom
+          ? fmt(p.potentialMMGF, 2)
+          : String(Math.round(parseFloat(p.potentialMMGF)))
+        : p.potentialMMGF,
+      potentialFee: p.potentialFee
+        ? dom
+          ? fmt(p.potentialFee, 2)
+          : fmt(p.potentialFee, 3)
+        : p.potentialFee,
+    }));
+  }, [selectedClient, initial]);
+
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients-all"],
     queryFn: async () => {
@@ -484,7 +520,13 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
             </CardContent>
           </Card>
           <div className="flex justify-end">
-            <Button onClick={() => setActiveTab("queue")}>Next</Button>
+            <Button
+              onClick={() => {
+                if (validateA()) setActiveTab("queue");
+              }}
+            >
+              Next
+            </Button>
           </div>
         </TabsContent>
 
