@@ -292,8 +292,9 @@ router.post("/", async (req: Request, res: Response) => {
 
         // Handle strict context constraint preventing business offering follow-ups
         if (
-          ((dbError as any).code === '23514' && dbError.message.includes('chk_follow_up_context')) ||
-          dbError.message.includes('chk_follow_up_context')
+          ((dbError as any).code === "23514" &&
+            dbError.message.includes("chk_follow_up_context")) ||
+          dbError.message.includes("chk_follow_up_context")
         ) {
           try {
             await pool.query(`
@@ -309,7 +310,10 @@ router.post("/", async (req: Request, res: Response) => {
             const retry = await pool.query(query as string, values as any[]);
             return res.status(201).json(retry.rows[0]);
           } catch (constraintError: any) {
-            console.error("Failed to update chk_follow_up_context:", constraintError.message);
+            console.error(
+              "Failed to update chk_follow_up_context:",
+              constraintError.message,
+            );
           }
         }
 
