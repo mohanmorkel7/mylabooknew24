@@ -190,11 +190,7 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     };
     setFormA((p) => ({
       ...p,
-      avgFee: p.avgFee
-        ? dom
-          ? fmt(p.avgFee, 2)
-          : fmt(p.avgFee, 3)
-        : p.avgFee,
+      avgFee: p.avgFee ? (dom ? fmt(p.avgFee, 2) : fmt(p.avgFee, 3)) : p.avgFee,
       mmgf: p.mmgf
         ? dom
           ? fmt(p.mmgf, 2)

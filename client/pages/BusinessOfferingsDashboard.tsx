@@ -71,10 +71,16 @@ export default function BusinessOfferingsDashboard() {
     const percent = totalStepProbability
       ? Math.min(100, Math.round(totalCompletedProbability))
       : (() => {
-          const completed = steps.filter((s: any) => s.status === "completed").length;
-          const inProg = steps.filter((s: any) => s.status === "in_progress").length;
+          const completed = steps.filter(
+            (s: any) => s.status === "completed",
+          ).length;
+          const inProg = steps.filter(
+            (s: any) => s.status === "in_progress",
+          ).length;
           const total = steps.length;
-          return total ? Math.round(((completed + inProg * 0.5) / total) * 100) : 0;
+          return total
+            ? Math.round(((completed + inProg * 0.5) / total) * 100)
+            : 0;
         })();
     progressMap[o.id] = percent;
   });
@@ -258,7 +264,9 @@ export default function BusinessOfferingsDashboard() {
                               <div
                                 key={o.id}
                                 className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:shadow-sm"
-                                onClick={() => navigate(`/business-offerings/${o.id}`)}
+                                onClick={() =>
+                                  navigate(`/business-offerings/${o.id}`)
+                                }
                               >
                                 <div>
                                   <div className="font-medium text-gray-900">

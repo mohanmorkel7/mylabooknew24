@@ -298,7 +298,8 @@ router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
   try {
     if (!(await isDb())) return res.json([]);
     const stepId = parseInt(req.params.stepId);
-    if (isNaN(stepId)) return res.status(400).json({ error: "Invalid step id" });
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
     await ensureBusinessOfferStepChatsTable();
     const r = await pool.query(
       `SELECT id, step_id, user_id, user_name, message, message_type, is_rich_text, attachments, created_at
@@ -314,9 +315,11 @@ router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
 
 router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const stepId = parseInt(req.params.stepId);
-    if (isNaN(stepId)) return res.status(400).json({ error: "Invalid step id" });
+    if (isNaN(stepId))
+      return res.status(400).json({ error: "Invalid step id" });
     await ensureBusinessOfferStepChatsTable();
 
     const b = req.body || {};
@@ -350,7 +353,8 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
 
 router.put("/chats/:id", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "Invalid chat id" });
     await ensureBusinessOfferStepChatsTable();
@@ -372,7 +376,8 @@ router.put("/chats/:id", async (req: Request, res: Response) => {
 
 router.delete("/chats/:id", async (req: Request, res: Response) => {
   try {
-    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDb()))
+      return res.status(503).json({ error: "Database unavailable" });
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ error: "Invalid chat id" });
     await ensureBusinessOfferStepChatsTable();

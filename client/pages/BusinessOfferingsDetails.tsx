@@ -162,14 +162,17 @@ export default function BusinessOfferingsDetails() {
                   const total = (steps as any[]).length;
                   return total
                     ? Math.round(
-                        ((completedCount + inProgressCount * 0.5) / total) * 100,
+                        ((completedCount + inProgressCount * 0.5) / total) *
+                          100,
                       )
                     : 0;
                 })();
             return (
               <div className="mt-4">
                 <div className="flex items-center gap-3">
-                  <span className="text-sm font-medium text-gray-700">Progress:</span>
+                  <span className="text-sm font-medium text-gray-700">
+                    Progress:
+                  </span>
                   <div className="flex-1 max-w-sm">
                     <div className="w-full bg-gray-200 rounded-full h-3 relative">
                       <div
@@ -193,9 +196,12 @@ export default function BusinessOfferingsDetails() {
                   </div>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {(steps as any[]).filter((s: any) => s.status === "completed").length}
-                  {" "}of{ " "}
-                  {(steps as any[]).length} steps
+                  {
+                    (steps as any[]).filter(
+                      (s: any) => s.status === "completed",
+                    ).length
+                  }{" "}
+                  of {(steps as any[]).length} steps
                 </div>
               </div>
             );
