@@ -1330,14 +1330,25 @@ export function useCreateStepChat() {
       stepId,
       chatData,
       isVC = false,
+      stepApiBase,
     }: {
       stepId: number;
       chatData: any;
       isVC?: boolean;
+      stepApiBase?: "vc" | "fund-raises" | "business-offerings";
     }) => {
-      if (isVC) {
+      if (stepApiBase === "business-offerings") {
+        // Use business offering step chat endpoint
+        return apiClient.createBusinessOfferingStepChat(stepId, chatData);
+      } else if (isVC || stepApiBase === "vc") {
         // Use VC step chat endpoint
         return apiClient.request(`/vc/steps/${stepId}/chats`, {
+          method: "POST",
+          body: JSON.stringify(chatData),
+        });
+      } else if (stepApiBase === "fund-raises") {
+        // Use fund raise step chat endpoint
+        return apiClient.request(`/fund-raises/steps/${stepId}/chats`, {
           method: "POST",
           body: JSON.stringify(chatData),
         });
