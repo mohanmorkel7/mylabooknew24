@@ -71,7 +71,7 @@ interface FollowUp {
   updated_at?: string;
   completed_at?: string;
   notes?: string;
-  type?: "lead" | "vc"; // Add type to distinguish between lead and VC follow-ups
+  type?: "lead" | "vc" | "sales"; // Add 'sales' for business offering follow-ups
 }
 
 // Mock follow-up data with both leads and VC follow-ups
