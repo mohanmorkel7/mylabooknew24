@@ -293,7 +293,9 @@ export default function FollowUpTracker() {
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
-              (f.business_offering_id || f.business_offering_solution || f.business_offering_product
+              (f.business_offering_id ||
+              f.business_offering_solution ||
+              f.business_offering_product
                 ? "sales"
                 : f.vc_id || f.vc_round_title || f.investor_name
                   ? "vc"
@@ -1031,8 +1033,8 @@ export default function FollowUpTracker() {
                   (followUp as any).business_offering_product
                     ? "sales"
                     : followUp.vc_id ||
-                      followUp.vc_round_title ||
-                      followUp.investor_name
+                        followUp.vc_round_title ||
+                        followUp.investor_name
                       ? "vc"
                       : "lead");
 

@@ -41,7 +41,7 @@ export default function Login() {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <img
-              src={'./mylapaylogo.png'}
+              src={"./mylapaylogo.png"}
               alt="Mylapay"
               className="h-12 object-contain"
             />
