@@ -315,15 +315,15 @@ export function VCDraggableStepsList({
               <VCEnhancedStepItem
                 key={step.id}
                 step={stepWithCount}
-              vcId={vcId}
-              isExpanded={expandedSteps?.has(step.id) || false}
-              onToggleExpansion={() => onToggleExpansion(step.id)}
-              onUpdateStatus={handleUpdateStatus}
-              onDeleteStep={(id) => onDeleteStep(id)}
-              stepApiBase={apiBase}
-              focusStepId={focusStepId}
-              focusFollowUpId={focusFollowUpId}
-            />
+                vcId={vcId}
+                isExpanded={expandedSteps?.has(step.id) || false}
+                onToggleExpansion={() => onToggleExpansion(step.id)}
+                onUpdateStatus={handleUpdateStatus}
+                onDeleteStep={(id) => onDeleteStep(id)}
+                stepApiBase={apiBase}
+                focusStepId={focusStepId}
+                focusFollowUpId={focusFollowUpId}
+              />
             );
           })}
         </div>
