@@ -290,7 +290,7 @@ export default function BusinessOfferingsDashboard() {
                                   )}
                                 </div>
 
-                                <div className="hidden md:flex items-center gap-2 ml-4">
+                                <div className="hidden md:flex items-center gap-3 ml-4">
                                   <div className="w-32 bg-gray-200 rounded h-2">
                                     <div
                                       className={`${percent >= 100 ? "bg-green-500" : percent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
@@ -300,6 +300,19 @@ export default function BusinessOfferingsDashboard() {
                                   <span className="text-xs text-gray-700 font-medium w-8 text-right">
                                     {percent}%
                                   </span>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm("Delete this business offering?")) {
+                                        handleDelete(o.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
                                 </div>
                               </div>
                             );
