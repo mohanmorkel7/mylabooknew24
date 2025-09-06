@@ -58,11 +58,6 @@ router.post("/", async (req: Request, res: Response) => {
         const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
           ["business_offering_id", "business_offering_step_id"].includes(row.column_name),
         );
-        const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
-          ["business_offering_id", "business_offering_step_id"].includes(
-            row.column_name,
-          ),
-        );
 
         let query, values;
 
