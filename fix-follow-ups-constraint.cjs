@@ -38,7 +38,7 @@ async function fixFollowUpsConstraint() {
         ((CASE WHEN lead_id IS NOT NULL THEN 1 ELSE 0 END) +
          (CASE WHEN vc_id IS NOT NULL THEN 1 ELSE 0 END) +
          (CASE WHEN business_offering_id IS NOT NULL THEN 1 ELSE 0 END)) = 1
-      )
+      ) NOT VALID
     `);
     console.log("✅ Added corrected constraint");
 
