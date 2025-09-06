@@ -126,9 +126,36 @@ router.post("/", async (req: Request, res: Response) => {
             );
           }
 
+          // Handle business offering step resolution
+          let resolvedBusinessOfferingId = business_offering_id;
+          let finalBusinessOfferingStepId = business_offering_step_id;
+
+          // For business offering steps, store the business_offering_step_id in message_id field for reference
+          if (business_offering_step_id && !finalMessageId) {
+            try {
+              // Check if it's a business offering step and get the business offering ID
+              const businessOfferingStepResult = await pool.query(
+                `SELECT business_offering_id FROM business_offer_steps WHERE id = $1`,
+                [business_offering_step_id],
+              );
+
+              if (businessOfferingStepResult.rows.length > 0) {
+                resolvedBusinessOfferingId = businessOfferingStepResult.rows[0].business_offering_id;
+                finalMessageId = business_offering_step_id; // Store step id in message_id for reference
+                console.log(
+                  `📋 Resolved business_offering_id ${resolvedBusinessOfferingId} for business_offering_step ${business_offering_step_id}`,
+                );
+              }
+            } catch (error) {
+              console.log("Could not resolve business offering step:", error.message);
+            }
+          }
+
           console.log(`📋 Creating follow-up with:`, {
             vc_id: resolvedVcId,
             vc_step_id: resolvedVcStepId,
+            business_offering_id: resolvedBusinessOfferingId,
+            business_offering_step_id: finalBusinessOfferingStepId,
             fund_raise_step_id: finalMessageId,
             title,
           });
@@ -139,6 +166,8 @@ router.post("/", async (req: Request, res: Response) => {
             step_id || null,
             resolvedVcId || null,
             resolvedVcStepId || null, // This will be null for fund raise steps
+            resolvedBusinessOfferingId || null,
+            finalBusinessOfferingStepId || null,
             title,
             description || null,
             defaultDueDate,
