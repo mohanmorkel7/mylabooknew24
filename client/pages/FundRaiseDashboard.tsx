@@ -1214,7 +1214,10 @@ export default function FundRaiseDashboard() {
                                             className="text-[10px] bg-blue-50 text-blue-700 border-blue-200"
                                             variant="outline"
                                           >
-                                            Total Fund Raise : ${Number.isFinite(totalFundMn) ? totalFundMn.toFixed(3) : "0.000"}
+                                            Total Fund Raise : $
+                                            {Number.isFinite(totalFundMn)
+                                              ? totalFundMn.toFixed(3)
+                                              : "0.000"}
                                           </Badge>
                                           <Badge
                                             className="text-[10px] bg-green-50 text-green-700 border-green-200"
