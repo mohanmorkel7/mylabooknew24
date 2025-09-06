@@ -714,7 +714,10 @@ export class ApiClient {
       body: JSON.stringify(chatData),
     });
   }
-  async updateBusinessOfferingStepChat(chatId: number, updateData: { message: string; is_rich_text: boolean }) {
+  async updateBusinessOfferingStepChat(
+    chatId: number,
+    updateData: { message: string; is_rich_text: boolean },
+  ) {
     return this.request(`/business-offerings/chats/${chatId}`, {
       method: "PUT",
       body: JSON.stringify(updateData),

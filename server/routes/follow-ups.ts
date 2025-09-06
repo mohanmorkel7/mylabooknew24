@@ -52,8 +52,14 @@ router.post("/", async (req: Request, res: Response) => {
           AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id')
         `);
 
-        const hasVCColumns = columnCheck.rows.some(row => ['vc_id', 'vc_step_id'].includes(row.column_name));
-        const hasBusinessOfferingColumns = columnCheck.rows.some(row => ['business_offering_id', 'business_offering_step_id'].includes(row.column_name));
+        const hasVCColumns = columnCheck.rows.some((row) =>
+          ["vc_id", "vc_step_id"].includes(row.column_name),
+        );
+        const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
+          ["business_offering_id", "business_offering_step_id"].includes(
+            row.column_name,
+          ),
+        );
 
         let query, values;
 
@@ -140,14 +146,18 @@ router.post("/", async (req: Request, res: Response) => {
               );
 
               if (businessOfferingStepResult.rows.length > 0) {
-                resolvedBusinessOfferingId = businessOfferingStepResult.rows[0].business_offering_id;
+                resolvedBusinessOfferingId =
+                  businessOfferingStepResult.rows[0].business_offering_id;
                 finalMessageId = business_offering_step_id; // Store step id in message_id for reference
                 console.log(
                   `📋 Resolved business_offering_id ${resolvedBusinessOfferingId} for business_offering_step ${business_offering_step_id}`,
                 );
               }
             } catch (error) {
-              console.log("Could not resolve business offering step:", error.message);
+              console.log(
+                "Could not resolve business offering step:",
+                error.message,
+              );
             }
           }
 

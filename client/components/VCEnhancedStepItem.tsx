@@ -891,7 +891,10 @@ export function VCEnhancedStepItem({
                                                     "business-offerings";
 
                                                   // For fund-raises and business-offerings chats: post step-style system message after status update
-                                                  if (isFundRaises || isBusinessOfferings) {
+                                                  if (
+                                                    isFundRaises ||
+                                                    isBusinessOfferings
+                                                  ) {
                                                     try {
                                                       await updateFollowUpStatus.mutateAsync(
                                                         {

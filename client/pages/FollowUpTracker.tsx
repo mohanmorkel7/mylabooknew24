@@ -413,17 +413,21 @@ export default function FollowUpTracker() {
           (followUp as any).business_offering_solution ||
           (followUp as any).business_offering_product
             ? "sales"
-            : followUp.vc_id || followUp.vc_round_title || followUp.investor_name
-            ? "vc"
-            : "lead");
+            : followUp.vc_id ||
+                followUp.vc_round_title ||
+                followUp.investor_name
+              ? "vc"
+              : "lead");
 
         // Derive the correct stepId and API base for notifications
-        let stepApiBase: "vc" | "fund-raises" | "leads" | "business-offerings" = "leads";
+        let stepApiBase: "vc" | "fund-raises" | "leads" | "business-offerings" =
+          "leads";
         let stepIdValue: number | undefined = followUp.step_id;
 
         if (followUpType === "sales") {
           // Business offering follow-up handling
-          const businessOfferingStepId = (followUp as any).business_offering_step_id;
+          const businessOfferingStepId = (followUp as any)
+            .business_offering_step_id;
           const messageId = followUp.message_id;
 
           console.log("Analyzing business offering follow-up step data:", {
@@ -437,17 +441,26 @@ export default function FollowUpTracker() {
             // This is a business offering step
             stepIdValue = businessOfferingStepId;
             stepApiBase = "business-offerings";
-            console.log("Using business_offering_step_id for business offering step:", stepIdValue);
+            console.log(
+              "Using business_offering_step_id for business offering step:",
+              stepIdValue,
+            );
           } else if (messageId) {
             // Backend might store business_offering_step_id in message_id
             stepIdValue = messageId;
             stepApiBase = "business-offerings";
-            console.log("Using message_id for business offering step:", stepIdValue);
+            console.log(
+              "Using message_id for business offering step:",
+              stepIdValue,
+            );
           } else {
             // Fallback to step_id
             stepIdValue = followUp.step_id;
             stepApiBase = "business-offerings";
-            console.log("Fallback to step_id for business offering follow-up:", stepIdValue);
+            console.log(
+              "Fallback to step_id for business offering follow-up:",
+              stepIdValue,
+            );
           }
         } else if (followUpType === "vc") {
           // VC-related follow-up handling
