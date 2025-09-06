@@ -208,6 +208,67 @@ export default function BusinessOfferingsDetails() {
         </CardContent>
       </Card>
 
+        <div className="space-y-4 md:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Client Information</CardTitle>
+              <CardDescription>Primary client details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex justify-between"><span className="text-gray-500">Client</span><span className="font-medium">-</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">Status</span><span className="font-medium">{offering.client_status || "-"}</span></div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sales Summary</CardTitle>
+              <CardDescription>Progress and key dates</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {(() => {
+                const completed = (steps as any[]).filter((s: any) => s.status === "completed").length;
+                const total = (steps as any[]).length;
+                let totalCompletedProbability = 0;
+                let totalStepProbability = 0;
+                (steps as any[]).forEach((s: any) => {
+                  const prob = parseFloat(s.probability_percent) || 0;
+                  totalStepProbability += prob;
+                  if (s.status === "completed") totalCompletedProbability += prob;
+                });
+                const percent = totalStepProbability
+                  ? Math.min(100, Math.round(totalCompletedProbability))
+                  : total
+                    ? Math.round(((completed + ((steps as any[]).filter((s: any) => s.status === "in_progress").length) * 0.5) / total) * 100)
+                    : 0;
+                return (
+                  <>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1">
+                        <div className="w-full bg-gray-200 rounded-full h-3">
+                          <div className={`${percent >= 100 ? "bg-green-500" : percent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-3 rounded`} style={{ width: `${percent}%` }} />
+                        </div>
+                      </div>
+                      <div className="text-sm font-bold text-blue-600 min-w-[48px] text-right">{percent}%</div>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2">{completed} of {total} steps</div>
+                    <div className="grid grid-cols-2 gap-3 text-sm mt-3">
+                      <div>
+                        <div className="text-gray-500">Started</div>
+                        <div className="font-medium">{(offering as any).created_at ? new Date((offering as any).created_at).toLocaleDateString("en-IN") : "-"}</div>
+                      </div>
+                      <div>
+                        <div className="text-gray-500">Target Close</div>
+                        <div className="font-medium">-</div>
+                      </div>
+                    </div>
+                  </>
+                );
+              })()}
+            </CardContent>
+          </Card>
+        </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Steps</CardTitle>
