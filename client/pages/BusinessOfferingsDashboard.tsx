@@ -115,7 +115,7 @@ export default function BusinessOfferingsDashboard() {
             <CardDescription>All captured business offerings</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold">0</div>
+            <div className="text-3xl font-semibold">{stats.total}</div>
           </CardContent>
         </Card>
         <Card>
