@@ -244,6 +244,22 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     setFormB((p) => ({ ...p, potentialMRR: value }));
   }, [formB.currentDailyVolume, formB.potentialFee, domesticB]);
 
+  // Auto-calc Current Potential ARR (USD Mn) from Potential MRR (INR Lacs)
+  useEffect(() => {
+    const mrrLacs = parseFloat(formB.potentialMRR || "");
+    if (isNaN(mrrLacs) || mrrLacs <= 0) {
+      setFormB((p) => ({ ...p, currentPotentialARR: "" }));
+      return;
+    }
+    const inrMnPerMonth = mrrLacs / 10;
+    const inrMnPerYear = inrMnPerMonth * 12;
+    const usdMnPerYear = inrMnPerYear / USD_TO_INR_RATE;
+    const valueArr = Number.isFinite(usdMnPerYear)
+      ? Number(usdMnPerYear.toFixed(3)).toString()
+      : "";
+    setFormB((p) => ({ ...p, currentPotentialARR: valueArr }));
+  }, [formB.potentialMRR, domesticB]);
+
   // Calculation details (testing)
   const calcDetails = useMemo(() => {
     const volMn = parseVolumeBucketToMn(formB.currentDailyVolume);
@@ -258,6 +274,11 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       : 0;
     const monthlyRevenueINR = valid ? monthly * feeInINR : 0;
     const mrrLacs = valid ? monthlyRevenueINR / 100_000 : 0;
+    const mrrLacsField = parseFloat(formB.potentialMRR || "");
+    const hasMRRField = !isNaN(mrrLacsField) && mrrLacsField > 0;
+    const arrInrMnPerMonth = hasMRRField ? mrrLacsField / 10 : 0;
+    const arrInrMnPerYear = hasMRRField ? arrInrMnPerMonth * 12 : 0;
+    const arrUsdMn = hasMRRField ? arrInrMnPerYear / USD_TO_INR_RATE : 0;
     return {
       domestic: domesticB,
       bucket: formB.currentDailyVolume || "",
@@ -269,6 +290,10 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       usdRate: USD_TO_INR_RATE,
       monthlyRevenueINR,
       mrrLacs,
+      mrrLacsField,
+      arrInrMnPerMonth,
+      arrInrMnPerYear,
+      arrUsdMn,
       valid,
     };
   }, [formB.currentDailyVolume, formB.potentialFee, domesticB]);
@@ -839,6 +864,18 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                       {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} /
                       100,000
                     </div>
+                    <div>
+                      <span className="font-medium">MRR (from field, INR Lacs):</span> {isNaN(calcDetails.mrrLacsField) ? "0.00" : calcDetails.mrrLacsField.toFixed(2)}
+                    </div>
+                    <div>
+                      <span className="font-medium">ARR Step 1 (INR Mn/mo):</span> {calcDetails.arrInrMnPerMonth.toFixed(2)} = {isNaN(calcDetails.mrrLacsField) ? "0.00" : calcDetails.mrrLacsField.toFixed(2)} / 10
+                    </div>
+                    <div>
+                      <span className="font-medium">ARR Step 2 (INR Mn/yr):</span> {calcDetails.arrInrMnPerYear.toFixed(2)} = {calcDetails.arrInrMnPerMonth.toFixed(2)} * 12
+                    </div>
+                    <div>
+                      <span className="font-medium">ARR Step 3 (USD Mn/yr):</span> {calcDetails.arrUsdMn.toFixed(3)} = {calcDetails.arrInrMnPerYear.toFixed(2)} / {calcDetails.usdRate}
+                    </div>
                   </div>
                 </div>
 
@@ -846,16 +883,12 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                   <Label>Current Potential ARR (USD Mn) *</Label>
                   <Input
                     type="number"
-                    step="0.01"
+                    step="0.001"
                     value={formB.currentPotentialARR}
-                    onChange={(e) => {
-                      setFormB((p) => ({
-                        ...p,
-                        currentPotentialARR: e.target.value,
-                      }));
-                      setErrors((er) => ({ ...er, currentPotentialARR: "" }));
-                    }}
-                    placeholder="e.g., 0.50"
+                    readOnly
+                    disabled
+                    className="bg-gray-50"
+                    placeholder="Auto-calculated"
                   />
                   {errors.currentPotentialARR && (
                     <div className="text-sm text-red-600 mt-1">
