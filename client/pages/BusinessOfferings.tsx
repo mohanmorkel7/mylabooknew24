@@ -213,7 +213,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
 
   function parseVolumeBucketToMn(bucket: string): number {
     if (!bucket) return 0;
-    const nums = (bucket.match(/\d+(?:\.\d+)?/g) || []).map((s) => parseFloat(s));
+    const nums = (bucket.match(/\d+(?:\.\d+)?/g) || []).map((s) =>
+      parseFloat(s),
+    );
     if (nums.length >= 2) return (nums[0] + nums[1]) / 2; // average when range
     if (nums.length === 1) return nums[0];
     return 0;
@@ -233,7 +235,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     const feeInINR = domesticB ? fee : fee * USD_TO_INR_RATE;
     const monthlyRevenueINR = monthly * feeInINR;
     const mrrLacs = monthlyRevenueINR / 100_000; // convert to INR Lakhs
-    const value = Number.isFinite(mrrLacs) ? Number(mrrLacs.toFixed(2)).toString() : "";
+    const value = Number.isFinite(mrrLacs)
+      ? Number(mrrLacs.toFixed(2)).toString()
+      : "";
     setFormB((p) => ({ ...p, potentialMRR: value }));
   }, [formB.currentDailyVolume, formA.avgFee, domesticB]);
 
