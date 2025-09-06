@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Briefcase, Plus, Trash2 } from "lucide-react";
+import { Briefcase, Plus, Trash2, Clock, CheckCircle, XCircle } from "lucide-react";
 import { useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { toast } from "@/components/ui/use-toast";
@@ -127,6 +127,23 @@ export default function BusinessOfferingsDashboard() {
     }
   };
 
+  // Load all follow-ups and filter for business offerings
+  const { data: allFollowUps = [], isLoading: followUpsLoading } = useQuery({
+    queryKey: ["follow-ups-dashboard"],
+    queryFn: async () => {
+      try {
+        return await apiClient.getAllFollowUps({});
+      } catch {
+        return [];
+      }
+    },
+    staleTime: 30000,
+  });
+
+  const boFollowUps = (allFollowUps as any[]).filter(
+    (f) => f.business_offering_id != null,
+  );
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -204,6 +221,186 @@ export default function BusinessOfferingsDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Follow-up Status Cards for Business Offerings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        {(() => {
+          const now = new Date();
+          const currentDueFollowUps = (boFollowUps || []).filter(
+            (followUp: any) => {
+              if (followUp.status === "completed") return false;
+              const dueDate = followUp.due_date
+                ? new Date(followUp.due_date)
+                : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
+              if (isNaN(dueDate.getTime())) return false;
+              const timeDiff = dueDate.getTime() - now.getTime();
+              const diffDays = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+              return diffDays >= 0 && diffDays <= 7;
+            },
+          );
+
+          const overdueFollowUps = (boFollowUps || []).filter(
+            (followUp: any) => {
+              if (followUp.status === "completed") return false;
+              const dueDate = followUp.due_date
+                ? new Date(followUp.due_date)
+                : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
+              if (isNaN(dueDate.getTime())) return false;
+              return dueDate < now;
+            },
+          );
+
+          return (
+            <>
+              <Card className="overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg font-semibold text-blue-900 flex items-center">
+                        <Clock className="w-5 h-5 mr-2" /> Follow-ups Due
+                      </CardTitle>
+                      <CardDescription className="text-blue-700">
+                        Follow-ups due within the next 7 days ({currentDueFollowUps.length} items)
+                      </CardDescription>
+                    </div>
+                    <Badge variant="secondary" className="bg-blue-200 text-blue-800">
+                      {currentDueFollowUps.length}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {followUpsLoading ? (
+                    <div className="p-6 text-center text-gray-500">Loading follow-ups...</div>
+                  ) : currentDueFollowUps.length === 0 ? (
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <CheckCircle className="w-6 h-6 text-blue-500" />
+                      </div>
+                      <p className="text-gray-600 font-medium">All caught up!</p>
+                      <p className="text-gray-500 text-sm">No follow-ups due in the next 7 days</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
+                      {currentDueFollowUps.map((followUp: any, index: number) => {
+                        const dueDate = followUp.due_date
+                          ? new Date(followUp.due_date)
+                          : new Date(new Date(followUp.created_at).getTime() + 3 * 24 * 60 * 60 * 1000);
+                        const diffDays = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                        const isToday = diffDays === 0;
+                        const isTomorrow = diffDays === 1;
+                        return (
+                          <div
+                            key={followUp.id}
+                            className={`p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${index === currentDueFollowUps.length - 1 ? "border-b-0" : ""}`}
+                            onClick={() => navigate(`/follow-ups?id=${followUp.id}`)}
+                            title={followUp.description || followUp.title || "No description available"}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-1">
+                                  <h4 className="font-medium text-gray-900 text-sm line-clamp-1">
+                                    {followUp.title}
+                                  </h4>
+                                  <Badge
+                                    variant="outline"
+                                    className={`text-xs ${isToday ? "border-orange-300 text-orange-700 bg-orange-50" : isTomorrow ? "border-yellow-300 text-yellow-700 bg-yellow-50" : "border-blue-300 text-blue-700 bg-blue-50"}`}
+                                  >
+                                    {isToday ? "Today" : isTomorrow ? "Tomorrow" : `${diffDays} days`}
+                                  </Badge>
+                                </div>
+                                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                  <span>
+                                    Offering: {followUp.business_offering_product || followUp.business_offering_solution || "Unknown"}
+                                  </span>
+                                  <span>Step: {followUp.business_offering_step_name || "N/A"}</span>
+                                  <span>Assigned to: {followUp.assigned_user_name || "Unassigned"}</span>
+                                </div>
+                              </div>
+                              <div className="text-right text-xs text-gray-500">
+                                Due: {followUp.due_date ? (() => {
+                                  const utcDate = new Date(followUp.due_date);
+                                  const y = utcDate.getFullYear();
+                                  const m = String(utcDate.getMonth() + 1).padStart(2, "0");
+                                  const d = String(utcDate.getDate()).padStart(2, "0");
+                                  return `${y}-${m}-${d}`;
+                                })() : "No date"}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card className="overflow-hidden">
+                <CardHeader className="bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-lg font-semibold text-red-900 flex items-center">
+                        <XCircle className="w-5 h-5 mr-2" /> Overdue Follow-ups
+                      </CardTitle>
+                      <CardDescription className="text-red-700">
+                        Follow-ups that are past their due date ({overdueFollowUps.length} items)
+                      </CardDescription>
+                    </div>
+                    <Badge variant="destructive" className="bg-red-200 text-red-800">
+                      {overdueFollowUps.length}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {followUpsLoading ? (
+                    <div className="p-6 text-center text-gray-500">Loading follow-ups...</div>
+                  ) : overdueFollowUps.length === 0 ? (
+                    <div className="p-6 text-center">
+                      <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <CheckCircle className="w-6 h-6 text-green-500" />
+                      </div>
+                      <p className="text-gray-600 font-medium">Great job!</p>
+                      <p className="text-gray-500 text-sm">No overdue follow-ups</p>
+                    </div>
+                  ) : (
+                    <div className="max-h-[calc(100vh-400px)] min-h-[200px] overflow-y-auto">
+                      {overdueFollowUps.map((followUp: any) => (
+                        <div
+                          key={followUp.id}
+                          className="p-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/follow-ups?id=${followUp.id}`)}
+                          title={followUp.description || followUp.title || "No description available"}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2 mb-1">
+                                <h4 className="font-medium text-gray-900 text-sm line-clamp-1">{followUp.title}</h4>
+                              </div>
+                              <div className="flex items-center space-x-4 text-xs text-gray-500">
+                                <span>Offering: {followUp.business_offering_product || followUp.business_offering_solution || "Unknown"}</span>
+                                <span>Step: {followUp.business_offering_step_name || "N/A"}</span>
+                                <span>Assigned to: {followUp.assigned_user_name || "Unassigned"}</span>
+                              </div>
+                            </div>
+                            <div className="text-right text-xs text-gray-500">
+                              Due: {followUp.due_date ? (() => {
+                                const utcDate = new Date(followUp.due_date);
+                                const y = utcDate.getFullYear();
+                                const m = String(utcDate.getMonth() + 1).padStart(2, "0");
+                                const d = String(utcDate.getDate()).padStart(2, "0");
+                                return `${y}-${m}-${d}`;
+                              })() : "No date"}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </>
+          );
+        })()}
+      </div>
 
       {/* Products wise accordion */}
       <Card className="mt-6">
