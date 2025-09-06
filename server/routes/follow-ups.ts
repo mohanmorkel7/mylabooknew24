@@ -305,7 +305,7 @@ router.post("/", async (req: Request, res: Response) => {
                 ((CASE WHEN lead_id IS NOT NULL THEN 1 ELSE 0 END) +
                  (CASE WHEN vc_id IS NOT NULL THEN 1 ELSE 0 END) +
                  (CASE WHEN business_offering_id IS NOT NULL THEN 1 ELSE 0 END)) = 1
-              );
+              ) NOT VALID;
             `);
             // Re-attempt insert with a safe fallback insert (business offering aware)
             const retryQuery2 = `
