@@ -290,6 +290,8 @@ router.post("/", async (req: Request, res: Response) => {
         client_id,
         lead_id,
         step_id,
+        business_offering_id,
+        business_offering_step_id,
         title,
         description,
         due_date,
