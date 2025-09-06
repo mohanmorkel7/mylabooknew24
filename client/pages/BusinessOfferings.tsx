@@ -209,6 +209,34 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
   const domesticA = isDomesticByGeography(selectedClient);
   const domesticB = isDomesticByGeography(selectedClient);
 
+  const USD_TO_INR_RATE = 87; // conversion rate for USD -> INR
+
+  function parseVolumeBucketToMn(bucket: string): number {
+    if (!bucket) return 0;
+    const nums = (bucket.match(/\d+(?:\.\d+)?/g) || []).map((s) => parseFloat(s));
+    if (nums.length >= 2) return (nums[0] + nums[1]) / 2; // average when range
+    if (nums.length === 1) return nums[0];
+    return 0;
+  }
+
+  // Auto-calc Potential MRR (INR Lacs)
+  useEffect(() => {
+    const volMn = parseVolumeBucketToMn(formB.currentDailyVolume);
+    const fee = parseFloat(formA.avgFee || "");
+    if (!volMn || isNaN(fee)) {
+      setFormB((p) => ({ ...p, potentialMRR: "" }));
+      return;
+    }
+    // daily volume (in millions) -> absolute units
+    const daily = volMn * 1_000_000;
+    const monthly = daily * 30;
+    const feeInINR = domesticB ? fee : fee * USD_TO_INR_RATE;
+    const monthlyRevenueINR = monthly * feeInINR;
+    const mrrLacs = monthlyRevenueINR / 100_000; // convert to INR Lakhs
+    const value = Number.isFinite(mrrLacs) ? Number(mrrLacs.toFixed(2)).toString() : "";
+    setFormB((p) => ({ ...p, potentialMRR: value }));
+  }, [formB.currentDailyVolume, formA.avgFee, domesticB]);
+
   // Normalize fee/MMGF values to match combobox item formats on edit/view (depends on selectedClient)
   useEffect(() => {
     if (!initial) return;
@@ -703,11 +731,10 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     type="number"
                     step="0.01"
                     value={formB.potentialMRR}
-                    onChange={(e) => {
-                      setFormB((p) => ({ ...p, potentialMRR: e.target.value }));
-                      setErrors((er) => ({ ...er, potentialMRR: "" }));
-                    }}
-                    placeholder="e.g., 1.25"
+                    readOnly
+                    disabled
+                    className="bg-gray-50"
+                    placeholder="Auto-calculated"
                   />
                   {errors.potentialMRR && (
                     <div className="text-sm text-red-600 mt-1">
