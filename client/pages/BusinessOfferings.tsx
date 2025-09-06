@@ -299,6 +299,15 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     const arrInrMnPerMonth = hasMRRField ? mrrLacsField / 10 : 0;
     const arrInrMnPerYear = hasMRRField ? arrInrMnPerMonth * 12 : 0;
     const arrUsdMn = hasMRRField ? arrInrMnPerYear / USD_TO_INR_RATE : 0;
+    // Projected ARR details
+    const projAvgMn = parseVolumeBucketToMn(formB.projectedDailyVolume);
+    const projAnnualMn = projAvgMn ? projAvgMn * 365 : 0;
+    const projUsdMn = projAvgMn
+      ? domesticB
+        ? (projAnnualMn * (isNaN(feeRaw) ? 0 : feeRaw)) / USD_TO_INR_RATE
+        : projAnnualMn * (isNaN(feeRaw) ? 0 : feeRaw)
+      : 0;
+
     return {
       domestic: domesticB,
       bucket: formB.currentDailyVolume || "",
@@ -314,10 +323,16 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       arrInrMnPerMonth,
       arrInrMnPerYear,
       arrUsdMn,
+      // projected breakdown
+      projBucket: formB.projectedDailyVolume || "",
+      projAvgMn,
+      projAnnualMn,
+      projUsdMn,
       valid,
     };
   }, [
     formB.currentDailyVolume,
+    formB.projectedDailyVolume,
     formB.potentialFee,
     domesticB,
     formB.potentialMRR,
