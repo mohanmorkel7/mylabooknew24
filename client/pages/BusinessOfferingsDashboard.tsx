@@ -107,11 +107,17 @@ export default function BusinessOfferingsDashboard() {
     progressMap[o.id] = percent;
   });
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = (id: number) => {
+    setDeleteId(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteId) return;
     try {
-      await apiClient.deleteBusinessOffering(id);
+      await apiClient.deleteBusinessOffering(deleteId);
       toast({ title: "Deleted", description: "Business Offering removed" });
       queryClient.invalidateQueries({ queryKey: ["business-offerings"] });
+      setDeleteId(null);
     } catch (e: any) {
       toast({
         title: "Delete failed",
