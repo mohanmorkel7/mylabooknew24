@@ -1194,6 +1194,25 @@ export default function FollowUpTracker() {
                               <ExternalLink className="w-3 h-3 mr-1" />
                               View Message
                             </Button>
+                          ) : followUpType === "sales" ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const businessOfferingId = (followUp as any).business_offering_id;
+                                if (businessOfferingId) {
+                                  navigate(`/business-offerings/${businessOfferingId}`, {
+                                    state: {
+                                      focusFollowUpId: followUp.id,
+                                    },
+                                  });
+                                }
+                              }}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              View Business Offering
+                            </Button>
                           ) : (
                             (() => {
                               // Check if this is a fund raise follow-up (has message_id indicating fund_raise_step)
