@@ -56,7 +56,9 @@ router.post("/", async (req: Request, res: Response) => {
           ["vc_id", "vc_step_id"].includes(row.column_name),
         );
         const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
-          ["business_offering_id", "business_offering_step_id"].includes(row.column_name),
+          ["business_offering_id", "business_offering_step_id"].includes(
+            row.column_name,
+          ),
         );
 
         let query, values;
@@ -513,14 +515,22 @@ router.get("/", async (req: Request, res: Response) => {
         AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id')
       `);
 
-      const hasVCColumns = columnCheck.rows.some(row => ['vc_id', 'vc_step_id'].includes(row.column_name));
-      const hasBusinessOfferingColumns = columnCheck.rows.some(row => ['business_offering_id', 'business_offering_step_id'].includes(row.column_name));
+      const hasVCColumns = columnCheck.rows.some((row) =>
+        ["vc_id", "vc_step_id"].includes(row.column_name),
+      );
+      const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
+        ["business_offering_id", "business_offering_step_id"].includes(
+          row.column_name,
+        ),
+      );
 
       // If business offering columns are missing, add them
       let finalHasBusinessOfferingColumns = hasBusinessOfferingColumns;
       if (!hasBusinessOfferingColumns) {
         try {
-          console.log("Adding missing business offering columns to follow_ups table...");
+          console.log(
+            "Adding missing business offering columns to follow_ups table...",
+          );
           await pool.query(`
             ALTER TABLE follow_ups
             ADD COLUMN IF NOT EXISTS business_offering_id INTEGER,
@@ -529,7 +539,10 @@ router.get("/", async (req: Request, res: Response) => {
           console.log("✅ Business offering columns added successfully");
           finalHasBusinessOfferingColumns = true; // Update flag after successful migration
         } catch (migrationError) {
-          console.error("❌ Failed to add business offering columns:", migrationError.message);
+          console.error(
+            "❌ Failed to add business offering columns:",
+            migrationError.message,
+          );
         }
       }
 
@@ -549,7 +562,7 @@ router.get("/", async (req: Request, res: Response) => {
         const businessOfferingJoins = finalHasBusinessOfferingColumns
           ? `LEFT JOIN business_offerings bo ON f.business_offering_id = bo.id
              LEFT JOIN business_offer_steps bos ON f.business_offering_step_id = bos.id`
-          : '';
+          : "";
 
         // Full query with VC, Fund Raise and conditional Business Offering support
         query = `

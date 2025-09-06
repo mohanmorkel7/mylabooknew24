@@ -760,7 +760,11 @@ export default function FollowUpTracker() {
           </h1>
           <p className="text-gray-600 mt-1">
             Track and manage follow-up tasks from{" "}
-            {isAdmin ? "leads, business offerings, and VC rounds" : isVC ? "VC rounds" : "leads"}
+            {isAdmin
+              ? "leads, business offerings, and VC rounds"
+              : isVC
+                ? "VC rounds"
+                : "leads"}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -1080,8 +1084,10 @@ export default function FollowUpTracker() {
                                   >
                                     Business Offering
                                   </Badge>
-                                  {(followUp as any).business_offering_solution ||
-                                    (followUp as any).business_offering_product ||
+                                  {(followUp as any)
+                                    .business_offering_solution ||
+                                    (followUp as any)
+                                      .business_offering_product ||
                                     followUp.client_name ||
                                     "Business Offering"}
                                 </>
@@ -1200,13 +1206,17 @@ export default function FollowUpTracker() {
                               variant="outline"
                               size="sm"
                               onClick={() => {
-                                const businessOfferingId = (followUp as any).business_offering_id;
+                                const businessOfferingId = (followUp as any)
+                                  .business_offering_id;
                                 if (businessOfferingId) {
-                                  navigate(`/business-offerings/${businessOfferingId}`, {
-                                    state: {
-                                      focusFollowUpId: followUp.id,
+                                  navigate(
+                                    `/business-offerings/${businessOfferingId}`,
+                                    {
+                                      state: {
+                                        focusFollowUpId: followUp.id,
+                                      },
                                     },
-                                  });
+                                  );
                                 }
                               }}
                               className="text-green-600 hover:text-green-700 hover:bg-green-50"
