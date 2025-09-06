@@ -240,7 +240,7 @@ export default function BusinessOfferingsDashboard() {
             const groups: Record<string, any[]> = {};
             const source = (filtered as any[]).length
               ? (filtered as any[])
-              : ((data as any[]) || []);
+              : (data as any[]) || [];
             source.forEach((o: any) => {
               const key = o.product || "Unknown";
               if (!groups[key]) groups[key] = [];
@@ -270,7 +270,9 @@ export default function BusinessOfferingsDashboard() {
                               <div
                                 key={o.id}
                                 className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:shadow-sm"
-                                onClick={() => navigate(`/business-offerings/${o.id}`)}
+                                onClick={() =>
+                                  navigate(`/business-offerings/${o.id}`)
+                                }
                               >
                                 <div className="flex-1">
                                   <div className="flex items-center gap-2 mb-2">
@@ -286,25 +288,43 @@ export default function BusinessOfferingsDashboard() {
 
                                   <div className="grid grid-cols-2 gap-4 text-xs text-gray-600 mb-2">
                                     <div>
-                                      <span className="font-medium">Client:</span> {client?.client_name || "-"}
+                                      <span className="font-medium">
+                                        Client:
+                                      </span>{" "}
+                                      {client?.client_name || "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">Industry:</span> {client?.industry || "-"}
+                                      <span className="font-medium">
+                                        Industry:
+                                      </span>{" "}
+                                      {client?.industry || "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">Contact:</span> {client?.contact_person || "-"}
+                                      <span className="font-medium">
+                                        Contact:
+                                      </span>{" "}
+                                      {client?.contact_person || "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">Location:</span> {client?.city || client?.country || "-"}
+                                      <span className="font-medium">
+                                        Location:
+                                      </span>{" "}
+                                      {client?.city || client?.country || "-"}
                                     </div>
                                   </div>
 
                                   <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
                                     <div>
-                                      <span className="font-medium">MRR:</span> {o.potential_mrr_lacs ? `${o.potential_mrr_lacs} Lacs` : "-"}
+                                      <span className="font-medium">MRR:</span>{" "}
+                                      {o.potential_mrr_lacs
+                                        ? `${o.potential_mrr_lacs} Lacs`
+                                        : "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">ARR:</span> {o.current_potential_arr_usd_mn ? `$${o.current_potential_arr_usd_mn}Mn` : "-"}
+                                      <span className="font-medium">ARR:</span>{" "}
+                                      {o.current_potential_arr_usd_mn
+                                        ? `$${o.current_potential_arr_usd_mn}Mn`
+                                        : "-"}
                                     </div>
                                   </div>
 
@@ -322,7 +342,9 @@ export default function BusinessOfferingsDashboard() {
                                       style={{ width: `${percent}%` }}
                                     />
                                   </div>
-                                  <span className="text-xs text-gray-700 font-medium w-8 text-right">{percent}%</span>
+                                  <span className="text-xs text-gray-700 font-medium w-8 text-right">
+                                    {percent}%
+                                  </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
