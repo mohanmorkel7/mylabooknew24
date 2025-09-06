@@ -276,7 +276,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     } else {
       usdMn = annualMn * feeRaw;
     }
-    const value = Number.isFinite(usdMn) ? Number(usdMn.toFixed(3)).toString() : "";
+    const value = Number.isFinite(usdMn)
+      ? Number(usdMn.toFixed(3)).toString()
+      : "";
     setFormB((p) => ({ ...p, projectedPotentialARR: value }));
   }, [formB.projectedDailyVolume, formB.potentialFee, domesticB]);
 
@@ -940,21 +942,47 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
 
                     <div className="mt-2 border-t pt-2">
                       <div>
-                        <span className="font-medium">Projected Daily Volume Mn - next 2 years:</span> {calcDetails.projBucket || "-"}
+                        <span className="font-medium">
+                          Projected Daily Volume Mn - next 2 years:
+                        </span>{" "}
+                        {calcDetails.projBucket || "-"}
                       </div>
                       <div>
-                        <span className="font-medium">Projected Parsed Avg (Mn):</span> {calcDetails.projAvgMn ? calcDetails.projAvgMn.toFixed(2) : "0.00"}
+                        <span className="font-medium">
+                          Projected Parsed Avg (Mn):
+                        </span>{" "}
+                        {calcDetails.projAvgMn
+                          ? calcDetails.projAvgMn.toFixed(2)
+                          : "0.00"}
                       </div>
                       <div>
-                        <span className="font-medium">Projected Annual Volume (Mn):</span> {calcDetails.projAnnualMn.toFixed(2)} = {calcDetails.projAvgMn ? calcDetails.projAvgMn.toFixed(2) : "0.00"} * 365
+                        <span className="font-medium">
+                          Projected Annual Volume (Mn):
+                        </span>{" "}
+                        {calcDetails.projAnnualMn.toFixed(2)} ={" "}
+                        {calcDetails.projAvgMn
+                          ? calcDetails.projAvgMn.toFixed(2)
+                          : "0.00"}{" "}
+                        * 365
                       </div>
                       {calcDetails.domestic ? (
                         <div>
-                          <span className="font-medium">Projected ARR (USD Mn):</span> {calcDetails.projUsdMn.toFixed(3)} = ({calcDetails.projAnnualMn.toFixed(2)} * {calcDetails.feeRaw.toFixed(2)}) / {calcDetails.usdRate}
+                          <span className="font-medium">
+                            Projected ARR (USD Mn):
+                          </span>{" "}
+                          {calcDetails.projUsdMn.toFixed(3)} = (
+                          {calcDetails.projAnnualMn.toFixed(2)} *{" "}
+                          {calcDetails.feeRaw.toFixed(2)}) /{" "}
+                          {calcDetails.usdRate}
                         </div>
                       ) : (
                         <div>
-                          <span className="font-medium">Projected ARR (USD Mn):</span> {calcDetails.projUsdMn.toFixed(3)} = {calcDetails.projAnnualMn.toFixed(2)} * {calcDetails.feeRaw.toFixed(3)}
+                          <span className="font-medium">
+                            Projected ARR (USD Mn):
+                          </span>{" "}
+                          {calcDetails.projUsdMn.toFixed(3)} ={" "}
+                          {calcDetails.projAnnualMn.toFixed(2)} *{" "}
+                          {calcDetails.feeRaw.toFixed(3)}
                         </div>
                       )}
                     </div>
