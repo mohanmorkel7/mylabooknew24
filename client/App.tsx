@@ -29,11 +29,22 @@ class AuthErrorBoundary extends React.Component<
     console.error("Auth Error Boundary caught an error:", error, errorInfo);
 
     // Check if it's an auth-related error
-    if (
+    const isAuthCtxError =
       error.message?.includes("useAuth") ||
-      error.message?.includes("AuthProvider")
-    ) {
+      error.message?.includes("AuthProvider");
+    if (isAuthCtxError) {
       console.warn("Auth context error detected - possible HMR issue");
+      try {
+        const key = "__auth_error_reloaded";
+        if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          setTimeout(() => {
+            window.location.reload();
+          }, 150);
+        } else {
+          // Do not loop; allow manual retry
+        }
+      } catch {}
     }
   }
 
@@ -48,12 +59,23 @@ class AuthErrorBoundary extends React.Component<
             <p className="text-gray-600 mb-4">
               There was an issue with authentication. Please refresh the page.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Refresh Page
-            </button>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  try { sessionStorage.removeItem("__auth_error_reloaded"); } catch {}
+                  this.setState({ hasError: false, error: undefined });
+                }}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       );
