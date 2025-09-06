@@ -316,21 +316,23 @@ export default function BusinessOfferingsDetails() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>{client?.client_name || "Client"} steps pipeline</CardTitle>
+            <CardTitle>
+              {client?.client_name || "Client"} steps pipeline
+            </CardTitle>
             <CardDescription>Track progress</CardDescription>
           </CardHeader>
-        <CardContent>
-          <VCDraggableStepsList
-            vcId={boId}
-            steps={steps as any[]}
-            expandedSteps={expandedSteps}
-            onToggleExpansion={onToggleExpansion}
-            onDeleteStep={onDeleteStep}
-            onReorderSteps={onReorderSteps}
-            updateStepStatus={updateStepStatus}
-            stepApiBase={"business-offerings"}
-          />
-        </CardContent>
+          <CardContent>
+            <VCDraggableStepsList
+              vcId={boId}
+              steps={steps as any[]}
+              expandedSteps={expandedSteps}
+              onToggleExpansion={onToggleExpansion}
+              onDeleteStep={onDeleteStep}
+              onReorderSteps={onReorderSteps}
+              updateStepStatus={updateStepStatus}
+              stepApiBase={"business-offerings"}
+            />
+          </CardContent>
         </Card>
       </div>
     </div>
