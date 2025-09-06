@@ -1034,7 +1034,10 @@ export default function FundRaiseDashboard() {
                       list.forEach((fr: any) => {
                         const s = (fr.investor_status || "").trim() || "N/A";
                         statusCount[s] = (statusCount[s] || 0) + 1;
-                        if (Array.isArray(fr.investors) && fr.investors.length) {
+                        if (
+                          Array.isArray(fr.investors) &&
+                          fr.investors.length
+                        ) {
                           fr.investors.forEach((iv: any) => {
                             const f = parseFloat(iv?.fund_mn ?? "");
                             if (!isNaN(f)) totalFund += f;
@@ -1073,7 +1076,10 @@ export default function FundRaiseDashboard() {
                                 className="bg-blue-50 text-blue-700"
                               >
                                 <DollarSign className="w-3 h-3 mr-1 inline" />
-                                Total Fund Raise $ Mn: {Number.isFinite(totalFund) ? totalFund.toFixed(2) : '0.00'}
+                                Total Fund Raise $ Mn:{" "}
+                                {Number.isFinite(totalFund)
+                                  ? totalFund.toFixed(2)
+                                  : "0.00"}
                               </Badge>
                             </div>
 
@@ -1109,12 +1115,16 @@ export default function FundRaiseDashboard() {
                                     (iv.investor_status || "").toLowerCase() ===
                                     "closed",
                                 ).length;
-                                if (closedCount === 0 && (fr.investor_status || '').toLowerCase() === 'closed') {
+                                if (
+                                  closedCount === 0 &&
+                                  (fr.investor_status || "").toLowerCase() ===
+                                    "closed"
+                                ) {
                                   closedCount = 1;
                                 }
                                 let totalFundMn = investorList.reduce(
                                   (sum: number, iv: any) => {
-                                    const v = parseFloat(iv?.fund_mn ?? '');
+                                    const v = parseFloat(iv?.fund_mn ?? "");
                                     return sum + (isNaN(v) ? 0 : v);
                                   },
                                   0,
@@ -1219,7 +1229,9 @@ export default function FundRaiseDashboard() {
                                           >
                                             <DollarSign className="w-3 h-3 mr-1 inline" />
                                             Total Fund Raise $ Mn:{" "}
-                                            {Number.isFinite(totalFundMn) ? totalFundMn.toFixed(2) : '0.00'}
+                                            {Number.isFinite(totalFundMn)
+                                              ? totalFundMn.toFixed(2)
+                                              : "0.00"}
                                           </Badge>
                                           {fr.start_date && (
                                             <span className="inline-flex items-center gap-1">
