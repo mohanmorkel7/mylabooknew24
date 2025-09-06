@@ -507,15 +507,31 @@ router.get("/", async (req: Request, res: Response) => {
         queryParams.push(parseInt(assigned_to as string));
       }
 
-      // Check if VC columns exist in follow_ups table
+      // Check if VC and business offering columns exist in follow_ups table
       const columnCheck = await pool.query(`
         SELECT column_name
         FROM information_schema.columns
         WHERE table_name = 'follow_ups'
-        AND column_name IN ('vc_id', 'vc_step_id')
+        AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id')
       `);
 
-      const hasVCColumns = columnCheck.rows.length === 2;
+      const hasVCColumns = columnCheck.rows.some(row => ['vc_id', 'vc_step_id'].includes(row.column_name));
+      const hasBusinessOfferingColumns = columnCheck.rows.some(row => ['business_offering_id', 'business_offering_step_id'].includes(row.column_name));
+
+      // If business offering columns are missing, add them
+      if (!hasBusinessOfferingColumns) {
+        try {
+          console.log("Adding missing business offering columns to follow_ups table...");
+          await pool.query(`
+            ALTER TABLE follow_ups
+            ADD COLUMN IF NOT EXISTS business_offering_id INTEGER,
+            ADD COLUMN IF NOT EXISTS business_offering_step_id INTEGER
+          `);
+          console.log("✅ Business offering columns added successfully");
+        } catch (migrationError) {
+          console.error("❌ Failed to add business offering columns:", migrationError.message);
+        }
+      }
 
       let query;
       if (hasVCColumns) {
