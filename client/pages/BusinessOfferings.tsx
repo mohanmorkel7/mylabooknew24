@@ -296,7 +296,12 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       arrUsdMn,
       valid,
     };
-  }, [formB.currentDailyVolume, formB.potentialFee, domesticB, formB.potentialMRR]);
+  }, [
+    formB.currentDailyVolume,
+    formB.potentialFee,
+    domesticB,
+    formB.potentialMRR,
+  ]);
 
   // Normalize fee/MMGF values to match combobox item formats on edit/view (depends on selectedClient)
   useEffect(() => {
