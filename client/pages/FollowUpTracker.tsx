@@ -293,7 +293,11 @@ export default function FollowUpTracker() {
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
-              (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
+              (f.business_offering_id || f.business_offering_solution || f.business_offering_product
+                ? "sales"
+                : f.vc_id || f.vc_round_title || f.investor_name
+                  ? "vc"
+                  : "lead"),
           }));
 
           // Debug VC follow-ups to check stepId fields
