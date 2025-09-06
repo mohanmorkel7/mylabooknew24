@@ -37,6 +37,13 @@ export default function BusinessOfferingsDetails() {
     enabled: !!boId,
   });
 
+  const clientId = (offering as any)?.client_id as number | undefined;
+  const { data: client } = useQuery({
+    queryKey: ["client", clientId],
+    queryFn: () => apiClient.getClient(clientId as number),
+    enabled: !!clientId,
+  });
+
   const { data: steps = [], refetch: refetchSteps } = useQuery({
     queryKey: ["business-offering-steps", boId],
     queryFn: () => apiClient.getBusinessOfferingSteps(boId),
