@@ -379,18 +379,31 @@ export function VCEnhancedStepItem({
     });
 
     try {
-      // Create the follow-up task
+      // Create the follow-up task with proper context based on stepApiBase
       console.log("📝 Creating follow-up with mutation...");
-      const created = await createFollowUpMutation.mutateAsync({
-        title: `Fund Raise Follow-up: ${step.name}`,
+
+      const followUpData: any = {
         description: followUpNotes,
         assigned_to: parseInt(followUpAssignTo),
         due_date: new Date(followUpDueDate).toISOString(),
         priority: "medium",
-        vc_id: step.vc_id,
-        vc_step_id: step.id,
         created_by: parseInt(user?.id || "1"),
-      });
+      };
+
+      if (stepApiBase === "business-offerings") {
+        // Business offering follow-up
+        followUpData.title = `Sales Follow-up: ${step.name}`;
+        followUpData.follow_up_type = "sales";
+        followUpData.business_offering_id = step.business_offering_id;
+        followUpData.business_offering_step_id = step.id;
+      } else {
+        // Fund raise follow-up (existing logic)
+        followUpData.title = `Fund Raise Follow-up: ${step.name}`;
+        followUpData.vc_id = step.vc_id;
+        followUpData.vc_step_id = step.id;
+      }
+
+      const created = await createFollowUpMutation.mutateAsync(followUpData);
 
       console.log("✅ Follow-up created successfully:", created);
 
