@@ -876,6 +876,7 @@ export default function FollowUpTracker() {
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="lead">Lead</SelectItem>
                     <SelectItem value="vc">Fund Raise</SelectItem>
+                    <SelectItem value="sales">Business Offering</SelectItem>
                   </SelectContent>
                 </Select>
               )}
