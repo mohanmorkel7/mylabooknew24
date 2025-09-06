@@ -406,15 +406,19 @@ export default function FollowUpTracker() {
       console.log("Found follow-up for status update:", followUp);
 
       if (followUp && user) {
-        // Determine if this is a VC follow-up
+        // Determine if this is a VC, business offering, or lead follow-up
         const followUpType =
           followUp.type ||
-          (followUp.vc_id || followUp.vc_round_title || followUp.investor_name
+          ((followUp as any).business_offering_id ||
+          (followUp as any).business_offering_solution ||
+          (followUp as any).business_offering_product
+            ? "sales"
+            : followUp.vc_id || followUp.vc_round_title || followUp.investor_name
             ? "vc"
             : "lead");
 
         // Derive the correct stepId and API base for notifications
-        let stepApiBase: "vc" | "fund-raises" | "leads" = "leads";
+        let stepApiBase: "vc" | "fund-raises" | "leads" | "business-offerings" = "leads";
         let stepIdValue: number | undefined = followUp.step_id;
 
         if (followUpType === "vc") {
