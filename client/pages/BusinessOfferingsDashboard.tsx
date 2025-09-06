@@ -45,6 +45,39 @@ export default function BusinessOfferingsDashboard() {
 
   const stats = { total: (data as any[]).length };
 
+  // Fetch steps for offerings to compute progress (lightweight, capped by React Query cache)
+  const stepQueries = useQueries({
+    queries: (data as any[]).map((o) => ({
+      queryKey: ["business-offering-steps", o.id],
+      queryFn: () => apiClient.getBusinessOfferingSteps(o.id),
+      enabled: (data as any[]).length <= 50,
+      staleTime: 10000,
+    })),
+  });
+
+  const progressMap: Record<number, number> = {};
+  (data as any[]).forEach((o, idx) => {
+    const q = stepQueries[idx];
+    const steps = (q?.data as any[]) || [];
+    if (!steps.length) return;
+    let totalCompletedProbability = 0;
+    let totalStepProbability = 0;
+    steps.forEach((s: any) => {
+      const prob = parseFloat(s.probability_percent) || 0;
+      totalStepProbability += prob;
+      if (s.status === "completed") totalCompletedProbability += prob;
+    });
+    const percent = totalStepProbability
+      ? Math.min(100, Math.round(totalCompletedProbability))
+      : (() => {
+          const completed = steps.filter((s: any) => s.status === "completed").length;
+          const inProg = steps.filter((s: any) => s.status === "in_progress").length;
+          const total = steps.length;
+          return total ? Math.round(((completed + inProg * 0.5) / total) * 100) : 0;
+        })();
+    progressMap[o.id] = percent;
+  });
+
   const handleDelete = async (id: number) => {
     try {
       await apiClient.deleteBusinessOffering(id);
