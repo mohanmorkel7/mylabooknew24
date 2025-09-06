@@ -72,11 +72,6 @@ export default function BusinessOfferingsDetails() {
       setExpandedSteps(new Set([(steps as any[])[0].id]));
     }
   }, [focusStepId, focusFollowUpId, steps]);
-  useEffect(() => {
-    if (focusStepId) {
-      setExpandedSteps(new Set([focusStepId]));
-    }
-  }, [focusStepId]);
   const onToggleExpansion = (stepId: number) => {
     setExpandedSteps((prev) => {
       const n = new Set(prev);
