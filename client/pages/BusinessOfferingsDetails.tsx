@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,9 @@ export default function BusinessOfferingsDetails() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const boId = Number(id);
+  const location = useLocation();
+  const focusFollowUpId = (location.state as any)?.focusFollowUpId as number | undefined;
+  const focusStepId = (location.state as any)?.focusStepId as number | undefined;
 
   const {
     data: offering,
@@ -51,6 +54,11 @@ export default function BusinessOfferingsDetails() {
   });
 
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    if (focusStepId) {
+      setExpandedSteps(new Set([focusStepId]));
+    }
+  }, [focusStepId]);
   const onToggleExpansion = (stepId: number) => {
     setExpandedSteps((prev) => {
       const n = new Set(prev);
@@ -317,6 +325,8 @@ export default function BusinessOfferingsDetails() {
               onReorderSteps={onReorderSteps}
               updateStepStatus={updateStepStatus}
               stepApiBase={"business-offerings"}
+              focusStepId={focusStepId}
+              focusFollowUpId={focusFollowUpId}
             />
           </CardContent>
         </Card>
