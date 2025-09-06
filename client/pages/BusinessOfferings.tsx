@@ -216,8 +216,11 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     const nums = (bucket.match(/\d+(?:\.\d+)?/g) || []).map((s) =>
       parseFloat(s),
     );
-    if (nums.length >= 2) return (nums[0] + nums[1]) / 2; // average when range
-    if (nums.length === 1) return nums[0];
+    if (nums.length >= 2) {
+      const avg = (nums[0] + nums[1]) / 2;
+      return parseFloat(avg.toFixed(2)); // e.g., 0.75<>1.00 => 0.88
+    }
+    if (nums.length === 1) return parseFloat(nums[0].toFixed(2));
     return 0;
   }
 
