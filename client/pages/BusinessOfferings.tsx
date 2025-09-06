@@ -180,7 +180,6 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     }
   }, [initial]);
 
-
   const { data: clients = [], isLoading: clientsLoading } = useQuery({
     queryKey: ["clients-all"],
     queryFn: async () => {
