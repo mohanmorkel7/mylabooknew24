@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { VCDraggableStepsList } from "@/components/VCDraggableStepsList";
 import { ArrowLeft, Edit } from "lucide-react";
+import { useState } from "react";
 
 export default function BusinessOfferingsDetails() {
   const { id } = useParams<{ id: string }>();
