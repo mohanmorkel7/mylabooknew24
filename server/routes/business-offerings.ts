@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { BusinessOfferingRepository } from "../models/BusinessOffering";
 import { DatabaseValidator } from "../utils/validation";
+import { pool } from "../database/connection";
 
 const router = Router();
 
@@ -9,6 +10,52 @@ async function isDb() {
     return await DatabaseValidator.isDatabaseAvailable();
   } catch {
     return false;
+  }
+}
+
+async function ensureBusinessOfferStepChatsTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_offer_step_chats (
+        id SERIAL PRIMARY KEY,
+        step_id INTEGER NOT NULL,
+        user_id INTEGER,
+        user_name TEXT,
+        message TEXT,
+        message_type TEXT DEFAULT 'text',
+        is_rich_text BOOLEAN DEFAULT FALSE,
+        attachments JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+      CREATE INDEX IF NOT EXISTS idx_bos_chats_step_id ON business_offer_step_chats(step_id);
+    `);
+    // Ensure trigger for updated_at exists
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION update_updated_at_column()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        NEW.updated_at = NOW();
+        RETURN NEW;
+      END;
+      $$ language 'plpgsql';
+    `);
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.triggers
+          WHERE event_object_table = 'business_offer_step_chats'
+            AND trigger_name = 'update_business_offer_step_chats_updated_at'
+        ) THEN
+          CREATE TRIGGER update_business_offer_step_chats_updated_at
+          BEFORE UPDATE ON business_offer_step_chats
+          FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        END IF;
+      END$$;
+    `);
+  } catch (e) {
+    console.log("ensureBusinessOfferStepChatsTable error:", (e as any).message);
   }
 }
 
@@ -242,6 +289,102 @@ router.delete("/steps/:stepId", async (req: Request, res: Response) => {
     );
     res.json({ success: r.rowCount > 0 });
   } catch (e: any) {
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+// Business Offering Step Chats
+router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDb())) return res.json([]);
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(stepId)) return res.status(400).json({ error: "Invalid step id" });
+    await ensureBusinessOfferStepChatsTable();
+    const r = await pool.query(
+      `SELECT id, step_id, user_id, user_name, message, message_type, is_rich_text, attachments, created_at
+       FROM business_offer_step_chats WHERE step_id = $1 ORDER BY created_at ASC`,
+      [stepId],
+    );
+    res.json(r.rows || []);
+  } catch (e: any) {
+    console.error("Error fetching business offer step chats:", e.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    const stepId = parseInt(req.params.stepId);
+    if (isNaN(stepId)) return res.status(400).json({ error: "Invalid step id" });
+    await ensureBusinessOfferStepChatsTable();
+
+    const b = req.body || {};
+    const user_id = b.user_id ?? null;
+    const user_name = b.user_name ?? "Unknown";
+    const message = b.message ?? "";
+    const message_type = b.message_type ?? "text";
+    const is_rich_text = !!b.is_rich_text;
+    const attachments = Array.isArray(b.attachments) ? b.attachments : [];
+
+    const r = await pool.query(
+      `INSERT INTO business_offer_step_chats (step_id, user_id, user_name, message, message_type, is_rich_text, attachments)
+       VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [
+        stepId,
+        user_id,
+        user_name,
+        message,
+        message_type,
+        is_rich_text,
+        JSON.stringify(attachments),
+      ],
+    );
+
+    res.status(201).json(r.rows[0]);
+  } catch (e: any) {
+    console.error("Error creating business offer step chat:", e);
+    res.status(500).json({ error: "Failed to create chat" });
+  }
+});
+
+router.put("/chats/:id", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid chat id" });
+    await ensureBusinessOfferStepChatsTable();
+
+    const { message, is_rich_text } = req.body || {};
+    const r = await pool.query(
+      `UPDATE business_offer_step_chats
+       SET message = $1, is_rich_text = COALESCE($2,false), updated_at = NOW()
+       WHERE id = $3 RETURNING *`,
+      [message, !!is_rich_text, id],
+    );
+    if (!r.rows[0]) return res.status(404).json({ error: "Not found" });
+    res.json(r.rows[0]);
+  } catch (e: any) {
+    console.error("Error updating business offer step chat:", e.message);
+    res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.delete("/chats/:id", async (req: Request, res: Response) => {
+  try {
+    if (!(await isDb())) return res.status(503).json({ error: "Database unavailable" });
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid chat id" });
+    await ensureBusinessOfferStepChatsTable();
+
+    const r = await pool.query(
+      `DELETE FROM business_offer_step_chats WHERE id = $1`,
+      [id],
+    );
+    if (!r.rowCount) return res.status(404).json({ error: "Not found" });
+    res.json({ success: true });
+  } catch (e: any) {
+    console.error("Error deleting business offer step chat:", e.message);
     res.status(500).json({ error: "Failed" });
   }
 });
