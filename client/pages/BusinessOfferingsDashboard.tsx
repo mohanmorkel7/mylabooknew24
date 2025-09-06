@@ -219,6 +219,78 @@ export default function BusinessOfferingsDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {/* Products wise accordion */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Products</CardTitle>
+          <CardDescription>Group by product with counts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            const groups: Record<string, any[]> = {};
+            (filtered as any[]).forEach((o: any) => {
+              const key = o.product || "Unknown";
+              if (!groups[key]) groups[key] = [];
+              groups[key].push(o);
+            });
+            const keys = Object.keys(groups).sort();
+            if (keys.length === 0)
+              return <div className="text-gray-600">No entries</div>;
+            return (
+              <Accordion type="single" collapsible className="w-full">
+                {keys.map((k) => {
+                  const list = groups[k] || [];
+                  return (
+                    <AccordionItem key={k} value={k}>
+                      <AccordionTrigger>
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">{k}</span>
+                          <Badge variant="secondary">{list.length}</Badge>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="space-y-2">
+                          {list.map((o: any) => {
+                            const percent = progressMap[o.id] || 0;
+                            return (
+                              <div
+                                key={o.id}
+                                className="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg cursor-pointer hover:shadow-sm"
+                                onClick={() => navigate(`/business-offerings/${o.id}`)}
+                              >
+                                <div>
+                                  <div className="font-medium text-gray-900">
+                                    {o.product || o.solution || "Offering"}
+                                  </div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    {o.offering_description || "No description"}
+                                  </div>
+                                </div>
+                                <div className="hidden md:flex items-center gap-2">
+                                  <div className="w-32 bg-gray-200 rounded h-2">
+                                    <div
+                                      className={`${percent >= 100 ? "bg-green-500" : percent >= 50 ? "bg-blue-500" : "bg-orange-500"} h-2 rounded`}
+                                      style={{ width: `${percent}%` }}
+                                    />
+                                  </div>
+                                  <span className="text-xs text-gray-700 font-medium w-8 text-right">
+                                    {percent}%
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  );
+                })}
+              </Accordion>
+            );
+          })()}
+        </CardContent>
+      </Card>
     </div>
   );
 }
