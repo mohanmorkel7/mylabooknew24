@@ -180,7 +180,37 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
     }
   }, [initial]);
 
-  // Normalize fee/MMGF values to match combobox item formats on edit/view
+
+  const { data: clients = [], isLoading: clientsLoading } = useQuery({
+    queryKey: ["clients-all"],
+    queryFn: async () => {
+      const res = await apiClient.getClients();
+      return Array.isArray(res) ? res : [];
+    },
+    staleTime: 60000,
+  });
+
+  const clientMap = useMemo(() => {
+    const m = new Map<string, any>();
+    (clients || []).forEach((c: any) => m.set(String(c.id), c));
+    return m;
+  }, [clients]);
+
+  const { data: freshClient } = useQuery({
+    queryKey: ["client", formA.clientId],
+    queryFn: async () =>
+      formA.clientId ? apiClient.getClient(Number(formA.clientId)) : null,
+    enabled: !!formA.clientId,
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    keepPreviousData: true,
+  });
+
+  const selectedClient = freshClient || clientMap.get(formA.clientId);
+  const domesticA = isDomesticByGeography(selectedClient);
+  const domesticB = isDomesticByGeography(selectedClient);
+
+  // Normalize fee/MMGF values to match combobox item formats on edit/view (depends on selectedClient)
   useEffect(() => {
     if (!initial) return;
     const dom = isDomesticByGeography(selectedClient);
@@ -211,35 +241,6 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
         : p.potentialFee,
     }));
   }, [selectedClient, initial]);
-
-  const { data: clients = [], isLoading: clientsLoading } = useQuery({
-    queryKey: ["clients-all"],
-    queryFn: async () => {
-      const res = await apiClient.getClients();
-      return Array.isArray(res) ? res : [];
-    },
-    staleTime: 60000,
-  });
-
-  const clientMap = useMemo(() => {
-    const m = new Map<string, any>();
-    (clients || []).forEach((c: any) => m.set(String(c.id), c));
-    return m;
-  }, [clients]);
-
-  const { data: freshClient } = useQuery({
-    queryKey: ["client", formA.clientId],
-    queryFn: async () =>
-      formA.clientId ? apiClient.getClient(Number(formA.clientId)) : null,
-    enabled: !!formA.clientId,
-    staleTime: 0,
-    refetchOnWindowFocus: false,
-    keepPreviousData: true,
-  });
-
-  const selectedClient = freshClient || clientMap.get(formA.clientId);
-  const domesticA = isDomesticByGeography(selectedClient);
-  const domesticB = isDomesticByGeography(selectedClient);
 
   const validateA = () => {
     const n: Record<string, string> = {};
