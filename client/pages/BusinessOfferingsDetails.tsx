@@ -151,7 +151,6 @@ export default function BusinessOfferingsDetails() {
                 </div>
               </div>
             </div>
-
           </CardContent>
         </Card>
 
