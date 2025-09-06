@@ -324,13 +324,7 @@ export default function BusinessOfferingsDashboard() {
                                     className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      if (
-                                        confirm(
-                                          "Delete this business offering?",
-                                        )
-                                      ) {
-                                        handleDelete(o.id);
-                                      }
+                                      handleDelete(o.id);
                                     }}
                                   >
                                     <Trash2 size={16} />
