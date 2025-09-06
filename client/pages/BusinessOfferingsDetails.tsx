@@ -181,9 +181,6 @@ export default function BusinessOfferingsDetails() {
               return (
                 <div className="mt-4">
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium text-gray-700">
-                      Progress:
-                    </span>
                     <div className="flex-1 max-w-sm">
                       <div className="w-full bg-gray-200 rounded-full h-3 relative">
                         <div
@@ -316,11 +313,12 @@ export default function BusinessOfferingsDetails() {
         </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Steps</CardTitle>
-          <CardDescription>Track progress</CardDescription>
-        </CardHeader>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <CardTitle>{client?.client_name || "Client"} steps pipeline</CardTitle>
+            <CardDescription>Track progress</CardDescription>
+          </CardHeader>
         <CardContent>
           <VCDraggableStepsList
             vcId={boId}
@@ -333,7 +331,8 @@ export default function BusinessOfferingsDetails() {
             stepApiBase={"business-offerings"}
           />
         </CardContent>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 }
