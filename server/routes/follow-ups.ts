@@ -307,7 +307,31 @@ router.post("/", async (req: Request, res: Response) => {
                  (CASE WHEN business_offering_id IS NOT NULL THEN 1 ELSE 0 END)) = 1
               );
             `);
-            const retry = await pool.query(query as string, values as any[]);
+            // Re-attempt insert with a safe fallback insert (business offering aware)
+            const retryQuery2 = `
+              INSERT INTO follow_ups (
+                client_id, lead_id, step_id, business_offering_id, business_offering_step_id,
+                title, description, due_date, follow_up_type, assigned_to, created_by, message_id
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+              RETURNING *
+            `;
+            const fallbackDueDate = (due_date as any) || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+            const retryValues2 = [
+              client_id || null,
+              lead_id || null,
+              step_id || null,
+              business_offering_id || null,
+              business_offering_step_id || null,
+              title,
+              description || null,
+              fallbackDueDate,
+              follow_up_type,
+              assigned_to || null,
+              created_by,
+              message_id || null,
+            ];
+            const retry = await pool.query(retryQuery2, retryValues2 as any[]);
             return res.status(201).json(retry.rows[0]);
           } catch (constraintError: any) {
             console.error(
