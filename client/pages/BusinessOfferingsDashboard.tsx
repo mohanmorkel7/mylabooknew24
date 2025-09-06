@@ -51,7 +51,7 @@ export default function BusinessOfferingsDashboard() {
 
   // Helper to get client for an offering
   const getClientForOffering = (offering: any) => {
-    return (clients as any[]).find(c => c.id === offering.client_id) || null;
+    return (clients as any[]).find((c) => c.id === offering.client_id) || null;
   };
 
   const stats = { total: (data as any[]).length };
@@ -243,25 +243,43 @@ export default function BusinessOfferingsDashboard() {
 
                                   <div className="grid grid-cols-2 gap-4 text-xs text-gray-600 mb-2">
                                     <div>
-                                      <span className="font-medium">Client:</span> {client?.client_name || "-"}
+                                      <span className="font-medium">
+                                        Client:
+                                      </span>{" "}
+                                      {client?.client_name || "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">Industry:</span> {client?.industry || "-"}
+                                      <span className="font-medium">
+                                        Industry:
+                                      </span>{" "}
+                                      {client?.industry || "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">Contact:</span> {client?.contact_person || "-"}
+                                      <span className="font-medium">
+                                        Contact:
+                                      </span>{" "}
+                                      {client?.contact_person || "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">Location:</span> {client?.city || client?.country || "-"}
+                                      <span className="font-medium">
+                                        Location:
+                                      </span>{" "}
+                                      {client?.city || client?.country || "-"}
                                     </div>
                                   </div>
 
                                   <div className="grid grid-cols-2 gap-4 text-xs text-gray-600">
                                     <div>
-                                      <span className="font-medium">MRR:</span> {o.potential_mrr_lacs ? `${o.potential_mrr_lacs} Lacs` : "-"}
+                                      <span className="font-medium">MRR:</span>{" "}
+                                      {o.potential_mrr_lacs
+                                        ? `${o.potential_mrr_lacs} Lacs`
+                                        : "-"}
                                     </div>
                                     <div>
-                                      <span className="font-medium">ARR:</span> {o.current_potential_arr_usd_mn ? `$${o.current_potential_arr_usd_mn}Mn` : "-"}
+                                      <span className="font-medium">ARR:</span>{" "}
+                                      {o.current_potential_arr_usd_mn
+                                        ? `$${o.current_potential_arr_usd_mn}Mn`
+                                        : "-"}
                                     </div>
                                   </div>
 
