@@ -37,6 +37,7 @@ export default function BusinessOfferingsDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const {
     data = [],
