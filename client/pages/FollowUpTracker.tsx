@@ -250,6 +250,7 @@ export default function FollowUpTracker() {
     if (isAdmin) return true; // Admin sees all
     if (followUpType === "vc" && !isVC) return false; // VC follow-ups only for VC/admin
     if (followUpType === "lead" && isVC) return false; // Lead follow-ups hidden from VC role
+    if (followUpType === "sales" && isVC) return false; // Hide sales from VC role
     return true;
   };
 
