@@ -1226,11 +1226,19 @@ export default function FundRaiseDashboard() {
                                             className="text-[10px] bg-blue-50 text-blue-700 border-blue-200"
                                             variant="outline"
                                           >
-                                            <DollarSign className="w-3 h-3 mr-1 inline" />
-                                            Total Fund Raise $ Mn:{" "}
-                                            {Number.isFinite(totalFundMn)
-                                              ? totalFundMn.toFixed(2)
-                                              : "0.00"}
+                                            Total Fund Raise $ Mn: ${Number.isFinite(totalFundMn) ? totalFundMn.toFixed(3) : "0.000"}
+                                          </Badge>
+                                          <Badge
+                                            className="text-[10px] bg-green-50 text-green-700 border-green-200"
+                                            variant="outline"
+                                          >
+                                            Valuation $ Mn: ${Number.isFinite(parseFloat(fr.valuation_mn)) ? parseFloat(fr.valuation_mn).toFixed(3) : "0.000"}
+                                          </Badge>
+                                          <Badge
+                                            className="text-[10px] bg-purple-50 text-purple-700 border-purple-200"
+                                            variant="outline"
+                                          >
+                                            Fund $ Mn: ${Number.isFinite(parseFloat(fr.fund_mn)) ? parseFloat(fr.fund_mn).toFixed(3) : "0.000"}
                                           </Badge>
                                           {fr.start_date && (
                                             <span className="inline-flex items-center gap-1">
