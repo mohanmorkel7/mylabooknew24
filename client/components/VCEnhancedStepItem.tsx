@@ -886,9 +886,12 @@ export function VCEnhancedStepItem({
                                                   const isFundRaises =
                                                     (stepApiBase as any) ===
                                                     "fund-raises";
+                                                  const isBusinessOfferings =
+                                                    (stepApiBase as any) ===
+                                                    "business-offerings";
 
-                                                  // For fund-raises chats: post step-style system message after status update
-                                                  if (isFundRaises) {
+                                                  // For fund-raises and business-offerings chats: post step-style system message after status update
+                                                  if (isFundRaises || isBusinessOfferings) {
                                                     try {
                                                       await updateFollowUpStatus.mutateAsync(
                                                         {
