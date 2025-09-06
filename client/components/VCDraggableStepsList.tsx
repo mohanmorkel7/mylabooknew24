@@ -50,6 +50,7 @@ export function VCDraggableStepsList({
 }: VCDraggableStepsListProps) {
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const [items, setItems] = useState(steps);
+  const [chatCounts, setChatCounts] = useState<Record<number, number>>({});
   const updateStepMutation = useUpdateVCStep();
   const { user } = useAuth();
 
@@ -84,19 +85,50 @@ export function VCDraggableStepsList({
     }
 
     // Additional validation
-    const idCounts = {};
+    const idCounts = {} as Record<number, number>;
     steps.forEach((step) => {
       idCounts[step.id] = (idCounts[step.id] || 0) + 1;
     });
 
     Object.entries(idCounts).forEach(([id, count]) => {
-      if (count > 1) {
+      if ((count as number) > 1) {
         console.error(`Step ID ${id} appears ${count} times`);
       }
     });
 
     setItems(uniqueSteps);
   }, [steps]);
+
+  // Prefetch chat counts so badges show immediately on load
+  React.useEffect(() => {
+    let isCancelled = false;
+    const loadCounts = async () => {
+      if (!stepApiBase || !items || items.length === 0) return;
+      try {
+        const entries = await Promise.all(
+          items.map(async (s) => {
+            try {
+              const rows = await apiClient.request(
+                `/${stepApiBase}/steps/${s.id}/chats`,
+              );
+              return [s.id, Array.isArray(rows) ? rows.length : 0] as const;
+            } catch (e) {
+              return [s.id, 0] as const;
+            }
+          }),
+        );
+        if (!isCancelled) {
+          const map: Record<number, number> = {};
+          entries.forEach(([id, count]) => (map[id] = count));
+          setChatCounts(map);
+        }
+      } catch {}
+    };
+    loadCounts();
+    return () => {
+      isCancelled = true;
+    };
+  }, [items, stepApiBase]);
 
   const handleUpdateStatus = async (stepId: number, status: string) => {
     const step = items.find((item) => item.id === stepId);
@@ -271,10 +303,18 @@ export function VCDraggableStepsList({
         strategy={verticalListSortingStrategy}
       >
         <div className="space-y-2">
-          {items.map((step) => (
-            <VCEnhancedStepItem
-              key={step.id}
-              step={step}
+          {items.map((step) => {
+            const stepWithCount = {
+              ...step,
+              message_count:
+                typeof chatCounts[step.id] === "number"
+                  ? chatCounts[step.id]
+                  : step.message_count,
+            };
+            return (
+              <VCEnhancedStepItem
+                key={step.id}
+                step={stepWithCount}
               vcId={vcId}
               isExpanded={expandedSteps?.has(step.id) || false}
               onToggleExpansion={() => onToggleExpansion(step.id)}
@@ -284,7 +324,8 @@ export function VCDraggableStepsList({
               focusStepId={focusStepId}
               focusFollowUpId={focusFollowUpId}
             />
-          ))}
+            );
+          })}
         </div>
       </SortableContext>
 
