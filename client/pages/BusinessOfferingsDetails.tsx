@@ -127,30 +127,77 @@ export default function BusinessOfferingsDetails() {
             <CardDescription>Key information</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500">Solution</div>
-                <div className="font-medium">{offering.solution || "-"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Product</div>
-                <div className="font-medium">{offering.product || "-"}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">Client Status</div>
-                <div className="font-medium">
-                  {offering.client_status || "-"}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500">
-                  Potential MRR (Lacs)
-                </div>
-                <div className="font-medium">
-                  {offering.potential_mrr_lacs ?? "-"}
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <div className="text-sm text-gray-500">Solution</div>
+              <div className="font-medium">{offering.solution || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Product</div>
+              <div className="font-medium">{offering.product || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Client Status</div>
+              <div className="font-medium">
+                {offering.client_status || "-"}
               </div>
             </div>
+            <div>
+              <div className="text-sm text-gray-500">Industry</div>
+              <div className="font-medium">{client?.industry || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Company Size</div>
+              <div className="font-medium">{client?.company_size || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Contact Person</div>
+              <div className="font-medium">{client?.contact_person || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Location</div>
+              <div className="font-medium">
+                {client?.city && client?.country
+                  ? `${client.city}, ${client.country}`
+                  : client?.city || client?.country || "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Current Daily Volume</div>
+              <div className="font-medium">{offering.current_daily_volume_bucket || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Projected Daily Volume</div>
+              <div className="font-medium">{offering.projected_daily_volume_bucket || "-"}</div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Avg Fee</div>
+              <div className="font-medium">
+                {offering.avg_fee_value && offering.avg_fee_currency
+                  ? `${offering.avg_fee_value} ${offering.avg_fee_currency}`
+                  : "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Potential MRR (Lacs)</div>
+              <div className="font-medium">
+                {offering.potential_mrr_lacs ?? "-"}
+              </div>
+            </div>
+            <div>
+              <div className="text-sm text-gray-500">Current ARR (USD Mn)</div>
+              <div className="font-medium">
+                {offering.current_potential_arr_usd_mn ?? "-"}
+              </div>
+            </div>
+          </div>
+
+          {offering.offering_description && (
+            <div className="mt-4 pt-4 border-t">
+              <div className="text-sm text-gray-500 mb-2">Description</div>
+              <div className="text-sm text-gray-700">{offering.offering_description}</div>
+            </div>
+          )}
           </CardContent>
         </Card>
 
