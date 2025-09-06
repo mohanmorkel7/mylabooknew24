@@ -621,9 +621,13 @@ export default function FollowUpTracker() {
     // Determine follow-up type with fallback logic
     const followUpType =
       followUp.type ||
-      (followUp.vc_id || followUp.vc_round_title || followUp.investor_name
-        ? "vc"
-        : "lead");
+      ((followUp as any).business_offering_id ||
+      (followUp as any).business_offering_solution ||
+      (followUp as any).business_offering_product
+        ? "sales"
+        : followUp.vc_id || followUp.vc_round_title || followUp.investor_name
+          ? "vc"
+          : "lead");
 
     // Role-based filtering for follow-up visibility
     if (!canViewFollowUp(followUp)) {
