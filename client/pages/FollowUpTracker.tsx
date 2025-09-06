@@ -239,9 +239,13 @@ export default function FollowUpTracker() {
   const canViewFollowUp = (followUp: FollowUp) => {
     const followUpType =
       followUp.type ||
-      (followUp.vc_id || followUp.vc_round_title || followUp.investor_name
-        ? "vc"
-        : "lead");
+      ((followUp as any).business_offering_id ||
+      (followUp as any).business_offering_solution ||
+      (followUp as any).business_offering_product
+        ? "sales"
+        : followUp.vc_id || followUp.vc_round_title || followUp.investor_name
+          ? "vc"
+          : "lead");
 
     if (isAdmin) return true; // Admin sees all
     if (followUpType === "vc" && !isVC) return false; // VC follow-ups only for VC/admin
