@@ -704,6 +704,28 @@ export class ApiClient {
     });
   }
 
+  // Business Offering Step Chats
+  async getBusinessOfferingStepChats(stepId: number) {
+    return this.request(`/business-offerings/steps/${stepId}/chats`);
+  }
+  async createBusinessOfferingStepChat(stepId: number, chatData: any) {
+    return this.request(`/business-offerings/steps/${stepId}/chats`, {
+      method: "POST",
+      body: JSON.stringify(chatData),
+    });
+  }
+  async updateBusinessOfferingStepChat(chatId: number, updateData: { message: string; is_rich_text: boolean }) {
+    return this.request(`/business-offerings/chats/${chatId}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    });
+  }
+  async deleteBusinessOfferingStepChat(chatId: number) {
+    return this.request(`/business-offerings/chats/${chatId}`, {
+      method: "DELETE",
+    });
+  }
+
   // Template methods
   async getTemplates() {
     return this.request("/templates");
