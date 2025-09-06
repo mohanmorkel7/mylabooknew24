@@ -227,7 +227,7 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
   // Auto-calc Potential MRR (INR Lacs)
   useEffect(() => {
     const volMn = parseVolumeBucketToMn(formB.currentDailyVolume);
-    const fee = parseFloat(formA.avgFee || "");
+    const fee = parseFloat(formB.potentialFee || "");
     if (!volMn || isNaN(fee)) {
       setFormB((p) => ({ ...p, potentialMRR: "" }));
       return;
@@ -242,12 +242,12 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       ? Number(mrrLacs.toFixed(2)).toString()
       : "";
     setFormB((p) => ({ ...p, potentialMRR: value }));
-  }, [formB.currentDailyVolume, formA.avgFee, domesticB]);
+  }, [formB.currentDailyVolume, formB.potentialFee, domesticB]);
 
   // Calculation details (testing)
   const calcDetails = useMemo(() => {
     const volMn = parseVolumeBucketToMn(formB.currentDailyVolume);
-    const feeRaw = parseFloat(formA.avgFee || "");
+    const feeRaw = parseFloat(formB.potentialFee || "");
     const valid = !!volMn && !isNaN(feeRaw);
     const daily = valid ? volMn * 1_000_000 : 0;
     const monthly = valid ? daily * 30 : 0;
@@ -271,7 +271,7 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
       mrrLacs,
       valid,
     };
-  }, [formB.currentDailyVolume, formA.avgFee, domesticB]);
+  }, [formB.currentDailyVolume, formB.potentialFee, domesticB]);
 
   // Normalize fee/MMGF values to match combobox item formats on edit/view (depends on selectedClient)
   useEffect(() => {
