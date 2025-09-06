@@ -845,7 +845,6 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     </div>
                   )}
                 </div>
-
               </div>
             </CardContent>
           </Card>
@@ -862,7 +861,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
         <Card>
           <CardHeader>
             <CardTitle>Current Potential ARR (USD Mn)</CardTitle>
-            <CardDescription>Auto-calculated from Potential MRR</CardDescription>
+            <CardDescription>
+              Auto-calculated from Potential MRR
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Input
@@ -876,46 +877,77 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
             />
             <div className="p-3 border rounded bg-gray-50 text-xs text-gray-700 space-y-1">
               <div>
-                <span className="font-medium">Geography:</span> {calcDetails.domestic ? "Domestic" : "International"}
+                <span className="font-medium">Geography:</span>{" "}
+                {calcDetails.domestic ? "Domestic" : "International"}
               </div>
               <div>
-                <span className="font-medium">Bucket:</span> {calcDetails.bucket || "-"}
+                <span className="font-medium">Bucket:</span>{" "}
+                {calcDetails.bucket || "-"}
               </div>
               <div>
-                <span className="font-medium">Parsed Avg (Mn):</span> {calcDetails.volMn ? calcDetails.volMn.toFixed(2) : "0.00"}
+                <span className="font-medium">Parsed Avg (Mn):</span>{" "}
+                {calcDetails.volMn ? calcDetails.volMn.toFixed(2) : "0.00"}
               </div>
               <div>
-                <span className="font-medium">Daily Volume (units):</span> {calcDetails.daily.toLocaleString("en-IN")} = {calcDetails.volMn ? `${calcDetails.volMn.toFixed(2)} * 1,000,000` : "0 * 1,000,000"}
+                <span className="font-medium">Daily Volume (units):</span>{" "}
+                {calcDetails.daily.toLocaleString("en-IN")} ={" "}
+                {calcDetails.volMn
+                  ? `${calcDetails.volMn.toFixed(2)} * 1,000,000`
+                  : "0 * 1,000,000"}
               </div>
               <div>
-                <span className="font-medium">Monthly Volume (units):</span> {calcDetails.monthly.toLocaleString("en-IN")} = {calcDetails.daily.toLocaleString("en-IN")} * 30
+                <span className="font-medium">Monthly Volume (units):</span>{" "}
+                {calcDetails.monthly.toLocaleString("en-IN")} ={" "}
+                {calcDetails.daily.toLocaleString("en-IN")} * 30
               </div>
               {calcDetails.domestic ? (
                 <div>
-                  <span className="font-medium">Fee (INR):</span> {calcDetails.feeInINR.toFixed(2)} = INR {calcDetails.feeRaw.toFixed(2)}
+                  <span className="font-medium">Fee (INR):</span>{" "}
+                  {calcDetails.feeInINR.toFixed(2)} = INR{" "}
+                  {calcDetails.feeRaw.toFixed(2)}
                 </div>
               ) : (
                 <div>
-                  <span className="font-medium">Fee (USD to INR):</span> {calcDetails.feeInINR.toFixed(2)} = USD {calcDetails.feeRaw.toFixed(3)} * {calcDetails.usdRate}
+                  <span className="font-medium">Fee (USD to INR):</span>{" "}
+                  {calcDetails.feeInINR.toFixed(2)} = USD{" "}
+                  {calcDetails.feeRaw.toFixed(3)} * {calcDetails.usdRate}
                 </div>
               )}
               <div>
-                <span className="font-medium">Monthly Revenue (INR):</span> {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} = {calcDetails.monthly.toLocaleString("en-IN")} * {calcDetails.feeInINR.toFixed(2)}
+                <span className="font-medium">Monthly Revenue (INR):</span>{" "}
+                {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} ={" "}
+                {calcDetails.monthly.toLocaleString("en-IN")} *{" "}
+                {calcDetails.feeInINR.toFixed(2)}
               </div>
               <div>
-                <span className="font-medium">Potential MRR (INR Lacs):</span> {calcDetails.mrrLacs.toFixed(2)} = {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} / 100,000
+                <span className="font-medium">Potential MRR (INR Lacs):</span>{" "}
+                {calcDetails.mrrLacs.toFixed(2)} ={" "}
+                {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} /
+                100,000
               </div>
               <div>
-                <span className="font-medium">MRR (from field, INR Lacs):</span> {isNaN(calcDetails.mrrLacsField) ? "0.00" : calcDetails.mrrLacsField.toFixed(2)}
+                <span className="font-medium">MRR (from field, INR Lacs):</span>{" "}
+                {isNaN(calcDetails.mrrLacsField)
+                  ? "0.00"
+                  : calcDetails.mrrLacsField.toFixed(2)}
               </div>
               <div>
-                <span className="font-medium">ARR Step 1 (INR Mn/mo):</span> {calcDetails.arrInrMnPerMonth.toFixed(2)} = {isNaN(calcDetails.mrrLacsField) ? "0.00" : calcDetails.mrrLacsField.toFixed(2)} / 10
+                <span className="font-medium">ARR Step 1 (INR Mn/mo):</span>{" "}
+                {calcDetails.arrInrMnPerMonth.toFixed(2)} ={" "}
+                {isNaN(calcDetails.mrrLacsField)
+                  ? "0.00"
+                  : calcDetails.mrrLacsField.toFixed(2)}{" "}
+                / 10
               </div>
               <div>
-                <span className="font-medium">ARR Step 2 (INR Mn/yr):</span> {calcDetails.arrInrMnPerYear.toFixed(2)} = {calcDetails.arrInrMnPerMonth.toFixed(2)} * 12
+                <span className="font-medium">ARR Step 2 (INR Mn/yr):</span>{" "}
+                {calcDetails.arrInrMnPerYear.toFixed(2)} ={" "}
+                {calcDetails.arrInrMnPerMonth.toFixed(2)} * 12
               </div>
               <div>
-                <span className="font-medium">ARR Step 3 (USD Mn/yr):</span> {calcDetails.arrUsdMn.toFixed(3)} = {calcDetails.arrInrMnPerYear.toFixed(2)} / {calcDetails.usdRate}
+                <span className="font-medium">ARR Step 3 (USD Mn/yr):</span>{" "}
+                {calcDetails.arrUsdMn.toFixed(3)} ={" "}
+                {calcDetails.arrInrMnPerYear.toFixed(2)} / {calcDetails.usdRate}
               </div>
             </div>
           </CardContent>
@@ -923,8 +955,12 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Projected Potential ARR (USD Mn) - next 2 years</CardTitle>
-            <CardDescription>Auto-calculated from Projected Daily Volume</CardDescription>
+            <CardTitle>
+              Projected Potential ARR (USD Mn) - next 2 years
+            </CardTitle>
+            <CardDescription>
+              Auto-calculated from Projected Daily Volume
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <Input
@@ -938,21 +974,40 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
             />
             <div className="p-3 border rounded bg-gray-50 text-xs text-gray-700 space-y-1">
               <div>
-                <span className="font-medium">Projected Daily Volume Mn - next 2 years:</span> {calcDetails.projBucket || "-"}
+                <span className="font-medium">
+                  Projected Daily Volume Mn - next 2 years:
+                </span>{" "}
+                {calcDetails.projBucket || "-"}
               </div>
               <div>
-                <span className="font-medium">Projected Parsed Avg (Mn):</span> {calcDetails.projAvgMn ? calcDetails.projAvgMn.toFixed(2) : "0.00"}
+                <span className="font-medium">Projected Parsed Avg (Mn):</span>{" "}
+                {calcDetails.projAvgMn
+                  ? calcDetails.projAvgMn.toFixed(2)
+                  : "0.00"}
               </div>
               <div>
-                <span className="font-medium">Projected Annual Volume (Mn):</span> {calcDetails.projAnnualMn.toFixed(2)} = {calcDetails.projAvgMn ? calcDetails.projAvgMn.toFixed(2) : "0.00"} * 365
+                <span className="font-medium">
+                  Projected Annual Volume (Mn):
+                </span>{" "}
+                {calcDetails.projAnnualMn.toFixed(2)} ={" "}
+                {calcDetails.projAvgMn
+                  ? calcDetails.projAvgMn.toFixed(2)
+                  : "0.00"}{" "}
+                * 365
               </div>
               {calcDetails.domestic ? (
                 <div>
-                  <span className="font-medium">Projected ARR (USD Mn):</span> {calcDetails.projUsdMn.toFixed(3)} = ({calcDetails.projAnnualMn.toFixed(2)} * {calcDetails.feeRaw.toFixed(2)}) / {calcDetails.usdRate}
+                  <span className="font-medium">Projected ARR (USD Mn):</span>{" "}
+                  {calcDetails.projUsdMn.toFixed(3)} = (
+                  {calcDetails.projAnnualMn.toFixed(2)} *{" "}
+                  {calcDetails.feeRaw.toFixed(2)}) / {calcDetails.usdRate}
                 </div>
               ) : (
                 <div>
-                  <span className="font-medium">Projected ARR (USD Mn):</span> {calcDetails.projUsdMn.toFixed(3)} = {calcDetails.projAnnualMn.toFixed(2)} * {calcDetails.feeRaw.toFixed(3)}
+                  <span className="font-medium">Projected ARR (USD Mn):</span>{" "}
+                  {calcDetails.projUsdMn.toFixed(3)} ={" "}
+                  {calcDetails.projAnnualMn.toFixed(2)} *{" "}
+                  {calcDetails.feeRaw.toFixed(3)}
                 </div>
               )}
             </div>
