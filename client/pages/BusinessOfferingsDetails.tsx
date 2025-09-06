@@ -27,12 +27,9 @@ export default function BusinessOfferingsDetails() {
   const queryClient = useQueryClient();
   const boId = Number(id);
   const location = useLocation();
-  const focusFollowUpId = (location.state as any)?.focusFollowUpId as
-    | number
-    | undefined;
-  const focusStepId = (location.state as any)?.focusStepId as
-    | number
-    | undefined;
+  const searchParams = new URLSearchParams(location.search);
+  const focusFollowUpId = ((location.state as any)?.focusFollowUpId ?? (searchParams.get("focusFollowUpId") ? Number(searchParams.get("focusFollowUpId")) : undefined)) as number | undefined;
+  const focusStepId = ((location.state as any)?.focusStepId ?? (searchParams.get("focusStepId") ? Number(searchParams.get("focusStepId")) : undefined)) as number | undefined;
 
   const {
     data: offering,
@@ -58,6 +55,16 @@ export default function BusinessOfferingsDetails() {
   });
 
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    if (focusStepId) {
+      setExpandedSteps(new Set([focusStepId]));
+    }
+  }, [focusStepId]);
+  useEffect(() => {
+    if (!focusStepId && focusFollowUpId && (steps as any[]).length > 0) {
+      setExpandedSteps(new Set([(steps as any[])[0].id]));
+    }
+  }, [focusStepId, focusFollowUpId, steps]);
   useEffect(() => {
     if (focusStepId) {
       setExpandedSteps(new Set([focusStepId]));
