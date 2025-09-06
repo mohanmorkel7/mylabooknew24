@@ -11,7 +11,8 @@ export default function BusinessOfferingsEdit() {
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["business-offering", id],
-    queryFn: async () => (id ? apiClient.getBusinessOffering(Number(id)) : null),
+    queryFn: async () =>
+      id ? apiClient.getBusinessOffering(Number(id)) : null,
     enabled: !!id,
     retry: 1,
   });
@@ -20,7 +21,8 @@ export default function BusinessOfferingsEdit() {
 
   let initial = data;
   if ((!initial || error) && id) {
-    const list: any[] = (queryClient.getQueryData(["business-offerings"]) as any[]) || [];
+    const list: any[] =
+      (queryClient.getQueryData(["business-offerings"]) as any[]) || [];
     const fromCache = list.find((o) => String(o.id) === String(id));
     if (fromCache) initial = fromCache;
   }
