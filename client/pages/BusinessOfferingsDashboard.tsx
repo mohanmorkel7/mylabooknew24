@@ -314,6 +314,22 @@ export default function BusinessOfferingsDashboard() {
                                     <Trash2 size={16} />
                                   </Button>
                                 </div>
+
+                                <div className="md:hidden ml-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (confirm("Delete this business offering?")) {
+                                        handleDelete(o.id);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 size={16} />
+                                  </Button>
+                                </div>
                               </div>
                             );
                           })}
