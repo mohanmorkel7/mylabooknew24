@@ -1233,8 +1233,11 @@ export default function FollowUpTracker() {
                                       .business_offering_step_id ||
                                     (followUp as any).message_id ||
                                     (followUp as any).step_id;
+                                  const params = new URLSearchParams();
+                                  if (stepId) params.set("focusStepId", String(stepId));
+                                  params.set("focusFollowUpId", String(followUp.id));
                                   navigate(
-                                    `/business-offerings/${businessOfferingId}`,
+                                    `/business-offerings/${businessOfferingId}?${params.toString()}`,
                                     {
                                       state: {
                                         focusFollowUpId: followUp.id,
