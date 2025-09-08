@@ -330,11 +330,33 @@ router.get("/tasks", async (req: Request, res: Response) => {
       `;
 
       const result = await pool.query(query, dateParam ? [dateParam] : []);
-      const tasks = result.rows.map((row) => ({
-        ...row,
-        subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
-        client_name: row.client_name || "Unknown Client",
-      }));
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const tasks = result.rows.map((row) => {
+        const rawSubtasks = Array.isArray(row.subtasks) ? row.subtasks : [];
+        const isDaily = String(row.duration || '').toLowerCase() === 'daily';
+        const normalizedSubtasks = rawSubtasks.map((st: any) => {
+          if (!dateParam && isDaily) {
+            const sd = st.scheduled_date
+              ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+              : todayStr;
+            if (sd !== todayStr) {
+              return {
+                ...st,
+                status: 'pending',
+                started_at: null,
+                completed_at: null,
+                scheduled_date: todayStr,
+              };
+            }
+          }
+          return st;
+        });
+        return {
+          ...row,
+          subtasks: normalizedSubtasks,
+          client_name: row.client_name || 'Unknown Client',
+        };
+      });
 
       console.log(
         `✅ Successfully fetched ${tasks.length} FinOps tasks from database`,
