@@ -481,6 +481,24 @@ export async function initializeDatabase() {
       );
     }
 
+    // Connections table migration
+    try {
+      const connectionsPath = path.join(
+        __dirname,
+        "create-connections-table.sql",
+      );
+      if (fs.existsSync(connectionsPath)) {
+        const sql = fs.readFileSync(connectionsPath, "utf8");
+        await client.query(sql);
+        console.log("Connections table migration applied successfully");
+      }
+    } catch (connectionsErr) {
+      console.log(
+        "Connections table migration already applied or error:",
+        (connectionsErr as any).message,
+      );
+    }
+
     // Extend fund_raises with all fields
     try {
       const fundRaisesAlterPath = path.join(
