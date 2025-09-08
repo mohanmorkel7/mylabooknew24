@@ -216,11 +216,11 @@ function ConnectionForm({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-80" align="start">
+            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto">
+                <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
                   <CommandGroup>
                     {countries.map((c) => (
                       <CommandItem
@@ -249,11 +249,11 @@ function ConnectionForm({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-80" align="start">
+            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto">
+                <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
                   <CommandGroup>
                     {states.map((s) => (
                       <CommandItem
@@ -285,11 +285,11 @@ function ConnectionForm({
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-80" align="start">
+            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto">
+                <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
                   <CommandGroup>
                     {cities.map((c: any) => {
                       const val = `${c.name}|${c.stateCode || ""}`;
