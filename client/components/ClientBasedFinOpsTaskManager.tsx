@@ -1045,7 +1045,9 @@ export default function ClientBasedFinOpsTaskManager() {
       if (currentTask.duration === "daily") return taskStart <= today;
       if (currentTask.duration === "weekly") {
         const days = Array.isArray((currentTask as any).weekly_days)
-          ? ((currentTask as any).weekly_days as string[]).map((d) => d.toLowerCase())
+          ? ((currentTask as any).weekly_days as string[]).map((d) =>
+              d.toLowerCase(),
+            )
           : [];
         if (days.length === 0) return false;
         const day = dayNames[today.getDay()];
@@ -1057,7 +1059,8 @@ export default function ClientBasedFinOpsTaskManager() {
     if (!isActiveToday) {
       toast({
         title: "Not scheduled today",
-        description: "This weekly task can only be updated on its scheduled day(s).",
+        description:
+          "This weekly task can only be updated on its scheduled day(s).",
         variant: "destructive",
       });
       return;
@@ -1561,7 +1564,9 @@ export default function ClientBasedFinOpsTaskManager() {
         }
         if (task.duration === "weekly") {
           const days = Array.isArray((task as any).weekly_days)
-            ? ((task as any).weekly_days as string[]).map((d) => d.toLowerCase())
+            ? ((task as any).weekly_days as string[]).map((d) =>
+                d.toLowerCase(),
+              )
             : [];
           if (days.length === 0) return false;
           const day = dayNames[filterDate.getDay()];
@@ -2377,89 +2382,107 @@ export default function ClientBasedFinOpsTaskManager() {
                                   }
                                   isInline={true}
                                 />
-                                {(slaWarning || subtask.start_time) && (() => {
-                                  const dayNames = [
-                                    "sunday",
-                                    "monday",
-                                    "tuesday",
-                                    "wednesday",
-                                    "thursday",
-                                    "friday",
-                                    "saturday",
-                                  ];
-                                  const today = dateFilter ? new Date(dateFilter) : new Date();
-                                  const taskStart = task.effective_from ? new Date(task.effective_from) : today;
-                                  const show = (() => {
-                                    if (task.duration === "daily") return taskStart <= today;
-                                    if (task.duration === "weekly") {
-                                      const days = Array.isArray((task as any).weekly_days)
-                                        ? ((task as any).weekly_days as string[]).map((d) => d.toLowerCase())
-                                        : [];
-                                      if (days.length === 0) return false;
-                                      const day = dayNames[today.getDay()];
-                                      return taskStart <= today && days.includes(day);
-                                    }
-                                    return taskStart.toDateString() === today.toDateString();
-                                  })();
-                                  return show; })() && (
-                                  <Alert
-                                    className={`mt-2 p-2 ${
-                                      slaWarning?.type === "overdue" ||
-                                      subtask.status === "overdue"
-                                        ? "border-red-200 bg-red-50"
-                                        : slaWarning?.type === "warning"
-                                          ? "border-orange-200 bg-orange-50"
-                                          : "border-blue-200 bg-blue-50"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-1">
-                                      <Clock
-                                        className={`h-3 w-3 flex-shrink-0 ${
-                                          slaWarning?.type === "overdue" ||
-                                          subtask.status === "overdue"
-                                            ? "text-red-600"
-                                            : slaWarning?.type === "warning"
-                                              ? "text-orange-600"
-                                              : "text-blue-600"
-                                        }`}
-                                      />
-                                      <AlertDescription
-                                        className={`text-xs ${
-                                          slaWarning?.type === "overdue" ||
-                                          subtask.status === "overdue"
-                                            ? "text-red-700"
-                                            : slaWarning?.type === "warning"
-                                              ? "text-orange-700"
-                                              : "text-blue-700"
-                                        }`}
-                                      >
-                                        {(() => {
-                                          const overdue =
+                                {(slaWarning || subtask.start_time) &&
+                                  (() => {
+                                    const dayNames = [
+                                      "sunday",
+                                      "monday",
+                                      "tuesday",
+                                      "wednesday",
+                                      "thursday",
+                                      "friday",
+                                      "saturday",
+                                    ];
+                                    const today = dateFilter
+                                      ? new Date(dateFilter)
+                                      : new Date();
+                                    const taskStart = task.effective_from
+                                      ? new Date(task.effective_from)
+                                      : today;
+                                    const show = (() => {
+                                      if (task.duration === "daily")
+                                        return taskStart <= today;
+                                      if (task.duration === "weekly") {
+                                        const days = Array.isArray(
+                                          (task as any).weekly_days,
+                                        )
+                                          ? (
+                                              (task as any)
+                                                .weekly_days as string[]
+                                            ).map((d) => d.toLowerCase())
+                                          : [];
+                                        if (days.length === 0) return false;
+                                        const day = dayNames[today.getDay()];
+                                        return (
+                                          taskStart <= today &&
+                                          days.includes(day)
+                                        );
+                                      }
+                                      return (
+                                        taskStart.toDateString() ===
+                                        today.toDateString()
+                                      );
+                                    })();
+                                    return show;
+                                  })() && (
+                                    <Alert
+                                      className={`mt-2 p-2 ${
+                                        slaWarning?.type === "overdue" ||
+                                        subtask.status === "overdue"
+                                          ? "border-red-200 bg-red-50"
+                                          : slaWarning?.type === "warning"
+                                            ? "border-orange-200 bg-orange-50"
+                                            : "border-blue-200 bg-blue-50"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-1">
+                                        <Clock
+                                          className={`h-3 w-3 flex-shrink-0 ${
                                             slaWarning?.type === "overdue" ||
-                                            subtask.status === "overdue";
-                                          const timeText = subtask.start_time
-                                            ? overdue
-                                              ? getTimeSinceStartStrict(
-                                                  subtask.start_time,
-                                                )
-                                              : getTimeSinceStart(
-                                                  subtask.start_time,
-                                                )
-                                            : "";
-                                          if (overdue) {
-                                            return `Overdue${timeText ? " • " + timeText : ""}`;
-                                          }
-                                          if (slaWarning?.message) {
-                                            return `${slaWarning.message}${timeText ? " • " + timeText : ""}`;
-                                          }
-                                          return timeText
-                                            ? `Status • ${timeText}`
-                                            : "Status";
-                                        })()}
-                                      </AlertDescription>
-                                    </div>
-                                  </Alert>
-                                )}
+                                            subtask.status === "overdue"
+                                              ? "text-red-600"
+                                              : slaWarning?.type === "warning"
+                                                ? "text-orange-600"
+                                                : "text-blue-600"
+                                          }`}
+                                        />
+                                        <AlertDescription
+                                          className={`text-xs ${
+                                            slaWarning?.type === "overdue" ||
+                                            subtask.status === "overdue"
+                                              ? "text-red-700"
+                                              : slaWarning?.type === "warning"
+                                                ? "text-orange-700"
+                                                : "text-blue-700"
+                                          }`}
+                                        >
+                                          {(() => {
+                                            const overdue =
+                                              slaWarning?.type === "overdue" ||
+                                              subtask.status === "overdue";
+                                            const timeText = subtask.start_time
+                                              ? overdue
+                                                ? getTimeSinceStartStrict(
+                                                    subtask.start_time,
+                                                  )
+                                                : getTimeSinceStart(
+                                                    subtask.start_time,
+                                                  )
+                                              : "";
+                                            if (overdue) {
+                                              return `Overdue${timeText ? " • " + timeText : ""}`;
+                                            }
+                                            if (slaWarning?.message) {
+                                              return `${slaWarning.message}${timeText ? " • " + timeText : ""}`;
+                                            }
+                                            return timeText
+                                              ? `Status • ${timeText}`
+                                              : "Status";
+                                          })()}
+                                        </AlertDescription>
+                                      </div>
+                                    </Alert>
+                                  )}
                               </div>
                             );
                           });
@@ -2688,7 +2711,9 @@ export default function ClientBasedFinOpsTaskManager() {
                             "Friday",
                             "Saturday",
                           ].map((d) => (
-                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                            <SelectItem key={d} value={d}>
+                              {d}
+                            </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -2701,7 +2726,9 @@ export default function ClientBasedFinOpsTaskManager() {
                             onClick={() =>
                               setTaskForm((prev) => ({
                                 ...prev,
-                                weekly_days: prev.weekly_days.filter((x) => x !== d),
+                                weekly_days: prev.weekly_days.filter(
+                                  (x) => x !== d,
+                                ),
                               }))
                             }
                           >
@@ -2710,7 +2737,9 @@ export default function ClientBasedFinOpsTaskManager() {
                         ))}
                       </div>
                       {taskForm.weekly_days.length === 0 && (
-                        <span className="text-xs text-gray-500">Pick up to two days</span>
+                        <span className="text-xs text-gray-500">
+                          Pick up to two days
+                        </span>
                       )}
                     </div>
                   </div>
