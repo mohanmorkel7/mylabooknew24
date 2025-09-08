@@ -2,8 +2,16 @@ import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
-import ConnectionForm, { ConnectionFormValues } from "@/components/ConnectionForm";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import ConnectionForm, {
+  ConnectionFormValues,
+} from "@/components/ConnectionForm";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +31,8 @@ export default function ConnectionEdit() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: Partial<ConnectionFormValues>) => apiClient.updateConnection(Number(id), data),
+    mutationFn: (data: Partial<ConnectionFormValues>) =>
+      apiClient.updateConnection(Number(id), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["connections"] });
       queryClient.invalidateQueries({ queryKey: ["connection", id] });
@@ -31,7 +40,11 @@ export default function ConnectionEdit() {
       navigate("/connections");
     },
     onError: (e: any) => {
-      toast({ title: "Update failed", description: String(e?.message), variant: "destructive" });
+      toast({
+        title: "Update failed",
+        description: String(e?.message),
+        variant: "destructive",
+      });
     },
   });
 
@@ -45,7 +58,9 @@ export default function ConnectionEdit() {
           <h1 className="text-2xl font-bold">Edit member</h1>
           <p className="text-sm text-gray-500">Update connection</p>
         </div>
-        <Button variant="outline" onClick={() => navigate(-1)}>Back</Button>
+        <Button variant="outline" onClick={() => navigate(-1)}>
+          Back
+        </Button>
       </div>
 
       <Card>
@@ -54,7 +69,12 @@ export default function ConnectionEdit() {
           <CardDescription>Modify contact and location details</CardDescription>
         </CardHeader>
         <CardContent>
-          <ConnectionForm initial={connection} onSubmit={(d) => updateMutation.mutate(d)} onCancel={() => navigate(-1)} submitLabel="Update" />
+          <ConnectionForm
+            initial={connection}
+            onSubmit={(d) => updateMutation.mutate(d)}
+            onCancel={() => navigate(-1)}
+            submitLabel="Update"
+          />
         </CardContent>
       </Card>
     </div>

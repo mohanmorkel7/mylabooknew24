@@ -521,7 +521,7 @@ export default function Connections() {
             Manage your members and contacts
           </p>
         </div>
-        <Button onClick={() => navigate("/connections/new") }>
+        <Button onClick={() => navigate("/connections/new")}>
           <Plus className="w-4 h-4 mr-2" /> Add member
         </Button>
       </div>

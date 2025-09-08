@@ -4,10 +4,27 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Country, State, City } from "country-state-city";
 import { useToast } from "@/hooks/use-toast";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { ChevronsUpDown, Check } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const CONNECTION_TYPES = [
@@ -139,7 +156,9 @@ export default function ConnectionForm({
               <Label>Phone Prefix *</Label>
               <Select
                 value={form.phone_prefix as string}
-                onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, phone_prefix: v }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select prefix" />
@@ -157,7 +176,9 @@ export default function ConnectionForm({
               <Label>Phone *</Label>
               <Input
                 value={(form.phone as string) || ""}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
                 placeholder="Phone number"
               />
             </div>
@@ -179,26 +200,54 @@ export default function ConnectionForm({
           <Label>Country</Label>
           <Popover modal={false}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={false}
+                className="w-full justify-between"
+              >
                 {form.country || "Select country"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} data-radix-scroll-lock-ignore>
+            <PopoverContent
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              data-radix-scroll-lock-ignore
+            >
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto overscroll-contain" data-radix-scroll-lock-ignore>
+                <CommandList
+                  className="max-h-72 overflow-y-auto overscroll-contain"
+                  data-radix-scroll-lock-ignore
+                >
                   <CommandGroup>
                     {countries.map((c) => (
                       <CommandItem
                         key={c.isoCode}
                         value={c.name}
                         onSelect={(value) => {
-                          setForm((f) => ({ ...f, country: value, state: "", city: "" }));
+                          setForm((f) => ({
+                            ...f,
+                            country: value,
+                            state: "",
+                            city: "",
+                          }));
                         }}
                       >
-                        <Check className={cn("mr-2 h-4 w-4", form.country === c.name ? "opacity-100" : "opacity-0")} />
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            form.country === c.name
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
                         {c.name}
                       </CommandItem>
                     ))}
@@ -212,16 +261,33 @@ export default function ConnectionForm({
           <Label>State</Label>
           <Popover modal={false}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={false}
+                className="w-full justify-between"
+                disabled={!selectedCountry}
+              >
                 {form.state || "Select state"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} data-radix-scroll-lock-ignore>
+            <PopoverContent
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              data-radix-scroll-lock-ignore
+            >
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto overscroll-contain" data-radix-scroll-lock-ignore>
+                <CommandList
+                  className="max-h-72 overflow-y-auto overscroll-contain"
+                  data-radix-scroll-lock-ignore
+                >
                   <CommandGroup>
                     {states.map((s) => (
                       <CommandItem
@@ -229,10 +295,20 @@ export default function ConnectionForm({
                         value={s.isoCode}
                         onSelect={(value) => {
                           const st = states.find((x) => x.isoCode === value);
-                          if (st) setForm((f) => ({ ...f, state: st.name, city: "" }));
+                          if (st)
+                            setForm((f) => ({
+                              ...f,
+                              state: st.name,
+                              city: "",
+                            }));
                         }}
                       >
-                        <Check className={cn("mr-2 h-4 w-4", form.state === s.name ? "opacity-100" : "opacity-0")} />
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            form.state === s.name ? "opacity-100" : "opacity-0",
+                          )}
+                        />
                         {s.name}
                       </CommandItem>
                     ))}
@@ -246,16 +322,33 @@ export default function ConnectionForm({
           <Label>City</Label>
           <Popover modal={false}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={false}
+                className="w-full justify-between"
+                disabled={!selectedCountry}
+              >
                 {form.city || "Select city"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()} data-radix-scroll-lock-ignore>
+            <PopoverContent
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              data-radix-scroll-lock-ignore
+            >
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto overscroll-contain" data-radix-scroll-lock-ignore>
+                <CommandList
+                  className="max-h-72 overflow-y-auto overscroll-contain"
+                  data-radix-scroll-lock-ignore
+                >
                   <CommandGroup>
                     {cities.map((c: any) => {
                       const val = `${c.name}|${c.stateCode || ""}`;
@@ -267,12 +360,23 @@ export default function ConnectionForm({
                             const [name, stateCode] = value.split("|");
                             setForm((f) => ({ ...f, city: name }));
                             if (stateCode && selectedCountry?.isoCode) {
-                              const stObj = State.getStateByCodeAndCountry(stateCode, selectedCountry.isoCode);
-                              if (stObj) setForm((f) => ({ ...f, state: stObj.name }));
+                              const stObj = State.getStateByCodeAndCountry(
+                                stateCode,
+                                selectedCountry.isoCode,
+                              );
+                              if (stObj)
+                                setForm((f) => ({ ...f, state: stObj.name }));
                             }
                           }}
                         >
-                          <Check className={cn("mr-2 h-4 w-4", form.city === c.name ? "opacity-100" : "opacity-0")} />
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              form.city === c.name
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
                           {c.name}
                         </CommandItem>
                       );
