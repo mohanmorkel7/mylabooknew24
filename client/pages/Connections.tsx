@@ -162,31 +162,35 @@ function ConnectionForm({
             </SelectContent>
           </Select>
         </div>
-        <div>
-          <Label>Phone Prefix *</Label>
-          <Select
-            value={form.phone_prefix}
-            onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select prefix" />
-            </SelectTrigger>
-            <SelectContent>
-              {PHONE_PREFIXES.map((p) => (
-                <SelectItem key={p.code} value={p.code}>
-                  {p.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label>Phone *</Label>
-          <Input
-            value={form.phone as string}
-            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            placeholder="Phone number"
-          />
+        <div className="md:col-span-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <Label>Phone Prefix *</Label>
+              <Select
+                value={form.phone_prefix}
+                onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select prefix" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PHONE_PREFIXES.map((p) => (
+                    <SelectItem key={p.code} value={p.code}>
+                      {p.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="md:col-span-2">
+              <Label>Phone *</Label>
+              <Input
+                value={form.phone as string}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                placeholder="Phone number"
+              />
+            </div>
+          </div>
         </div>
         <div>
           <Label>Email</Label>
