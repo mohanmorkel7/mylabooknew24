@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const CONNECTION_TYPES = [
   "Business Team",
@@ -254,7 +255,8 @@ function ConnectionForm({
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
+                <ScrollArea className="h-72" data-radix-scroll-lock-ignore onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()}>
+                <CommandList className="max-h-72">
                   <CommandGroup>
                     {countries.map((c) => (
                       <CommandItem
@@ -282,6 +284,7 @@ function ConnectionForm({
                     ))}
                   </CommandGroup>
                 </CommandList>
+              </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
@@ -312,7 +315,8 @@ function ConnectionForm({
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
+                <ScrollArea className="h-72" data-radix-scroll-lock-ignore onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()}>
+                <CommandList className="max-h-72">
                   <CommandGroup>
                     {states.map((s) => (
                       <CommandItem
@@ -340,6 +344,7 @@ function ConnectionForm({
                     ))}
                   </CommandGroup>
                 </CommandList>
+              </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
@@ -370,7 +375,8 @@ function ConnectionForm({
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
-                <CommandList className="max-h-72 overflow-y-auto overscroll-contain">
+                <ScrollArea className="h-72" data-radix-scroll-lock-ignore onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()}>
+                <CommandList className="max-h-72">
                   <CommandGroup>
                     {cities.map((c: any) => {
                       const val = `${c.name}|${c.stateCode || ""}`;
@@ -405,6 +411,7 @@ function ConnectionForm({
                     })}
                   </CommandGroup>
                 </CommandList>
+              </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
