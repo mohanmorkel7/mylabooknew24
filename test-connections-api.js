@@ -31,7 +31,9 @@ async function run() {
     console.log("Created:", created);
 
     if (!created || !created.id) {
-      console.log("Create did not return ID - database may be unavailable, continuing tests");
+      console.log(
+        "Create did not return ID - database may be unavailable, continuing tests",
+      );
       return;
     }
 

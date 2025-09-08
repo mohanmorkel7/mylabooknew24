@@ -142,7 +142,11 @@ router.put("/:id", async (req: Request, res: Response) => {
       return res.json(updated);
     }
 
-    return res.json({ id, ...normalized, updated_at: new Date().toISOString() });
+    return res.json({
+      id,
+      ...normalized,
+      updated_at: new Date().toISOString(),
+    });
   } catch (error) {
     console.error("Error updating connection:", error);
     return res.status(500).json({ error: "Failed to update connection" });

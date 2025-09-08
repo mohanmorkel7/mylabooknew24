@@ -27,10 +27,28 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Country, State, City } from "country-state-city";
-import { Trash2, Edit, Plus, Search, ChevronsUpDown, Check } from "lucide-react";
+import {
+  Trash2,
+  Edit,
+  Plus,
+  Search,
+  ChevronsUpDown,
+  Check,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -171,7 +189,9 @@ function ConnectionForm({
               <Label>Phone Prefix *</Label>
               <Select
                 value={form.phone_prefix}
-                onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, phone_prefix: v }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select prefix" />
@@ -189,7 +209,9 @@ function ConnectionForm({
               <Label>Phone *</Label>
               <Input
                 value={form.phone as string}
-                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, phone: e.target.value }))
+                }
                 placeholder="Phone number"
               />
             </div>
@@ -211,12 +233,24 @@ function ConnectionForm({
           <Label>Country</Label>
           <Popover modal={false}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={false}
+                className="w-full justify-between"
+              >
                 {form.country || "Select country"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+            <PopoverContent
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+            >
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
@@ -227,10 +261,22 @@ function ConnectionForm({
                         key={c.isoCode}
                         value={c.name}
                         onSelect={(value) => {
-                          setForm((f) => ({ ...f, country: value, state: "", city: "" }));
+                          setForm((f) => ({
+                            ...f,
+                            country: value,
+                            state: "",
+                            city: "",
+                          }));
                         }}
                       >
-                        <Check className={cn("mr-2 h-4 w-4", form.country === c.name ? "opacity-100" : "opacity-0")} />
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            form.country === c.name
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
                         {c.name}
                       </CommandItem>
                     ))}
@@ -244,12 +290,25 @@ function ConnectionForm({
           <Label>State</Label>
           <Popover modal={false}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={false}
+                className="w-full justify-between"
+                disabled={!selectedCountry}
+              >
                 {form.state || "Select state"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+            <PopoverContent
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+            >
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
@@ -262,11 +321,20 @@ function ConnectionForm({
                         onSelect={(value) => {
                           const st = states.find((x) => x.isoCode === value);
                           if (st) {
-                            setForm((f) => ({ ...f, state: st.name, city: "" }));
+                            setForm((f) => ({
+                              ...f,
+                              state: st.name,
+                              city: "",
+                            }));
                           }
                         }}
                       >
-                        <Check className={cn("mr-2 h-4 w-4", form.state === s.name ? "opacity-100" : "opacity-0")} />
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            form.state === s.name ? "opacity-100" : "opacity-0",
+                          )}
+                        />
                         {s.name}
                       </CommandItem>
                     ))}
@@ -280,12 +348,25 @@ function ConnectionForm({
           <Label>City</Label>
           <Popover modal={false}>
             <PopoverTrigger asChild>
-              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={false}
+                className="w-full justify-between"
+                disabled={!selectedCountry}
+              >
                 {form.city || "Select city"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent side="bottom" align="start" sideOffset={4} className="w-[--radix-popover-trigger-width] p-0 max-h-80" onWheel={(e) => e.stopPropagation()} onTouchMove={(e) => e.stopPropagation()}>
+            <PopoverContent
+              side="bottom"
+              align="start"
+              sideOffset={4}
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              onWheel={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+            >
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
@@ -301,12 +382,23 @@ function ConnectionForm({
                             const [name, stateCode] = value.split("|");
                             setForm((f) => ({ ...f, city: name }));
                             if (stateCode) {
-                              const stObj = State.getStateByCodeAndCountry(stateCode, selectedCountry?.isoCode || "");
-                              if (stObj) setForm((f) => ({ ...f, state: stObj.name }));
+                              const stObj = State.getStateByCodeAndCountry(
+                                stateCode,
+                                selectedCountry?.isoCode || "",
+                              );
+                              if (stObj)
+                                setForm((f) => ({ ...f, state: stObj.name }));
                             }
                           }}
                         >
-                          <Check className={cn("mr-2 h-4 w-4", form.city === c.name ? "opacity-100" : "opacity-0")} />
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              form.city === c.name
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
                           {c.name}
                         </CommandItem>
                       );
@@ -340,7 +432,11 @@ export default function Connections() {
   const [isDialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Connection | null>(null);
 
-  const { data: connections = [], refetch, isLoading } = useConnections({
+  const {
+    data: connections = [],
+    refetch,
+    isLoading,
+  } = useConnections({
     q: search ? search : undefined,
     type: typeFilter && typeFilter !== "all" ? typeFilter : undefined,
   });
@@ -353,7 +449,11 @@ export default function Connections() {
       setDialogOpen(false);
     },
     onError: (e: any) => {
-      toast({ title: "Create failed", description: String(e?.message), variant: "destructive" });
+      toast({
+        title: "Create failed",
+        description: String(e?.message),
+        variant: "destructive",
+      });
     },
   });
 
@@ -367,7 +467,11 @@ export default function Connections() {
       setDialogOpen(false);
     },
     onError: (e: any) => {
-      toast({ title: "Update failed", description: String(e?.message), variant: "destructive" });
+      toast({
+        title: "Update failed",
+        description: String(e?.message),
+        variant: "destructive",
+      });
     },
   });
 
@@ -378,7 +482,11 @@ export default function Connections() {
       toast({ title: "Deleted", description: "Connection removed" });
     },
     onError: (e: any) => {
-      toast({ title: "Delete failed", description: String(e?.message), variant: "destructive" });
+      toast({
+        title: "Delete failed",
+        description: String(e?.message),
+        variant: "destructive",
+      });
     },
   });
 
@@ -396,22 +504,40 @@ export default function Connections() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Connections</h1>
-          <p className="text-sm text-gray-500">Manage your members and contacts</p>
+          <p className="text-sm text-gray-500">
+            Manage your members and contacts
+          </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(null); }}>
+        <Dialog
+          open={isDialogOpen}
+          onOpenChange={(o) => {
+            setDialogOpen(o);
+            if (!o) setEditing(null);
+          }}
+        >
           <DialogTrigger asChild>
-            <Button onClick={() => { setEditing(null); setDialogOpen(true); }}>
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setDialogOpen(true);
+              }}
+            >
               <Plus className="w-4 h-4 mr-2" /> Add member
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
-              <DialogTitle>{editing ? "Edit member" : "Add member"}</DialogTitle>
+              <DialogTitle>
+                {editing ? "Edit member" : "Add member"}
+              </DialogTitle>
             </DialogHeader>
             <ConnectionForm
               initial={editing || undefined}
               onSubmit={editing ? handleUpdate : handleCreate}
-              onCancel={() => { setDialogOpen(false); setEditing(null); }}
+              onCancel={() => {
+                setDialogOpen(false);
+                setEditing(null);
+              }}
             />
             <DialogFooter />
           </DialogContent>
@@ -421,7 +547,9 @@ export default function Connections() {
       <Card>
         <CardHeader>
           <CardTitle>Search & Filters</CardTitle>
-          <CardDescription>Find connections by name, email, phone and type</CardDescription>
+          <CardDescription>
+            Find connections by name, email, phone and type
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -435,10 +563,15 @@ export default function Connections() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Button variant="outline" onClick={() => refetch()}>Search</Button>
+              <Button variant="outline" onClick={() => refetch()}>
+                Search
+              </Button>
             </div>
             <div>
-              <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v)}>
+              <Select
+                value={typeFilter}
+                onValueChange={(v) => setTypeFilter(v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
@@ -458,10 +591,14 @@ export default function Connections() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {isLoading && (
-          <div className="col-span-full text-center text-sm text-gray-500">Loading...</div>
+          <div className="col-span-full text-center text-sm text-gray-500">
+            Loading...
+          </div>
         )}
         {!isLoading && connections.length === 0 && (
-          <div className="col-span-full text-center text-sm text-gray-500">No connections found</div>
+          <div className="col-span-full text-center text-sm text-gray-500">
+            No connections found
+          </div>
         )}
         {connections.map((c: Connection) => (
           <Card key={c.id} className="relative">
@@ -471,15 +608,16 @@ export default function Connections() {
                 {c.type && <Badge variant="secondary">{c.type}</Badge>}
               </div>
               <CardDescription>
-                {(c.city ? c.city + ", " : "")}
-                {(c.state ? c.state + ", " : "")}
-                {(c.country || "")}
+                {c.city ? c.city + ", " : ""}
+                {c.state ? c.state + ", " : ""}
+                {c.country || ""}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-1 text-sm">
                 <div>
-                  <span className="text-gray-500">Phone:</span> {c.phone_prefix} {c.phone}
+                  <span className="text-gray-500">Phone:</span> {c.phone_prefix}{" "}
+                  {c.phone}
                 </div>
                 {c.email && (
                   <div>
