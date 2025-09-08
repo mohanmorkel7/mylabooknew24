@@ -648,6 +648,35 @@ export class ApiClient {
     return this.request("/clients/stats");
   }
 
+  // Connections
+  async getConnections(filters?: { q?: string; type?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.q) params.append("q", filters.q);
+    if (filters?.type) params.append("type", filters.type);
+    const qs = params.toString();
+    return this.request(`/connections${qs ? `?${qs}` : ""}`);
+  }
+
+  async createConnection(data: any) {
+    return this.request("/connections", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateConnection(id: number, data: any) {
+    return this.request(`/connections/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteConnection(id: number) {
+    return this.request(`/connections/${id}`, {
+      method: "DELETE",
+    });
+  }
+
   // Business Offerings
   async getBusinessOfferings() {
     return this.request("/business-offerings");
