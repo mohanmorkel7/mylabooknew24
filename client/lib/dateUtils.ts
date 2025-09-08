@@ -139,7 +139,10 @@ export const getRelativeTimeIST = (date: string | Date): string => {
   const dateObj = typeof date === "string" ? new Date(date) : date;
   const currentIST = getCurrentISTTimestamp();
 
-  const diffMs = currentIST.getTime() - dateObj.getTime();
+  // Convert the event time to IST as well to compare in the same timezone
+  const eventIST = convertToIST(dateObj);
+
+  const diffMs = currentIST.getTime() - eventIST.getTime();
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
@@ -151,7 +154,7 @@ export const getRelativeTimeIST = (date: string | Date): string => {
     return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
   if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
 
-  return formatToIST(dateObj);
+  return formatToIST(eventIST);
 };
 
 /**
