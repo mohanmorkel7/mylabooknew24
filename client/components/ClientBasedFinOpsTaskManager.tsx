@@ -1026,6 +1026,43 @@ export default function ClientBasedFinOpsTaskManager() {
     );
     const currentStatus = currentSubtask?.status;
 
+    // Enforce active-day rule: allow status change only on scheduled day(s)
+    const dayNames = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+    const today = dateFilter ? new Date(dateFilter) : new Date();
+    const taskStart = currentTask?.effective_from
+      ? new Date(currentTask.effective_from)
+      : today;
+    const isActiveToday = (() => {
+      if (!currentTask) return true;
+      if (currentTask.duration === "daily") return taskStart <= today;
+      if (currentTask.duration === "weekly") {
+        const days = Array.isArray((currentTask as any).weekly_days)
+          ? ((currentTask as any).weekly_days as string[]).map((d) => d.toLowerCase())
+          : [];
+        if (days.length === 0) return false;
+        const day = dayNames[today.getDay()];
+        return taskStart <= today && days.includes(day);
+      }
+      return taskStart.toDateString() === today.toDateString();
+    })();
+
+    if (!isActiveToday) {
+      toast({
+        title: "Not scheduled today",
+        description: "This weekly task can only be updated on its scheduled day(s).",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Check if status is changing FROM "overdue" TO any other status
     if (currentStatus === "overdue" && newStatus !== "overdue") {
       console.log(
