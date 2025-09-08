@@ -1285,11 +1285,14 @@ export default function FinOpsNotifications() {
                             >
                               {notification.title}
                             </h4>
-                            {notification.message && notification.title && notification.message.trim() !== notification.title.trim() && (
-                              <p className="text-sm text-gray-700 mt-1 break-words">
-                                {notification.message}
-                              </p>
-                            )}
+                            {notification.message &&
+                              notification.title &&
+                              notification.message.trim() !==
+                                notification.title.trim() && (
+                                <p className="text-sm text-gray-700 mt-1 break-words">
+                                  {notification.message}
+                                </p>
+                              )}
                           </div>
                           <div className="flex items-center gap-2 ml-3">
                             <Badge
