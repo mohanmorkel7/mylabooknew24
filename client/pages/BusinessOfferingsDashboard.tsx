@@ -156,7 +156,7 @@ export default function BusinessOfferingsDashboard() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-            <Briefcase className="w-7 h-7 text-blue-600" /> Business Offerings
+            <Briefcase className="w-7 h-7 text-blue-600" /> Sales
           </h1>
           <p className="text-gray-600 mt-1">
             Manage business offerings and pipeline
