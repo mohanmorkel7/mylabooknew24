@@ -136,6 +136,8 @@ import BusinessOfferingsEdit from "@/pages/BusinessOfferingsEdit";
 import BusinessOfferingsDetails from "@/pages/BusinessOfferingsDetails";
 import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import Connections from "@/pages/Connections";
+import ConnectionNew from "@/pages/ConnectionNew";
+import ConnectionEdit from "@/pages/ConnectionEdit";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
@@ -797,6 +799,28 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <Connections />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/connections/new"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ConnectionNew />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/connections/:id/edit"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ConnectionEdit />
             </DashboardLayout>
           </ProtectedRoute>
         }
