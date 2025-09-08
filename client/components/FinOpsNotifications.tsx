@@ -785,7 +785,7 @@ export default function FinOpsNotifications() {
         );
         return transformed;
       } else {
-        console.log("📭 Database returned empty notifications array");
+        console.log("���� Database returned empty notifications array");
         return []; // Database is empty - this is valid
       }
     }
@@ -1584,13 +1584,24 @@ export default function FinOpsNotifications() {
                           </span>
                         </div>
                       )}
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-600 flex items-center gap-2">
-                          <User className="w-4 h-4" /> Assigned To
-                        </span>
-                        <span className="font-medium text-right">
-                          {detailsDialog.notification.assigned_to}
-                        </span>
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 flex items-center gap-2">
+                            <User className="w-4 h-4" /> Assignees
+                          </span>
+                          {!detailsDialog.notification.assigned_users?.length && (
+                            <span className="font-medium text-right">
+                              {detailsDialog.notification.assigned_to}
+                            </span>
+                          )}
+                        </div>
+                        {detailsDialog.notification.assigned_users?.length ? (
+                          <div className="mt-2 flex flex-wrap gap-2 justify-end">
+                            {detailsDialog.notification.assigned_users.map((u, idx) => (
+                              <Badge key={`assignee-${idx}`} variant="secondary" className="px-2 py-0.5">{u}</Badge>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </div>
