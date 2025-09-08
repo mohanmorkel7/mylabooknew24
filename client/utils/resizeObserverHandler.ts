@@ -78,6 +78,39 @@ export function initializeResizeObserverErrorHandler(): void {
     originalConsoleWarn.apply(console, args);
   };
 
+  // Monkey-patch global ResizeObserver to wrap callbacks safely (covers third-party usage)
+  try {
+    const w = window as any;
+    if (typeof w.ResizeObserver === 'function' && !w.__patchedResizeObserver) {
+      const OriginalResizeObserver = w.ResizeObserver;
+      w.ResizeObserver = class SafePatchedResizeObserver extends OriginalResizeObserver {
+        constructor(callback: ResizeObserverCallback) {
+          const wrapped: ResizeObserverCallback = (entries, observer) => {
+            try {
+              requestAnimationFrame(() => {
+                try {
+                  callback(entries, observer);
+                } catch (err: any) {
+                  if (isResizeObserverLoopMessage(err?.message)) return;
+                  throw err;
+                }
+              });
+            } catch (err: any) {
+              if (isResizeObserverLoopMessage(err?.message)) return;
+              throw err;
+            }
+          };
+          // @ts-ignore - call parent with wrapped callback
+          super(wrapped);
+        }
+      };
+      w.__patchedResizeObserver = true;
+      console.log('🛡️ Global ResizeObserver patched with safe wrapper');
+    }
+  } catch (e) {
+    // Non-fatal
+  }
+
   // Expose helpers for testing
   (window as any).createSafeResizeObserver = createSafeResizeObserver;
   (window as any).createDebouncedResizeObserver = createDebouncedResizeObserver;
