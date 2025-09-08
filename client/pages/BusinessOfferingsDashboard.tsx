@@ -43,7 +43,7 @@ import {
 export default function BusinessOfferingsDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [search, setSearch] = useState("");
+  const [productSearch, setProductSearch] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const {
@@ -62,11 +62,11 @@ export default function BusinessOfferingsDashboard() {
     staleTime: 30000,
   });
 
-  const filtered = (data as any[]).filter((o) => {
-    const term = search.toLowerCase();
-    const fields = [o.solution, o.product, o.offering_description];
-    return fields.some((f) => (f || "").toLowerCase().includes(term));
-  });
+  const productFiltered = productSearch.trim()
+    ? (data as any[]).filter((o: any) =>
+        (o.product || "").toLowerCase().includes(productSearch.toLowerCase()),
+      )
+    : ((data as any[]) || []);
 
   // Helper to get client for an offering
   const getClientForOffering = (offering: any) => {
@@ -197,50 +197,25 @@ export default function BusinessOfferingsDashboard() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="gap-2">
-          <CardTitle>Offerings</CardTitle>
-          <CardDescription>
-            Search your offerings (see product-wise list below)
-          </CardDescription>
-          <div className="flex gap-3 items-end w-full">
-            <div className="flex-1">
-              <Label className="text-sm">Search</Label>
-              <Input
-                placeholder="Search by client, product or solution"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-gray-600">Loading...</div>
-          ) : error ? (
-            <div className="text-red-600">Failed to load</div>
-          ) : (filtered || []).length === 0 ? (
-            <div className="text-gray-600">No Business Offerings found.</div>
-          ) : (
-            <div className="text-gray-500 text-sm">
-              Use the Products accordion below to browse.
-            </div>
-          )}
-        </CardContent>
-      </Card>
 
       {/* Products wise accordion */}
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>Products</CardTitle>
           <CardDescription>Group by product with counts</CardDescription>
+          <div className="mt-2">
+            <Label className="text-sm">Filter products</Label>
+            <Input
+              placeholder="Type product name"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+            />
+          </div>
         </CardHeader>
         <CardContent>
           {(() => {
             const groups: Record<string, any[]> = {};
-            const source = (filtered as any[]).length
-              ? (filtered as any[])
-              : (data as any[]) || [];
+            const source = productFiltered;
             source.forEach((o: any) => {
               const key = o.product || "Unknown";
               if (!groups[key]) groups[key] = [];
