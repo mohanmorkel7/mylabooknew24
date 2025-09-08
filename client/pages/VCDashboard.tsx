@@ -197,7 +197,9 @@ function VCLinkedFundRaises({ vcId }: { vcId: number }) {
               </span>
             </div>
             {fr.status && (
-              <Badge className={`capitalize ${statusColors[fr.status as keyof typeof statusColors] || "bg-gray-100 text-gray-700"}`}>
+              <Badge
+                className={`capitalize ${statusColors[fr.status as keyof typeof statusColors] || "bg-gray-100 text-gray-700"}`}
+              >
                 {fr.status.replace("_", " ")}
               </Badge>
             )}
