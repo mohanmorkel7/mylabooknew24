@@ -918,13 +918,17 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     {calcDetails.feeInINR.toFixed(2)}
                   </div>
                   <div>
-                    <span className="font-medium">Potential MRR (INR Lacs):</span>{" "}
+                    <span className="font-medium">
+                      Potential MRR (INR Lacs):
+                    </span>{" "}
                     {calcDetails.mrrLacs.toFixed(2)} ={" "}
                     {calcDetails.monthlyRevenueINR.toLocaleString("en-IN")} /
                     100,000
                   </div>
                   <div>
-                    <span className="font-medium">MRR (from field, INR Lacs):</span>{" "}
+                    <span className="font-medium">
+                      MRR (from field, INR Lacs):
+                    </span>{" "}
                     {isNaN(calcDetails.mrrLacsField)
                       ? "0.00"
                       : calcDetails.mrrLacsField.toFixed(2)}
@@ -945,7 +949,8 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                   <div>
                     <span className="font-medium">ARR Step 3 (USD Mn/yr):</span>{" "}
                     {calcDetails.arrUsdMn.toFixed(3)} ={" "}
-                    {calcDetails.arrInrMnPerYear.toFixed(2)} / {calcDetails.usdRate}
+                    {calcDetails.arrInrMnPerYear.toFixed(2)} /{" "}
+                    {calcDetails.usdRate}
                   </div>
                 </div>
               </CardContent>
@@ -978,7 +983,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     {calcDetails.projBucket || "-"}
                   </div>
                   <div>
-                    <span className="font-medium">Projected Parsed Avg (Mn):</span>{" "}
+                    <span className="font-medium">
+                      Projected Parsed Avg (Mn):
+                    </span>{" "}
                     {calcDetails.projAvgMn
                       ? calcDetails.projAvgMn.toFixed(2)
                       : "0.00"}
@@ -995,14 +1002,18 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                   </div>
                   {calcDetails.domestic ? (
                     <div>
-                      <span className="font-medium">Projected ARR (USD Mn):</span>{" "}
+                      <span className="font-medium">
+                        Projected ARR (USD Mn):
+                      </span>{" "}
                       {calcDetails.projUsdMn.toFixed(3)} = (
                       {calcDetails.projAnnualMn.toFixed(2)} *{" "}
                       {calcDetails.feeRaw.toFixed(2)}) / {calcDetails.usdRate}
                     </div>
                   ) : (
                     <div>
-                      <span className="font-medium">Projected ARR (USD Mn):</span>{" "}
+                      <span className="font-medium">
+                        Projected ARR (USD Mn):
+                      </span>{" "}
                       {calcDetails.projUsdMn.toFixed(3)} ={" "}
                       {calcDetails.projAnnualMn.toFixed(2)} *{" "}
                       {calcDetails.feeRaw.toFixed(3)}
