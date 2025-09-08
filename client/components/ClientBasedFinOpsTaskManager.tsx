@@ -1508,19 +1508,34 @@ export default function ClientBasedFinOpsTaskManager() {
         effective_from: task.effective_from,
       });
 
-      // For daily tasks, check if task should run on the selected date
-      if (task.duration === "daily") {
-        // Daily task should show if it started on or before the selected date
-        if (taskDate > filterDate) {
-          console.log("Filtering out daily task - not started yet");
-          return false; // Task hasn't started yet
+      // Determine if task is active on the selected date (supports weekly days)
+      const dayNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      const isActiveOnDate = (() => {
+        if (task.duration === "daily") {
+          return taskDate <= filterDate;
         }
-      } else {
-        // For non-daily tasks, check if the date matches exactly
-        if (taskDate.toDateString() !== filterDate.toDateString()) {
-          console.log("Filtering out non-daily task - date doesn't match");
-          return false;
+        if (task.duration === "weekly") {
+          const days = Array.isArray((task as any).weekly_days)
+            ? ((task as any).weekly_days as string[]).map((d) => d.toLowerCase())
+            : [];
+          if (days.length === 0) return false;
+          const day = dayNames[filterDate.getDay()];
+          return taskDate <= filterDate && days.includes(day);
         }
+        // monthly and others: fallback to exact date match
+        return taskDate.toDateString() === filterDate.toDateString();
+      })();
+      if (!isActiveOnDate) {
+        console.log("Filtering out task - not active on selected date");
+        return false;
       }
       console.log("Task passed date filter");
     }
