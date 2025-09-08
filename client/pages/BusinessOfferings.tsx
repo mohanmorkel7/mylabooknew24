@@ -845,6 +845,24 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                     </div>
                   )}
                 </div>
+
+                <div>
+                  <Label>Current Potential ARR (USD Mn) *</Label>
+                  <Input
+                    type="number"
+                    step="0.001"
+                    value={formB.currentPotentialARR}
+                    readOnly
+                    disabled
+                    className="bg-gray-50"
+                    placeholder="Auto-calculated"
+                  />
+                  {errors.currentPotentialARR && (
+                    <div className="text-sm text-red-600 mt-1">
+                      {errors.currentPotentialARR}
+                    </div>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -864,15 +882,6 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Input
-                  type="number"
-                  step="0.001"
-                  value={formB.currentPotentialARR}
-                  readOnly
-                  disabled
-                  className="bg-gray-50"
-                  placeholder="Auto-calculated"
-                />
                 <div className="p-3 border rounded bg-gray-50 text-xs text-gray-700 space-y-1">
                   <div>
                     <span className="font-medium">Geography:</span>{" "}
