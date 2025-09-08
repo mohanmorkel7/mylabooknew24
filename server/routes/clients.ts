@@ -411,9 +411,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
           }
 
           // Delete business offerings for this client (steps are ON DELETE CASCADE)
-          await pool.query(`DELETE FROM business_offerings WHERE client_id = $1`, [
-            id,
-          ]);
+          await pool.query(
+            `DELETE FROM business_offerings WHERE client_id = $1`,
+            [id],
+          );
         } catch (e) {
           console.log("Cascade delete warning:", (e as any).message);
         }

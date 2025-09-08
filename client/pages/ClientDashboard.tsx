@@ -427,9 +427,11 @@ export default function ClientDashboard() {
                                     Delete Client
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to delete "{c.client_name || "this client"}"?
-                                    This will also delete all related business offerings and follow-ups.
-                                    This action cannot be undone.
+                                    Are you sure you want to delete "
+                                    {c.client_name || "this client"}"? This will
+                                    also delete all related business offerings
+                                    and follow-ups. This action cannot be
+                                    undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
