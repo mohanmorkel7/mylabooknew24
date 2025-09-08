@@ -672,6 +672,22 @@ export default function ClientDetails() {
                 <Phone className="w-4 h-4 mr-2" />
                 Call Phone
               </Button>
+              {clientData.website && (
+                <Button
+                  className="w-full justify-start"
+                  variant="outline"
+                  onClick={() => window.open(clientData.website, "_blank")}
+                >
+                  <Globe className="w-4 h-4 mr-2" />
+                  Open Website
+                </Button>
+              )}
+              {clientData.address && (
+                <div className="text-xs text-gray-500 mt-2">
+                  <div className="font-medium text-gray-700 mb-1">Address</div>
+                  <div className="rounded-md border bg-gray-50 p-2">{clientData.address}</div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
