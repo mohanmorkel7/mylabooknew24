@@ -595,6 +595,7 @@ export default function FinOpsNotifications() {
     notificationId: string;
     taskName: string;
   }>({ open: false, notificationId: "", taskName: "" });
+  const [detailsDialog, setDetailsDialog] = useState<{ open: boolean; notification: FinOpsNotification | null }>({ open: false, notification: null });
   const [overdueReason, setOverdueReason] = useState("");
   const [debugMode, setDebugMode] = useState(false);
 
@@ -1479,8 +1480,7 @@ export default function FinOpsNotifications() {
                         size="sm"
                         className="h-8 px-2"
                         onClick={() => {
-                          // Handle view action - could open task details
-                          console.log("View notification:", notification.id);
+                          setDetailsDialog({ open: true, notification });
                         }}
                         title="View Details"
                       >
@@ -1494,6 +1494,103 @@ export default function FinOpsNotifications() {
           })
         )}
       </div>
+
+      {/* View Details Dialog */}
+      <Dialog
+        open={detailsDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setDetailsDialog({ open: false, notification: null });
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="w-5 h-5" />
+              {detailsDialog.notification?.title || "Notification Details"}
+            </DialogTitle>
+            <DialogDescription>
+              {detailsDialog.notification?.message}
+            </DialogDescription>
+          </DialogHeader>
+          {detailsDialog.notification && (
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div className="text-gray-600">Type</div>
+                <div className="font-medium">{detailsDialog.notification.type}</div>
+                <div className="text-gray-600">Priority</div>
+                <div className="font-medium capitalize">{detailsDialog.notification.priority}</div>
+                <div className="text-gray-600">Task</div>
+                <div className="font-medium">{detailsDialog.notification.task_name}</div>
+                {detailsDialog.notification.client_name && (
+                  <>
+                    <div className="text-gray-600">Client</div>
+                    <div className="font-medium">{detailsDialog.notification.client_name}</div>
+                  </>
+                )}
+                {detailsDialog.notification.subtask_name && (
+                  <>
+                    <div className="text-gray-600">Subtask</div>
+                    <div className="font-medium">{detailsDialog.notification.subtask_name}</div>
+                  </>
+                )}
+                <div className="text-gray-600">Assigned To</div>
+                <div className="font-medium">{detailsDialog.notification.assigned_to}</div>
+                <div className="text-gray-600">Created</div>
+                <div className="font-medium">{formatToISTDateTime(detailsDialog.notification.created_at)}</div>
+                {detailsDialog.notification.scheduled_time_ist && (
+                  <>
+                    <div className="text-gray-600">Scheduled (IST)</div>
+                    <div className="font-medium">{detailsDialog.notification.scheduled_time_ist}</div>
+                  </>
+                )}
+                {typeof detailsDialog.notification.time_diff_minutes === 'number' && (
+                  <>
+                    <div className="text-gray-600">Time Diff</div>
+                    <div className="font-medium">{detailsDialog.notification.time_diff_minutes} min</div>
+                  </>
+                )}
+              </div>
+
+              {detailsDialog.notification.reporting_managers?.length ? (
+                <div>
+                  <div className="text-gray-600">Reporting Managers</div>
+                  <div className="font-medium">{detailsDialog.notification.reporting_managers.join(", ")}</div>
+                </div>
+              ) : null}
+
+              {detailsDialog.notification.escalation_managers?.length ? (
+                <div>
+                  <div className="text-gray-600">Escalation Managers</div>
+                  <div className="font-medium">{detailsDialog.notification.escalation_managers.join(", ")}</div>
+                </div>
+              ) : null}
+
+              {detailsDialog.notification.sla_remaining && (
+                <div className="text-orange-700 font-semibold">
+                  SLA Status: {detailsDialog.notification.sla_remaining}
+                </div>
+              )}
+
+              {detailsDialog.notification.delay_reason && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2">
+                  <div className="text-yellow-800 font-medium">Delay/Overdue Reason</div>
+                  <div className="text-yellow-700">{detailsDialog.notification.delay_reason}</div>
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            {detailsDialog.notification && detailsDialog.notification.status === 'unread' && (
+              <Button onClick={() => markAsRead(detailsDialog.notification!.id)}>
+                Mark as Read
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setDetailsDialog({ open: false, notification: null })}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Enhanced Overdue Reason Dialog */}
       <Dialog
