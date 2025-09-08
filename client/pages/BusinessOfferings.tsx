@@ -469,7 +469,8 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-              <Briefcase className="w-7 h-7 text-blue-600" /> {offeringId ? "Edit Sales" : "Create sales"}
+              <Briefcase className="w-7 h-7 text-blue-600" />{" "}
+              {offeringId ? "Edit Sales" : "Create sales"}
             </h1>
             <p className="text-gray-600">
               Record offerings and client pipeline
