@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertCircle,
@@ -19,6 +26,9 @@ import {
   User,
   Trash,
   Trash2,
+  Calendar,
+  DollarSign,
+  MapPin,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useDeleteClient } from "@/hooks/useApi";
@@ -57,6 +67,36 @@ export default function ClientDashboard() {
   const openClient = (id: number) => navigate(`/clients/${id}`);
   const deleteMutation = useDeleteClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+
+  const selectedMeta = useMemo(() => parseNotesMeta(selectedClient?.notes), [selectedClient]);
+  const primaryContact = Array.isArray(selectedMeta.contacts)
+    ? selectedMeta.contacts[0]
+    : undefined;
+  const phoneDisplay = primaryContact?.phone
+    ? `${primaryContact.phone_prefix || ""} ${primaryContact.phone}`
+    : selectedClient?.phone || "Not provided";
+  const telHref = primaryContact?.phone
+    ? `tel:${(primaryContact.phone_prefix || "")}${primaryContact.phone}`.replace(/\s+/g, "")
+    : selectedClient?.phone
+      ? `tel:${String(selectedClient.phone).replace(/\s+/g, "")}`
+      : "";
+
+  const statusColors: Record<string, string> = {
+    active: "bg-green-100 text-green-700",
+    inactive: "bg-gray-100 text-gray-700",
+    onboarding: "bg-blue-100 text-blue-700",
+    completed: "bg-purple-100 text-purple-700",
+  };
+
+  const priorityColors: Record<string, string> = {
+    low: "bg-gray-100 text-gray-700",
+    medium: "bg-yellow-100 text-yellow-700",
+    high: "bg-orange-100 text-orange-700",
+    urgent: "bg-red-100 text-red-700",
+  };
   const handleDelete = async (id: number, name?: string) => {
     setDeletingId(id);
     try {
@@ -410,6 +450,17 @@ export default function ClientDashboard() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedClient(c);
+                                setQuickViewOpen(true);
+                              }}
+                            >
+                              Quick View
+                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
@@ -475,6 +526,142 @@ export default function ClientDashboard() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={quickViewOpen} onOpenChange={setQuickViewOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selectedClient?.client_name || "Client"}</DialogTitle>
+            <DialogDescription>Snapshot, contacts, and quick actions</DialogDescription>
+          </DialogHeader>
+          {selectedClient && (
+            <div className="space-y-6">
+              <div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="rounded-md border p-3 bg-white">
+                    <div className="text-xs text-gray-500 mb-1">Status</div>
+                    <div className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[selectedClient.status || "active"] || statusColors.active}`}>
+                      {selectedClient.status || "active"}
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 bg-white">
+                    <div className="text-xs text-gray-500 mb-1">Priority</div>
+                    <div className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[selectedClient.priority || "medium"] || priorityColors.medium}`}>
+                      {selectedClient.priority || "medium"}
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 bg-white">
+                    <div className="text-xs text-gray-500 mb-1">Account Owner</div>
+                    <div className="font-medium">{selectedClient.sales_rep_name || "-"}</div>
+                  </div>
+                  <div className="rounded-md border p-3 bg-white">
+                    <div className="text-xs text-gray-500 mb-1">Expected Value</div>
+                    <div className="font-medium">
+                      {selectedClient.expected_value != null
+                        ? `$${Number(selectedClient.expected_value).toLocaleString()}`
+                        : "-"}
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 bg-white">
+                    <div className="text-xs text-gray-500 mb-1">Start Date</div>
+                    <div className="font-medium">
+                      {selectedClient.start_date
+                        ? new Date(selectedClient.start_date).toLocaleDateString()
+                        : "-"}
+                    </div>
+                  </div>
+                  <div className="rounded-md border p-3 bg-white">
+                    <div className="text-xs text-gray-500 mb-1">Industry</div>
+                    <div className="font-medium">{selectedClient.industry || "-"}</div>
+                  </div>
+                </div>
+              </div>
+
+              {Array.isArray(selectedMeta.contacts) && selectedMeta.contacts.length > 0 && (
+                <div>
+                  <div className="text-sm font-semibold mb-2">Contacts</div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {selectedMeta.contacts.map((c: any, idx: number) => (
+                      <div key={`contact-${idx}`} className="rounded-md border p-4 bg-white">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="font-semibold text-gray-900">
+                              {c.name || selectedClient.contact_person || "Contact"}
+                            </div>
+                            {c.role && (
+                              <div className="text-xs text-gray-500 mt-0.5">{c.role}</div>
+                            )}
+                          </div>
+                          {c.primary && <Badge variant="secondary">Primary</Badge>}
+                        </div>
+                        <div className="mt-3 space-y-2 text-sm">
+                          {(c.email || selectedClient.email) && (
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <Mail className="w-4 h-4 text-gray-400" />
+                              <a href={`mailto:${c.email || selectedClient.email}`} className="text-blue-600 hover:underline">
+                                {c.email || selectedClient.email}
+                              </a>
+                            </div>
+                          )}
+                          {(c.phone || selectedClient.phone) && (
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <Phone className="w-4 h-4 text-gray-400" />
+                              <span>{`${c.phone_prefix || ""} ${c.phone || selectedClient.phone}`.trim()}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <div className="text-sm font-semibold mb-2">Quick Actions</div>
+                <div className="space-y-2">
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={() =>
+                      selectedClient?.email && (window.location.href = `mailto:${selectedClient.email}`)
+                    }
+                    disabled={!selectedClient?.email}
+                  >
+                    <Mail className="w-4 h-4 mr-2" />
+                    Send Email
+                  </Button>
+                  <Button
+                    className="w-full justify-start"
+                    variant="outline"
+                    onClick={() => telHref && (window.location.href = telHref)}
+                    disabled={!telHref}
+                  >
+                    <Phone className="w-4 h-4 mr-2" />
+                    Call Phone
+                  </Button>
+                  {(selectedClient?.website || selectedMeta.website) && (
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
+                      onClick={() =>
+                        window.open(selectedClient?.website || selectedMeta.website, "_blank")
+                      }
+                    >
+                      <Globe className="w-4 h-4 mr-2" />
+                      Open Website
+                    </Button>
+                  )}
+                  {selectedClient?.address && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      <div className="font-medium text-gray-700 mb-1">Address</div>
+                      <div className="rounded-md border bg-gray-50 p-2">{selectedClient.address}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
