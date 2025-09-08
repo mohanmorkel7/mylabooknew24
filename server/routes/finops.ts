@@ -323,7 +323,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ) as subtasks
         FROM finops_tasks t
         LEFT JOIN finops_subtasks st ON t.id = st.task_id
-          ${dateParam ? "AND st.scheduled_date = $1::date" : ""}
+          ${dateParam ? "AND (st.scheduled_date = $1::date OR st.scheduled_date IS NULL)" : ""}
         WHERE t.deleted_at IS NULL
         GROUP BY t.id
         ORDER BY t.created_at DESC
