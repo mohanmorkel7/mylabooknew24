@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -179,17 +178,6 @@ export default function ClientDashboard() {
   };
 
   function BusinessOfferingItem({ offering }: { offering: any }) {
-    const { data: steps = [], isLoading } = useQuery({
-      queryKey: ["business-offering-steps", offering.id],
-      queryFn: () => apiClient.getBusinessOfferingSteps(offering.id),
-      staleTime: 15000,
-    });
-
-    const total = Array.isArray(steps) ? steps.length : 0;
-    const completed = Array.isArray(steps)
-      ? steps.filter((s: any) => s.status === "completed").length
-      : 0;
-    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
 
     return (
       <div
@@ -212,14 +200,6 @@ export default function ClientDashboard() {
               {String(offering.client_status).replace(/_/g, " ")}
             </Badge>
           )}
-        </div>
-        <div className="mt-2 flex items-center gap-3">
-          <div className="flex-1">
-            <Progress value={percent} />
-          </div>
-          <div className="text-xs text-gray-600 whitespace-nowrap">
-            {isLoading ? "..." : `${completed}/${total} completed`}
-          </div>
         </div>
       </div>
     );
