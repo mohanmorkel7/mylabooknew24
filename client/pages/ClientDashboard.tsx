@@ -488,38 +488,7 @@ export default function ClientDashboard() {
                                 )}
                             </div>
 
-                            {Array.isArray(allOfferings) &&
-                              (allOfferings as any[]).some(
-                                (o: any) => o.client_id === c.id,
-                              ) && (
-                                <div className="mt-3">
-                                  <div className="text-xs font-medium text-gray-600 mb-1">
-                                    Tagged Business Offerings
-                                  </div>
-                                  <div className="flex flex-wrap gap-2">
-                                    {(allOfferings as any[])
-                                      .filter((o: any) => o.client_id === c.id)
-                                      .map((o: any) => (
-                                        <Button
-                                          key={o.id}
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            navigate(
-                                              `/business-offerings/${o.id}`,
-                                            );
-                                          }}
-                                        >
-                                          {(o.solution || "Offering") +
-                                            (o.product
-                                              ? ` - ${o.product}`
-                                              : "")}
-                                        </Button>
-                                      ))}
-                                  </div>
-                                </div>
-                              )}
+                            <ClientLinkedBusinessOfferings clientId={c.id} />
                           </div>
                           <div className="flex items-center gap-2">
                             <AlertDialog>
