@@ -453,20 +453,25 @@ export default function ClientDashboard() {
                                   Website
                                 </a>
                               )}
+                              {meta.client_type && (
+                                <span>
+                                  Client Type:{" "}
+                                  <span className="font-medium">{String(meta.client_type)}</span>
+                                </span>
+                              )}
+                              {Array.isArray(meta.payment_offerings) && meta.payment_offerings.length > 0 && (
+                                <span className="flex items-center gap-2">
+                                  <span>Payment Offering:</span>
+                                  <span className="flex flex-wrap gap-1">
+                                    {meta.payment_offerings.map((p: string) => (
+                                      <Badge key={p} variant="outline">{p}</Badge>
+                                    ))}
+                                  </span>
+                                </span>
+                              )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedClient(c);
-                                setQuickViewOpen(true);
-                              }}
-                            >
-                              Quick View
-                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button
@@ -533,7 +538,7 @@ export default function ClientDashboard() {
         </CardContent>
       </Card>
 
-      <Dialog open={quickViewOpen} onOpenChange={setQuickViewOpen}>
+      {false && (<Dialog open={quickViewOpen} onOpenChange={setQuickViewOpen}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{selectedClient?.client_name || "Client"}</DialogTitle>
@@ -706,7 +711,7 @@ export default function ClientDashboard() {
             </div>
           )}
         </DialogContent>
-      </Dialog>
+      </Dialog>)}
     </div>
   );
 }
