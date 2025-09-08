@@ -721,6 +721,7 @@ export default function ClientBasedFinOpsTaskManager() {
     escalation_managers: [] as string[],
     effective_from: new Date().toISOString().split("T")[0],
     duration: "daily" as "daily" | "weekly" | "monthly",
+    weekly_days: [] as string[],
     is_active: true,
     subtasks: [] as ClientBasedFinOpsSubTask[],
   });
