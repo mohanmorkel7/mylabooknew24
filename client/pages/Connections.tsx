@@ -619,9 +619,7 @@ export default function Connections() {
                   variant="destructive"
                   size="sm"
                   onClick={() => {
-                    if (confirm("Delete this connection?")) {
-                      deleteMutation.mutate(c.id);
-                    }
+                    deleteMutation.mutate(c.id);
                   }}
                 >
                   <Trash2 className="w-4 h-4 mr-1" /> Delete
