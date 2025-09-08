@@ -162,7 +162,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     await requireDatabase();
 
     const query = `
-      SELECT 
+      SELECT
         t.*,
         json_agg(
           json_build_object(
@@ -175,7 +175,11 @@ router.get("/tasks", async (req: Request, res: Response) => {
             'status', st.status,
             'started_at', st.started_at,
             'completed_at', st.completed_at,
-            'due_at', st.due_at
+            'due_at', st.due_at,
+            'start_time', st.start_time,
+            'start_time_ist', st.start_time_ist,
+            'end_time_ist', st.end_time_ist,
+            'scheduled_date', st.scheduled_date
           ) ORDER BY st.order_position
         ) FILTER (WHERE st.id IS NOT NULL) as subtasks
       FROM finops_tasks t
