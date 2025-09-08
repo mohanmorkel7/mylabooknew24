@@ -333,23 +333,38 @@ router.get("/tasks", async (req: Request, res: Response) => {
       const tasks = result.rows.map((row) => {
         const rawSubtasks = Array.isArray(row.subtasks) ? row.subtasks : [];
         const isDaily = String(row.duration || "").toLowerCase() === "daily";
-        const normalizedSubtasks = rawSubtasks.map((st: any) => {
-          if (!dateParam && isDaily) {
-            const sd = st.scheduled_date
-              ? new Date(st.scheduled_date).toISOString().slice(0, 10)
-              : todayStr;
-            if (sd !== todayStr) {
-              return {
-                ...st,
-                status: "pending",
-                started_at: null,
-                completed_at: null,
-                scheduled_date: todayStr,
-              };
-            }
-          }
-          return st;
-        });
+
+        // If a date is provided, show only subtasks for that date
+        const dateFiltered = dateParam
+          ? rawSubtasks.filter((st: any) => {
+              const sd = st.scheduled_date
+                ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+                : null;
+              return sd === dateParam;
+            })
+          : rawSubtasks;
+
+        // For today's view without explicit date, reset daily subtasks from previous days to pending
+        const normalizedSubtasks = dateParam
+          ? dateFiltered
+          : dateFiltered.map((st: any) => {
+              if (isDaily) {
+                const sd = st.scheduled_date
+                  ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+                  : todayStr;
+                if (sd !== todayStr) {
+                  return {
+                    ...st,
+                    status: "pending",
+                    started_at: null,
+                    completed_at: null,
+                    scheduled_date: todayStr,
+                  };
+                }
+              }
+              return st;
+            });
+
         return {
           ...row,
           subtasks: normalizedSubtasks,
