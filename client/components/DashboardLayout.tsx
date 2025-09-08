@@ -31,6 +31,7 @@ import {
   Building,
   Briefcase,
   UserPlus,
+  LayoutGrid,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api";
@@ -63,7 +64,7 @@ const navigationItems: NavigationItem[] = [
   {
     name: "Templates",
     href: "/admin",
-    icon: Users,
+    icon: LayoutGrid,
     roles: ["admin"],
     permissions: ["admin"],
   },
