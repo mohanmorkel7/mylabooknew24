@@ -178,7 +178,6 @@ export default function ClientDashboard() {
   };
 
   function BusinessOfferingItem({ offering }: { offering: any }) {
-
     return (
       <div
         className="px-2.5 py-2 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition cursor-pointer"
