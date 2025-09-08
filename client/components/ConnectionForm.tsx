@@ -292,15 +292,9 @@ export default function ConnectionForm({
                     {states.map((s) => (
                       <CommandItem
                         key={s.isoCode}
-                        value={s.isoCode}
+                        value={s.name}
                         onSelect={(value) => {
-                          const st = states.find((x) => x.isoCode === value);
-                          if (st)
-                            setForm((f) => ({
-                              ...f,
-                              state: st.name,
-                              city: "",
-                            }));
+                          setForm((f) => ({ ...f, state: value, city: "" }));
                         }}
                       >
                         <Check
