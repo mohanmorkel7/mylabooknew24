@@ -252,6 +252,7 @@ function ConnectionForm({
               data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
+              data-radix-scroll-lock-ignore
             >
               <Command>
                 <CommandInput placeholder="Search country..." />
@@ -316,6 +317,7 @@ function ConnectionForm({
               data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
+              data-radix-scroll-lock-ignore
             >
               <Command>
                 <CommandInput placeholder="Search state..." />
@@ -380,6 +382,7 @@ function ConnectionForm({
               data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
+              data-radix-scroll-lock-ignore
             >
               <Command>
                 <CommandInput placeholder="Search city..." />
