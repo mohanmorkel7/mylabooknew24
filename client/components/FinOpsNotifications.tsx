@@ -58,12 +58,12 @@ import {
 interface FinOpsNotification {
   id: string;
   type:
-    | "pre_start_alert" // 15 mins before start time
-    | "sla_warning" // Task missed start time
-    | "escalation_alert" // 15+ mins overdue
-    | "task_completed" // Task completed (moved to activity log)
-    | "task_overdue" // Task overdue (moved to activity log)
-    | "overdue_reason_required" // Requires immediate overdue reason
+    | "pre_start_alert"
+    | "sla_warning"
+    | "escalation_alert"
+    | "task_completed"
+    | "task_overdue"
+    | "overdue_reason_required"
     | "daily_reminder"
     | "task_pending"
     | "task_delayed";
@@ -72,7 +72,8 @@ interface FinOpsNotification {
   task_name: string;
   client_name?: string;
   subtask_name?: string;
-  assigned_to: string;
+  assigned_to: string; // Summary string for list
+  assigned_users?: string[]; // Parsed list from DB
   reporting_managers: string[];
   escalation_managers?: string[];
   priority: "low" | "medium" | "high" | "critical";
@@ -83,8 +84,8 @@ interface FinOpsNotification {
   sla_remaining?: string;
   overdue_minutes?: number;
   members_list?: string[];
-  scheduled_time_ist?: string; // IST time when task should start
-  time_diff_minutes?: number; // Minutes until/since start time
+  scheduled_time_ist?: string;
+  time_diff_minutes?: number;
 }
 
 // Mock notifications data
@@ -785,7 +786,7 @@ export default function FinOpsNotifications() {
         );
         return transformed;
       } else {
-        console.log("���� Database returned empty notifications array");
+        console.log("📭 Database returned empty notifications array");
         return []; // Database is empty - this is valid
       }
     }
