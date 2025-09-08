@@ -295,12 +295,6 @@ export default function BusinessOfferingsDashboard() {
                                     </div>
                                     <div>
                                       <span className="font-medium">
-                                        Industry:
-                                      </span>{" "}
-                                      {client?.industry || "-"}
-                                    </div>
-                                    <div>
-                                      <span className="font-medium">
                                         Contact:
                                       </span>{" "}
                                       {client?.contact_person || "-"}
