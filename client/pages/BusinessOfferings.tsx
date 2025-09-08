@@ -865,7 +865,9 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                 </div>
 
                 <div>
-                  <Label>Projected Potential ARR (USD Mn) - next 2 years *</Label>
+                  <Label>
+                    Projected Potential ARR (USD Mn) - next 2 years *
+                  </Label>
                   <Input
                     type="number"
                     step="0.001"
