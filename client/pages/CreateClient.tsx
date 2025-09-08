@@ -131,7 +131,9 @@ export default function CreateClient() {
     product_tag_info: "",
   });
 
-  const [referenceConnections, setReferenceConnections] = useState<string[]>([]);
+  const [referenceConnections, setReferenceConnections] = useState<string[]>(
+    [],
+  );
 
   const [contacts, setContacts] = useState<
     Array<{
@@ -284,7 +286,9 @@ export default function CreateClient() {
           product_tag_info: clientInfo.product_tag_info,
           source_value:
             clientInfo.source === "Reference"
-              ? (referenceConnections.length ? referenceConnections.join(", ") : undefined)
+              ? referenceConnections.length
+                ? referenceConnections.join(", ")
+                : undefined
               : clientInfo.source_value || undefined,
           contacts,
         }),
@@ -488,7 +492,10 @@ export default function CreateClient() {
                             <div className="flex items-start gap-2">
                               <div className="flex-1">
                                 <MultiSelect
-                                  options={(Array.isArray(connections) ? connections : []).map((c: any) => c.name)}
+                                  options={(Array.isArray(connections)
+                                    ? connections
+                                    : []
+                                  ).map((c: any) => c.name)}
                                   value={referenceConnections}
                                   onChange={setReferenceConnections}
                                   placeholder="Select connections"
