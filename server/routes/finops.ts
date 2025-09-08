@@ -333,7 +333,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
       const todayStr = new Date().toISOString().slice(0, 10);
       const tasks = result.rows.map((row) => {
         const rawSubtasks = Array.isArray(row.subtasks) ? row.subtasks : [];
-        const isDaily = String(row.duration || '').toLowerCase() === 'daily';
+        const isDaily = String(row.duration || "").toLowerCase() === "daily";
         const normalizedSubtasks = rawSubtasks.map((st: any) => {
           if (!dateParam && isDaily) {
             const sd = st.scheduled_date
@@ -342,7 +342,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             if (sd !== todayStr) {
               return {
                 ...st,
-                status: 'pending',
+                status: "pending",
                 started_at: null,
                 completed_at: null,
                 scheduled_date: todayStr,
@@ -354,7 +354,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
         return {
           ...row,
           subtasks: normalizedSubtasks,
-          client_name: row.client_name || 'Unknown Client',
+          client_name: row.client_name || "Unknown Client",
         };
       });
 
