@@ -27,9 +27,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Country, State, City } from "country-state-city";
-import { Trash2, Edit, Plus, Search } from "lucide-react";
+import { Trash2, Edit, Plus, Search, ChevronsUpDown, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const CONNECTION_TYPES = [
   "Business Team",
@@ -206,61 +209,113 @@ function ConnectionForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Country</Label>
-          <Select
-            value={form.country || undefined}
-            onValueChange={(v) =>
-              setForm((f) => ({ ...f, country: v, state: "", city: "" }))
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select country" />
-            </SelectTrigger>
-            <SelectContent>
-              {countries.map((c) => (
-                <SelectItem key={c.isoCode} value={c.name}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
+                {form.country || "Select country"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search country..." />
+                <CommandEmpty>No country found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    {countries.map((c) => (
+                      <CommandItem
+                        key={c.isoCode}
+                        value={c.name}
+                        onSelect={(value) => {
+                          setForm((f) => ({ ...f, country: value, state: "", city: "" }));
+                        }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", form.country === c.name ? "opacity-100" : "opacity-0")} />
+                        {c.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         <div>
           <Label>State</Label>
-          <Select
-            value={form.state || undefined}
-            onValueChange={(v) => setForm((f) => ({ ...f, state: v, city: "" }))}
-            disabled={!selectedCountry}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select state" />
-            </SelectTrigger>
-            <SelectContent>
-              {states.map((s) => (
-                <SelectItem key={s.isoCode} value={s.name}>
-                  {s.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
+                {form.state || "Select state"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search state..." />
+                <CommandEmpty>No state found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    {states.map((s) => (
+                      <CommandItem
+                        key={s.isoCode}
+                        value={s.isoCode}
+                        onSelect={(value) => {
+                          const st = states.find((x) => x.isoCode === value);
+                          if (st) {
+                            setForm((f) => ({ ...f, state: st.name, city: "" }));
+                          }
+                        }}
+                      >
+                        <Check className={cn("mr-2 h-4 w-4", form.state === s.name ? "opacity-100" : "opacity-0")} />
+                        {s.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         <div>
           <Label>City</Label>
-          <Select
-            value={form.city || undefined}
-            onValueChange={(v) => setForm((f) => ({ ...f, city: v }))}
-            disabled={!selectedCountry}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select city" />
-            </SelectTrigger>
-            <SelectContent>
-              {cities.map((c) => (
-                <SelectItem key={`${c.name}-${c.stateCode || ""}`} value={c.name}>
-                  {c.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
+                {form.city || "Select city"}
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+              <Command>
+                <CommandInput placeholder="Search city..." />
+                <CommandEmpty>No city found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    {cities.map((c: any) => {
+                      const val = `${c.name}|${c.stateCode || ""}`;
+                      return (
+                        <CommandItem
+                          key={val}
+                          value={val}
+                          onSelect={(value) => {
+                            const [name, stateCode] = value.split("|");
+                            setForm((f) => ({ ...f, city: name }));
+                            if (stateCode) {
+                              const stObj = State.getStateByCodeAndCountry(stateCode, selectedCountry?.isoCode || "");
+                              if (stObj) setForm((f) => ({ ...f, state: stObj.name }));
+                            }
+                          }}
+                        >
+                          <Check className={cn("mr-2 h-4 w-4", form.city === c.name ? "opacity-100" : "opacity-0")} />
+                          {c.name}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
