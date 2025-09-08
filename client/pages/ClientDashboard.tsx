@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -166,6 +167,93 @@ export default function ClientDashboard() {
     queryFn: () => apiClient.getBusinessOfferings(),
     staleTime: 10000,
   });
+
+  const StatusDot = ({ status }: { status?: string | null }) => {
+    const color =
+      status === "completed"
+        ? "bg-green-500"
+        : status === "in_progress" || status === "in-progress"
+          ? "bg-blue-500"
+          : "bg-gray-400";
+    return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
+  };
+
+  function BusinessOfferingItem({ offering }: { offering: any }) {
+    const { data: steps = [], isLoading } = useQuery({
+      queryKey: ["business-offering-steps", offering.id],
+      queryFn: () => apiClient.getBusinessOfferingSteps(offering.id),
+      staleTime: 15000,
+    });
+
+    const total = Array.isArray(steps) ? steps.length : 0;
+    const completed = Array.isArray(steps)
+      ? steps.filter((s: any) => s.status === "completed").length
+      : 0;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return (
+      <div
+        className="px-2.5 py-2 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/business-offerings/${offering.id}`);
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <StatusDot status={offering.client_status} />
+            <span className="text-sm font-medium text-gray-800 truncate max-w-[220px]">
+              {offering.solution || "Offering"}
+              {offering.product ? ` - ${offering.product}` : ""}
+            </span>
+          </div>
+          {offering.client_status && (
+            <Badge className="capitalize">
+              {String(offering.client_status).replace(/_/g, " ")}
+            </Badge>
+          )}
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="flex-1">
+            <Progress value={percent} />
+          </div>
+          <div className="text-xs text-gray-600 whitespace-nowrap">
+            {isLoading ? "..." : `${completed}/${total} completed`}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function ClientLinkedBusinessOfferings({ clientId }: { clientId: number }) {
+    const tagged = useMemo(
+      () => (allOfferings as any[]).filter((o: any) => o.client_id === clientId),
+      [allOfferings, clientId],
+    );
+
+    if (!tagged || tagged.length === 0) return null;
+
+    return (
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm font-medium text-gray-800 flex items-center gap-2">
+            <Target className="w-4 h-4 text-blue-500" /> Tagged Business Offerings
+          </div>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            {tagged.length}
+          </Badge>
+        </div>
+        <div className="space-y-2">
+          {tagged.slice(0, 4).map((o: any) => (
+            <BusinessOfferingItem key={o.id} offering={o} />
+          ))}
+          {tagged.length > 4 && (
+            <div className="text-xs text-gray-500">+{tagged.length - 4} more</div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const filtered = useMemo(() => {
     if (!searchTerm) return clients;
