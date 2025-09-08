@@ -12,11 +12,13 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ConnectionNew() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -26,7 +28,7 @@ export default function ConnectionNew() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["connections"] });
       toast({ title: "Saved", description: "Connection created" });
-      navigate("/connections");
+      navigate(returnTo || "/connections");
     },
     onError: (e: any) => {
       toast({
