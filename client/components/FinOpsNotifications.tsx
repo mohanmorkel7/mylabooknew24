@@ -115,7 +115,11 @@ const transformDbNotifications = (
 
   const parseManagers = (val: any): string[] => {
     if (!val) return [];
-    if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
+    if (Array.isArray(val))
+      return val
+        .map(String)
+        .map((s) => s.trim())
+        .filter(Boolean);
     if (typeof val === "string") {
       let s = val.trim();
       if (s.startsWith("{") && s.endsWith("}")) {
@@ -128,13 +132,25 @@ const transformDbNotifications = (
       }
       try {
         const parsed = JSON.parse(s);
-        if (Array.isArray(parsed)) return parsed.map(String).map((x) => x.trim()).filter(Boolean);
+        if (Array.isArray(parsed))
+          return parsed
+            .map(String)
+            .map((x) => x.trim())
+            .filter(Boolean);
       } catch {}
-      return s.split(",").map((x) => x.trim()).filter(Boolean);
+      return s
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
     }
     try {
       const parsed = JSON.parse(val);
-      return Array.isArray(parsed) ? parsed.map(String).map((x) => x.trim()).filter(Boolean) : [];
+      return Array.isArray(parsed)
+        ? parsed
+            .map(String)
+            .map((x) => x.trim())
+            .filter(Boolean)
+        : [];
     } catch {
       return [];
     }
@@ -442,15 +458,17 @@ const transformDbNotifications = (
             ? "PaySwiff"
             : "ABC Corporation"),
       subtask_name: dbNotif.subtask_name,
-      assigned_users: parseManagers(dbNotif.assigned_to) || (members.assigned_to ? [members.assigned_to] : []),
-      assigned_to:
-        (parseManagers(dbNotif.assigned_to).length
-          ? parseManagers(dbNotif.assigned_to).join(", ")
-          : dbNotif.user_name || members.assigned_to || "Unassigned"),
+      assigned_users:
+        parseManagers(dbNotif.assigned_to) ||
+        (members.assigned_to ? [members.assigned_to] : []),
+      assigned_to: parseManagers(dbNotif.assigned_to).length
+        ? parseManagers(dbNotif.assigned_to).join(", ")
+        : dbNotif.user_name || members.assigned_to || "Unassigned",
       reporting_managers:
         parseManagers(dbNotif.reporting_managers) || members.reporting_managers,
       escalation_managers:
-        parseManagers(dbNotif.escalation_managers) || members.escalation_managers,
+        parseManagers(dbNotif.escalation_managers) ||
+        members.escalation_managers,
       priority:
         dbNotif.priority ||
         (notificationType === "overdue_reason_required"
@@ -1623,7 +1641,8 @@ export default function FinOpsNotifications() {
                           <span className="text-gray-600 flex items-center gap-2">
                             <User className="w-4 h-4" /> Assignees
                           </span>
-                          {!detailsDialog.notification.assigned_users?.length && (
+                          {!detailsDialog.notification.assigned_users
+                            ?.length && (
                             <span className="font-medium text-right">
                               {detailsDialog.notification.assigned_to}
                             </span>
@@ -1631,9 +1650,17 @@ export default function FinOpsNotifications() {
                         </div>
                         {detailsDialog.notification.assigned_users?.length ? (
                           <div className="mt-2 flex flex-wrap gap-2 justify-end">
-                            {detailsDialog.notification.assigned_users.map((u, idx) => (
-                              <Badge key={`assignee-${idx}`} variant="secondary" className="px-2 py-0.5">{u}</Badge>
-                            ))}
+                            {detailsDialog.notification.assigned_users.map(
+                              (u, idx) => (
+                                <Badge
+                                  key={`assignee-${idx}`}
+                                  variant="secondary"
+                                  className="px-2 py-0.5"
+                                >
+                                  {u}
+                                </Badge>
+                              ),
+                            )}
                           </div>
                         ) : null}
                       </div>
