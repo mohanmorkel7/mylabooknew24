@@ -248,7 +248,7 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80 overflow-y-auto"
               data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
@@ -312,7 +312,7 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80 overflow-y-auto"
               data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
@@ -376,7 +376,7 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80 overflow-y-auto"
               data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
