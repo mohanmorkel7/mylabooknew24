@@ -2596,6 +2596,64 @@ export default function ClientBasedFinOpsTaskManager() {
                     <SelectItem value="monthly">Monthly</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {taskForm.duration === "weekly" && (
+                  <div className="mt-3">
+                    <Label>Select day(s)</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Select
+                        onValueChange={(value) => {
+                          const v = value.toLowerCase();
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            weekly_days: prev.weekly_days.includes(v)
+                              ? prev.weekly_days
+                              : prev.weekly_days.length < 2
+                                ? [...prev.weekly_days, v]
+                                : prev.weekly_days,
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="w-52">
+                          <SelectValue placeholder="Select day (max 2)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            "Sunday",
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                          ].map((d) => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex flex-wrap gap-2">
+                        {taskForm.weekly_days.map((d, idx) => (
+                          <Badge
+                            key={`${d}-${idx}`}
+                            variant="secondary"
+                            className="cursor-pointer"
+                            onClick={() =>
+                              setTaskForm((prev) => ({
+                                ...prev,
+                                weekly_days: prev.weekly_days.filter((x) => x !== d),
+                              }))
+                            }
+                          >
+                            {d.charAt(0).toUpperCase() + d.slice(1)} ×
+                          </Badge>
+                        ))}
+                      </div>
+                      {taskForm.weekly_days.length === 0 && (
+                        <span className="text-xs text-gray-500">Pick up to two days</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
