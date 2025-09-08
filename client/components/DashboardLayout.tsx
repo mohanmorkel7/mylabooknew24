@@ -80,6 +80,12 @@ const navigationItems: NavigationItem[] = [
     permissions: ["leads"],
   },
   {
+    name: "Connections",
+    href: "/connections",
+    icon: UserPlus,
+    roles: ["admin", "sales", "product", "finance"],
+  },
+  {
     name: "VC",
     href: "/vc",
     icon: Megaphone,
