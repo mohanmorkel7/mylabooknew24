@@ -1515,7 +1515,8 @@ export default function FinOpsNotifications() {
                 </div>
                 <div>
                   <DialogTitle className="text-base leading-tight">
-                    {detailsDialog.notification?.title || "Notification Details"}
+                    {detailsDialog.notification?.title ||
+                      "Notification Details"}
                   </DialogTitle>
                   {detailsDialog.notification?.message && (
                     <DialogDescription className="mt-1">
@@ -1531,10 +1532,10 @@ export default function FinOpsNotifications() {
                       detailsDialog.notification.priority === "critical"
                         ? "bg-red-600 text-white"
                         : detailsDialog.notification.priority === "high"
-                        ? "bg-orange-600 text-white"
-                        : detailsDialog.notification.priority === "medium"
-                        ? "bg-amber-500 text-white"
-                        : "bg-gray-500 text-white"
+                          ? "bg-orange-600 text-white"
+                          : detailsDialog.notification.priority === "medium"
+                            ? "bg-amber-500 text-white"
+                            : "bg-gray-500 text-white"
                     }
                   >
                     {detailsDialog.notification.priority}
@@ -1560,24 +1561,36 @@ export default function FinOpsNotifications() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 flex items-center gap-2"><Calendar className="w-4 h-4" /> Task</span>
-                        <span className="font-medium text-right">{detailsDialog.notification.task_name}</span>
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <Calendar className="w-4 h-4" /> Task
+                        </span>
+                        <span className="font-medium text-right">
+                          {detailsDialog.notification.task_name}
+                        </span>
                       </div>
                       {detailsDialog.notification.subtask_name && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Subtask</span>
-                          <span className="font-medium text-right">{detailsDialog.notification.subtask_name}</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.subtask_name}
+                          </span>
                         </div>
                       )}
                       {detailsDialog.notification.client_name && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Client</span>
-                          <span className="font-medium text-right">{detailsDialog.notification.client_name}</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.client_name}
+                          </span>
                         </div>
                       )}
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 flex items-center gap-2"><User className="w-4 h-4" /> Assigned To</span>
-                        <span className="font-medium text-right">{detailsDialog.notification.assigned_to}</span>
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <User className="w-4 h-4" /> Assigned To
+                        </span>
+                        <span className="font-medium text-right">
+                          {detailsDialog.notification.assigned_to}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -1588,22 +1601,37 @@ export default function FinOpsNotifications() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-gray-600 flex items-center gap-2"><Clock className="w-4 h-4" /> Created</span>
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <Clock className="w-4 h-4" /> Created
+                        </span>
                         <span className="text-right">
-                          <span className="block font-medium">{getRelativeTimeIST(detailsDialog.notification.created_at)}</span>
-                          <span className="block text-xs text-gray-500">{formatToISTDateTime(detailsDialog.notification.created_at)}</span>
+                          <span className="block font-medium">
+                            {getRelativeTimeIST(
+                              detailsDialog.notification.created_at,
+                            )}
+                          </span>
+                          <span className="block text-xs text-gray-500">
+                            {formatToISTDateTime(
+                              detailsDialog.notification.created_at,
+                            )}
+                          </span>
                         </span>
                       </div>
                       {detailsDialog.notification.scheduled_time_ist && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Scheduled (IST)</span>
-                          <span className="font-medium text-right">{detailsDialog.notification.scheduled_time_ist}</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.scheduled_time_ist}
+                          </span>
                         </div>
                       )}
-                      {typeof detailsDialog.notification.time_diff_minutes === "number" && (
+                      {typeof detailsDialog.notification.time_diff_minutes ===
+                        "number" && (
                         <div className="flex items-center justify-between">
                           <span className="text-gray-600">Time Diff</span>
-                          <span className="font-medium text-right">{detailsDialog.notification.time_diff_minutes} min</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.time_diff_minutes} min
+                          </span>
                         </div>
                       )}
                     </div>
@@ -1618,29 +1646,51 @@ export default function FinOpsNotifications() {
                     <div className="space-y-3">
                       {detailsDialog.notification.reporting_managers?.length ? (
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">Reporting Managers</div>
+                          <div className="text-xs text-gray-500 mb-1">
+                            Reporting Managers
+                          </div>
                           <div className="flex flex-wrap gap-2">
-                            {detailsDialog.notification.reporting_managers.map((m, idx) => (
-                              <Badge key={`rm-${idx}`} variant="secondary" className="px-2 py-0.5">{m}</Badge>
-                            ))}
+                            {detailsDialog.notification.reporting_managers.map(
+                              (m, idx) => (
+                                <Badge
+                                  key={`rm-${idx}`}
+                                  variant="secondary"
+                                  className="px-2 py-0.5"
+                                >
+                                  {m}
+                                </Badge>
+                              ),
+                            )}
                           </div>
                         </div>
                       ) : null}
 
-                      {detailsDialog.notification.escalation_managers?.length ? (
+                      {detailsDialog.notification.escalation_managers
+                        ?.length ? (
                         <div>
-                          <div className="text-xs text-gray-500 mb-1">Escalation Managers</div>
+                          <div className="text-xs text-gray-500 mb-1">
+                            Escalation Managers
+                          </div>
                           <div className="flex flex-wrap gap-2">
-                            {detailsDialog.notification.escalation_managers.map((m, idx) => (
-                              <Badge key={`em-${idx}`} variant="outline" className="px-2 py-0.5">{m}</Badge>
-                            ))}
+                            {detailsDialog.notification.escalation_managers.map(
+                              (m, idx) => (
+                                <Badge
+                                  key={`em-${idx}`}
+                                  variant="outline"
+                                  className="px-2 py-0.5"
+                                >
+                                  {m}
+                                </Badge>
+                              ),
+                            )}
                           </div>
                         </div>
                       ) : null}
                     </div>
                   </div>
 
-                  {(detailsDialog.notification.sla_remaining || detailsDialog.notification.delay_reason) && (
+                  {(detailsDialog.notification.sla_remaining ||
+                    detailsDialog.notification.delay_reason) && (
                     <div className="rounded-md border bg-white p-4">
                       <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
                         SLA & Status
@@ -1648,13 +1698,18 @@ export default function FinOpsNotifications() {
                       <div className="space-y-3">
                         {detailsDialog.notification.sla_remaining && (
                           <div className="flex items-center gap-2 text-orange-700 font-semibold">
-                            <Shield className="w-4 h-4" /> {detailsDialog.notification.sla_remaining}
+                            <Shield className="w-4 h-4" />{" "}
+                            {detailsDialog.notification.sla_remaining}
                           </div>
                         )}
                         {detailsDialog.notification.delay_reason && (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-                            <div className="text-yellow-800 font-medium mb-1">Delay/Overdue Reason</div>
-                            <div className="text-yellow-700 text-sm leading-relaxed">{detailsDialog.notification.delay_reason}</div>
+                            <div className="text-yellow-800 font-medium mb-1">
+                              Delay/Overdue Reason
+                            </div>
+                            <div className="text-yellow-700 text-sm leading-relaxed">
+                              {detailsDialog.notification.delay_reason}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1666,12 +1721,21 @@ export default function FinOpsNotifications() {
           )}
 
           <DialogFooter>
-            {detailsDialog.notification && detailsDialog.notification.status === "unread" && (
-              <Button onClick={() => markAsRead(detailsDialog.notification!.id)} className="bg-blue-600 hover:bg-blue-700 text-white">
-                Mark as Read
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setDetailsDialog({ open: false, notification: null })}>
+            {detailsDialog.notification &&
+              detailsDialog.notification.status === "unread" && (
+                <Button
+                  onClick={() => markAsRead(detailsDialog.notification!.id)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Mark as Read
+                </Button>
+              )}
+            <Button
+              variant="outline"
+              onClick={() =>
+                setDetailsDialog({ open: false, notification: null })
+              }
+            >
               Close
             </Button>
           </DialogFooter>
