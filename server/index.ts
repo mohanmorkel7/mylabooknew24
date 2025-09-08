@@ -31,6 +31,7 @@ import azureSyncRouter from "./routes/azure-sync";
 import fundRaisesRouter from "./routes/fund-raises";
 import businessOfferingsRouter from "./routes/business-offerings";
 import finopsScheduler from "./services/finopsScheduler";
+import connectionsRouter from "./routes/connections";
 
 // Production routes (database-only, no mock fallback)
 import templatesProductionRouter from "./routes/templates-production";
@@ -276,6 +277,13 @@ export function createServer() {
     console.log("Business Offerings router loaded successfully");
   } catch (error) {
     console.error("Error loading Business Offerings router:", error);
+  }
+
+  try {
+    app.use("/api/connections", connectionsRouter);
+    console.log("Connections router loaded successfully");
+  } catch (error) {
+    console.error("Error loading Connections router:", error);
   }
 
   try {
