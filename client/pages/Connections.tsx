@@ -209,18 +209,18 @@ function ConnectionForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Country</Label>
-          <Popover>
+          <Popover modal={false}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between">
                 {form.country || "Select country"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-80" align="start">
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
-                <CommandList>
+                <CommandList className="max-h-72 overflow-y-auto">
                   <CommandGroup>
                     {countries.map((c) => (
                       <CommandItem
@@ -242,18 +242,18 @@ function ConnectionForm({
         </div>
         <div>
           <Label>State</Label>
-          <Popover>
+          <Popover modal={false}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
                 {form.state || "Select state"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-80" align="start">
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
-                <CommandList>
+                <CommandList className="max-h-72 overflow-y-auto">
                   <CommandGroup>
                     {states.map((s) => (
                       <CommandItem
@@ -278,18 +278,18 @@ function ConnectionForm({
         </div>
         <div>
           <Label>City</Label>
-          <Popover>
+          <Popover modal={false}>
             <PopoverTrigger asChild>
               <Button variant="outline" role="combobox" aria-expanded={false} className="w-full justify-between" disabled={!selectedCountry}>
                 {form.city || "Select city"}
                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 max-h-80" align="start">
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
-                <CommandList>
+                <CommandList className="max-h-72 overflow-y-auto">
                   <CommandGroup>
                     {cities.map((c: any) => {
                       const val = `${c.name}|${c.stateCode || ""}`;
