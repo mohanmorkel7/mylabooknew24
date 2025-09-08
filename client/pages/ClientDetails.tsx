@@ -65,23 +65,9 @@ import {
   Send,
   Settings,
   Trash2,
-  Globe,
 } from "lucide-react";
 import { StepItem } from "@/components/StepItem";
 
-const statusColors = {
-  active: "bg-green-100 text-green-700",
-  inactive: "bg-gray-100 text-gray-700",
-  onboarding: "bg-blue-100 text-blue-700",
-  completed: "bg-purple-100 text-purple-700",
-};
-
-const priorityColors = {
-  low: "bg-gray-100 text-gray-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  high: "bg-orange-100 text-orange-700",
-  urgent: "bg-red-100 text-red-700",
-};
 
 // Mock follow-up data
 const mockFollowUps = [
@@ -322,126 +308,7 @@ export default function ClientDetails() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column - Client Information */}
         <div className="lg:col-span-3 space-y-6">
-          {/* Client Summary */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Client Summary</CardTitle>
-              <CardDescription>Snapshot of key attributes</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Status</div>
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[clientData.status || "active"] || statusColors.active}`}
-                    >
-                      {clientData.status || "active"}
-                    </span>
-                  </div>
-                </div>
-                <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Priority</div>
-                  <div
-                    className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[clientData.priority || "medium"] || priorityColors.medium}`}
-                  >
-                    {clientData.priority || "medium"}
-                  </div>
-                </div>
-                <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">
-                    Account Owner
-                  </div>
-                  <div className="font-medium">
-                    {clientData.sales_rep_name || "-"}
-                  </div>
-                </div>
-                <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">
-                    Expected Value
-                  </div>
-                  <div className="font-medium">
-                    {clientData.expected_value != null
-                      ? `$${Number(clientData.expected_value).toLocaleString()}`
-                      : "-"}
-                  </div>
-                </div>
-                <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Start Date</div>
-                  <div className="font-medium">
-                    {clientData.start_date
-                      ? new Date(clientData.start_date).toLocaleDateString()
-                      : "-"}
-                  </div>
-                </div>
-                <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Industry</div>
-                  <div className="font-medium">
-                    {clientData.industry || "-"}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Contacts */}
-          {Array.isArray(meta.contacts) && meta.contacts.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>Contacts</CardTitle>
-                <CardDescription>
-                  Primary stakeholders and contacts
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {meta.contacts.map((c: any, idx: number) => (
-                    <div
-                      key={`contact-${idx}`}
-                      className="rounded-md border p-4 bg-white"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-semibold text-gray-900">
-                            {c.name || clientData.contact_person || "Contact"}
-                          </div>
-                          {c.role && (
-                            <div className="text-xs text-gray-500 mt-0.5">
-                              {c.role}
-                            </div>
-                          )}
-                        </div>
-                        {c.primary && (
-                          <Badge variant="secondary">Primary</Badge>
-                        )}
-                      </div>
-                      <div className="mt-3 space-y-2 text-sm">
-                        {c.email || clientData.email ? (
-                          <div className="flex items-center gap-2 text-gray-700">
-                            <Mail className="w-4 h-4 text-gray-400" />
-                            <a
-                              href={`mailto:${c.email || clientData.email}`}
-                              className="text-blue-600 hover:underline"
-                            >
-                              {c.email || clientData.email}
-                            </a>
-                          </div>
-                        ) : null}
-                        {c.phone || clientData.phone ? (
-                          <div className="flex items-center gap-2 text-gray-700">
-                            <Phone className="w-4 h-4 text-gray-400" />
-                            <span>
-                              {`${c.phone_prefix || ""} ${c.phone || clientData.phone}`.trim()}
-                            </span>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Client Overview */}
           <Card>
@@ -711,24 +578,6 @@ export default function ClientDetails() {
                 <Phone className="w-4 h-4 mr-2" />
                 Call Phone
               </Button>
-              {clientData.website && (
-                <Button
-                  className="w-full justify-start"
-                  variant="outline"
-                  onClick={() => window.open(clientData.website, "_blank")}
-                >
-                  <Globe className="w-4 h-4 mr-2" />
-                  Open Website
-                </Button>
-              )}
-              {clientData.address && (
-                <div className="text-xs text-gray-500 mt-2">
-                  <div className="font-medium text-gray-700 mb-1">Address</div>
-                  <div className="rounded-md border bg-gray-50 p-2">
-                    {clientData.address}
-                  </div>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>
