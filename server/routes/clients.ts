@@ -6,6 +6,7 @@ import {
 } from "../models/Client";
 import { MockDataService } from "../services/mockData";
 import { DatabaseValidator, ValidationSchemas } from "../utils/validation";
+import { pool } from "../database/connection";
 
 const router = Router();
 
@@ -375,6 +376,46 @@ router.delete("/:id", async (req: Request, res: Response) => {
         const exists = await DatabaseValidator.clientExists(id);
         if (!exists) {
           return res.status(404).json({ error: "Client not found" });
+        }
+
+        // Cascade delete: related business offerings and follow-ups
+        try {
+          // Delete follow-ups tied to this client and (if column exists) to its business offerings
+          try {
+            const boIdsRes = await pool.query(
+              `SELECT id FROM business_offerings WHERE client_id = $1`,
+              [id],
+            );
+            const boIds = boIdsRes.rows.map((r: any) => r.id);
+
+            if (boIds.length > 0) {
+              await pool.query(
+                `DELETE FROM follow_ups
+                 WHERE client_id = $1
+                   OR (SELECT EXISTS (
+                         SELECT 1 FROM information_schema.columns
+                         WHERE table_name = 'follow_ups' AND column_name = 'business_offering_id'
+                       )) AND business_offering_id = ANY($2::int[])`,
+                [id, boIds],
+              );
+            } else {
+              await pool.query(`DELETE FROM follow_ups WHERE client_id = $1`, [
+                id,
+              ]);
+            }
+          } catch (e) {
+            // Fallback: at least remove by client_id
+            await pool.query(`DELETE FROM follow_ups WHERE client_id = $1`, [
+              id,
+            ]);
+          }
+
+          // Delete business offerings for this client (steps are ON DELETE CASCADE)
+          await pool.query(`DELETE FROM business_offerings WHERE client_id = $1`, [
+            id,
+          ]);
+        } catch (e) {
+          console.log("Cascade delete warning:", (e as any).message);
         }
 
         const success = await ClientRepository.delete(id);
