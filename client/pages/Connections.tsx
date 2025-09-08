@@ -18,16 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 import {
   Popover,
   PopoverContent,
@@ -451,8 +443,7 @@ export default function Connections() {
 
   const [search, setSearch] = React.useState("");
   const [typeFilter, setTypeFilter] = React.useState<string>("all");
-  const [isDialogOpen, setDialogOpen] = React.useState(false);
-  const [editing, setEditing] = React.useState<Connection | null>(null);
+  const navigate = useNavigate();
 
   const {
     data: connections = [],
@@ -530,45 +521,9 @@ export default function Connections() {
             Manage your members and contacts
           </p>
         </div>
-        <Dialog
-          open={isDialogOpen}
-          onOpenChange={(o) => {
-            setDialogOpen(o);
-            if (!o) setEditing(null);
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setDialogOpen(true);
-              }}
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add member
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                {editing ? "Edit member" : "Add member"}
-              </DialogTitle>
-              <DialogDescription>
-                {editing
-                  ? "Update connection details."
-                  : "Fill in connection details and save."}
-              </DialogDescription>
-            </DialogHeader>
-            <ConnectionForm
-              initial={editing || undefined}
-              onSubmit={editing ? handleUpdate : handleCreate}
-              onCancel={() => {
-                setDialogOpen(false);
-                setEditing(null);
-              }}
-            />
-            <DialogFooter />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => navigate("/connections/new") }>
+          <Plus className="w-4 h-4 mr-2" /> Add member
+        </Button>
       </div>
 
       <Card>
@@ -656,10 +611,7 @@ export default function Connections() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => {
-                    setEditing(c);
-                    setDialogOpen(true);
-                  }}
+                  onClick={() => navigate(`/connections/${c.id}/edit`)}
                 >
                   <Edit className="w-4 h-4 mr-1" /> Edit
                 </Button>
