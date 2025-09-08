@@ -51,6 +51,7 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
+  // a) Overview
   {
     name: "Overview",
     href: "/dashboard",
@@ -58,33 +59,22 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["leads", "vc", "product"],
   },
+  // b) Templates (was Admin Panel)
   {
-    name: "Admin Panel",
+    name: "Templates",
     href: "/admin",
     icon: Users,
     roles: ["admin"],
     permissions: ["admin"],
   },
-  {
-    name: "Sales",
-    href: "/leads",
-    icon: Target,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads"],
-  },
-  {
-    name: "Clients",
-    href: "/clients",
-    icon: Building,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads"],
-  },
+  // c) Connections
   {
     name: "Connections",
     href: "/connections",
     icon: UserPlus,
     roles: ["admin", "sales", "product", "finance"],
   },
+  // d) VC
   {
     name: "VC",
     href: "/vc",
@@ -92,6 +82,7 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["vc"],
   },
+  // e) Fund Raise
   {
     name: "Fund Raise",
     href: "/fundraise",
@@ -99,13 +90,23 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["vc"],
   },
+  // f) Clients
   {
-    name: "Business Offerings",
+    name: "Clients",
+    href: "/clients",
+    icon: Building,
+    roles: ["admin", "sales", "product"],
+    permissions: ["leads"],
+  },
+  // g) Sales (was Business Offerings)
+  {
+    name: "Sales",
     href: "/business-offerings",
     icon: Briefcase,
     roles: ["admin", "sales", "product"],
     permissions: ["vc"],
   },
+  // h) Follow-ups
   {
     name: "Follow-ups",
     href: "/follow-ups",
@@ -113,36 +114,42 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["leads", "vc"],
   },
+  // i) FinOps
   {
     name: "FinOps",
     href: "/finops",
     icon: DollarSign,
     roles: ["admin", "finance"],
   },
+  // j) Product Management
   {
     name: "Product Management",
     href: "/product",
     icon: Grid3X3,
     roles: ["admin", "product"],
   },
+  // Keep Proposals (not specified in ordering list)
   {
     name: "Proposals",
     href: "/proposals",
     icon: FileText,
     roles: ["admin", "sales", "product"],
   },
+  // k) Support tickets
   {
     name: "Support Tickets",
     href: "/tickets",
     icon: Ticket,
     roles: ["admin", "sales", "product"],
   },
+  // l) Alerts & notifications
   {
     name: "Alerts & Notifications",
     href: "/alerts",
     icon: Bell,
     roles: ["admin", "sales", "product"],
   },
+  // m) Settings
   {
     name: "Settings",
     icon: Settings,
