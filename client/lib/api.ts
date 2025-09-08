@@ -677,6 +677,10 @@ export class ApiClient {
     });
   }
 
+  async getConnection(id: number) {
+    return this.request(`/connections/${id}`);
+  }
+
   // Business Offerings
   async getBusinessOfferings() {
     return this.request("/business-offerings");
