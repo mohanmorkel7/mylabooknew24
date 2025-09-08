@@ -283,7 +283,7 @@ export default function Connections() {
 
   const { data: connections = [], refetch, isLoading } = useConnections({
     q: search ? search : undefined,
-    type: typeFilter || undefined,
+    type: typeFilter && typeFilter !== "all" ? typeFilter : undefined,
   });
 
   const createMutation = useMutation({
@@ -384,7 +384,7 @@ export default function Connections() {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   {CONNECTION_TYPES.map((t) => (
                     <SelectItem key={t} value={t}>
                       {t}
