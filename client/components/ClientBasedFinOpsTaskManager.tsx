@@ -1440,6 +1440,9 @@ export default function ClientBasedFinOpsTaskManager() {
         ? new Date(task.effective_from).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
       duration: task.duration || "daily",
+      weekly_days: Array.isArray((task as any).weekly_days)
+        ? (task as any).weekly_days
+        : [],
       is_active: task.is_active ?? true,
       subtasks: (task.subtasks || []).map((subtask) => ({
         ...subtask,
