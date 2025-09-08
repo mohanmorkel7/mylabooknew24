@@ -248,7 +248,8 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80" data-radix-scroll-lock-ignore
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
@@ -261,33 +262,33 @@ function ConnectionForm({
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >
-                    <CommandGroup>
-                      {countries.map((c) => (
-                        <CommandItem
-                          key={c.isoCode}
-                          value={c.name}
-                          onSelect={(value) => {
-                            setForm((f) => ({
-                              ...f,
-                              country: value,
-                              state: "",
-                              city: "",
-                            }));
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              form.country === c.name
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          {c.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
+                  <CommandGroup>
+                    {countries.map((c) => (
+                      <CommandItem
+                        key={c.isoCode}
+                        value={c.name}
+                        onSelect={(value) => {
+                          setForm((f) => ({
+                            ...f,
+                            country: value,
+                            state: "",
+                            city: "",
+                          }));
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            form.country === c.name
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
+                        {c.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
               </Command>
             </PopoverContent>
           </Popover>
@@ -311,7 +312,8 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80" data-radix-scroll-lock-ignore
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
@@ -324,35 +326,33 @@ function ConnectionForm({
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >
-                    <CommandGroup>
-                      {states.map((s) => (
-                        <CommandItem
-                          key={s.isoCode}
-                          value={s.isoCode}
-                          onSelect={(value) => {
-                            const st = states.find((x) => x.isoCode === value);
-                            if (st) {
-                              setForm((f) => ({
-                                ...f,
-                                state: st.name,
-                                city: "",
-                              }));
-                            }
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              form.state === s.name
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          {s.name}
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
+                  <CommandGroup>
+                    {states.map((s) => (
+                      <CommandItem
+                        key={s.isoCode}
+                        value={s.isoCode}
+                        onSelect={(value) => {
+                          const st = states.find((x) => x.isoCode === value);
+                          if (st) {
+                            setForm((f) => ({
+                              ...f,
+                              state: st.name,
+                              city: "",
+                            }));
+                          }
+                        }}
+                      >
+                        <Check
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            form.state === s.name ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                        {s.name}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
               </Command>
             </PopoverContent>
           </Popover>
@@ -376,7 +376,8 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80" data-radix-scroll-lock-ignore
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
@@ -389,40 +390,40 @@ function ConnectionForm({
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >
-                    <CommandGroup>
-                      {cities.map((c: any) => {
-                        const val = `${c.name}|${c.stateCode || ""}`;
-                        return (
-                          <CommandItem
-                            key={val}
-                            value={val}
-                            onSelect={(value) => {
-                              const [name, stateCode] = value.split("|");
-                              setForm((f) => ({ ...f, city: name }));
-                              if (stateCode) {
-                                const stObj = State.getStateByCodeAndCountry(
-                                  stateCode,
-                                  selectedCountry?.isoCode || "",
-                                );
-                                if (stObj)
-                                  setForm((f) => ({ ...f, state: stObj.name }));
-                              }
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                form.city === c.name
-                                  ? "opacity-100"
-                                  : "opacity-0",
-                              )}
-                            />
-                            {c.name}
-                          </CommandItem>
-                        );
-                      })}
-                    </CommandGroup>
-                  </CommandList>
+                  <CommandGroup>
+                    {cities.map((c: any) => {
+                      const val = `${c.name}|${c.stateCode || ""}`;
+                      return (
+                        <CommandItem
+                          key={val}
+                          value={val}
+                          onSelect={(value) => {
+                            const [name, stateCode] = value.split("|");
+                            setForm((f) => ({ ...f, city: name }));
+                            if (stateCode) {
+                              const stObj = State.getStateByCodeAndCountry(
+                                stateCode,
+                                selectedCountry?.isoCode || "",
+                              );
+                              if (stObj)
+                                setForm((f) => ({ ...f, state: stObj.name }));
+                            }
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              form.city === c.name
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {c.name}
+                        </CommandItem>
+                      );
+                    })}
+                  </CommandGroup>
+                </CommandList>
               </Command>
             </PopoverContent>
           </Popover>
