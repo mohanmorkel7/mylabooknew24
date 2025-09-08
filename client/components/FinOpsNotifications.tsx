@@ -1506,125 +1506,172 @@ export default function FinOpsNotifications() {
           if (!open) setDetailsDialog({ open: false, notification: null });
         }}
       >
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="sm:max-w-[680px]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Bell className="w-5 h-5" />
-              {detailsDialog.notification?.title || "Notification Details"}
-            </DialogTitle>
-            <DialogDescription>
-              {detailsDialog.notification?.message}
-            </DialogDescription>
-          </DialogHeader>
-          {detailsDialog.notification && (
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <div className="text-gray-600">Type</div>
-                <div className="font-medium">
-                  {detailsDialog.notification.type}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 rounded-md bg-blue-50 p-2 text-blue-700">
+                  <Bell className="w-4 h-4" />
                 </div>
-                <div className="text-gray-600">Priority</div>
-                <div className="font-medium capitalize">
-                  {detailsDialog.notification.priority}
+                <div>
+                  <DialogTitle className="text-base leading-tight">
+                    {detailsDialog.notification?.title || "Notification Details"}
+                  </DialogTitle>
+                  {detailsDialog.notification?.message && (
+                    <DialogDescription className="mt-1">
+                      {detailsDialog.notification.message}
+                    </DialogDescription>
+                  )}
                 </div>
-                <div className="text-gray-600">Task</div>
-                <div className="font-medium">
-                  {detailsDialog.notification.task_name}
-                </div>
-                {detailsDialog.notification.client_name && (
-                  <>
-                    <div className="text-gray-600">Client</div>
-                    <div className="font-medium">
-                      {detailsDialog.notification.client_name}
-                    </div>
-                  </>
-                )}
-                {detailsDialog.notification.subtask_name && (
-                  <>
-                    <div className="text-gray-600">Subtask</div>
-                    <div className="font-medium">
-                      {detailsDialog.notification.subtask_name}
-                    </div>
-                  </>
-                )}
-                <div className="text-gray-600">Assigned To</div>
-                <div className="font-medium">
-                  {detailsDialog.notification.assigned_to}
-                </div>
-                <div className="text-gray-600">Created</div>
-                <div className="font-medium">
-                  {formatToISTDateTime(detailsDialog.notification.created_at)}
-                </div>
-                {detailsDialog.notification.scheduled_time_ist && (
-                  <>
-                    <div className="text-gray-600">Scheduled (IST)</div>
-                    <div className="font-medium">
-                      {detailsDialog.notification.scheduled_time_ist}
-                    </div>
-                  </>
-                )}
-                {typeof detailsDialog.notification.time_diff_minutes ===
-                  "number" && (
-                  <>
-                    <div className="text-gray-600">Time Diff</div>
-                    <div className="font-medium">
-                      {detailsDialog.notification.time_diff_minutes} min
-                    </div>
-                  </>
-                )}
               </div>
-
-              {detailsDialog.notification.reporting_managers?.length ? (
-                <div>
-                  <div className="text-gray-600">Reporting Managers</div>
-                  <div className="font-medium">
-                    {detailsDialog.notification.reporting_managers.join(", ")}
-                  </div>
-                </div>
-              ) : null}
-
-              {detailsDialog.notification.escalation_managers?.length ? (
-                <div>
-                  <div className="text-gray-600">Escalation Managers</div>
-                  <div className="font-medium">
-                    {detailsDialog.notification.escalation_managers.join(", ")}
-                  </div>
-                </div>
-              ) : null}
-
-              {detailsDialog.notification.sla_remaining && (
-                <div className="text-orange-700 font-semibold">
-                  SLA Status: {detailsDialog.notification.sla_remaining}
-                </div>
-              )}
-
-              {detailsDialog.notification.delay_reason && (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-2">
-                  <div className="text-yellow-800 font-medium">
-                    Delay/Overdue Reason
-                  </div>
-                  <div className="text-yellow-700">
-                    {detailsDialog.notification.delay_reason}
-                  </div>
+              {detailsDialog.notification && (
+                <div className="flex items-center gap-2">
+                  <Badge
+                    className={
+                      detailsDialog.notification.priority === "critical"
+                        ? "bg-red-600 text-white"
+                        : detailsDialog.notification.priority === "high"
+                        ? "bg-orange-600 text-white"
+                        : detailsDialog.notification.priority === "medium"
+                        ? "bg-amber-500 text-white"
+                        : "bg-gray-500 text-white"
+                    }
+                  >
+                    {detailsDialog.notification.priority}
+                  </Badge>
+                  <Badge variant="secondary" className="capitalize">
+                    {detailsDialog.notification.type.replaceAll("_", " ")}
+                  </Badge>
+                  <Badge variant="outline" className="capitalize">
+                    {detailsDialog.notification.status}
+                  </Badge>
                 </div>
               )}
             </div>
+          </DialogHeader>
+
+          {detailsDialog.notification && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Overview
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center gap-2"><Calendar className="w-4 h-4" /> Task</span>
+                        <span className="font-medium text-right">{detailsDialog.notification.task_name}</span>
+                      </div>
+                      {detailsDialog.notification.subtask_name && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Subtask</span>
+                          <span className="font-medium text-right">{detailsDialog.notification.subtask_name}</span>
+                        </div>
+                      )}
+                      {detailsDialog.notification.client_name && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Client</span>
+                          <span className="font-medium text-right">{detailsDialog.notification.client_name}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center gap-2"><User className="w-4 h-4" /> Assigned To</span>
+                        <span className="font-medium text-right">{detailsDialog.notification.assigned_to}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Timing
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center gap-2"><Clock className="w-4 h-4" /> Created</span>
+                        <span className="text-right">
+                          <span className="block font-medium">{getRelativeTimeIST(detailsDialog.notification.created_at)}</span>
+                          <span className="block text-xs text-gray-500">{formatToISTDateTime(detailsDialog.notification.created_at)}</span>
+                        </span>
+                      </div>
+                      {detailsDialog.notification.scheduled_time_ist && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Scheduled (IST)</span>
+                          <span className="font-medium text-right">{detailsDialog.notification.scheduled_time_ist}</span>
+                        </div>
+                      )}
+                      {typeof detailsDialog.notification.time_diff_minutes === "number" && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Time Diff</span>
+                          <span className="font-medium text-right">{detailsDialog.notification.time_diff_minutes} min</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Stakeholders
+                    </div>
+                    <div className="space-y-3">
+                      {detailsDialog.notification.reporting_managers?.length ? (
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Reporting Managers</div>
+                          <div className="flex flex-wrap gap-2">
+                            {detailsDialog.notification.reporting_managers.map((m, idx) => (
+                              <Badge key={`rm-${idx}`} variant="secondary" className="px-2 py-0.5">{m}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {detailsDialog.notification.escalation_managers?.length ? (
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">Escalation Managers</div>
+                          <div className="flex flex-wrap gap-2">
+                            {detailsDialog.notification.escalation_managers.map((m, idx) => (
+                              <Badge key={`em-${idx}`} variant="outline" className="px-2 py-0.5">{m}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {(detailsDialog.notification.sla_remaining || detailsDialog.notification.delay_reason) && (
+                    <div className="rounded-md border bg-white p-4">
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        SLA & Status
+                      </div>
+                      <div className="space-y-3">
+                        {detailsDialog.notification.sla_remaining && (
+                          <div className="flex items-center gap-2 text-orange-700 font-semibold">
+                            <Shield className="w-4 h-4" /> {detailsDialog.notification.sla_remaining}
+                          </div>
+                        )}
+                        {detailsDialog.notification.delay_reason && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                            <div className="text-yellow-800 font-medium mb-1">Delay/Overdue Reason</div>
+                            <div className="text-yellow-700 text-sm leading-relaxed">{detailsDialog.notification.delay_reason}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           )}
+
           <DialogFooter>
-            {detailsDialog.notification &&
-              detailsDialog.notification.status === "unread" && (
-                <Button
-                  onClick={() => markAsRead(detailsDialog.notification!.id)}
-                >
-                  Mark as Read
-                </Button>
-              )}
-            <Button
-              variant="outline"
-              onClick={() =>
-                setDetailsDialog({ open: false, notification: null })
-              }
-            >
+            {detailsDialog.notification && detailsDialog.notification.status === "unread" && (
+              <Button onClick={() => markAsRead(detailsDialog.notification!.id)} className="bg-blue-600 hover:bg-blue-700 text-white">
+                Mark as Read
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => setDetailsDialog({ open: false, notification: null })}>
               Close
             </Button>
           </DialogFooter>
