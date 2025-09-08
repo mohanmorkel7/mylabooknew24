@@ -2298,7 +2298,8 @@ export default function ClientBasedFinOpsTaskManager() {
                                 {(slaWarning || subtask.start_time) && (
                                   <Alert
                                     className={`mt-2 p-2 ${
-                                      slaWarning?.type === "overdue" || subtask.status === "overdue"
+                                      slaWarning?.type === "overdue" ||
+                                      subtask.status === "overdue"
                                         ? "border-red-200 bg-red-50"
                                         : slaWarning?.type === "warning"
                                           ? "border-orange-200 bg-orange-50"
@@ -2308,7 +2309,8 @@ export default function ClientBasedFinOpsTaskManager() {
                                     <div className="flex items-center gap-1">
                                       <Clock
                                         className={`h-3 w-3 flex-shrink-0 ${
-                                          slaWarning?.type === "overdue" || subtask.status === "overdue"
+                                          slaWarning?.type === "overdue" ||
+                                          subtask.status === "overdue"
                                             ? "text-red-600"
                                             : slaWarning?.type === "warning"
                                               ? "text-orange-600"
@@ -2317,7 +2319,8 @@ export default function ClientBasedFinOpsTaskManager() {
                                       />
                                       <AlertDescription
                                         className={`text-xs ${
-                                          slaWarning?.type === "overdue" || subtask.status === "overdue"
+                                          slaWarning?.type === "overdue" ||
+                                          subtask.status === "overdue"
                                             ? "text-red-700"
                                             : slaWarning?.type === "warning"
                                               ? "text-orange-700"
@@ -2326,15 +2329,22 @@ export default function ClientBasedFinOpsTaskManager() {
                                       >
                                         {(() => {
                                           const timeText = subtask.start_time
-                                            ? getTimeSinceStart(subtask.start_time)
+                                            ? getTimeSinceStart(
+                                                subtask.start_time,
+                                              )
                                             : "";
-                                          if (slaWarning?.type === "overdue" || subtask.status === "overdue") {
+                                          if (
+                                            slaWarning?.type === "overdue" ||
+                                            subtask.status === "overdue"
+                                          ) {
                                             return `Overdue${timeText ? " • " + timeText : ""}`;
                                           }
                                           if (slaWarning?.message) {
                                             return `${slaWarning.message}${timeText ? " • " + timeText : ""}`;
                                           }
-                                          return timeText ? `Status • ${timeText}` : "Status";
+                                          return timeText
+                                            ? `Status • ${timeText}`
+                                            : "Status";
                                         })()}
                                       </AlertDescription>
                                     </div>
