@@ -255,36 +255,41 @@ function ConnectionForm({
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
-                <ScrollArea className="h-72" data-radix-scroll-lock-ignore onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()}>
-                <CommandList className="max-h-72">
-                  <CommandGroup>
-                    {countries.map((c) => (
-                      <CommandItem
-                        key={c.isoCode}
-                        value={c.name}
-                        onSelect={(value) => {
-                          setForm((f) => ({
-                            ...f,
-                            country: value,
-                            state: "",
-                            city: "",
-                          }));
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            form.country === c.name
-                              ? "opacity-100"
-                              : "opacity-0",
-                          )}
-                        />
-                        {c.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </ScrollArea>
+                <ScrollArea
+                  className="h-72"
+                  data-radix-scroll-lock-ignore
+                  onWheelCapture={(e) => e.stopPropagation()}
+                  onTouchMoveCapture={(e) => e.stopPropagation()}
+                >
+                  <CommandList className="max-h-72">
+                    <CommandGroup>
+                      {countries.map((c) => (
+                        <CommandItem
+                          key={c.isoCode}
+                          value={c.name}
+                          onSelect={(value) => {
+                            setForm((f) => ({
+                              ...f,
+                              country: value,
+                              state: "",
+                              city: "",
+                            }));
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              form.country === c.name
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {c.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
@@ -315,36 +320,43 @@ function ConnectionForm({
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
-                <ScrollArea className="h-72" data-radix-scroll-lock-ignore onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()}>
-                <CommandList className="max-h-72">
-                  <CommandGroup>
-                    {states.map((s) => (
-                      <CommandItem
-                        key={s.isoCode}
-                        value={s.isoCode}
-                        onSelect={(value) => {
-                          const st = states.find((x) => x.isoCode === value);
-                          if (st) {
-                            setForm((f) => ({
-                              ...f,
-                              state: st.name,
-                              city: "",
-                            }));
-                          }
-                        }}
-                      >
-                        <Check
-                          className={cn(
-                            "mr-2 h-4 w-4",
-                            form.state === s.name ? "opacity-100" : "opacity-0",
-                          )}
-                        />
-                        {s.name}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </CommandList>
-              </ScrollArea>
+                <ScrollArea
+                  className="h-72"
+                  data-radix-scroll-lock-ignore
+                  onWheelCapture={(e) => e.stopPropagation()}
+                  onTouchMoveCapture={(e) => e.stopPropagation()}
+                >
+                  <CommandList className="max-h-72">
+                    <CommandGroup>
+                      {states.map((s) => (
+                        <CommandItem
+                          key={s.isoCode}
+                          value={s.isoCode}
+                          onSelect={(value) => {
+                            const st = states.find((x) => x.isoCode === value);
+                            if (st) {
+                              setForm((f) => ({
+                                ...f,
+                                state: st.name,
+                                city: "",
+                              }));
+                            }
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              form.state === s.name
+                                ? "opacity-100"
+                                : "opacity-0",
+                            )}
+                          />
+                          {s.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
@@ -375,43 +387,48 @@ function ConnectionForm({
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
-                <ScrollArea className="h-72" data-radix-scroll-lock-ignore onWheelCapture={(e) => e.stopPropagation()} onTouchMoveCapture={(e) => e.stopPropagation()}>
-                <CommandList className="max-h-72">
-                  <CommandGroup>
-                    {cities.map((c: any) => {
-                      const val = `${c.name}|${c.stateCode || ""}`;
-                      return (
-                        <CommandItem
-                          key={val}
-                          value={val}
-                          onSelect={(value) => {
-                            const [name, stateCode] = value.split("|");
-                            setForm((f) => ({ ...f, city: name }));
-                            if (stateCode) {
-                              const stObj = State.getStateByCodeAndCountry(
-                                stateCode,
-                                selectedCountry?.isoCode || "",
-                              );
-                              if (stObj)
-                                setForm((f) => ({ ...f, state: stObj.name }));
-                            }
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              form.city === c.name
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                          {c.name}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </CommandList>
-              </ScrollArea>
+                <ScrollArea
+                  className="h-72"
+                  data-radix-scroll-lock-ignore
+                  onWheelCapture={(e) => e.stopPropagation()}
+                  onTouchMoveCapture={(e) => e.stopPropagation()}
+                >
+                  <CommandList className="max-h-72">
+                    <CommandGroup>
+                      {cities.map((c: any) => {
+                        const val = `${c.name}|${c.stateCode || ""}`;
+                        return (
+                          <CommandItem
+                            key={val}
+                            value={val}
+                            onSelect={(value) => {
+                              const [name, stateCode] = value.split("|");
+                              setForm((f) => ({ ...f, city: name }));
+                              if (stateCode) {
+                                const stObj = State.getStateByCodeAndCountry(
+                                  stateCode,
+                                  selectedCountry?.isoCode || "",
+                                );
+                                if (stObj)
+                                  setForm((f) => ({ ...f, state: stObj.name }));
+                              }
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                form.city === c.name
+                                  ? "opacity-100"
+                                  : "opacity-0",
+                              )}
+                            />
+                            {c.name}
+                          </CommandItem>
+                        );
+                      })}
+                    </CommandGroup>
+                  </CommandList>
+                </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
