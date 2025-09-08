@@ -419,16 +419,20 @@ export default function ClientDashboard() {
                               )}
                             </div>
                             <div className="mt-1 text-sm text-gray-700 flex flex-wrap gap-4">
-                              <span>
-                                Contact:{" "}
-                                <span className="font-medium">
-                                  {c.contact_person || "N/A"}
+                              {c.contact_person && (
+                                <span>
+                                  Contact:{" "}
+                                  <span className="font-medium">
+                                    {c.contact_person}
+                                  </span>
                                 </span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-4 h-4 text-gray-400" />{" "}
-                                {c.email || "N/A"}
-                              </span>
+                              )}
+                              {c.email && (
+                                <span className="flex items-center gap-1">
+                                  <Mail className="w-4 h-4 text-gray-400" />{" "}
+                                  {c.email}
+                                </span>
+                              )}
                               {c.phone && (
                                 <span className="flex items-center gap-1">
                                   <Phone className="w-4 h-4 text-gray-400" />{" "}
