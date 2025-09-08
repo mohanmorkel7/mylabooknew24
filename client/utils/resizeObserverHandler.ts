@@ -7,6 +7,16 @@
 
 let isErrorHandlerInitialized = false;
 
+function isResizeObserverLoopMessage(msg?: string): boolean {
+  if (!msg) return false;
+  const m = msg.toLowerCase();
+  return (
+    m.includes('resizeobserver loop completed with undelivered notifications') ||
+    m.includes('resizeobserver loop limit exceeded') ||
+    (m.includes('resizeobserver') && m.includes('undelivered'))
+  );
+}
+
 /**
  * Initialize global ResizeObserver error handling
  * Should be called once in the main app entry point
@@ -18,22 +28,15 @@ export function initializeResizeObserverErrorHandler(): void {
 
   // Handle standard JavaScript errors
   const handleError = (event: ErrorEvent): void => {
-    if (
-      event.error?.message?.includes('ResizeObserver loop completed with undelivered notifications') ||
-      event.message?.includes('ResizeObserver loop completed with undelivered notifications')
-    ) {
-      // Prevent the error from propagating
+    if (isResizeObserverLoopMessage(event.error?.message) || isResizeObserverLoopMessage(event.message)) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      
-      // Log for debugging (can be removed in production)
       console.warn('🔧 ResizeObserver loop detected and suppressed:', {
         message: event.message,
         filename: event.filename,
         lineno: event.lineno,
         colno: event.colno
       });
-      
       return;
     }
   };
@@ -41,17 +44,10 @@ export function initializeResizeObserverErrorHandler(): void {
   // Handle unhandled promise rejections
   const handleUnhandledRejection = (event: PromiseRejectionEvent): void => {
     const reason = event.reason;
-    
-    if (
-      (typeof reason === 'string' && reason.includes('ResizeObserver loop completed with undelivered notifications')) ||
-      (reason?.message && reason.message.includes('ResizeObserver loop completed with undelivered notifications'))
-    ) {
-      // Prevent the error from propagating
+    const reasonMsg = typeof reason === 'string' ? reason : reason?.message;
+    if (isResizeObserverLoopMessage(reasonMsg)) {
       event.preventDefault();
-      
-      // Log for debugging
       console.warn('🔧 ResizeObserver loop in promise detected and suppressed:', reason);
-      
       return;
     }
   };
@@ -63,13 +59,28 @@ export function initializeResizeObserverErrorHandler(): void {
   // Override console.error to catch ResizeObserver errors that might slip through
   const originalConsoleError = console.error;
   console.error = (...args: any[]) => {
-    const errorMessage = args.join(' ');
-    if (errorMessage.includes('ResizeObserver loop completed with undelivered notifications')) {
+    const errorMessage = args.map((a) => (typeof a === 'string' ? a : a?.message || String(a))).join(' ');
+    if (isResizeObserverLoopMessage(errorMessage)) {
       console.warn('🔧 ResizeObserver loop detected in console.error and suppressed');
       return;
     }
     originalConsoleError.apply(console, args);
   };
+
+  // Also override console.warn just in case some libs log it as warn
+  const originalConsoleWarn = console.warn;
+  console.warn = (...args: any[]) => {
+    const warnMessage = args.map((a) => (typeof a === 'string' ? a : a?.message || String(a))).join(' ');
+    if (isResizeObserverLoopMessage(warnMessage)) {
+      // Silently drop duplicate noisy warnings
+      return;
+    }
+    originalConsoleWarn.apply(console, args);
+  };
+
+  // Expose helpers for testing
+  (window as any).createSafeResizeObserver = createSafeResizeObserver;
+  (window as any).createDebouncedResizeObserver = createDebouncedResizeObserver;
 
   isErrorHandlerInitialized = true;
   console.log('✅ Global ResizeObserver error handler initialized');
@@ -88,16 +99,16 @@ export function createSafeResizeObserver(
       requestAnimationFrame(() => {
         try {
           callback(entries, observer);
-        } catch (error) {
-          if (error.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
+        } catch (error: any) {
+          if (isResizeObserverLoopMessage(error?.message)) {
             console.warn('🔧 ResizeObserver callback error suppressed:', error.message);
             return;
           }
           throw error;
         }
       });
-    } catch (error) {
-      if (error.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
+    } catch (error: any) {
+      if (isResizeObserverLoopMessage(error?.message)) {
         console.warn('🔧 ResizeObserver callback error suppressed:', error.message);
         return;
       }
@@ -123,8 +134,8 @@ export function createDebouncedResizeObserver(
     timeoutId = setTimeout(() => {
       try {
         callback(entries, observer);
-      } catch (error) {
-        if (error.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
+      } catch (error: any) {
+        if (isResizeObserverLoopMessage(error?.message)) {
           console.warn('🔧 Debounced ResizeObserver callback error suppressed:', error.message);
           return;
         }
