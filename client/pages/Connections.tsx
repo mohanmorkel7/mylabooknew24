@@ -277,7 +277,7 @@ export default function Connections() {
   const { toast } = useToast();
 
   const [search, setSearch] = React.useState("");
-  const [typeFilter, setTypeFilter] = React.useState<string>("");
+  const [typeFilter, setTypeFilter] = React.useState<string>("all");
   const [isDialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Connection | null>(null);
 
