@@ -71,7 +71,10 @@ export default function ClientDashboard() {
   const [quickViewOpen, setQuickViewOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<any | null>(null);
 
-  const selectedMeta = useMemo(() => parseNotesMeta(selectedClient?.notes), [selectedClient]);
+  const selectedMeta = useMemo(
+    () => parseNotesMeta(selectedClient?.notes),
+    [selectedClient],
+  );
   const primaryContact = Array.isArray(selectedMeta.contacts)
     ? selectedMeta.contacts[0]
     : undefined;
@@ -79,7 +82,10 @@ export default function ClientDashboard() {
     ? `${primaryContact.phone_prefix || ""} ${primaryContact.phone}`
     : selectedClient?.phone || "Not provided";
   const telHref = primaryContact?.phone
-    ? `tel:${(primaryContact.phone_prefix || "")}${primaryContact.phone}`.replace(/\s+/g, "")
+    ? `tel:${primaryContact.phone_prefix || ""}${primaryContact.phone}`.replace(
+        /\s+/g,
+        "",
+      )
     : selectedClient?.phone
       ? `tel:${String(selectedClient.phone).replace(/\s+/g, "")}`
       : "";
@@ -531,7 +537,9 @@ export default function ClientDashboard() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{selectedClient?.client_name || "Client"}</DialogTitle>
-            <DialogDescription>Snapshot, contacts, and quick actions</DialogDescription>
+            <DialogDescription>
+              Snapshot, contacts, and quick actions
+            </DialogDescription>
           </DialogHeader>
           {selectedClient && (
             <div className="space-y-6">
@@ -539,22 +547,32 @@ export default function ClientDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="rounded-md border p-3 bg-white">
                     <div className="text-xs text-gray-500 mb-1">Status</div>
-                    <div className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[selectedClient.status || "active"] || statusColors.active}`}>
+                    <div
+                      className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[selectedClient.status || "active"] || statusColors.active}`}
+                    >
                       {selectedClient.status || "active"}
                     </div>
                   </div>
                   <div className="rounded-md border p-3 bg-white">
                     <div className="text-xs text-gray-500 mb-1">Priority</div>
-                    <div className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[selectedClient.priority || "medium"] || priorityColors.medium}`}>
+                    <div
+                      className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[selectedClient.priority || "medium"] || priorityColors.medium}`}
+                    >
                       {selectedClient.priority || "medium"}
                     </div>
                   </div>
                   <div className="rounded-md border p-3 bg-white">
-                    <div className="text-xs text-gray-500 mb-1">Account Owner</div>
-                    <div className="font-medium">{selectedClient.sales_rep_name || "-"}</div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Account Owner
+                    </div>
+                    <div className="font-medium">
+                      {selectedClient.sales_rep_name || "-"}
+                    </div>
                   </div>
                   <div className="rounded-md border p-3 bg-white">
-                    <div className="text-xs text-gray-500 mb-1">Expected Value</div>
+                    <div className="text-xs text-gray-500 mb-1">
+                      Expected Value
+                    </div>
                     <div className="font-medium">
                       {selectedClient.expected_value != null
                         ? `$${Number(selectedClient.expected_value).toLocaleString()}`
@@ -565,55 +583,74 @@ export default function ClientDashboard() {
                     <div className="text-xs text-gray-500 mb-1">Start Date</div>
                     <div className="font-medium">
                       {selectedClient.start_date
-                        ? new Date(selectedClient.start_date).toLocaleDateString()
+                        ? new Date(
+                            selectedClient.start_date,
+                          ).toLocaleDateString()
                         : "-"}
                     </div>
                   </div>
                   <div className="rounded-md border p-3 bg-white">
                     <div className="text-xs text-gray-500 mb-1">Industry</div>
-                    <div className="font-medium">{selectedClient.industry || "-"}</div>
+                    <div className="font-medium">
+                      {selectedClient.industry || "-"}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {Array.isArray(selectedMeta.contacts) && selectedMeta.contacts.length > 0 && (
-                <div>
-                  <div className="text-sm font-semibold mb-2">Contacts</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedMeta.contacts.map((c: any, idx: number) => (
-                      <div key={`contact-${idx}`} className="rounded-md border p-4 bg-white">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="font-semibold text-gray-900">
-                              {c.name || selectedClient.contact_person || "Contact"}
+              {Array.isArray(selectedMeta.contacts) &&
+                selectedMeta.contacts.length > 0 && (
+                  <div>
+                    <div className="text-sm font-semibold mb-2">Contacts</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {selectedMeta.contacts.map((c: any, idx: number) => (
+                        <div
+                          key={`contact-${idx}`}
+                          className="rounded-md border p-4 bg-white"
+                        >
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="font-semibold text-gray-900">
+                                {c.name ||
+                                  selectedClient.contact_person ||
+                                  "Contact"}
+                              </div>
+                              {c.role && (
+                                <div className="text-xs text-gray-500 mt-0.5">
+                                  {c.role}
+                                </div>
+                              )}
                             </div>
-                            {c.role && (
-                              <div className="text-xs text-gray-500 mt-0.5">{c.role}</div>
+                            {c.primary && (
+                              <Badge variant="secondary">Primary</Badge>
                             )}
                           </div>
-                          {c.primary && <Badge variant="secondary">Primary</Badge>}
+                          <div className="mt-3 space-y-2 text-sm">
+                            {(c.email || selectedClient.email) && (
+                              <div className="flex items-center gap-2 text-gray-700">
+                                <Mail className="w-4 h-4 text-gray-400" />
+                                <a
+                                  href={`mailto:${c.email || selectedClient.email}`}
+                                  className="text-blue-600 hover:underline"
+                                >
+                                  {c.email || selectedClient.email}
+                                </a>
+                              </div>
+                            )}
+                            {(c.phone || selectedClient.phone) && (
+                              <div className="flex items-center gap-2 text-gray-700">
+                                <Phone className="w-4 h-4 text-gray-400" />
+                                <span>
+                                  {`${c.phone_prefix || ""} ${c.phone || selectedClient.phone}`.trim()}
+                                </span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <div className="mt-3 space-y-2 text-sm">
-                          {(c.email || selectedClient.email) && (
-                            <div className="flex items-center gap-2 text-gray-700">
-                              <Mail className="w-4 h-4 text-gray-400" />
-                              <a href={`mailto:${c.email || selectedClient.email}`} className="text-blue-600 hover:underline">
-                                {c.email || selectedClient.email}
-                              </a>
-                            </div>
-                          )}
-                          {(c.phone || selectedClient.phone) && (
-                            <div className="flex items-center gap-2 text-gray-700">
-                              <Phone className="w-4 h-4 text-gray-400" />
-                              <span>{`${c.phone_prefix || ""} ${c.phone || selectedClient.phone}`.trim()}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div>
                 <div className="text-sm font-semibold mb-2">Quick Actions</div>
@@ -622,7 +659,8 @@ export default function ClientDashboard() {
                     className="w-full justify-start"
                     variant="outline"
                     onClick={() =>
-                      selectedClient?.email && (window.location.href = `mailto:${selectedClient.email}`)
+                      selectedClient?.email &&
+                      (window.location.href = `mailto:${selectedClient.email}`)
                     }
                     disabled={!selectedClient?.email}
                   >
@@ -643,7 +681,10 @@ export default function ClientDashboard() {
                       className="w-full justify-start"
                       variant="outline"
                       onClick={() =>
-                        window.open(selectedClient?.website || selectedMeta.website, "_blank")
+                        window.open(
+                          selectedClient?.website || selectedMeta.website,
+                          "_blank",
+                        )
                       }
                     >
                       <Globe className="w-4 h-4 mr-2" />
@@ -652,8 +693,12 @@ export default function ClientDashboard() {
                   )}
                   {selectedClient?.address && (
                     <div className="text-xs text-gray-500 mt-2">
-                      <div className="font-medium text-gray-700 mb-1">Address</div>
-                      <div className="rounded-md border bg-gray-50 p-2">{selectedClient.address}</div>
+                      <div className="font-medium text-gray-700 mb-1">
+                        Address
+                      </div>
+                      <div className="rounded-md border bg-gray-50 p-2">
+                        {selectedClient.address}
+                      </div>
                     </div>
                   )}
                 </div>
