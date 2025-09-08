@@ -65,6 +65,7 @@ import {
   Send,
   Settings,
   Trash2,
+  Globe,
 } from "lucide-react";
 import { StepItem } from "@/components/StepItem";
 
