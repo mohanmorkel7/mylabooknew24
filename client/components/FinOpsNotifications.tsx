@@ -1007,52 +1007,13 @@ export default function FinOpsNotifications() {
   };
 
   const getRelativeTime = (dateString: string) => {
-    // Handle the real-time calculation properly
-    const inputDate = new Date(dateString);
-    const currentTime = new Date(); // Use current time directly
-
-    // Calculate difference in milliseconds
-    const diffMs = currentTime.getTime() - inputDate.getTime();
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    // Debug logging for troubleshooting
-    console.log(`🕒 Real-time calculation for ${dateString}:`, {
-      inputUTC: inputDate.toISOString(),
-      currentUTC: currentTime.toISOString(),
-      diffMs,
-      diffMinutes,
-      diffHours,
-      diffDays,
-      calculatedResult:
-        diffMinutes < 1
-          ? "Just now"
-          : diffMinutes < 60
-            ? `${diffMinutes} min ago`
-            : diffHours < 24
-              ? `${diffHours}h ${diffMinutes % 60}m ago`
-              : `${diffDays}d ${diffHours % 24}h ago`,
-    });
-
-    // Return appropriate relative time
-    if (diffMinutes < 1) {
-      return "Just now";
-    } else if (diffMinutes < 60) {
-      return `${diffMinutes} min ago`;
-    } else if (diffHours < 24) {
-      const remainingMins = diffMinutes % 60;
-      return remainingMins > 0
-        ? `${diffHours}h ${remainingMins}m ago`
-        : `${diffHours}h ago`;
-    } else if (diffDays < 7) {
-      const remainingHours = diffHours % 24;
-      return remainingHours > 0
-        ? `${diffDays}d ${remainingHours}h ago`
-        : `${diffDays}d ago`;
-    } else {
-      // For dates older than a week, show formatted date
-      return formatToISTDateTime(inputDate, {
+    // Use IST-aware helper to avoid -5:30 offset issues
+    try {
+      return getRelativeTimeIST(dateString);
+    } catch (e) {
+      // Fallback to simple display in case of parsing issues
+      const d = new Date(dateString);
+      return formatToISTDateTime(d, {
         month: "short",
         day: "numeric",
         hour: "numeric",
