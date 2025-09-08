@@ -506,10 +506,15 @@ export default function ClientDashboard() {
                                           size="sm"
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            navigate(`/business-offerings/${o.id}`);
+                                            navigate(
+                                              `/business-offerings/${o.id}`,
+                                            );
                                           }}
                                         >
-                                          {(o.solution || "Offering") + (o.product ? ` - ${o.product}` : "")}
+                                          {(o.solution || "Offering") +
+                                            (o.product
+                                              ? ` - ${o.product}`
+                                              : "")}
                                         </Button>
                                       ))}
                                   </div>
