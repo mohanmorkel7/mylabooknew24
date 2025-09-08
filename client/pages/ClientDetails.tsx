@@ -333,28 +333,52 @@ export default function ClientDetails() {
                 <div className="rounded-md border p-3 bg-white">
                   <div className="text-xs text-gray-500 mb-1">Status</div>
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[clientData.status || 'active'] || statusColors.active}`}>{clientData.status || 'active'}</span>
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[clientData.status || "active"] || statusColors.active}`}
+                    >
+                      {clientData.status || "active"}
+                    </span>
                   </div>
                 </div>
                 <div className="rounded-md border p-3 bg-white">
                   <div className="text-xs text-gray-500 mb-1">Priority</div>
-                  <div className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[clientData.priority || 'medium'] || priorityColors.medium}`}>{clientData.priority || 'medium'}</div>
+                  <div
+                    className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[clientData.priority || "medium"] || priorityColors.medium}`}
+                  >
+                    {clientData.priority || "medium"}
+                  </div>
                 </div>
                 <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Account Owner</div>
-                  <div className="font-medium">{clientData.sales_rep_name || '-'}</div>
+                  <div className="text-xs text-gray-500 mb-1">
+                    Account Owner
+                  </div>
+                  <div className="font-medium">
+                    {clientData.sales_rep_name || "-"}
+                  </div>
                 </div>
                 <div className="rounded-md border p-3 bg-white">
-                  <div className="text-xs text-gray-500 mb-1">Expected Value</div>
-                  <div className="font-medium">{clientData.expected_value != null ? `$${Number(clientData.expected_value).toLocaleString()}` : '-'}</div>
+                  <div className="text-xs text-gray-500 mb-1">
+                    Expected Value
+                  </div>
+                  <div className="font-medium">
+                    {clientData.expected_value != null
+                      ? `$${Number(clientData.expected_value).toLocaleString()}`
+                      : "-"}
+                  </div>
                 </div>
                 <div className="rounded-md border p-3 bg-white">
                   <div className="text-xs text-gray-500 mb-1">Start Date</div>
-                  <div className="font-medium">{clientData.start_date ? new Date(clientData.start_date).toLocaleDateString() : '-'}</div>
+                  <div className="font-medium">
+                    {clientData.start_date
+                      ? new Date(clientData.start_date).toLocaleDateString()
+                      : "-"}
+                  </div>
                 </div>
                 <div className="rounded-md border p-3 bg-white">
                   <div className="text-xs text-gray-500 mb-1">Industry</div>
-                  <div className="font-medium">{clientData.industry || '-'}</div>
+                  <div className="font-medium">
+                    {clientData.industry || "-"}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -365,17 +389,26 @@ export default function ClientDetails() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle>Contacts</CardTitle>
-                <CardDescription>Primary stakeholders and contacts</CardDescription>
+                <CardDescription>
+                  Primary stakeholders and contacts
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {meta.contacts.map((c: any, idx: number) => (
-                    <div key={`contact-${idx}`} className="rounded-md border p-4 bg-white">
+                    <div
+                      key={`contact-${idx}`}
+                      className="rounded-md border p-4 bg-white"
+                    >
                       <div className="flex items-start justify-between">
                         <div>
-                          <div className="font-semibold text-gray-900">{c.name || clientData.contact_person || 'Contact'}</div>
+                          <div className="font-semibold text-gray-900">
+                            {c.name || clientData.contact_person || "Contact"}
+                          </div>
                           {c.role && (
-                            <div className="text-xs text-gray-500 mt-0.5">{c.role}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {c.role}
+                            </div>
                           )}
                         </div>
                         {c.primary && (
@@ -386,7 +419,10 @@ export default function ClientDetails() {
                         {c.email || clientData.email ? (
                           <div className="flex items-center gap-2 text-gray-700">
                             <Mail className="w-4 h-4 text-gray-400" />
-                            <a href={`mailto:${c.email || clientData.email}`} className="text-blue-600 hover:underline">
+                            <a
+                              href={`mailto:${c.email || clientData.email}`}
+                              className="text-blue-600 hover:underline"
+                            >
                               {c.email || clientData.email}
                             </a>
                           </div>
@@ -394,7 +430,9 @@ export default function ClientDetails() {
                         {c.phone || clientData.phone ? (
                           <div className="flex items-center gap-2 text-gray-700">
                             <Phone className="w-4 h-4 text-gray-400" />
-                            <span>{`${c.phone_prefix || ''} ${c.phone || clientData.phone}`.trim()}</span>
+                            <span>
+                              {`${c.phone_prefix || ""} ${c.phone || clientData.phone}`.trim()}
+                            </span>
                           </div>
                         ) : null}
                       </div>
@@ -686,7 +724,9 @@ export default function ClientDetails() {
               {clientData.address && (
                 <div className="text-xs text-gray-500 mt-2">
                   <div className="font-medium text-gray-700 mb-1">Address</div>
-                  <div className="rounded-md border bg-gray-50 p-2">{clientData.address}</div>
+                  <div className="rounded-md border bg-gray-50 p-2">
+                    {clientData.address}
+                  </div>
                 </div>
               )}
             </CardContent>
