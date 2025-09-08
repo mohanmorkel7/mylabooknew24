@@ -52,7 +52,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 const CONNECTION_TYPES = [
   "Business Team",
@@ -249,20 +248,19 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80" data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
               <Command>
                 <CommandInput placeholder="Search country..." />
                 <CommandEmpty>No country found.</CommandEmpty>
-                <ScrollArea
-                  className="h-72"
+                <CommandList
+                  className="max-h-72 overflow-y-auto overscroll-contain"
                   data-radix-scroll-lock-ignore
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >
-                  <CommandList className="max-h-72">
                     <CommandGroup>
                       {countries.map((c) => (
                         <CommandItem
@@ -290,7 +288,6 @@ function ConnectionForm({
                       ))}
                     </CommandGroup>
                   </CommandList>
-                </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
@@ -314,20 +311,19 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80" data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
               <Command>
                 <CommandInput placeholder="Search state..." />
                 <CommandEmpty>No state found.</CommandEmpty>
-                <ScrollArea
-                  className="h-72"
+                <CommandList
+                  className="max-h-72 overflow-y-auto overscroll-contain"
                   data-radix-scroll-lock-ignore
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >
-                  <CommandList className="max-h-72">
                     <CommandGroup>
                       {states.map((s) => (
                         <CommandItem
@@ -357,7 +353,6 @@ function ConnectionForm({
                       ))}
                     </CommandGroup>
                   </CommandList>
-                </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
@@ -381,20 +376,19 @@ function ConnectionForm({
               side="bottom"
               align="start"
               sideOffset={4}
-              className="w-[--radix-popover-trigger-width] p-0 max-h-80"
+              className="w-[--radix-popover-trigger-width] p-0 max-h-80" data-radix-scroll-lock-ignore
               onWheel={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
             >
               <Command>
                 <CommandInput placeholder="Search city..." />
                 <CommandEmpty>No city found.</CommandEmpty>
-                <ScrollArea
-                  className="h-72"
+                <CommandList
+                  className="max-h-72 overflow-y-auto overscroll-contain"
                   data-radix-scroll-lock-ignore
                   onWheelCapture={(e) => e.stopPropagation()}
                   onTouchMoveCapture={(e) => e.stopPropagation()}
                 >
-                  <CommandList className="max-h-72">
                     <CommandGroup>
                       {cities.map((c: any) => {
                         const val = `${c.name}|${c.stateCode || ""}`;
@@ -429,7 +423,6 @@ function ConnectionForm({
                       })}
                     </CommandGroup>
                   </CommandList>
-                </ScrollArea>
               </Command>
             </PopoverContent>
           </Popover>
