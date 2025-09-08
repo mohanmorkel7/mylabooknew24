@@ -66,7 +66,7 @@ export default function BusinessOfferingsDashboard() {
     ? (data as any[]).filter((o: any) =>
         (o.product || "").toLowerCase().includes(productSearch.toLowerCase()),
       )
-    : ((data as any[]) || []);
+    : (data as any[]) || [];
 
   // Helper to get client for an offering
   const getClientForOffering = (offering: any) => {
@@ -196,7 +196,6 @@ export default function BusinessOfferingsDashboard() {
           </CardContent>
         </Card>
       </div>
-
 
       {/* Products wise accordion */}
       <Card className="mt-6">
