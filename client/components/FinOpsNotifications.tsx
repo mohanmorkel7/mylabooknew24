@@ -442,9 +442,15 @@ const transformDbNotifications = (
             ? "PaySwiff"
             : "ABC Corporation"),
       subtask_name: dbNotif.subtask_name,
-      assigned_to: dbNotif.user_name || members.assigned_to || "Unassigned",
-      reporting_managers: members.reporting_managers,
-      escalation_managers: members.escalation_managers,
+      assigned_users: parseManagers(dbNotif.assigned_to) || (members.assigned_to ? [members.assigned_to] : []),
+      assigned_to:
+        (parseManagers(dbNotif.assigned_to).length
+          ? parseManagers(dbNotif.assigned_to).join(", ")
+          : dbNotif.user_name || members.assigned_to || "Unassigned"),
+      reporting_managers:
+        parseManagers(dbNotif.reporting_managers) || members.reporting_managers,
+      escalation_managers:
+        parseManagers(dbNotif.escalation_managers) || members.escalation_managers,
       priority:
         dbNotif.priority ||
         (notificationType === "overdue_reason_required"
