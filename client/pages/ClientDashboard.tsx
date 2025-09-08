@@ -227,7 +227,8 @@ export default function ClientDashboard() {
 
   function ClientLinkedBusinessOfferings({ clientId }: { clientId: number }) {
     const tagged = useMemo(
-      () => (allOfferings as any[]).filter((o: any) => o.client_id === clientId),
+      () =>
+        (allOfferings as any[]).filter((o: any) => o.client_id === clientId),
       [allOfferings, clientId],
     );
 
@@ -237,7 +238,8 @@ export default function ClientDashboard() {
       <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm font-medium text-gray-800 flex items-center gap-2">
-            <Target className="w-4 h-4 text-blue-500" /> Tagged Business Offerings
+            <Target className="w-4 h-4 text-blue-500" /> Tagged Business
+            Offerings
           </div>
           <Badge variant="secondary" className="bg-blue-100 text-blue-800">
             {tagged.length}
@@ -248,7 +250,9 @@ export default function ClientDashboard() {
             <BusinessOfferingItem key={o.id} offering={o} />
           ))}
           {tagged.length > 4 && (
-            <div className="text-xs text-gray-500">+{tagged.length - 4} more</div>
+            <div className="text-xs text-gray-500">
+              +{tagged.length - 4} more
+            </div>
           )}
         </div>
       </div>
