@@ -288,38 +288,3 @@ CREATE TRIGGER trigger_update_ist_times
   BEFORE INSERT OR UPDATE ON finops_subtasks
   FOR EACH ROW
   EXECUTE FUNCTION update_ist_times();
-
--- Insert or update sample data with IST times (example: 5:00 PM IST task)
-INSERT INTO finops_tasks (
-  task_name, description, assigned_to, reporting_managers, escalation_managers,
-  effective_from, duration, is_active, created_by
-) VALUES (
-  'Daily FinOps Task Example - IST',
-  'Daily task scheduled for 5:00 PM IST with 5 subtasks (5:00-6:00 PM)',
-  'John Durairaj',
-  '["Albert", "Hari"]'::jsonb,
-  '["Albert", "Hari"]'::jsonb,
-  CURRENT_DATE,
-  'daily',
-  true,
-  1
-) ON CONFLICT DO NOTHING;
-
--- Update existing subtasks with IST times
-UPDATE finops_subtasks 
-SET start_time_ist = '17:00:00'::TIME,  -- 5:00 PM IST
-    end_time_ist = '18:00:00'::TIME,    -- 6:00 PM IST
-    auto_notify = true,
-    scheduled_date = CURRENT_DATE
-WHERE task_id IN (SELECT id FROM finops_tasks WHERE task_name LIKE '%IST%' OR task_name LIKE '%CLEARING%')
-AND start_time_ist IS NULL;
-
--- Add sample client for testing
-INSERT INTO finops_clients (company_name, contact_person, email, phone, address, created_by)
-VALUES ('Test Client Ltd', 'Test Contact', 'test@client.com', '+91-9999999999', 'Mumbai, India', 1)
-ON CONFLICT DO NOTHING;
-
--- Update tasks to have client_id
-UPDATE finops_tasks
-SET client_id = (SELECT id FROM finops_clients WHERE company_name = 'Test Client Ltd' LIMIT 1)
-WHERE client_id IS NULL;
