@@ -556,7 +556,9 @@ export default function Connections() {
                 {editing ? "Edit member" : "Add member"}
               </DialogTitle>
               <DialogDescription>
-                {editing ? "Update connection details." : "Fill in connection details and save."}
+                {editing
+                  ? "Update connection details."
+                  : "Fill in connection details and save."}
               </DialogDescription>
             </DialogHeader>
             <ConnectionForm
