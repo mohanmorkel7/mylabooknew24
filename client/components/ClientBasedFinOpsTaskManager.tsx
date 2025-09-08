@@ -1165,6 +1165,30 @@ export default function ClientBasedFinOpsTaskManager() {
     }
   };
 
+  const getTimeSinceStartStrict = (startTime: string) => {
+    if (!startTime || typeof startTime !== "string") return "";
+
+    const [hours, minutes] = startTime.split(":").map(Number);
+    const taskStartTime = new Date();
+    taskStartTime.setHours(hours, minutes, 0, 0);
+
+    const diffMs = currentTime.getTime() - taskStartTime.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes < 0) {
+      const remaining = Math.abs(diffMinutes);
+      const h = Math.floor(remaining / 60);
+      const m = remaining % 60;
+      return h > 0 ? `Starts in ${h}h ${m}m` : `Starts in ${m}m`;
+    }
+    if (diffMinutes < 60) {
+      return `${diffMinutes} min ago`;
+    }
+    const h = Math.floor(diffMinutes / 60);
+    const m = diffMinutes % 60;
+    return `${h}h ${m}m ago`;
+  };
+
   const getSLAWarning = (startTime: string, status: string) => {
     if (status === "completed" || !startTime || typeof startTime !== "string")
       return null;
@@ -2328,15 +2352,13 @@ export default function ClientBasedFinOpsTaskManager() {
                                         }`}
                                       >
                                         {(() => {
+                                          const overdue = slaWarning?.type === "overdue" || subtask.status === "overdue";
                                           const timeText = subtask.start_time
-                                            ? getTimeSinceStart(
-                                                subtask.start_time,
-                                              )
+                                            ? overdue
+                                              ? getTimeSinceStartStrict(subtask.start_time)
+                                              : getTimeSinceStart(subtask.start_time)
                                             : "";
-                                          if (
-                                            slaWarning?.type === "overdue" ||
-                                            subtask.status === "overdue"
-                                          ) {
+                                          if (overdue) {
                                             return `Overdue${timeText ? " • " + timeText : ""}`;
                                           }
                                           if (slaWarning?.message) {
