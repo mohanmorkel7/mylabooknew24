@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useClient, useUpdateClient } from "@/hooks/useApi";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -151,6 +151,8 @@ export default function ClientEdit() {
     source_value: "",
   });
 
+  const [referenceConnections, setReferenceConnections] = useState<string[]>([]);
+
   const [contacts, setContacts] = useState<
     {
       contact_name: string;
@@ -193,6 +195,15 @@ export default function ClientEdit() {
       product_tag_info: meta.product_tag_info || "",
       source_value: meta.source_value || "",
     });
+
+    if (meta.source === "Reference") {
+      setReferenceConnections(
+        String(meta.source_value || "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+    }
 
     // Contacts
     const primary = {
@@ -255,6 +266,11 @@ export default function ClientEdit() {
       }
     }
   }, [addressInfo.city, JSON.stringify(uniqueCities)]);
+
+  const { data: connections } = useQuery({
+    queryKey: ["connections"],
+    queryFn: () => apiClient.getConnections(),
+  });
 
   // Validation
   const errors = useMemo(() => {
@@ -359,7 +375,10 @@ export default function ClientEdit() {
           geography: clientInfo.geography,
           txn_volume: clientInfo.txn_volume,
           product_tag_info: clientInfo.product_tag_info,
-          source_value: clientInfo.source_value || undefined,
+          source_value:
+            clientInfo.source === "Reference"
+              ? (referenceConnections.length ? referenceConnections.join(", ") : undefined)
+              : clientInfo.source_value || undefined,
           contacts,
         }),
       };
@@ -465,13 +484,14 @@ export default function ClientEdit() {
                     <Label>Source *</Label>
                     <Select
                       value={clientInfo.source}
-                      onValueChange={(v) =>
+                      onValueChange={(v) => {
                         setClientInfo((p) => ({
                           ...p,
                           source: v,
                           source_value: "",
-                        }))
-                      }
+                        }));
+                        if (v !== "Reference") setReferenceConnections([]);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select source" />
@@ -493,6 +513,34 @@ export default function ClientEdit() {
                   {clientInfo.source &&
                     (() => {
                       const src = clientInfo.source;
+                      if (src === "Reference") {
+                        return (
+                          <div className="space-y-1">
+                            <Label>Referred by (select one or more)</Label>
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1">
+                                <MultiSelect
+                                  options={(Array.isArray(connections) ? connections : []).map((c: any) => c.name)}
+                                  value={referenceConnections}
+                                  onChange={setReferenceConnections}
+                                  placeholder="Select connections"
+                                  className="mt-1"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                onClick={() =>
+                                  navigate(
+                                    `/connections/new?returnTo=${encodeURIComponent(`/clients/${id}/edit`)}`,
+                                  )
+                                }
+                              >
+                                Add connection
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      }
                       const meta = (() => {
                         if (src.startsWith("Email"))
                           return {
@@ -522,13 +570,6 @@ export default function ClientEdit() {
                           return {
                             label: "Team Member Name",
                             placeholder: "Enter internal team member name",
-                            type: "text" as const,
-                          };
-                        if (src === "Reference")
-                          return {
-                            label: "Reference Person",
-                            placeholder:
-                              "Enter reference person's name or contact",
                             type: "text" as const,
                           };
                         if (src === "General List")
