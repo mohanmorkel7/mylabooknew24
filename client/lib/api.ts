@@ -1013,8 +1013,8 @@ export class ApiClient {
       console.log("🔍 Fetching FinOps tasks...", date ? `(date=${date})` : "");
 
       const path = date
-        ? `/finops/tasks?date=${encodeURIComponent(date)}`
-        : "/finops/tasks";
+        ? `/finops-production/tasks?date=${encodeURIComponent(date)}`
+        : "/finops-production/tasks";
       // Use request with retry for better reliability
       const result = await this.requestWithRetry(path, {}, 3);
 
