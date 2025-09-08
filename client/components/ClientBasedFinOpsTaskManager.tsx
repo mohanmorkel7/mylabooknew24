@@ -2340,7 +2340,31 @@ export default function ClientBasedFinOpsTaskManager() {
                                   }
                                   isInline={true}
                                 />
-                                {(slaWarning || subtask.start_time) && (
+                                {(slaWarning || subtask.start_time) && (() => {
+                                  const dayNames = [
+                                    "sunday",
+                                    "monday",
+                                    "tuesday",
+                                    "wednesday",
+                                    "thursday",
+                                    "friday",
+                                    "saturday",
+                                  ];
+                                  const today = dateFilter ? new Date(dateFilter) : new Date();
+                                  const taskStart = task.effective_from ? new Date(task.effective_from) : today;
+                                  const show = (() => {
+                                    if (task.duration === "daily") return taskStart <= today;
+                                    if (task.duration === "weekly") {
+                                      const days = Array.isArray((task as any).weekly_days)
+                                        ? ((task as any).weekly_days as string[]).map((d) => d.toLowerCase())
+                                        : [];
+                                      if (days.length === 0) return false;
+                                      const day = dayNames[today.getDay()];
+                                      return taskStart <= today && days.includes(day);
+                                    }
+                                    return taskStart.toDateString() === today.toDateString();
+                                  })();
+                                  return show; })() && (
                                   <Alert
                                     className={`mt-2 p-2 ${
                                       slaWarning?.type === "overdue" ||
