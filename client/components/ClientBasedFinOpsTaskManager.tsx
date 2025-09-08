@@ -2352,11 +2352,17 @@ export default function ClientBasedFinOpsTaskManager() {
                                         }`}
                                       >
                                         {(() => {
-                                          const overdue = slaWarning?.type === "overdue" || subtask.status === "overdue";
+                                          const overdue =
+                                            slaWarning?.type === "overdue" ||
+                                            subtask.status === "overdue";
                                           const timeText = subtask.start_time
                                             ? overdue
-                                              ? getTimeSinceStartStrict(subtask.start_time)
-                                              : getTimeSinceStart(subtask.start_time)
+                                              ? getTimeSinceStartStrict(
+                                                  subtask.start_time,
+                                                )
+                                              : getTimeSinceStart(
+                                                  subtask.start_time,
+                                                )
                                             : "";
                                           if (overdue) {
                                             return `Overdue${timeText ? " • " + timeText : ""}`;
