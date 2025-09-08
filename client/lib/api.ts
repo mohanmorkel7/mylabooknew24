@@ -1008,12 +1008,13 @@ export class ApiClient {
   }
 
   // FinOps Task Management methods with enhanced error handling
-  async getFinOpsTasks() {
+  async getFinOpsTasks(date?: string) {
     try {
-      console.log("🔍 Fetching FinOps tasks...");
+      console.log("🔍 Fetching FinOps tasks...", date ? `(date=${date})` : "");
 
+      const path = date ? `/finops/tasks?date=${encodeURIComponent(date)}` : "/finops/tasks";
       // Use request with retry for better reliability
-      const result = await this.requestWithRetry("/finops/tasks", {}, 3);
+      const result = await this.requestWithRetry(path, {}, 3);
 
       console.log(
         "✅ FinOps tasks fetched successfully:",
