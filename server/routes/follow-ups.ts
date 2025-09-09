@@ -587,12 +587,12 @@ router.get("/", async (req: Request, res: Response) => {
         queryParams.push(parseInt(assigned_to as string));
       }
 
-      // Check if VC and business offering columns exist in follow_ups table
+      // Check if VC, business offering and assigned list columns exist in follow_ups table
       const columnCheck = await pool.query(`
         SELECT column_name
         FROM information_schema.columns
         WHERE table_name = 'follow_ups'
-        AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id')
+        AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id', 'assigned_to_list')
       `);
 
       const hasVCColumns = columnCheck.rows.some((row) =>
@@ -602,6 +602,9 @@ router.get("/", async (req: Request, res: Response) => {
         ["business_offering_id", "business_offering_step_id"].includes(
           row.column_name,
         ),
+      );
+      const hasAssignedList = columnCheck.rows.some(
+        (row) => row.column_name === 'assigned_to_list',
       );
 
       // If business offering columns are missing, add them
@@ -644,21 +647,16 @@ router.get("/", async (req: Request, res: Response) => {
              LEFT JOIN business_offer_steps bos ON f.business_offering_step_id = bos.id`
           : "";
 
-        const assignedListSelect = `,
-          CASE WHEN EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name = 'follow_ups' AND column_name = 'assigned_to_list'
-          ) THEN f.assigned_to_list ELSE NULL END as assigned_to_list,
-          CASE WHEN EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name = 'follow_ups' AND column_name = 'assigned_to_list'
-          ) THEN (
-            SELECT string_agg(CONCAT(u2.first_name, ' ', u2.last_name), ', ')
-            FROM users u2
-            WHERE u2.id = ANY (
-              SELECT ARRAY(SELECT (jsonb_array_elements_text(f.assigned_to_list))::int)
-            )
-          ) ELSE NULL END as assigned_users_names`;
+        const assignedListSelect = hasAssignedList
+          ? `, f.assigned_to_list,
+              (
+                SELECT string_agg(CONCAT(u2.first_name, ' ', u2.last_name), ', ')
+                FROM users u2
+                WHERE u2.id = ANY (
+                  SELECT ARRAY(SELECT (jsonb_array_elements_text(f.assigned_to_list))::int)
+                )
+              ) as assigned_users_names`
+          : `, NULL as assigned_to_list, NULL as assigned_users_names`;
 
         // Full query with VC, Fund Raise and conditional Business Offering support
         query = `
