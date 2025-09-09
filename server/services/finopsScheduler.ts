@@ -268,8 +268,7 @@ class FinOpsScheduler {
         ) {
           newStatus = "completed";
         } else if (task.in_progress_subtasks > 0) {
-          // Database does not allow 'in_progress' for task status; map to 'active'
-          newStatus = "active";
+          newStatus = "in_progress";
         }
 
         // Update task status if it has changed
