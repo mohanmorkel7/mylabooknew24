@@ -169,7 +169,9 @@ function ConnectionForm({
           <Label>Designation</Label>
           <Input
             value={(form.designation as string) || ""}
-            onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, designation: e.target.value }))
+            }
             placeholder="e.g. Senior Manager"
           />
         </div>
