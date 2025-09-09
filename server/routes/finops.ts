@@ -2391,8 +2391,8 @@ router.put("/config", async (req: Request, res: Response) => {
     );
     const repeatInterval = Math.max(
       1,
-    parseInt(body.repeat_overdue_call_interval_minutes ?? 15),
-  );
+      parseInt(body.repeat_overdue_call_interval_minutes ?? 15),
+    );
     const onlySingle = Boolean(body.only_repeat_when_single_overdue ?? false);
 
     const row = await pool.query(

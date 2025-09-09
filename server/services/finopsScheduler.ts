@@ -30,16 +30,16 @@ class FinOpsScheduler {
 
     // Run SLA monitoring every 15 minutes instead of every minute
     cron.schedule(
-    "*/15 * * * *",
-    async () => {
-      if (!(await isDatabaseAvailable())) return;
-      console.log("Running SLA monitoring check...");
-      await finopsAlertService.checkSLAAlerts();
-    },
-    {
-      timezone: "Asia/Kolkata",
-    },
-  );
+      "*/15 * * * *",
+      async () => {
+        if (!(await isDatabaseAvailable())) return;
+        console.log("Running SLA monitoring check...");
+        await finopsAlertService.checkSLAAlerts();
+      },
+      {
+        timezone: "Asia/Kolkata",
+      },
+    );
 
     // Incomplete subtask check every 30 minutes
     cron.schedule(

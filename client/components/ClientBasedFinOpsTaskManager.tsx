@@ -443,7 +443,15 @@ function SortableSubTaskItem({
                       {subtask.started_at && (
                         <span>
                           Started:{" "}
-                          {new Date(subtask.started_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })}
+                          {new Date(subtask.started_at).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                              timeZone: "Asia/Kolkata",
+                            },
+                          )}
                         </span>
                       )}
                     </div>
