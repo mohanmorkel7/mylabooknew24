@@ -75,6 +75,7 @@ type Connection = {
   phone_prefix: string;
   phone: string;
   email?: string | null;
+  designation?: string | null;
   country?: string | null;
   state?: string | null;
   city?: string | null;
@@ -105,6 +106,7 @@ function ConnectionForm({
     phone_prefix: initial?.phone_prefix || "+91",
     phone: initial?.phone || "",
     email: initial?.email || "",
+    designation: (initial?.designation as string) || "",
     country: initial?.country || "",
     state: initial?.state || "",
     city: initial?.city || "",
@@ -142,6 +144,7 @@ function ConnectionForm({
       phone_prefix: String(form.phone_prefix).trim(),
       phone: String(form.phone).trim(),
       email: form.email ? String(form.email).trim() : null,
+      designation: form.designation ? String(form.designation).trim() : null,
       country: form.country ? String(form.country).trim() : null,
       state: form.state ? String(form.state).trim() : null,
       city: form.city ? String(form.city).trim() : null,
@@ -150,13 +153,24 @@ function ConnectionForm({
 
   return (
     <div className="space-y-4">
+      {/* Row 1: Name full width */}
+      <div>
+        <Label>Name *</Label>
+        <Input
+          value={form.name as string}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Member name"
+        />
+      </div>
+
+      {/* Row 2: Designation | Type */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label>Name *</Label>
+          <Label>Designation</Label>
           <Input
-            value={form.name as string}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Member name"
+            value={(form.designation as string) || ""}
+            onChange={(e) => setForm((f) => ({ ...f, designation: e.target.value }))}
+            placeholder="e.g. Senior Manager"
           />
         </div>
         <div>
@@ -177,41 +191,37 @@ function ConnectionForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="md:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label>Phone Prefix *</Label>
-              <Select
-                value={form.phone_prefix}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, phone_prefix: v }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select prefix" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PHONE_PREFIXES.map((p) => (
-                    <SelectItem key={p.code} value={p.code}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="md:col-span-2">
-              <Label>Phone *</Label>
-              <Input
-                value={form.phone as string}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
-                }
-                placeholder="Phone number"
-              />
-            </div>
-          </div>
+      </div>
+
+      {/* Row 3: Phone Prefix | Phone | Email (reduced prefix width) */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="md:col-span-1">
+          <Label>Phone Prefix *</Label>
+          <Select
+            value={form.phone_prefix}
+            onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select prefix" />
+            </SelectTrigger>
+            <SelectContent>
+              {PHONE_PREFIXES.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div>
+        <div className="md:col-span-2">
+          <Label>Phone *</Label>
+          <Input
+            value={form.phone as string}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            placeholder="Phone number"
+          />
+        </div>
+        <div className="md:col-span-3">
           <Label>Email</Label>
           <Input
             type="email"
