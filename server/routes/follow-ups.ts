@@ -604,7 +604,7 @@ router.get("/", async (req: Request, res: Response) => {
         ),
       );
       const hasAssignedList = columnCheck.rows.some(
-        (row) => row.column_name === 'assigned_to_list',
+        (row) => row.column_name === "assigned_to_list",
       );
 
       // If business offering columns are missing, add them
