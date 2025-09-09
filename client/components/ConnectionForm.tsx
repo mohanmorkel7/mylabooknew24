@@ -98,6 +98,7 @@ export default function ConnectionForm({
   function submit() {
     const missing: string[] = [];
     if (!form.name || !String(form.name).trim()) missing.push("name");
+    if (!form.type || !String(form.type).trim()) missing.push("type");
     if (!form.phone_prefix || !String(form.phone_prefix).trim())
       missing.push("phone_prefix");
     if (!form.phone || !String(form.phone).trim()) missing.push("phone");
@@ -133,7 +134,7 @@ export default function ConnectionForm({
           />
         </div>
         <div>
-          <Label>Type</Label>
+          <Label>Type *</Label>
           <Select
             value={(form.type as any) || undefined}
             onValueChange={(v) => setForm((f) => ({ ...f, type: v as any }))}
