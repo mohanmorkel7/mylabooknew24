@@ -608,12 +608,14 @@ class FinOpsAlertService {
       `;
 
       await this.sendEmailAlerts(recipients, subject, message);
+      const customTitle = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
       await this.logAlert(
         task.id,
         subtask.id,
         "sla_overdue",
         "all",
         minutesOverdue,
+        customTitle,
       );
     } catch (error) {
       console.error("Error sending SLA overdue alert:", error);
