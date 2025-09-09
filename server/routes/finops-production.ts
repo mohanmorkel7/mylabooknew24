@@ -20,7 +20,7 @@ async function ensureExternalAlertsSchema(): Promise<void> {
     )
   `);
   await pool.query(
-    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
   );
 }
 
