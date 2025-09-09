@@ -996,7 +996,7 @@ router.patch(
             );
             const taskName = trow.rows[0]?.task_name || "Unknown Task";
             const clientName = trow.rows[0]?.client_name || "Unknown Client";
-            const title = `Please take immediate action on the overdue subtask "${subtaskName}" under the task "${taskName}" for the client "${clientName}".`;
+            const title = `Please take immediate action on the overdue subtask ${subtaskName} under the task ${taskName} for the client ${clientName}.`;
 
             const managerNames = Array.from(
               new Set([
