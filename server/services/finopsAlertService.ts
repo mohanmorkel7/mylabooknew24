@@ -296,14 +296,16 @@ class FinOpsAlertService {
   private async checkOverdueRepeatAlerts(): Promise<void> {
     try {
       // Default behavior: check every minute, no initial delay, no single-overdue constraint
+      // Default behavior: check every 15 minutes for repeat alerts, no initial delay
       const initialDelay = 0;
-      const repeatInterval = 1;
+      const repeatInterval = 15;
 
       const result = await pool.query(
         `
         SELECT
           t.id as task_id,
           t.task_name,
+          t.client_name,
           t.reporting_managers,
           t.escalation_managers,
           t.assigned_to,
