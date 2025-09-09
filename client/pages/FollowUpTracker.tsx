@@ -551,15 +551,38 @@ export default function FollowUpTracker() {
           return;
         }
 
-        // Use the utility function that includes chat notification
-        await updateFollowUpStatusWithNotification(
-          followUpId,
-          { status: newStatus, completed_at: completedAt },
-          notificationData,
-        );
-        console.log(
-          "Follow-up status update with notification completed successfully",
-        );
+        // Update status
+        const resp = await fetch(`/api/follow-ups/${followUpId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: newStatus, completed_at: completedAt }),
+        });
+        if (!resp.ok) throw new Error("Failed to update status");
+
+        // Post unified system message to the appropriate team chat
+        const statusDisplayMap: Record<string, string> = {
+          pending: "Pending",
+          in_progress: "In Progress",
+          completed: "Completed",
+          overdue: "Overdue",
+        };
+        const oldDisplay = statusDisplayMap[(followUp as any).status] || (followUp as any).status;
+        const newDisplay = statusDisplayMap[newStatus] || newStatus;
+        const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user.name}`;
+
+        await apiClient.request(`/${stepApiBase}/steps/${stepIdValue}/chats`, {
+          method: "POST",
+          body: JSON.stringify({
+            user_id: parseInt(user.id),
+            user_name: "System",
+            message: sysMsg,
+            message_type: "system",
+            is_rich_text: false,
+            attachments: [],
+          }),
+        });
+
+        console.log("Follow-up status update and chat notification completed successfully");
       } else {
         // Fallback to original method if follow-up not found or no user
         const response = await fetch(`/api/follow-ups/${followUpId}`, {
