@@ -207,6 +207,7 @@ interface FinOpsTask {
   created_by: string;
   last_run?: string;
   next_run?: string;
+  client_name?: string;
   status: "active" | "inactive" | "completed" | "overdue";
 }
 
