@@ -656,8 +656,16 @@ export default function FinOpsTaskManager({
                             <span className="text-red-600">
                               Next call in:{" "}
                               {(() => {
-                                const seconds =
-                                  overdueTimers[task.id] || 15 * 60;
+                                // compute from persisted next-call if available
+                                let seconds = overdueTimers[task.id] || 15 * 60;
+                                try {
+                                  const stored = typeof window !== "undefined" ? localStorage.getItem(`finops_next_call_${task.id}`) : null;
+                                  if (stored) {
+                                    const nextMs = parseInt(stored, 10);
+                                    const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
+                                    if (!isNaN(diff)) seconds = diff;
+                                  }
+                                } catch {}
                                 const mins = Math.floor(seconds / 60);
                                 const secs = seconds % 60;
                                 return `${mins}m ${secs.toString().padStart(2, "0")}s`;
