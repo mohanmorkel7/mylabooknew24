@@ -250,18 +250,41 @@ export default function FinOpsTaskManager({
     {},
   );
 
-  // Initialize timers for overdue tasks to 15 minutes (900 seconds) when tasks change
+  // Initialize timers for overdue tasks using persisted next-call timestamp in localStorage
   useEffect(() => {
     const initialTimers: Record<number, number> = { ...overdueTimers };
     finopsTasks.forEach((task: FinOpsTask) => {
       const slaStatus = getSLAStatus(task);
+      const key = `finops_next_call_${task.id}`;
       if (slaStatus === "overdue") {
-        if (!initialTimers[task.id]) {
-          initialTimers[task.id] = 15 * 60; // 15 minutes
+        const stored = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        let secondsRemaining = 15 * 60;
+        if (stored) {
+          const nextCallMs = parseInt(stored, 10);
+          const diff = Math.ceil((nextCallMs - Date.now()) / 1000);
+          if (!isNaN(diff) && diff > 0) secondsRemaining = diff;
+          else {
+            // expired or invalid -> schedule next call 15 min from now
+            const next = Date.now() + 15 * 60 * 1000;
+            try {
+              localStorage.setItem(key, String(next));
+            } catch {}
+            secondsRemaining = 15 * 60;
+          }
+        } else {
+          const next = Date.now() + 15 * 60 * 1000;
+          try {
+            localStorage.setItem(key, String(next));
+          } catch {}
+          secondsRemaining = 15 * 60;
         }
+        initialTimers[task.id] = secondsRemaining;
       } else {
-        // clear non-overdue timers
+        // clear non-overdue timers and remove persisted key
         if (initialTimers[task.id]) delete initialTimers[task.id];
+        try {
+          if (typeof window !== "undefined") localStorage.removeItem(key);
+        } catch {}
       }
     });
     setOverdueTimers(initialTimers);
