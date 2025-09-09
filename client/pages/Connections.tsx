@@ -651,7 +651,7 @@ export default function Connections() {
                       size="sm"
                       aria-label="Delete"
                       title="Delete"
-                      className="rounded-full p-2 border border-red-600 text-red-600 hover:bg-red-50"
+                      className="p-2 border border-red-600 text-red-600 hover:bg-red-50 rounded-md"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
