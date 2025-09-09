@@ -73,7 +73,7 @@ export async function notifyFollowUpStatusChange(
     const base = stepApiBase || (isVC ? "vc" : "leads");
 
     const endpoint = `/${base}/steps/${stepId}/chats`;
-  console.log("Using endpoint:", endpoint);
+    console.log("Using endpoint:", endpoint);
 
     const result = await apiClient.request<any>(endpoint, {
       method: "POST",
