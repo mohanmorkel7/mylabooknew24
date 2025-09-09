@@ -538,7 +538,7 @@ router.get("/:id", async (req: Request, res: Response) => {
       ]);
       if (r.rows.length === 0)
         return res.status(404).json({ error: "Not found" });
-      return res.json(r.rows[0]);
+      return res.json(addISTFields({ ...r.rows[0] }));
     }
     // Mock when DB down
     return res.json({ id, status: "pending" });
