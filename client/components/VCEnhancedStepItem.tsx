@@ -903,7 +903,7 @@ export function VCEnhancedStepItem({
                             <div className="flex-1">
                               {isStatusChange ? (
                                 <span className="text-xs text-gray-600">
-                                  {`📝 ${((message.message || "").trimStart().replace(/^([📝📋]\s*)+/, ""))} ${formatToISTDateTime(message.created_at)}`}
+                                  {`📝 ${(message.message || "").trimStart().replace(/^([📝📋]\s*)+/, "")} ${formatToISTDateTime(message.created_at)}`}
                                 </span>
                               ) : (
                                 <>
