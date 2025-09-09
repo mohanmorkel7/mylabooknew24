@@ -453,9 +453,13 @@ export default function FollowUpTracker() {
           }
         } else if (
           // Explicit fund-raise context
-          (followUp as any).fund_raise_id || (followUp as any).fund_raise_stage
+          (followUp as any).fund_raise_id ||
+          (followUp as any).fund_raise_stage
         ) {
-          const frStepId = followUp.message_id || (followUp as any).vc_step_id || followUp.step_id;
+          const frStepId =
+            followUp.message_id ||
+            (followUp as any).vc_step_id ||
+            followUp.step_id;
           stepIdValue = frStepId;
           stepApiBase = "fund-raises";
         } else if (followUpType === "vc") {
