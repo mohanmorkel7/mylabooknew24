@@ -2367,7 +2367,7 @@ router.get("/config", async (_req: Request, res: Response) => {
         settings.initial_overdue_call_delay_minutes || 0,
       ),
       repeat_overdue_call_interval_minutes: Number(
-        settings.repeat_overdue_call_interval_minutes || 10,
+        settings.repeat_overdue_call_interval_minutes || 15,
       ),
       only_repeat_when_single_overdue: Boolean(
         settings.only_repeat_when_single_overdue || false,
