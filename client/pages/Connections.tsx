@@ -607,7 +607,7 @@ export default function Connections() {
           </div>
         )}
         {connections.map((c: Connection) => (
-          <Card key={c.id} className="relative">
+          <Card key={c.id} className="relative h-full">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{c.name}</CardTitle>
@@ -619,7 +619,7 @@ export default function Connections() {
                 {c.country || ""}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-16 relative">
+            <CardContent className="h-full pb-16 relative">
               <div className="space-y-1 text-sm">
                 <div>
                   <span className="text-gray-500">Phone:</span> {c.phone_prefix}{" "}
