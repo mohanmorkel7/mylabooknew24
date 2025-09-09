@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Collapsible,
   CollapsibleContent,
@@ -208,7 +209,7 @@ export function VCEnhancedStepItem({
   // Follow-up related states
   const [createFollowUp, setCreateFollowUp] = useState(false);
   const [followUpNotes, setFollowUpNotes] = useState("");
-  const [followUpAssignTo, setFollowUpAssignTo] = useState("");
+  const [followUpAssignees, setFollowUpAssignees] = useState<string[]>([]);
   const [followUpDueDate, setFollowUpDueDate] = useState(() => {
     // Default to 3 days from now with time
     const defaultDate = new Date();
@@ -367,7 +368,7 @@ export function VCEnhancedStepItem({
   };
 
   const handleCreateFollowUp = async () => {
-    if (!followUpNotes.trim() || !followUpAssignTo || !followUpDueDate) {
+    if (!followUpNotes.trim() || followUpAssignees.length === 0 || !followUpDueDate) {
       alert("Please fill in all follow-up fields");
       return;
     }
@@ -382,9 +383,8 @@ export function VCEnhancedStepItem({
       // Create the follow-up task with proper context based on stepApiBase
       console.log("📝 Creating follow-up with mutation...");
 
-      const followUpData: any = {
+      const baseFollowUp: any = {
         description: followUpNotes,
-        assigned_to: parseInt(followUpAssignTo),
         due_date: new Date(followUpDueDate).toISOString(),
         priority: "medium",
         created_by: parseInt(user?.id || "1"),
@@ -392,36 +392,42 @@ export function VCEnhancedStepItem({
 
       if (stepApiBase === "business-offerings") {
         // Business offering follow-up
-        followUpData.title = `Sales Follow-up: ${step.name}`;
-        followUpData.follow_up_type = "sales";
-        followUpData.business_offering_id = step.business_offering_id;
-        followUpData.business_offering_step_id = step.id;
+        baseFollowUp.title = `Sales Follow-up: ${step.name}`;
+        baseFollowUp.follow_up_type = "sales";
+        baseFollowUp.business_offering_id = step.business_offering_id;
+        baseFollowUp.business_offering_step_id = step.id;
       } else {
         // Fund raise follow-up (existing logic)
-        followUpData.title = `Fund Raise Follow-up: ${step.name}`;
-        followUpData.vc_id = step.vc_id;
-        followUpData.vc_step_id = step.id;
+        baseFollowUp.title = `Fund Raise Follow-up: ${step.name}`;
+        baseFollowUp.vc_id = step.vc_id;
+        baseFollowUp.vc_step_id = step.id;
       }
 
-      const created = await createFollowUpMutation.mutateAsync(followUpData);
+      // Parse selected assignee IDs from labels like "Name (#123)"
+      const selectedIds: number[] = followUpAssignees
+        .map((label) => {
+          const match = label.match(/#(\d+)/);
+          return match ? parseInt(match[1]) : null;
+        })
+        .filter((v): v is number => typeof v === "number" && !isNaN(v));
 
-      console.log("✅ Follow-up created successfully:", created);
-
-      const assignee = teamMembers.find(
-        (m) => m.id === parseInt(followUpAssignTo),
-      );
-      if (created?.id && created?.status) {
-        setFollowUpStatuses((s) => ({ ...s, [created.id]: created.status }));
+      for (const uid of selectedIds) {
+        const payload = { ...baseFollowUp, assigned_to: uid };
+        await createFollowUpMutation.mutateAsync(payload);
       }
+
+      const assigneeNames = selectedIds
+        .map((id) => teamMembers.find((m) => m.id === id)?.name)
+        .filter(Boolean) as string[];
+
       const details = [
-        created?.id ? `ID: #${created.id}` : null,
-        assignee ? `Assignee: ${assignee.name}` : null,
+        assigneeNames.length ? `Assignees: ${assigneeNames.join(", ")}` : null,
         `Due: ${formatToISTDateTime(new Date(followUpDueDate).toISOString())}`,
       ]
         .filter(Boolean)
         .join(" | ");
 
-      const systemMessageText = `📋 Follow-up created: "${followUpNotes}" — ${details}`;
+      const systemMessageText = `📋 Follow-up created: "${followUpNotes}" ��� ${details}`;
       const chatApiUrl = `/${stepApiBase}/steps/${step.id}/chats`;
 
       console.log("💬 Preparing to send system message to team chat:", {
@@ -512,7 +518,7 @@ export function VCEnhancedStepItem({
 
       setCreateFollowUp(false);
       setFollowUpNotes("");
-      setFollowUpAssignTo("");
+      setFollowUpAssignees([]);
       setFollowUpDueDate("");
     } catch (error) {
       console.error("❌ Failed to create follow-up:", error);
@@ -1342,24 +1348,12 @@ export function VCEnhancedStepItem({
                               className="min-h-[60px]"
                             />
                             <div className="grid grid-cols-2 gap-3">
-                              <Select
-                                value={followUpAssignTo}
-                                onValueChange={setFollowUpAssignTo}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Assign to..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {teamMembers.map((member) => (
-                                    <SelectItem
-                                      key={member.id}
-                                      value={member.id.toString()}
-                                    >
-                                      {member.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <MultiSelect
+                                options={teamMembers.map((m) => `${m.name} (#${m.id})`)}
+                                value={followUpAssignees}
+                                onChange={setFollowUpAssignees}
+                                placeholder="Assign to users..."
+                              />
                               <Input
                                 type="datetime-local"
                                 value={followUpDueDate}
