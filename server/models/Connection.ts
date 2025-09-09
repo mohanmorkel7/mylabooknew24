@@ -6,6 +6,7 @@ export type ConnectionType =
   | "VC"
   | "Advisory Board"
   | "Consultants"
+  | "Client"
   | "General";
 
 export interface ConnectionRecord {
@@ -45,6 +46,37 @@ export interface UpdateConnectionData {
 }
 
 export class ConnectionRepository {
+  private static constraintEnsured = false;
+  private static async ensureTypeConstraint() {
+    if (this.constraintEnsured) return;
+    try {
+      // Ensure the check constraint includes the new "Client" type
+      await pool.query(
+        `DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1
+            FROM information_schema.table_constraints
+            WHERE table_name = 'connections'
+              AND constraint_name = 'connections_type_check'
+          ) THEN
+            EXECUTE 'ALTER TABLE connections DROP CONSTRAINT connections_type_check';
+          END IF;
+        END $$;`
+      );
+      await pool.query(
+        `ALTER TABLE connections
+         ADD CONSTRAINT connections_type_check
+         CHECK (type IN (
+           'Business Team', 'Internal Team', 'VC', 'Advisory Board', 'Consultants', 'Client', 'General'
+         ))`
+      );
+      this.constraintEnsured = true;
+    } catch (e) {
+      // If permission or DB issues occur, don't block the request; the next insert may still succeed if constraint already okay
+      this.constraintEnsured = true;
+    }
+  }
   static async findAll(filters?: {
     q?: string;
     type?: string;
@@ -84,6 +116,7 @@ export class ConnectionRepository {
   }
 
   static async create(data: CreateConnectionData): Promise<ConnectionRecord> {
+    await this.ensureTypeConstraint();
     const result = await pool.query(
       `INSERT INTO connections (name, type, phone_prefix, phone, email, country, state, city)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -106,6 +139,7 @@ export class ConnectionRepository {
     id: number,
     data: UpdateConnectionData,
   ): Promise<ConnectionRecord | null> {
+    await this.ensureTypeConstraint();
     const sets: string[] = [];
     const params: any[] = [];
     let idx = 1;
