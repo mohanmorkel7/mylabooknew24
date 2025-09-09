@@ -39,18 +39,19 @@ export async function notifyFollowUpStatusChange(
   let message = "";
   let messageType: "system" | "text" = "system";
 
+  // Unified plain system message without emojis
   switch (newStatus) {
     case "completed":
-      message = `✅ Follow-up task completed: "${followUpTitle || `Follow-up #${followUpId}`}" by ${userName}`;
+      message = `Step status changed to "Completed" by ${userName}`;
       break;
     case "in_progress":
-      message = `🔄 Follow-up task started: "${followUpTitle || `Follow-up #${followUpId}`}" by ${userName}`;
+      message = `Step status changed to "In Progress" by ${userName}`;
       break;
     case "overdue":
-      message = `⚠️ Follow-up task overdue: "${followUpTitle || `Follow-up #${followUpId}`}"`;
+      message = `Step status changed to "Overdue" by ${userName}`;
       break;
     default:
-      message = `📋 Follow-up task status changed to "${newStatus}": "${followUpTitle || `Follow-up #${followUpId}`}" by ${userName}`;
+      message = `Step status changed to "${newStatus}" by ${userName}`;
       break;
   }
 
