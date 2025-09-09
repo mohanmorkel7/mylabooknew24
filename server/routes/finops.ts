@@ -23,7 +23,7 @@ async function ensureFinOpsSettings() {
     await pool.query(
       `INSERT INTO finops_settings (initial_overdue_call_delay_minutes, repeat_overdue_call_interval_minutes, only_repeat_when_single_overdue)
        VALUES ($1, $2, $3)`,
-      [0, 10, false],
+      [0, 15, false],
     );
   }
 }
