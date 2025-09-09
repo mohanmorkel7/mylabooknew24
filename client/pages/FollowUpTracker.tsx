@@ -1159,7 +1159,9 @@ export default function FollowUpTracker() {
                               <span>
                                 Assigned to:{" "}
                                 <strong>
-                                  {(followUp as any).assigned_users_names || followUp.assigned_user_name || "Unassigned"}
+                                  {(followUp as any).assigned_users_names ||
+                                    followUp.assigned_user_name ||
+                                    "Unassigned"}
                                 </strong>
                               </span>
                             </span>
