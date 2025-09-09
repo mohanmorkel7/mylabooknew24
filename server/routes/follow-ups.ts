@@ -4,6 +4,48 @@ import { normalizeUserId } from "../services/mockData";
 
 const router = Router();
 
+// IST helpers
+const IST_TIMEZONE = "Asia/Kolkata";
+function toISTDate(date: any): Date | null {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  const utcMs = d.getTime();
+  const istMs = utcMs + 5.5 * 60 * 60 * 1000;
+  return new Date(istMs);
+}
+function toISTDisplay(date: any): string | null {
+  const d = toISTDate(date);
+  if (!d) return null;
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone: IST_TIMEZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const parts = new Intl.DateTimeFormat("en-IN", opts).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+  return `${get("day")} ${get("month")} ${get("year")}, ${get("hour")}:${get("minute")} ${get("dayPeriod")?.toUpperCase()}`;
+}
+function toISTISO(date: any): string | null {
+  const d = toISTDate(date);
+  if (!d) return null;
+  return d.toISOString().replace(/Z$/, "+05:30");
+}
+function addISTFields(row: any) {
+  if (!row || typeof row !== "object") return row;
+  const fields = ["due_date", "created_at", "updated_at", "completed_at"];
+  for (const f of fields) {
+    const v = (row as any)[f];
+    (row as any)[`${f}_ist`] = toISTDisplay(v);
+    (row as any)[`${f}_ist_iso`] = toISTISO(v);
+  }
+  return row;
+}
+
 // Enhanced helper function with better error handling and timeout
 async function isDatabaseAvailable() {
   try {
