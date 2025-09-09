@@ -441,65 +441,38 @@ export default function FollowUpTracker() {
             .business_offering_step_id;
           const messageId = followUp.message_id;
 
-          console.log("Analyzing business offering follow-up step data:", {
-            business_offering_step_id: businessOfferingStepId,
-            message_id: messageId,
-            step_id: followUp.step_id,
-            business_offering_id: (followUp as any).business_offering_id,
-          });
-
           if (businessOfferingStepId) {
-            // This is a business offering step
             stepIdValue = businessOfferingStepId;
             stepApiBase = "business-offerings";
-            console.log(
-              "Using business_offering_step_id for business offering step:",
-              stepIdValue,
-            );
           } else if (messageId) {
-            // Backend might store business_offering_step_id in message_id
             stepIdValue = messageId;
             stepApiBase = "business-offerings";
-            console.log(
-              "Using message_id for business offering step:",
-              stepIdValue,
-            );
           } else {
-            // Fallback to step_id
             stepIdValue = followUp.step_id;
             stepApiBase = "business-offerings";
-            console.log(
-              "Fallback to step_id for business offering follow-up:",
-              stepIdValue,
-            );
           }
+        } else if (
+          // Explicit fund-raise context
+          (followUp as any).fund_raise_id || (followUp as any).fund_raise_stage
+        ) {
+          const frStepId = followUp.message_id || (followUp as any).vc_step_id || followUp.step_id;
+          stepIdValue = frStepId;
+          stepApiBase = "fund-raises";
         } else if (followUpType === "vc") {
           // VC-related follow-up handling
           const vcStepId = (followUp as any).vc_step_id;
           const messageId = followUp.message_id;
 
-          console.log("Analyzing VC follow-up step data:", {
-            vc_step_id: vcStepId,
-            message_id: messageId,
-            step_id: followUp.step_id,
-            vc_id: (followUp as any).vc_id,
-          });
-
-          if (vcStepId) {
-            // This is a real VC step
-            stepIdValue = vcStepId;
-            stepApiBase = "vc";
-            console.log("Using vc_step_id for real VC step:", stepIdValue);
-          } else if (messageId) {
-            // This is a fund-raise step (backend stores fund_raise_step_id in message_id)
+          if (messageId) {
+            // Stored as fund-raise step id
             stepIdValue = messageId;
             stepApiBase = "fund-raises";
-            console.log("Using message_id for fund-raise step:", stepIdValue);
+          } else if (vcStepId) {
+            stepIdValue = vcStepId;
+            stepApiBase = "vc";
           } else {
-            // Fallback to step_id
             stepIdValue = followUp.step_id;
-            stepApiBase = "fund-raises"; // Default to fund-raises for VC type
-            console.log("Fallback to step_id for VC follow-up:", stepIdValue);
+            stepApiBase = "vc";
           }
         } else {
           stepApiBase = "leads";
