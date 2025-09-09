@@ -405,9 +405,9 @@ export function VCEnhancedStepItem({
         baseFollowUp.business_offering_id = step.business_offering_id;
         baseFollowUp.business_offering_step_id = step.id;
       } else if (stepApiBase === "fund-raises") {
-        // Fund raise follow-up: tie to fund_raise_step via message_id
+        // Fund raise follow-up: pass fund_raise_step id as vc_step_id so server resolves vc_id and stores step ref in message_id
         baseFollowUp.title = `Fund Raise Follow-up: ${step.name}`;
-        baseFollowUp.message_id = step.id;
+        baseFollowUp.vc_step_id = step.id;
       } else {
         // VC follow-up
         baseFollowUp.title = `VC Follow-up: ${step.name}`;
