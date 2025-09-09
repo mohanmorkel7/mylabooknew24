@@ -411,24 +411,47 @@ export function VCEnhancedStepItem({
         baseFollowUp.vc_step_id = step.id;
       }
 
-      // Parse selected assignee IDs from labels like "Name (#123)"
+      // Parse unique assignee IDs from labels like "Name (#123)"
       const selectedIds: number[] = followUpAssignees
         .map((label) => {
           const match = label.match(/#(\d+)/);
           return match ? parseInt(match[1]) : null;
         })
         .filter((v): v is number => typeof v === "number" && !isNaN(v));
+      const uniqueIds = Array.from(new Set(selectedIds));
 
-      const createdIds: number[] = [];
-      for (const uid of selectedIds) {
-        const payload = { ...baseFollowUp, assigned_to: uid };
-        const created = await createFollowUpMutation.mutateAsync(payload);
-        if (created && (created as any).id) {
-          createdIds.push((created as any).id);
+      // Create a single follow-up (team task) with a primary assignee for ownership
+      const primaryAssigneeId = uniqueIds.length > 0 ? uniqueIds[0] : null;
+      const payload = { ...baseFollowUp, assigned_to: primaryAssigneeId };
+      const created = await createFollowUpMutation.mutateAsync(payload);
+      const createdId: number | null = (created as any)?.id ?? null;
+
+      // Send notifications to all selected users
+      try {
+        const actionUrl =
+          stepApiBase === "business-offerings"
+            ? `/business-offerings/${step.business_offering_id}`
+            : `/fundraise/${step.vc_id}`;
+        for (const uid of uniqueIds) {
+          await apiClient.request(`/notifications-production`, {
+            method: "POST",
+            body: JSON.stringify({
+              type: "follow_up",
+              title: "New follow-up created",
+              description: `${followUpNotes} | Due: ${formatToISTDateTime(new Date(followUpDueDate).toISOString())}`,
+              user_id: uid,
+              entity_type: "follow_up",
+              entity_id: createdId,
+              action_url: actionUrl,
+              priority: "medium",
+            }),
+          });
         }
+      } catch (e) {
+        console.warn("Failed to send some notifications:", e);
       }
 
-      const assigneeNames = selectedIds
+      const assigneeNames = uniqueIds
         .map((id) => teamMembers.find((m) => m.id === id)?.name)
         .filter(Boolean) as string[];
 
@@ -439,11 +462,9 @@ export function VCEnhancedStepItem({
         .filter(Boolean)
         .join(" | ");
 
-      const idSegment = createdIds.length
-        ? `${createdIds.map((id) => `#${id}`).join(", ")} — `
-        : "";
+      const idSegment = createdId ? `#${createdId} — ` : "";
 
-      const systemMessageText = `📋 Follow-up(s) created: ${idSegment}"${followUpNotes}" ${details}`;
+      const systemMessageText = `📋 Follow-up created: ${idSegment}"${followUpNotes}" ${details}`;
       const chatApiUrl = `/${stepApiBase}/steps/${step.id}/chats`;
 
       console.log("💬 Preparing to send system message to team chat:", {
