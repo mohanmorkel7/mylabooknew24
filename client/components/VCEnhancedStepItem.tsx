@@ -852,10 +852,12 @@ export function VCEnhancedStepItem({
                       !chatError &&
                       sortedMessages.map((message, index) => {
                         const isStatusChange =
-                          message.message_type === "system" &&
-                          (message.message || "").includes(
-                            "Step status changed",
-                          );
+                          message.message_type === "system" && (() => {
+                            const txt = (message.message || "");
+                            return /Step status changed/i.test(txt) ||
+                              /Follow-up task (completed|started)/i.test(txt) ||
+                              /Follow-up task status changed/i.test(txt);
+                          })();
                         const isFocusAnchor =
                           !!focusFollowUpId &&
                           !!focusStepId &&
