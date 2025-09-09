@@ -641,7 +641,12 @@ export default function Connections() {
                 </Button>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
-                    <Button variant="ghost" size="sm" aria-label="Delete" title="Delete">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Delete"
+                      title="Delete"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </AlertDialogTrigger>
@@ -649,12 +654,15 @@ export default function Connections() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete connection?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete "{c.name}"? This action cannot be undone.
+                        Are you sure you want to delete "{c.name}"? This action
+                        cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>
+                      <AlertDialogAction
+                        onClick={() => deleteMutation.mutate(c.id)}
+                      >
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
