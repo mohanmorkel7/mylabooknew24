@@ -838,6 +838,7 @@ async function sendReplicaDownAlertOnce(
         subtask_id INTEGER NOT NULL,
         alert_key TEXT NOT NULL,
         title TEXT,
+        next_call_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(task_id, subtask_id, alert_key)
       )
