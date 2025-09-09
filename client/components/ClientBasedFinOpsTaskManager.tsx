@@ -2370,22 +2370,28 @@ export default function ClientBasedFinOpsTaskManager() {
                             <span className="text-red-600">
                               Next call in:{" "}
                               {(() => {
-                                // compute from persisted next-call if available
+                                // Prefer server-provided next_call_at if available
                                 let seconds = overdueTimers[task.id] || 15 * 60;
                                 try {
-                                  const stored =
-                                    typeof window !== "undefined"
-                                      ? localStorage.getItem(
-                                          `finops_next_call_${task.id}`,
-                                        )
-                                      : null;
-                                  if (stored) {
-                                    const nextMs = parseInt(stored, 10);
-                                    const diff = Math.max(
-                                      0,
-                                      Math.ceil((nextMs - Date.now()) / 1000),
-                                    );
+                                  if ((task as any).next_call_at) {
+                                    const nextMs = new Date((task as any).next_call_at).getTime();
+                                    const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
                                     if (!isNaN(diff)) seconds = diff;
+                                  } else {
+                                    const stored =
+                                      typeof window !== "undefined"
+                                        ? localStorage.getItem(
+                                            `finops_next_call_${task.id}`,
+                                          )
+                                        : null;
+                                    if (stored) {
+                                      const nextMs = parseInt(stored, 10);
+                                      const diff = Math.max(
+                                        0,
+                                        Math.ceil((nextMs - Date.now()) / 1000),
+                                      );
+                                      if (!isNaN(diff)) seconds = diff;
+                                    }
                                   }
                                 } catch {}
                                 const mins = Math.floor(seconds / 60);
