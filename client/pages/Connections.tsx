@@ -659,12 +659,15 @@ export default function Connections() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Delete connection?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to delete "{c.name}"? This action cannot be undone.
+                      Are you sure you want to delete "{c.name}"? This action
+                      cannot be undone.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>
+                    <AlertDialogAction
+                      onClick={() => deleteMutation.mutate(c.id)}
+                    >
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
