@@ -619,7 +619,7 @@ export default function Connections() {
                 {c.country || ""}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-12">
+            <CardContent className="pb-16 relative">
               <div className="space-y-1 text-sm">
                 <div>
                   <span className="text-gray-500">Phone:</span> {c.phone_prefix}{" "}
@@ -631,6 +631,9 @@ export default function Connections() {
                   </div>
                 )}
               </div>
+
+              {/* separator above actions for visual gap */}
+              <div className="absolute left-4 right-4 bottom-14 border-t border-gray-100 dark:border-gray-800 opacity-80" />
 
               {/* Actions anchored to bottom-right to avoid misalignment */}
               <div className="absolute right-4 bottom-4 flex items-center gap-2">
@@ -648,6 +651,7 @@ export default function Connections() {
                       size="sm"
                       aria-label="Delete"
                       title="Delete"
+                      className="rounded-full p-2 border border-red-600 text-red-600 hover:bg-red-50"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -656,15 +660,12 @@ export default function Connections() {
                     <AlertDialogHeader>
                       <AlertDialogTitle>Delete connection?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Are you sure you want to delete "{c.name}"? This action
-                        cannot be undone.
+                        Are you sure you want to delete "{c.name}"? This action cannot be undone.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteMutation.mutate(c.id)}
-                      >
+                      <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>
                         Delete
                       </AlertDialogAction>
                     </AlertDialogFooter>
