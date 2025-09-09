@@ -51,6 +51,7 @@ const CONNECTION_TYPES = [
   "VC",
   "Advisory Board",
   "Consultants",
+  "Client",
   "General",
 ] as const;
 
