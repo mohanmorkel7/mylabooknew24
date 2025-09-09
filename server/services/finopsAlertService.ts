@@ -909,7 +909,7 @@ class FinOpsAlertService {
       // Build human-readable status change message (special phrasing for overdue)
       const statusChangeMessage =
         status === "overdue"
-          ? `Please take immediate action on the overdue subtask "${subtaskName}" under the task "${taskName}" for the client "${clientName}".`
+          ? `Kindly take prompt action on the overdue subtask ${subtaskName} from the task ${taskName} for the client ${clientName}.`
           : `Subtask "${subtaskName}" status changed from "${previousStatus}" to "${status}"`;
 
       await this.logActivity(
