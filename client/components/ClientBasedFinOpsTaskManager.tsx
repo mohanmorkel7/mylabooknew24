@@ -2374,8 +2374,13 @@ export default function ClientBasedFinOpsTaskManager() {
                                 let seconds = overdueTimers[task.id] || 15 * 60;
                                 try {
                                   if ((task as any).next_call_at) {
-                                    const nextMs = new Date((task as any).next_call_at).getTime();
-                                    const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
+                                    const nextMs = new Date(
+                                      (task as any).next_call_at,
+                                    ).getTime();
+                                    const diff = Math.max(
+                                      0,
+                                      Math.ceil((nextMs - Date.now()) / 1000),
+                                    );
                                     if (!isNaN(diff)) seconds = diff;
                                   } else {
                                     const stored =
