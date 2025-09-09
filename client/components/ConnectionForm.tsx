@@ -56,6 +56,7 @@ export type ConnectionFormValues = {
   phone_prefix: string;
   phone: string;
   email?: string | null;
+  designation?: string | null;
   country?: string | null;
   state?: string | null;
   city?: string | null;
@@ -79,6 +80,7 @@ export default function ConnectionForm({
     phone_prefix: initial?.phone_prefix || "+91",
     phone: initial?.phone || "",
     email: initial?.email || "",
+    designation: (initial?.designation as string) || "",
     country: initial?.country || "",
     state: initial?.state || "",
     city: initial?.city || "",
@@ -117,6 +119,7 @@ export default function ConnectionForm({
       phone_prefix: String(form.phone_prefix).trim(),
       phone: String(form.phone).trim(),
       email: form.email ? String(form.email).trim() : null,
+      designation: form.designation ? String(form.designation).trim() : null,
       country: form.country ? String(form.country).trim() : null,
       state: form.state ? String(form.state).trim() : null,
       city: form.city ? String(form.city).trim() : null,
@@ -132,6 +135,16 @@ export default function ConnectionForm({
             value={(form.name as string) || ""}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
             placeholder="Member name"
+          />
+        </div>
+        <div>
+          <Label>Designation</Label>
+          <Input
+            value={(form.designation as string) || ""}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, designation: e.target.value }))
+            }
+            placeholder="e.g. Senior Manager"
           />
         </div>
         <div>
