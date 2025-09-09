@@ -293,7 +293,7 @@ router.post("/", async (req: Request, res: Response) => {
         const result = await pool.query(query, values);
         const followUp = result.rows[0];
 
-        res.status(201).json(followUp);
+        res.status(201).json(addISTFields({ ...followUp }));
       } catch (dbError) {
         console.error("Database insertion error:", dbError.message);
         // If database error (like missing column), run migration and fall back to mock
