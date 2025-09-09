@@ -31,9 +31,10 @@ export const handler: Handler = async () => {
     // Find overdue subtasks not yet sent
     const overdue = await pool.query(
       `
-      SELECT 
+      SELECT
         t.id as task_id,
         t.task_name,
+        t.client_name,
         t.assigned_to,
         t.reporting_managers,
         t.escalation_managers,
