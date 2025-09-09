@@ -898,10 +898,18 @@ class FinOpsAlertService {
         [status, taskId, subtaskId],
       );
 
+      // Fetch task and client details for richer message
+      const taskMeta = await pool.query(
+        `SELECT task_name, client_name FROM finops_tasks WHERE id = $1 LIMIT 1`,
+        [taskId],
+      );
+      const taskName = taskMeta.rows[0]?.task_name || "Unknown Task";
+      const clientName = taskMeta.rows[0]?.client_name || "Unknown Client";
+
       // Build human-readable status change message (special phrasing for overdue)
       const statusChangeMessage =
         status === "overdue"
-          ? `Take immediate action on the overdue subtask ${subtaskName}`
+          ? `Take immediate action on the overdue subtask "${subtaskName}" (Task: "${taskName}", Client: "${clientName}")`
           : `Subtask "${subtaskName}" status changed from "${previousStatus}" to "${status}"`;
 
       await this.logActivity(
