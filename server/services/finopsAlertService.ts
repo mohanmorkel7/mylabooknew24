@@ -384,8 +384,8 @@ class FinOpsAlertService {
 
             if (response.ok) {
               await pool.query(
-                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-                 VALUES ($1, $2, $3, $4)
+                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
                  ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
                 [row.task_id, row.subtask_id, initialKey, title],
               );
@@ -459,9 +459,9 @@ class FinOpsAlertService {
           }
 
           await pool.query(
-            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
             [row.task_id, row.subtask_id, alertKey, title],
           );
 
@@ -646,9 +646,9 @@ class FinOpsAlertService {
       `);
 
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
          RETURNING id`,
         [taskId, Number(subtaskId), "replica_down_overdue", title],
       );
