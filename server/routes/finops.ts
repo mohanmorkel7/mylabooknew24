@@ -989,7 +989,15 @@ router.patch(
             settings?.initial_overdue_call_delay_minutes || 0,
           );
           if (initialDelay === 0) {
-            const title = `Take immediate action on the overdue subtask ${subtaskName}`;
+            // Fetch task/client details for richer message
+            const trow = await pool.query(
+              `SELECT task_name, client_name FROM finops_tasks WHERE id = $1 LIMIT 1`,
+              [taskId],
+            );
+            const taskName = trow.rows[0]?.task_name || "Unknown Task";
+            const clientName = trow.rows[0]?.client_name || "Unknown Client";
+            const title = `Take immediate action on the overdue subtask "${subtaskName}" (Task: "${taskName}", Client: "${clientName}")`;
+
             const managerNames = Array.from(
               new Set([
                 ...parseManagerNames(subtaskData.reporting_managers),
