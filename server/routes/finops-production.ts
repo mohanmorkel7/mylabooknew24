@@ -79,14 +79,15 @@ async function sendReplicaDownAlertOnce(
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_external_alerts (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        alert_key TEXT NOT NULL,
-        title TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id, alert_key)
-      )
+    id SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL,
+    subtask_id INTEGER NOT NULL,
+    alert_key TEXT NOT NULL,
+    title TEXT,
+    next_call_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(task_id, subtask_id, alert_key)
+  )
     `);
 
     const reserve = await pool.query(
@@ -877,14 +878,15 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
     // Ensure idempotency table exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_external_alerts (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        alert_key TEXT NOT NULL,
-        title TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id, alert_key)
-      )
+    id SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL,
+    subtask_id INTEGER NOT NULL,
+    alert_key TEXT NOT NULL,
+    title TEXT,
+    next_call_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(task_id, subtask_id, alert_key)
+  )
     `);
 
     // Find overdue subtasks that haven't been sent to Pulse yet
