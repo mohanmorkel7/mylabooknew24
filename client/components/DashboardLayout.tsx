@@ -707,7 +707,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     variant="ghost"
                     size="sm"
                     className="w-full text-xs"
-                    onClick={() => navigate("/alerts")}
+                    onClick={() => navigate("/follow-ups")}
                   >
                     View All Notifications
                   </Button>
