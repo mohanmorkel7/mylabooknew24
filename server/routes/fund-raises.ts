@@ -4,6 +4,47 @@ import { isDatabaseAvailable, pool, withTimeout } from "../database/connection";
 
 const router = Router();
 
+// IST helpers for chat timestamps
+const IST_TZ = "Asia/Kolkata";
+function toISTDate(d: any): Date | null {
+  if (!d) return null;
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return null;
+  const utcMs = date.getTime();
+  const istMs = utcMs + 5.5 * 60 * 60 * 1000;
+  return new Date(istMs);
+}
+function istDisplay(d: any): string | null {
+  const date = toISTDate(d);
+  if (!date) return null;
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone: IST_TZ,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const parts = new Intl.DateTimeFormat("en-IN", opts).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+  return `${get("day")} ${get("month")} ${get("year")}, ${get("hour")}:${get("minute")} ${get("dayPeriod")?.toUpperCase()}`;
+}
+function istISO(d: any): string | null {
+  const date = toISTDate(d);
+  if (!date) return null;
+  return date.toISOString().replace(/Z$/, "+05:30");
+}
+function withIstChat(row: any) {
+  if (!row || typeof row !== "object") return row;
+  const r = { ...row };
+  r.created_at_ist = istDisplay(r.created_at);
+  r.created_at_ist_iso = istISO(r.created_at);
+  r.updated_at_ist = istDisplay(r.updated_at);
+  r.updated_at_ist_iso = istISO(r.updated_at);
+  return r;
+}
+
 // Progress data for Fund Raises (for dashboard charts)
 router.get("/progress", async (_req: Request, res: Response) => {
   try {
@@ -665,7 +706,7 @@ router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
        ORDER BY created_at ASC`,
       [stepId],
     );
-    res.json(r.rows || []);
+    res.json((r.rows || []).map((row: any) => withIstChat(row)));
   } catch (error: any) {
     console.error("Error fetching fund raise step chats:", error.message);
     res.status(500).json({ error: "Failed" });
@@ -776,7 +817,7 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
       user_name: r.rows[0].user_name,
     });
 
-    res.status(201).json(r.rows[0]);
+    res.status(201).json(withIstChat(r.rows[0]));
   } catch (error: any) {
     console.error("❌ Error creating fund raise step chat:", error);
     console.error("❌ Error details:", {
@@ -813,7 +854,7 @@ router.put("/chats/:id", async (req: Request, res: Response) => {
         [message.trim(), !!is_rich_text, id],
       );
       if (r.rowCount === 0) return res.status(404).json({ error: "Not found" });
-      return res.json(r.rows[0]);
+      return res.json(withIstChat(r.rows[0]));
     } catch (err: any) {
       const msg = (err && err.message) || "";
       if (err?.code === "42703" || msg.includes("updated_at")) {
