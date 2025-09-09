@@ -10,7 +10,9 @@ const parseToDateUTC = (date: string | Date): Date => {
   if (typeof date !== "string") return new Date(date as any);
   const trimmed = date.trim();
   const hasTZ = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(trimmed);
-  const isISO = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(trimmed);
+  const isISO = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(
+    trimmed,
+  );
   if (isISO && !hasTZ) {
     // Treat bare timestamps from DB as UTC
     const normalized = trimmed.replace(" ", "T") + "Z";
