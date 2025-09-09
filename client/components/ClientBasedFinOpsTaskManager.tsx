@@ -130,7 +130,7 @@ const extractNameFromValue = (value: string, depth: number = 0): string => {
         return extractNameFromValue(extracted, depth + 1);
       } else {
         // Handle unquoted content
-        console.log("✅ Manual extraction without quotes:", content);
+        console.log("�� Manual extraction without quotes:", content);
         // Recursively parse in case there are more nested levels
         return extractNameFromValue(content, depth + 1);
       }
@@ -443,7 +443,15 @@ function SortableSubTaskItem({
                       {subtask.started_at && (
                         <span>
                           Started:{" "}
-                          {format(new Date(subtask.started_at), "h:mm a")}
+                          {new Date(subtask.started_at).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                              timeZone: "Asia/Kolkata",
+                            },
+                          )}
                         </span>
                       )}
                     </div>
@@ -1591,9 +1599,114 @@ export default function ClientBasedFinOpsTaskManager() {
     finopsTasks.length,
     "Filtered tasks:",
     filteredTasks.length,
-    "Date filter:",
-    dateFilter,
   );
+
+  // Overdue direct-call timers (seconds remaining per task)
+  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>(
+    {},
+  );
+
+  // Initialize timers for overdue tasks when filteredTasks change (use persisted next-call)
+  useEffect(() => {
+    const initial: Record<number, number> = { ...overdueTimers };
+    filteredTasks.forEach((task: ClientBasedFinOpsTask) => {
+      const hasOverdue = (task.subtasks || []).some(
+        (st) => st.status === "overdue",
+      );
+      const key = `finops_next_call_${task.id}`;
+      if (hasOverdue) {
+        const stored =
+          typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        if (stored) {
+          const nextMs = parseInt(stored, 10);
+          const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
+          initial[task.id] = !isNaN(diff) ? diff : 15 * 60;
+        } else {
+          const next = Date.now() + 15 * 60 * 1000;
+          try {
+            if (typeof window !== "undefined")
+              localStorage.setItem(key, String(next));
+          } catch {}
+          initial[task.id] = 15 * 60;
+        }
+      } else {
+        if (initial[task.id]) delete initial[task.id];
+        try {
+          if (typeof window !== "undefined") localStorage.removeItem(key);
+        } catch {}
+      }
+    });
+    setOverdueTimers(initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredTasks]);
+
+  // Countdown interval
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOverdueTimers((prev) => {
+        const updated = { ...prev };
+        Object.keys(updated).forEach((k) => {
+          const id = Number(k);
+          updated[id] = Math.max(0, (updated[id] || 0) - 1);
+        });
+        return updated;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Trigger direct-call when timer reaches 0
+  useEffect(() => {
+    Object.entries(overdueTimers).forEach(async ([taskIdStr, seconds]) => {
+      const taskId = Number(taskIdStr);
+      if (seconds === 0) {
+        const task = filteredTasks.find((t) => t.id === taskId);
+        if (!task) return;
+        (task.subtasks || [])
+          .filter((st) => st.status === "overdue")
+          .forEach(async (subtask) => {
+            try {
+              const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name || "Unknown Client"}.`;
+              try {
+                await apiClient.sendFinOpsManualAlert(
+                  task.id,
+                  subtask.id,
+                  "sla_overdue",
+                  title,
+                );
+              } catch {}
+              await fetch("https://pulsealerts.mylapay.com/direct-call", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  receiver: "CRM_Switch",
+                  title,
+                  user_ids: [],
+                }),
+              });
+            } catch (err) {
+              console.warn(
+                "Failed to trigger direct-call for overdue subtask:",
+                err,
+              );
+            }
+          });
+        // schedule next call 15 minutes from now and persist
+        const nextMs = Date.now() + 15 * 60 * 1000;
+        try {
+          if (typeof window !== "undefined")
+            localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs));
+        } catch {}
+        // reset timer
+        setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overdueTimers]);
+
+  // End timers setup
+
+  console.log(filteredTasks.length, "Date filter:", dateFilter);
 
   // Calculate summary statistics
   const getOverallSummary = () => {
@@ -2246,6 +2359,50 @@ export default function ClientBasedFinOpsTaskManager() {
                                     return `Starts: ${time ? `${time} ${period}` : sorted[0].start_time}`;
                                   })()
                                 : "No schedule set"}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Next direct-call countdown for overdue tasks */}
+                        {taskStatus === "overdue" && (
+                          <div className="flex items-center gap-1">
+                            <Timer className="w-4 h-4" />
+                            <span className="text-red-600">
+                              Next call in:{" "}
+                              {(() => {
+                                // Prefer server-provided next_call_at if available
+                                let seconds = overdueTimers[task.id] || 15 * 60;
+                                try {
+                                  if ((task as any).next_call_at) {
+                                    const nextMs = new Date(
+                                      (task as any).next_call_at,
+                                    ).getTime();
+                                    const diff = Math.max(
+                                      0,
+                                      Math.ceil((nextMs - Date.now()) / 1000),
+                                    );
+                                    if (!isNaN(diff)) seconds = diff;
+                                  } else {
+                                    const stored =
+                                      typeof window !== "undefined"
+                                        ? localStorage.getItem(
+                                            `finops_next_call_${task.id}`,
+                                          )
+                                        : null;
+                                    if (stored) {
+                                      const nextMs = parseInt(stored, 10);
+                                      const diff = Math.max(
+                                        0,
+                                        Math.ceil((nextMs - Date.now()) / 1000),
+                                      );
+                                      if (!isNaN(diff)) seconds = diff;
+                                    }
+                                  }
+                                } catch {}
+                                const mins = Math.floor(seconds / 60);
+                                const secs = seconds % 60;
+                                return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+                              })()}
                             </span>
                           </div>
                         )}

@@ -207,6 +207,7 @@ interface FinOpsTask {
   created_by: string;
   last_run?: string;
   next_run?: string;
+  client_name?: string;
   status: "active" | "inactive" | "completed" | "overdue";
 }
 
@@ -243,6 +244,129 @@ export default function FinOpsTaskManager({
     queryFn: () => apiClient.getFinOpsTasks(),
     refetchInterval: 30000, // Refresh every 30 seconds for SLA monitoring
   });
+
+  // Overdue direct-call timers (seconds remaining)
+  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>(
+    {},
+  );
+
+  // Initialize timers for overdue tasks using persisted next-call timestamp in localStorage
+  useEffect(() => {
+    const initialTimers: Record<number, number> = { ...overdueTimers };
+    finopsTasks.forEach((task: FinOpsTask) => {
+      const slaStatus = getSLAStatus(task);
+      const key = `finops_next_call_${task.id}`;
+      if (slaStatus === "overdue") {
+        const stored =
+          typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        let secondsRemaining = 15 * 60;
+        if (stored) {
+          const nextCallMs = parseInt(stored, 10);
+          const diff = Math.ceil((nextCallMs - Date.now()) / 1000);
+          if (!isNaN(diff) && diff > 0) secondsRemaining = diff;
+          else {
+            // expired or invalid -> schedule next call 15 min from now
+            const next = Date.now() + 15 * 60 * 1000;
+            try {
+              localStorage.setItem(key, String(next));
+            } catch {}
+            secondsRemaining = 15 * 60;
+          }
+        } else {
+          const next = Date.now() + 15 * 60 * 1000;
+          try {
+            localStorage.setItem(key, String(next));
+          } catch {}
+          secondsRemaining = 15 * 60;
+        }
+        initialTimers[task.id] = secondsRemaining;
+      } else {
+        // clear non-overdue timers and remove persisted key
+        if (initialTimers[task.id]) delete initialTimers[task.id];
+        try {
+          if (typeof window !== "undefined") localStorage.removeItem(key);
+        } catch {}
+      }
+    });
+    setOverdueTimers(initialTimers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finopsTasks]);
+
+  // Countdown interval that decrements every second and triggers direct-call when 0
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOverdueTimers((prev) => {
+        const updated: Record<number, number> = { ...prev };
+        Object.keys(updated).forEach((k) => {
+          const id = Number(k);
+          updated[id] = Math.max(0, (updated[id] || 0) - 1);
+        });
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Trigger direct-call when a timer reaches 0
+  useEffect(() => {
+    Object.entries(overdueTimers).forEach(([taskIdStr, seconds]) => {
+      const taskId = Number(taskIdStr);
+      if (seconds === 0) {
+        const task = finopsTasks.find((t: FinOpsTask) => t.id === taskId);
+        if (task) {
+          // For each overdue subtask, call the external direct-call API and log an alert
+          task.subtasks
+            .filter((st) => st.status === "overdue")
+            .forEach(async (subtask) => {
+              try {
+                const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name || "Unknown Client"}.`;
+
+                // Call server to log manual alert (keeps server activity log consistent)
+                try {
+                  await apiClient.sendFinOpsManualAlert(
+                    task.id,
+                    subtask.id,
+                    "sla_overdue",
+                    title,
+                  );
+                } catch (e) {
+                  // swallow - still attempt external call
+                }
+
+                // Call external direct-call API (server also dedupes on its side)
+                await fetch("https://pulsealerts.mylapay.com/direct-call", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    receiver: "CRM_Switch",
+                    title,
+                    user_ids: [],
+                  }),
+                });
+              } catch (err) {
+                console.warn(
+                  "Failed to trigger direct-call for overdue subtask:",
+                  err,
+                );
+              }
+            });
+
+          // schedule next call 15 minutes from now and persist
+          const nextMs = Date.now() + 15 * 60 * 1000;
+          try {
+            if (typeof window !== "undefined")
+              localStorage.setItem(
+                `finops_next_call_${taskId}`,
+                String(nextMs),
+              );
+          } catch {}
+          setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overdueTimers]);
 
   // Fetch users for assignment
   const { data: users = [] } = useQuery({
@@ -530,6 +654,48 @@ export default function FinOpsTaskManager({
                               : "Not scheduled"}
                           </span>
                         </div>
+                        {slaStatus === "overdue" && (
+                          <div className="flex items-center gap-1">
+                            <Timer className="w-4 h-4" />
+                            <span className="text-red-600">
+                              Next call in:{" "}
+                              {(() => {
+                                // Prefer server-provided next_call_at if available
+                                let seconds = overdueTimers[task.id] || 15 * 60;
+                                try {
+                                  if (task.next_call_at) {
+                                    const nextMs = new Date(
+                                      task.next_call_at,
+                                    ).getTime();
+                                    const diff = Math.max(
+                                      0,
+                                      Math.ceil((nextMs - Date.now()) / 1000),
+                                    );
+                                    if (!isNaN(diff)) seconds = diff;
+                                  } else {
+                                    const stored =
+                                      typeof window !== "undefined"
+                                        ? localStorage.getItem(
+                                            `finops_next_call_${task.id}`,
+                                          )
+                                        : null;
+                                    if (stored) {
+                                      const nextMs = parseInt(stored, 10);
+                                      const diff = Math.max(
+                                        0,
+                                        Math.ceil((nextMs - Date.now()) / 1000),
+                                      );
+                                      if (!isNaN(diff)) seconds = diff;
+                                    }
+                                  }
+                                } catch {}
+                                const mins = Math.floor(seconds / 60);
+                                const secs = seconds % 60;
+                                return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+                              })()}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Timer className="w-4 h-4" />
                           <span>{task.subtasks.length} subtasks</span>
@@ -721,8 +887,9 @@ export default function FinOpsTaskManager({
                   </SelectTrigger>
                   <SelectContent>
                     {users
-                      .filter((user: any, index: number, arr: any[]) =>
-                        arr.findIndex(u => u.id === user.id) === index
+                      .filter(
+                        (user: any, index: number, arr: any[]) =>
+                          arr.findIndex((u) => u.id === user.id) === index,
                       )
                       .map((user: any, index: number) => (
                         <SelectItem

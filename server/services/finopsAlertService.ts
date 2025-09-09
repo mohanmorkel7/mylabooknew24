@@ -296,14 +296,16 @@ class FinOpsAlertService {
   private async checkOverdueRepeatAlerts(): Promise<void> {
     try {
       // Default behavior: check every minute, no initial delay, no single-overdue constraint
+      // Default behavior: check every 15 minutes for repeat alerts, no initial delay
       const initialDelay = 0;
-      const repeatInterval = 1;
+      const repeatInterval = 15;
 
       const result = await pool.query(
         `
         SELECT
           t.id as task_id,
           t.task_name,
+          t.client_name,
           t.reporting_managers,
           t.escalation_managers,
           t.assigned_to,
@@ -327,6 +329,7 @@ class FinOpsAlertService {
           subtask_id INTEGER NOT NULL,
           alert_key TEXT NOT NULL,
           title TEXT,
+          next_call_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT NOW(),
           UNIQUE(task_id, subtask_id, alert_key)
         )
@@ -354,7 +357,9 @@ class FinOpsAlertService {
               ]),
             );
             const userIds = await this.getUserIdsFromNames(names);
-            const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+            const taskName = row.task_name || "Unknown Task";
+            const clientName = row.client_name || "Unknown Client";
+            const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
             console.log("Direct-call payload (service initial)", {
               taskId: row.task_id,
@@ -379,8 +384,8 @@ class FinOpsAlertService {
 
             if (response.ok) {
               await pool.query(
-                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-                 VALUES ($1, $2, $3, $4)
+                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
                  ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
                 [row.task_id, row.subtask_id, initialKey, title],
               );
@@ -390,6 +395,7 @@ class FinOpsAlertService {
                 "sla_overdue_initial",
                 "all",
                 minutes,
+                title,
               );
             } else {
               console.warn(
@@ -420,7 +426,9 @@ class FinOpsAlertService {
           );
           const userIds = await this.getUserIdsFromNames(names);
 
-          const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+          const taskName = row.task_name || "Unknown Task";
+          const clientName = row.client_name || "Unknown Client";
+          const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
           console.log("Direct-call payload (service repeat)", {
             taskId: row.task_id,
@@ -451,9 +459,9 @@ class FinOpsAlertService {
           }
 
           await pool.query(
-            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-             VALUES ($1, $2, $3, $4)
-             ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
             [row.task_id, row.subtask_id, alertKey, title],
           );
 
@@ -463,6 +471,7 @@ class FinOpsAlertService {
             "sla_overdue_repeat",
             "all",
             minutes,
+            title,
           );
         }
       }
@@ -600,12 +609,14 @@ class FinOpsAlertService {
       `;
 
       await this.sendEmailAlerts(recipients, subject, message);
+      const customTitle = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
       await this.logAlert(
         task.id,
         subtask.id,
         "sla_overdue",
         "all",
         minutesOverdue,
+        customTitle,
       );
     } catch (error) {
       console.error("Error sending SLA overdue alert:", error);
@@ -628,15 +639,16 @@ class FinOpsAlertService {
           subtask_id INTEGER NOT NULL,
           alert_key TEXT NOT NULL,
           title TEXT,
+          next_call_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT NOW(),
           UNIQUE(task_id, subtask_id, alert_key)
         )
       `);
 
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
          RETURNING id`,
         [taskId, Number(subtaskId), "replica_down_overdue", title],
       );
@@ -829,6 +841,7 @@ class FinOpsAlertService {
     alertType: string,
     recipients: string,
     minutesData: number,
+    customMessage?: string,
   ): Promise<void> {
     try {
       const level = alertType.includes("overdue")
@@ -836,7 +849,8 @@ class FinOpsAlertService {
         : alertType.includes("warning")
           ? "warning"
           : "info";
-      const message = `${alertType} • ${minutesData} min`;
+      const defaultMessage = `${alertType} • ${minutesData} min`;
+      const messageToStore = customMessage || defaultMessage;
       const recipsArray = recipients
         .split(",")
         .map((s) => s.trim())
@@ -852,7 +866,7 @@ class FinOpsAlertService {
           subtaskId,
           alertType,
           level,
-          message,
+          messageToStore,
           JSON.stringify(recipsArray),
           JSON.stringify(metadata),
         ],
@@ -892,10 +906,18 @@ class FinOpsAlertService {
         [status, taskId, subtaskId],
       );
 
+      // Fetch task and client details for richer message
+      const taskMeta = await pool.query(
+        `SELECT task_name, client_name FROM finops_tasks WHERE id = $1 LIMIT 1`,
+        [taskId],
+      );
+      const taskName = taskMeta.rows[0]?.task_name || "Unknown Task";
+      const clientName = taskMeta.rows[0]?.client_name || "Unknown Client";
+
       // Build human-readable status change message (special phrasing for overdue)
       const statusChangeMessage =
         status === "overdue"
-          ? `Take immediate action on the overdue subtask ${subtaskName}`
+          ? `Kindly take prompt action on the overdue subtask ${subtaskName} from the task ${taskName} for the client ${clientName}.`
           : `Subtask "${subtaskName}" status changed from "${previousStatus}" to "${status}"`;
 
       await this.logActivity(

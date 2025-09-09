@@ -2008,11 +2008,11 @@ router.post("/test/create-overdue-now", async (req: Request, res: Response) => {
       // Create/update test task
       const taskQuery = `
         INSERT INTO finops_tasks (id, task_name, assigned_to, reporting_managers, escalation_managers, effective_from, duration, is_active, created_by, status, client_name)
-        VALUES (98, 'REAL-TIME OVERDUE TEST', 'Test User Real Time', '["Test Manager"]'::jsonb, '["Test Escalation"]'::jsonb, CURRENT_DATE, 'daily', true, 1, 'in_progress', 'Real Time Test Client')
+        VALUES (98, 'REAL-TIME OVERDUE TEST', 'Test User Real Time', '["Test Manager"]'::jsonb, '["Test Escalation"]'::jsonb, CURRENT_DATE, 'daily', true, 1, 'active', 'Real Time Test Client')
         ON CONFLICT (id) DO UPDATE SET
           task_name = EXCLUDED.task_name,
           assigned_to = EXCLUDED.assigned_to,
-          status = 'in_progress',
+          status = 'active',
           client_name = EXCLUDED.client_name
       `;
 

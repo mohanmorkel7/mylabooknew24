@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 import {
   Command,
   CommandEmpty,
@@ -75,6 +87,7 @@ type Connection = {
   phone_prefix: string;
   phone: string;
   email?: string | null;
+  designation?: string | null;
   country?: string | null;
   state?: string | null;
   city?: string | null;
@@ -105,6 +118,7 @@ function ConnectionForm({
     phone_prefix: initial?.phone_prefix || "+91",
     phone: initial?.phone || "",
     email: initial?.email || "",
+    designation: (initial?.designation as string) || "",
     country: initial?.country || "",
     state: initial?.state || "",
     city: initial?.city || "",
@@ -142,6 +156,7 @@ function ConnectionForm({
       phone_prefix: String(form.phone_prefix).trim(),
       phone: String(form.phone).trim(),
       email: form.email ? String(form.email).trim() : null,
+      designation: form.designation ? String(form.designation).trim() : null,
       country: form.country ? String(form.country).trim() : null,
       state: form.state ? String(form.state).trim() : null,
       city: form.city ? String(form.city).trim() : null,
@@ -150,13 +165,26 @@ function ConnectionForm({
 
   return (
     <div className="space-y-4">
+      {/* Row 1: Name full width */}
+      <div>
+        <Label>Name *</Label>
+        <Input
+          value={form.name as string}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Member name"
+        />
+      </div>
+
+      {/* Row 2: Designation | Type */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label>Name *</Label>
+          <Label>Designation</Label>
           <Input
-            value={form.name as string}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Member name"
+            value={(form.designation as string) || ""}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, designation: e.target.value }))
+            }
+            placeholder="e.g. Senior Manager"
           />
         </div>
         <div>
@@ -177,41 +205,37 @@ function ConnectionForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="md:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label>Phone Prefix *</Label>
-              <Select
-                value={form.phone_prefix}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, phone_prefix: v }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select prefix" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PHONE_PREFIXES.map((p) => (
-                    <SelectItem key={p.code} value={p.code}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="md:col-span-2">
-              <Label>Phone *</Label>
-              <Input
-                value={form.phone as string}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
-                }
-                placeholder="Phone number"
-              />
-            </div>
-          </div>
+      </div>
+
+      {/* Row 3: Phone Prefix | Phone | Email (reduced prefix width) */}
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="md:col-span-1">
+          <Label>Phone Prefix *</Label>
+          <Select
+            value={form.phone_prefix}
+            onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select prefix" />
+            </SelectTrigger>
+            <SelectContent>
+              {PHONE_PREFIXES.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <div>
+        <div className="md:col-span-2">
+          <Label>Phone *</Label>
+          <Input
+            value={form.phone as string}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            placeholder="Phone number"
+          />
+        </div>
+        <div className="md:col-span-3">
           <Label>Email</Label>
           <Input
             type="email"
@@ -584,7 +608,7 @@ export default function Connections() {
           </div>
         )}
         {connections.map((c: Connection) => (
-          <Card key={c.id} className="relative">
+          <Card key={c.id} className="relative h-full">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{c.name}</CardTitle>
@@ -596,7 +620,7 @@ export default function Connections() {
                 {c.country || ""}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1">
               <div className="space-y-1 text-sm">
                 <div>
                   <span className="text-gray-500">Phone:</span> {c.phone_prefix}{" "}
@@ -608,25 +632,48 @@ export default function Connections() {
                   </div>
                 )}
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/connections/${c.id}/edit`)}
-                >
-                  <Edit className="w-4 h-4 mr-1" /> Edit
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    deleteMutation.mutate(c.id);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-1" /> Delete
-                </Button>
-              </div>
             </CardContent>
+
+            <CardFooter className="pt-4 justify-end gap-2 border-t border-gray-100 dark:border-gray-800">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/connections/${c.id}/edit`)}
+              >
+                <Edit className="w-4 h-4 mr-1" /> Edit
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Delete"
+                    title="Delete"
+                    className="p-2 border border-red-600 text-red-600 hover:bg-red-50 rounded-md"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete connection?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{c.name}"? This action
+                      cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteMutation.mutate(c.id)}
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardFooter>
           </Card>
         ))}
       </div>

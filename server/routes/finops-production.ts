@@ -79,19 +79,20 @@ async function sendReplicaDownAlertOnce(
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_external_alerts (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        alert_key TEXT NOT NULL,
-        title TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id, alert_key)
-      )
+    id SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL,
+    subtask_id INTEGER NOT NULL,
+    alert_key TEXT NOT NULL,
+    title TEXT,
+    next_call_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(task_id, subtask_id, alert_key)
+  )
     `);
 
     const reserve = await pool.query(
-      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
        ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
        RETURNING id`,
       [taskId, Number(subtaskId), "replica_down_overdue", title],
@@ -164,6 +165,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     const query = `
       SELECT
         t.*,
+        CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'finops_external_alerts' AND column_name = 'next_call_at') THEN (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) ELSE NULL END AS next_call_at,
         json_agg(
           json_build_object(
             'id', st.id,
@@ -436,11 +438,13 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
 
         // External Pulse alert with managers and assignees
         const meta = await client.query(
-          `SELECT task_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
+          `SELECT task_name, client_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
           [subtask.task_id],
         );
         const row = meta.rows[0] || {};
-        const title = `Take immediate action on the overdue subtask ${subtask.name}`;
+        const taskName = row.task_name || "Unknown Task";
+        const clientName = row.client_name || "Unknown Client";
+        const title = `Please take immediate action on the overdue subtask ${subtask.name} under the task ${taskName} for the client ${clientName}.`;
         const managerNames = Array.from(
           new Set([
             ...parseManagers(row.reporting_managers),
@@ -875,14 +879,15 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
     // Ensure idempotency table exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_external_alerts (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        alert_key TEXT NOT NULL,
-        title TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id, alert_key)
-      )
+    id SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL,
+    subtask_id INTEGER NOT NULL,
+    alert_key TEXT NOT NULL,
+    title TEXT,
+    next_call_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(task_id, subtask_id, alert_key)
+  )
     `);
 
     // Find overdue subtasks that haven't been sent to Pulse yet
@@ -891,6 +896,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
       SELECT
         t.id as task_id,
         t.task_name,
+        t.client_name,
         t.assigned_to,
         t.reporting_managers,
         t.escalation_managers,
@@ -912,12 +918,14 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
 
     let sent = 0;
     for (const row of overdue.rows) {
-      const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+      const taskName = row.task_name || "Unknown Task";
+      const clientName = row.client_name || "Unknown Client";
+      const title = `Please take immediate action on the overdue subtask ${row.subtask_name} under the task ${taskName} for the client ${clientName}.`;
 
       // Reserve to avoid duplicates
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-         VALUES ($1, $2, 'replica_down_overdue', $3)
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+         VALUES ($1, $2, 'replica_down_overdue', $3, NOW() + INTERVAL '15 minutes')
          ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],
@@ -987,6 +995,27 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
     res.json({ success: true, checked: overdue.rowCount, sent });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get all external alert next_call timestamps
+router.get("/next-calls", async (req: Request, res: Response) => {
+  try {
+    await requireDatabase();
+    const { alert_key } = req.query;
+    const params: any[] = [];
+    let query = `SELECT task_id, subtask_id, alert_key, next_call_at, created_at FROM finops_external_alerts`;
+    if (alert_key) {
+      query += ` WHERE alert_key = $1`;
+      params.push(String(alert_key));
+    }
+    query += ` ORDER BY next_call_at ASC NULLS LAST`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    console.error("Error fetching next calls:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 

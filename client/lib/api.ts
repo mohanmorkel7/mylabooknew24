@@ -1067,6 +1067,11 @@ export class ApiClient {
     }
   }
 
+  async getFinOpsNextCalls(alertKey?: string) {
+    const params = alertKey ? `?alert_key=${encodeURIComponent(alertKey)}` : "";
+    return this.request(`/finops-production/next-calls${params}`);
+  }
+
   async createFinOpsTask(taskData: any) {
     return this.request("/finops/tasks", {
       method: "POST",

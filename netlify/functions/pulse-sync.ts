@@ -18,22 +18,24 @@ export const handler: Handler = async () => {
     // Ensure idempotency table exists
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_external_alerts (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        alert_key TEXT NOT NULL,
-        title TEXT,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id, alert_key)
-      )
+      id SERIAL PRIMARY KEY,
+      task_id INTEGER NOT NULL,
+      subtask_id INTEGER NOT NULL,
+      alert_key TEXT NOT NULL,
+      title TEXT,
+      next_call_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(task_id, subtask_id, alert_key)
+    )
     `);
 
     // Find overdue subtasks not yet sent
     const overdue = await pool.query(
       `
-      SELECT 
+      SELECT
         t.id as task_id,
         t.task_name,
+        t.client_name,
         t.assigned_to,
         t.reporting_managers,
         t.escalation_managers,
@@ -55,12 +57,14 @@ export const handler: Handler = async () => {
 
     let sent = 0;
     for (const row of overdue.rows) {
-      const title = `Take immediate action on the overdue subtask ${row.subtask_name}`;
+      const taskName = row.task_name || "Unknown Task";
+      const clientName = row.client_name || "Unknown Client";
+      const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
 
       // Reserve to avoid duplicates
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-         VALUES ($1, $2, 'replica_down_overdue', $3)
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+         VALUES ($1, $2, 'replica_down_overdue', $3, NOW() + INTERVAL '15 minutes')
          ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],

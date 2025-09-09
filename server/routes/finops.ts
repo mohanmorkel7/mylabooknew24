@@ -11,7 +11,7 @@ async function ensureFinOpsSettings() {
     CREATE TABLE IF NOT EXISTS finops_settings (
       id SERIAL PRIMARY KEY,
       initial_overdue_call_delay_minutes INTEGER DEFAULT 0,
-      repeat_overdue_call_interval_minutes INTEGER DEFAULT 10,
+      repeat_overdue_call_interval_minutes INTEGER DEFAULT 15,
       only_repeat_when_single_overdue BOOLEAN DEFAULT false,
       updated_at TIMESTAMP DEFAULT NOW()
     )
@@ -23,7 +23,7 @@ async function ensureFinOpsSettings() {
     await pool.query(
       `INSERT INTO finops_settings (initial_overdue_call_delay_minutes, repeat_overdue_call_interval_minutes, only_repeat_when_single_overdue)
        VALUES ($1, $2, $3)`,
-      [0, 10, false],
+      [0, 15, false],
     );
   }
 }
@@ -303,6 +303,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
       const query = `
         SELECT
           t.*,
+          CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'finops_external_alerts' AND column_name = 'next_call_at') THEN (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) ELSE NULL END AS next_call_at,
           COALESCE(
             json_agg(
               json_build_object(
@@ -838,16 +839,17 @@ async function sendReplicaDownAlertOnce(
         subtask_id INTEGER NOT NULL,
         alert_key TEXT NOT NULL,
         title TEXT,
+        next_call_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT NOW(),
         UNIQUE(task_id, subtask_id, alert_key)
       )
     `);
 
     const reserve = await pool.query(
-      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
-       RETURNING id`,
+      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+         VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+         RETURNING id`,
       [taskId, Number(subtaskId), "replica_down_overdue", title],
     );
 
@@ -989,7 +991,15 @@ router.patch(
             settings?.initial_overdue_call_delay_minutes || 0,
           );
           if (initialDelay === 0) {
-            const title = `Take immediate action on the overdue subtask ${subtaskName}`;
+            // Fetch task/client details for richer message
+            const trow = await pool.query(
+              `SELECT task_name, client_name FROM finops_tasks WHERE id = $1 LIMIT 1`,
+              [taskId],
+            );
+            const taskName = trow.rows[0]?.task_name || "Unknown Task";
+            const clientName = trow.rows[0]?.client_name || "Unknown Client";
+            const title = `Please take immediate action on the overdue subtask ${subtaskName} under the task ${taskName} for the client ${clientName}.`;
+
             const managerNames = Array.from(
               new Set([
                 ...parseManagerNames(subtaskData.reporting_managers),
@@ -1040,7 +1050,9 @@ router.patch(
 
             // External alert for overdue in mock mode as well
             if (status === "overdue") {
-              const title = `Take immediate action on the overdue subtask ${subtask.name}`;
+              const taskNameMock = task.task_name || "Unknown Task";
+              const clientNameMock = task.client_name || "Unknown Client";
+              const title = `Please take immediate action on the overdue subtask ${subtask.name} under the task ${taskNameMock} for the client ${clientNameMock}.`;
               await sendReplicaDownAlertOnce(taskId, subtaskId, title, []);
             }
 
@@ -2347,7 +2359,7 @@ router.get("/config", async (_req: Request, res: Response) => {
     if (!(await isDatabaseAvailable())) {
       return res.json({
         initial_overdue_call_delay_minutes: 0,
-        repeat_overdue_call_interval_minutes: 10,
+        repeat_overdue_call_interval_minutes: 15,
         only_repeat_when_single_overdue: false,
       });
     }
@@ -2357,7 +2369,7 @@ router.get("/config", async (_req: Request, res: Response) => {
         settings.initial_overdue_call_delay_minutes || 0,
       ),
       repeat_overdue_call_interval_minutes: Number(
-        settings.repeat_overdue_call_interval_minutes || 10,
+        settings.repeat_overdue_call_interval_minutes || 15,
       ),
       only_repeat_when_single_overdue: Boolean(
         settings.only_repeat_when_single_overdue || false,
@@ -2381,7 +2393,7 @@ router.put("/config", async (req: Request, res: Response) => {
     );
     const repeatInterval = Math.max(
       1,
-      parseInt(body.repeat_overdue_call_interval_minutes ?? 10),
+      parseInt(body.repeat_overdue_call_interval_minutes ?? 15),
     );
     const onlySingle = Boolean(body.only_repeat_when_single_overdue ?? false);
 
@@ -2466,6 +2478,41 @@ router.get("/test", (req: Request, res: Response) => {
       test: "/api/finops/test",
     },
   });
+});
+
+// Get all external alert next_call timestamps
+router.get("/next-calls", async (req: Request, res: Response) => {
+  try {
+    // Add CORS headers for FullStory compatibility
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
+
+    if (await isDatabaseAvailable()) {
+      const { alert_key } = req.query;
+      const params: any[] = [];
+      let query = `SELECT task_id, subtask_id, alert_key, next_call_at, created_at FROM finops_external_alerts`;
+      if (alert_key) {
+        query += ` WHERE alert_key = $1`;
+        params.push(String(alert_key));
+      }
+      query += ` ORDER BY next_call_at ASC NULLS LAST`;
+
+      const result = await pool.query(query, params);
+      res.json(result.rows);
+    } else {
+      res.json([]);
+    }
+  } catch (error: any) {
+    console.error("Error fetching next calls:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;
