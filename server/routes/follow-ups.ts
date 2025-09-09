@@ -780,7 +780,7 @@ router.get("/", async (req: Request, res: Response) => {
         );
       }
 
-      res.json(result.rows);
+      res.json(result.rows.map((row: any) => addISTFields({ ...row })));
     } else {
       // Return mock data from MockDataService when database is unavailable
       console.log("Database unavailable, returning mock follow-ups");
