@@ -652,9 +652,8 @@ router.get("/", async (req: Request, res: Response) => {
               (
                 SELECT string_agg(CONCAT(u2.first_name, ' ', u2.last_name), ', ')
                 FROM users u2
-                WHERE u2.id = ANY (
-                  SELECT ARRAY(SELECT (jsonb_array_elements_text(f.assigned_to_list))::int)
-                )
+                JOIN LATERAL jsonb_array_elements_text(f.assigned_to_list) AS j(uid) ON true
+                WHERE u2.id = (j.uid)::int
               ) as assigned_users_names`
           : `, NULL as assigned_to_list, NULL as assigned_users_names`;
 
