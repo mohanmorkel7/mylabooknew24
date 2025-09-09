@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,7 +40,7 @@ export default function Login() {
         <div className="text-center">
           <div className="flex justify-center mb-4">
             <img
-              src={'./mylapaylogo.png'}
+              src={"./mylapaylogo.png"}
               alt="Mylapay"
               className="h-12 object-contain"
             />

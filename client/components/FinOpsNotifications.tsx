@@ -30,6 +30,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import {
   Bell,
   AlertTriangle,
@@ -57,12 +58,12 @@ import {
 interface FinOpsNotification {
   id: string;
   type:
-    | "pre_start_alert" // 15 mins before start time
-    | "sla_warning" // Task missed start time
-    | "escalation_alert" // 15+ mins overdue
-    | "task_completed" // Task completed (moved to activity log)
-    | "task_overdue" // Task overdue (moved to activity log)
-    | "overdue_reason_required" // Requires immediate overdue reason
+    | "pre_start_alert"
+    | "sla_warning"
+    | "escalation_alert"
+    | "task_completed"
+    | "task_overdue"
+    | "overdue_reason_required"
     | "daily_reminder"
     | "task_pending"
     | "task_delayed";
@@ -71,7 +72,8 @@ interface FinOpsNotification {
   task_name: string;
   client_name?: string;
   subtask_name?: string;
-  assigned_to: string;
+  assigned_to: string; // Summary string for list
+  assigned_users?: string[]; // Parsed list from DB
   reporting_managers: string[];
   escalation_managers?: string[];
   priority: "low" | "medium" | "high" | "critical";
@@ -82,8 +84,8 @@ interface FinOpsNotification {
   sla_remaining?: string;
   overdue_minutes?: number;
   members_list?: string[];
-  scheduled_time_ist?: string; // IST time when task should start
-  time_diff_minutes?: number; // Minutes until/since start time
+  scheduled_time_ist?: string;
+  time_diff_minutes?: number;
 }
 
 // Mock notifications data
@@ -110,6 +112,49 @@ const transformDbNotifications = (
 
     return true;
   });
+
+  const parseManagers = (val: any): string[] => {
+    if (!val) return [];
+    if (Array.isArray(val))
+      return val
+        .map(String)
+        .map((s) => s.trim())
+        .filter(Boolean);
+    if (typeof val === "string") {
+      let s = val.trim();
+      if (s.startsWith("{") && s.endsWith("}")) {
+        s = s.slice(1, -1);
+        return s
+          .split(",")
+          .map((x) => x.trim())
+          .map((x) => x.replace(/^\"|\"$/g, ""))
+          .filter(Boolean);
+      }
+      try {
+        const parsed = JSON.parse(s);
+        if (Array.isArray(parsed))
+          return parsed
+            .map(String)
+            .map((x) => x.trim())
+            .filter(Boolean);
+      } catch {}
+      return s
+        .split(",")
+        .map((x) => x.trim())
+        .filter(Boolean);
+    }
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed)
+        ? parsed
+            .map(String)
+            .map((x) => x.trim())
+            .filter(Boolean)
+        : [];
+    } catch {
+      return [];
+    }
+  };
 
   return activeNotifications.map((dbNotif, index) => {
     // Initialize all variables at the beginning to avoid reference errors
@@ -413,9 +458,17 @@ const transformDbNotifications = (
             ? "PaySwiff"
             : "ABC Corporation"),
       subtask_name: dbNotif.subtask_name,
-      assigned_to: dbNotif.user_name || members.assigned_to || "Unassigned",
-      reporting_managers: members.reporting_managers,
-      escalation_managers: members.escalation_managers,
+      assigned_users:
+        parseManagers(dbNotif.assigned_to) ||
+        (members.assigned_to ? [members.assigned_to] : []),
+      assigned_to: parseManagers(dbNotif.assigned_to).length
+        ? parseManagers(dbNotif.assigned_to).join(", ")
+        : dbNotif.user_name || members.assigned_to || "Unassigned",
+      reporting_managers:
+        parseManagers(dbNotif.reporting_managers) || members.reporting_managers,
+      escalation_managers:
+        parseManagers(dbNotif.escalation_managers) ||
+        members.escalation_managers,
       priority:
         dbNotif.priority ||
         (notificationType === "overdue_reason_required"
@@ -595,6 +648,10 @@ export default function FinOpsNotifications() {
     notificationId: string;
     taskName: string;
   }>({ open: false, notificationId: "", taskName: "" });
+  const [detailsDialog, setDetailsDialog] = useState<{
+    open: boolean;
+    notification: FinOpsNotification | null;
+  }>({ open: false, notification: null });
   const [overdueReason, setOverdueReason] = useState("");
   const [debugMode, setDebugMode] = useState(false);
 
@@ -1007,52 +1064,13 @@ export default function FinOpsNotifications() {
   };
 
   const getRelativeTime = (dateString: string) => {
-    // Handle the real-time calculation properly
-    const inputDate = new Date(dateString);
-    const currentTime = new Date(); // Use current time directly
-
-    // Calculate difference in milliseconds
-    const diffMs = currentTime.getTime() - inputDate.getTime();
-    const diffMinutes = Math.floor(diffMs / (1000 * 60));
-    const diffHours = Math.floor(diffMinutes / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    // Debug logging for troubleshooting
-    console.log(`🕒 Real-time calculation for ${dateString}:`, {
-      inputUTC: inputDate.toISOString(),
-      currentUTC: currentTime.toISOString(),
-      diffMs,
-      diffMinutes,
-      diffHours,
-      diffDays,
-      calculatedResult:
-        diffMinutes < 1
-          ? "Just now"
-          : diffMinutes < 60
-            ? `${diffMinutes} min ago`
-            : diffHours < 24
-              ? `${diffHours}h ${diffMinutes % 60}m ago`
-              : `${diffDays}d ${diffHours % 24}h ago`,
-    });
-
-    // Return appropriate relative time
-    if (diffMinutes < 1) {
-      return "Just now";
-    } else if (diffMinutes < 60) {
-      return `${diffMinutes} min ago`;
-    } else if (diffHours < 24) {
-      const remainingMins = diffMinutes % 60;
-      return remainingMins > 0
-        ? `${diffHours}h ${remainingMins}m ago`
-        : `${diffHours}h ago`;
-    } else if (diffDays < 7) {
-      const remainingHours = diffHours % 24;
-      return remainingHours > 0
-        ? `${diffDays}d ${remainingHours}h ago`
-        : `${diffDays}d ago`;
-    } else {
-      // For dates older than a week, show formatted date
-      return formatToISTDateTime(inputDate, {
+    // Use IST-aware helper to avoid -5:30 offset issues
+    try {
+      return getRelativeTimeIST(dateString);
+    } catch (e) {
+      // Fallback to simple display in case of parsing issues
+      const d = new Date(dateString);
+      return formatToISTDateTime(d, {
         month: "short",
         day: "numeric",
         hour: "numeric",
@@ -1324,9 +1342,14 @@ export default function FinOpsNotifications() {
                             >
                               {notification.title}
                             </h4>
-                            <p className="text-sm text-gray-700 mt-1 break-words">
-                              {notification.message}
-                            </p>
+                            {notification.message &&
+                              notification.title &&
+                              notification.message.trim() !==
+                                notification.title.trim() && (
+                                <p className="text-sm text-gray-700 mt-1 break-words">
+                                  {notification.message}
+                                </p>
+                              )}
                           </div>
                           <div className="flex items-center gap-2 ml-3">
                             <Badge
@@ -1513,8 +1536,7 @@ export default function FinOpsNotifications() {
                         size="sm"
                         className="h-8 px-2"
                         onClick={() => {
-                          // Handle view action - could open task details
-                          console.log("View notification:", notification.id);
+                          setDetailsDialog({ open: true, notification });
                         }}
                         title="View Details"
                       >
@@ -1528,6 +1550,269 @@ export default function FinOpsNotifications() {
           })
         )}
       </div>
+
+      {/* View Details Dialog */}
+      <Dialog
+        open={detailsDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setDetailsDialog({ open: false, notification: null });
+        }}
+      >
+        <DialogContent className="sm:max-w-[680px]">
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 rounded-md bg-blue-50 p-2 text-blue-700">
+                  <Bell className="w-4 h-4" />
+                </div>
+                <div>
+                  <DialogTitle className="text-base leading-tight">
+                    {detailsDialog.notification?.title ||
+                      "Notification Details"}
+                  </DialogTitle>
+                  {detailsDialog.notification?.message && (
+                    <DialogDescription className="mt-1">
+                      {detailsDialog.notification.message}
+                    </DialogDescription>
+                  )}
+                </div>
+              </div>
+              {detailsDialog.notification && (
+                <div className="flex items-center gap-2">
+                  <Badge
+                    className={
+                      detailsDialog.notification.priority === "critical"
+                        ? "bg-red-600 text-white"
+                        : detailsDialog.notification.priority === "high"
+                          ? "bg-orange-600 text-white"
+                          : detailsDialog.notification.priority === "medium"
+                            ? "bg-amber-500 text-white"
+                            : "bg-gray-500 text-white"
+                    }
+                  >
+                    {detailsDialog.notification.priority}
+                  </Badge>
+                  <Badge variant="secondary" className="capitalize">
+                    {detailsDialog.notification.type.replaceAll("_", " ")}
+                  </Badge>
+                  <Badge variant="outline" className="capitalize">
+                    {detailsDialog.notification.status}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          </DialogHeader>
+
+          {detailsDialog.notification && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Overview
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <Calendar className="w-4 h-4" /> Task
+                        </span>
+                        <span className="font-medium text-right">
+                          {detailsDialog.notification.task_name}
+                        </span>
+                      </div>
+                      {detailsDialog.notification.subtask_name && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Subtask</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.subtask_name}
+                          </span>
+                        </div>
+                      )}
+                      {detailsDialog.notification.client_name && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Client</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.client_name}
+                          </span>
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600 flex items-center gap-2">
+                            <User className="w-4 h-4" /> Assignees
+                          </span>
+                          {!detailsDialog.notification.assigned_users
+                            ?.length && (
+                            <span className="font-medium text-right">
+                              {detailsDialog.notification.assigned_to}
+                            </span>
+                          )}
+                        </div>
+                        {detailsDialog.notification.assigned_users?.length ? (
+                          <div className="mt-2 flex flex-wrap gap-2 justify-end">
+                            {detailsDialog.notification.assigned_users.map(
+                              (u, idx) => (
+                                <Badge
+                                  key={`assignee-${idx}`}
+                                  variant="secondary"
+                                  className="px-2 py-0.5"
+                                >
+                                  {u}
+                                </Badge>
+                              ),
+                            )}
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Timing
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <Clock className="w-4 h-4" /> Created
+                        </span>
+                        <span className="text-right">
+                          <span className="block font-medium">
+                            {getRelativeTimeIST(
+                              detailsDialog.notification.created_at,
+                            )}
+                          </span>
+                          <span className="block text-xs text-gray-500">
+                            {formatToISTDateTime(
+                              detailsDialog.notification.created_at,
+                            )}
+                          </span>
+                        </span>
+                      </div>
+                      {detailsDialog.notification.scheduled_time_ist && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Scheduled (IST)</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.scheduled_time_ist}
+                          </span>
+                        </div>
+                      )}
+                      {typeof detailsDialog.notification.time_diff_minutes ===
+                        "number" && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-600">Time Diff</span>
+                          <span className="font-medium text-right">
+                            {detailsDialog.notification.time_diff_minutes} min
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-md border bg-white p-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Stakeholders
+                    </div>
+                    <div className="space-y-3">
+                      {detailsDialog.notification.reporting_managers?.length ? (
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">
+                            Reporting Managers
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {detailsDialog.notification.reporting_managers.map(
+                              (m, idx) => (
+                                <Badge
+                                  key={`rm-${idx}`}
+                                  variant="secondary"
+                                  className="px-2 py-0.5"
+                                >
+                                  {m}
+                                </Badge>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+
+                      {detailsDialog.notification.escalation_managers
+                        ?.length ? (
+                        <div>
+                          <div className="text-xs text-gray-500 mb-1">
+                            Escalation Managers
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {detailsDialog.notification.escalation_managers.map(
+                              (m, idx) => (
+                                <Badge
+                                  key={`em-${idx}`}
+                                  variant="outline"
+                                  className="px-2 py-0.5"
+                                >
+                                  {m}
+                                </Badge>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {(detailsDialog.notification.sla_remaining ||
+                    detailsDialog.notification.delay_reason) && (
+                    <div className="rounded-md border bg-white p-4">
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                        SLA & Status
+                      </div>
+                      <div className="space-y-3">
+                        {detailsDialog.notification.sla_remaining && (
+                          <div className="flex items-center gap-2 text-orange-700 font-semibold">
+                            <Shield className="w-4 h-4" />{" "}
+                            {detailsDialog.notification.sla_remaining}
+                          </div>
+                        )}
+                        {detailsDialog.notification.delay_reason && (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                            <div className="text-yellow-800 font-medium mb-1">
+                              Delay/Overdue Reason
+                            </div>
+                            <div className="text-yellow-700 text-sm leading-relaxed">
+                              {detailsDialog.notification.delay_reason}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            {detailsDialog.notification &&
+              detailsDialog.notification.status === "unread" && (
+                <Button
+                  onClick={() => markAsRead(detailsDialog.notification!.id)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  Mark as Read
+                </Button>
+              )}
+            <Button
+              variant="outline"
+              onClick={() =>
+                setDetailsDialog({ open: false, notification: null })
+              }
+            >
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Enhanced Overdue Reason Dialog */}
       <Dialog

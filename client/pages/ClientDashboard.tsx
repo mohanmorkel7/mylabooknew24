@@ -6,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   AlertCircle,
@@ -19,6 +26,9 @@ import {
   User,
   Trash,
   Trash2,
+  Calendar,
+  DollarSign,
+  MapPin,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { useDeleteClient } from "@/hooks/useApi";
@@ -57,6 +67,42 @@ export default function ClientDashboard() {
   const openClient = (id: number) => navigate(`/clients/${id}`);
   const deleteMutation = useDeleteClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [quickViewOpen, setQuickViewOpen] = useState(false);
+  const [selectedClient, setSelectedClient] = useState<any | null>(null);
+
+  const selectedMeta = useMemo(
+    () => parseNotesMeta(selectedClient?.notes),
+    [selectedClient],
+  );
+  const primaryContact = Array.isArray(selectedMeta.contacts)
+    ? selectedMeta.contacts[0]
+    : undefined;
+  const phoneDisplay = primaryContact?.phone
+    ? `${primaryContact.phone_prefix || ""} ${primaryContact.phone}`
+    : selectedClient?.phone || "Not provided";
+  const telHref = primaryContact?.phone
+    ? `tel:${primaryContact.phone_prefix || ""}${primaryContact.phone}`.replace(
+        /\s+/g,
+        "",
+      )
+    : selectedClient?.phone
+      ? `tel:${String(selectedClient.phone).replace(/\s+/g, "")}`
+      : "";
+
+  const statusColors: Record<string, string> = {
+    active: "bg-green-100 text-green-700",
+    inactive: "bg-gray-100 text-gray-700",
+    onboarding: "bg-blue-100 text-blue-700",
+    completed: "bg-purple-100 text-purple-700",
+  };
+
+  const priorityColors: Record<string, string> = {
+    low: "bg-gray-100 text-gray-700",
+    medium: "bg-yellow-100 text-yellow-700",
+    high: "bg-orange-100 text-orange-700",
+    urgent: "bg-red-100 text-red-700",
+  };
   const handleDelete = async (id: number, name?: string) => {
     setDeletingId(id);
     try {
@@ -114,6 +160,83 @@ export default function ClientDashboard() {
     },
     staleTime: 60000,
   });
+
+  const { data: allOfferings = [] } = useQuery({
+    queryKey: ["business-offerings"],
+    queryFn: () => apiClient.getBusinessOfferings(),
+    staleTime: 10000,
+  });
+
+  const StatusDot = ({ status }: { status?: string | null }) => {
+    const color =
+      status === "completed"
+        ? "bg-green-500"
+        : status === "in_progress" || status === "in-progress"
+          ? "bg-blue-500"
+          : "bg-gray-400";
+    return <span className={`inline-block w-2 h-2 rounded-full ${color}`} />;
+  };
+
+  function BusinessOfferingItem({ offering }: { offering: any }) {
+    return (
+      <div
+        className="px-2.5 py-2 bg-white border border-gray-200 rounded-lg hover:shadow-sm transition cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          navigate(`/business-offerings/${offering.id}`);
+        }}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 min-w-0">
+            <StatusDot status={offering.client_status} />
+            <span className="text-sm font-medium text-gray-800 truncate max-w-[220px]">
+              {offering.solution || "Offering"}
+              {offering.product ? ` - ${offering.product}` : ""}
+            </span>
+          </div>
+          {offering.client_status && (
+            <Badge className="capitalize">
+              {String(offering.client_status).replace(/_/g, " ")}
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function ClientLinkedBusinessOfferings({ clientId }: { clientId: number }) {
+    const tagged = useMemo(
+      () =>
+        (allOfferings as any[]).filter((o: any) => o.client_id === clientId),
+      [allOfferings, clientId],
+    );
+
+    if (!tagged || tagged.length === 0) return null;
+
+    return (
+      <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between mb-2">
+          <div className="text-sm font-medium text-gray-800 flex items-center gap-2">
+            <Target className="w-4 h-4 text-blue-500" /> Tagged Business
+            Offerings
+          </div>
+          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            {tagged.length}
+          </Badge>
+        </div>
+        <div className="space-y-2">
+          {tagged.slice(0, 4).map((o: any) => (
+            <BusinessOfferingItem key={o.id} offering={o} />
+          ))}
+          {tagged.length > 4 && (
+            <div className="text-xs text-gray-500">
+              +{tagged.length - 4} more
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const filtered = useMemo(() => {
     if (!searchTerm) return clients;
@@ -373,16 +496,20 @@ export default function ClientDashboard() {
                               )}
                             </div>
                             <div className="mt-1 text-sm text-gray-700 flex flex-wrap gap-4">
-                              <span>
-                                Contact:{" "}
-                                <span className="font-medium">
-                                  {c.contact_person || "N/A"}
+                              {c.contact_person && (
+                                <span>
+                                  Contact:{" "}
+                                  <span className="font-medium">
+                                    {c.contact_person}
+                                  </span>
                                 </span>
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-4 h-4 text-gray-400" />{" "}
-                                {c.email || "N/A"}
-                              </span>
+                              )}
+                              {c.email && (
+                                <span className="flex items-center gap-1">
+                                  <Mail className="w-4 h-4 text-gray-400" />{" "}
+                                  {c.email}
+                                </span>
+                              )}
                               {c.phone && (
                                 <span className="flex items-center gap-1">
                                   <Phone className="w-4 h-4 text-gray-400" />{" "}
@@ -407,7 +534,32 @@ export default function ClientDashboard() {
                                   Website
                                 </a>
                               )}
+                              {meta.client_type && (
+                                <span>
+                                  Client Type:{" "}
+                                  <span className="font-medium">
+                                    {String(meta.client_type)}
+                                  </span>
+                                </span>
+                              )}
+                              {Array.isArray(meta.payment_offerings) &&
+                                meta.payment_offerings.length > 0 && (
+                                  <span className="flex items-center gap-2">
+                                    <span>Payment Offering:</span>
+                                    <span className="flex flex-wrap gap-1">
+                                      {meta.payment_offerings.map(
+                                        (p: string) => (
+                                          <Badge key={p} variant="outline">
+                                            {p}
+                                          </Badge>
+                                        ),
+                                      )}
+                                    </span>
+                                  </span>
+                                )}
                             </div>
+
+                            <ClientLinkedBusinessOfferings clientId={c.id} />
                           </div>
                           <div className="flex items-center gap-2">
                             <AlertDialog>
@@ -428,8 +580,10 @@ export default function ClientDashboard() {
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to delete "
-                                    {c.client_name || "this client"}"? This
-                                    action cannot be undone.
+                                    {c.client_name || "this client"}"? This will
+                                    also delete all related business offerings
+                                    and follow-ups. This action cannot be
+                                    undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -473,6 +627,191 @@ export default function ClientDashboard() {
           )}
         </CardContent>
       </Card>
+
+      {false && (
+        <Dialog open={quickViewOpen} onOpenChange={setQuickViewOpen}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>
+                {selectedClient?.client_name || "Client"}
+              </DialogTitle>
+              <DialogDescription>
+                Snapshot, contacts, and quick actions
+              </DialogDescription>
+            </DialogHeader>
+            {selectedClient && (
+              <div className="space-y-6">
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="rounded-md border p-3 bg-white">
+                      <div className="text-xs text-gray-500 mb-1">Status</div>
+                      <div
+                        className={`inline-flex items-center px-2 py-0.5 rounded ${statusColors[selectedClient.status || "active"] || statusColors.active}`}
+                      >
+                        {selectedClient.status || "active"}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-white">
+                      <div className="text-xs text-gray-500 mb-1">Priority</div>
+                      <div
+                        className={`inline-flex items-center px-2 py-0.5 rounded ${priorityColors[selectedClient.priority || "medium"] || priorityColors.medium}`}
+                      >
+                        {selectedClient.priority || "medium"}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-white">
+                      <div className="text-xs text-gray-500 mb-1">
+                        Account Owner
+                      </div>
+                      <div className="font-medium">
+                        {selectedClient.sales_rep_name || "-"}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-white">
+                      <div className="text-xs text-gray-500 mb-1">
+                        Expected Value
+                      </div>
+                      <div className="font-medium">
+                        {selectedClient.expected_value != null
+                          ? `$${Number(selectedClient.expected_value).toLocaleString()}`
+                          : "-"}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-white">
+                      <div className="text-xs text-gray-500 mb-1">
+                        Start Date
+                      </div>
+                      <div className="font-medium">
+                        {selectedClient.start_date
+                          ? new Date(
+                              selectedClient.start_date,
+                            ).toLocaleDateString()
+                          : "-"}
+                      </div>
+                    </div>
+                    <div className="rounded-md border p-3 bg-white">
+                      <div className="text-xs text-gray-500 mb-1">Industry</div>
+                      <div className="font-medium">
+                        {selectedClient.industry || "-"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {Array.isArray(selectedMeta.contacts) &&
+                  selectedMeta.contacts.length > 0 && (
+                    <div>
+                      <div className="text-sm font-semibold mb-2">Contacts</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {selectedMeta.contacts.map((c: any, idx: number) => (
+                          <div
+                            key={`contact-${idx}`}
+                            className="rounded-md border p-4 bg-white"
+                          >
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="font-semibold text-gray-900">
+                                  {c.name ||
+                                    selectedClient.contact_person ||
+                                    "Contact"}
+                                </div>
+                                {c.role && (
+                                  <div className="text-xs text-gray-500 mt-0.5">
+                                    {c.role}
+                                  </div>
+                                )}
+                              </div>
+                              {c.primary && (
+                                <Badge variant="secondary">Primary</Badge>
+                              )}
+                            </div>
+                            <div className="mt-3 space-y-2 text-sm">
+                              {(c.email || selectedClient.email) && (
+                                <div className="flex items-center gap-2 text-gray-700">
+                                  <Mail className="w-4 h-4 text-gray-400" />
+                                  <a
+                                    href={`mailto:${c.email || selectedClient.email}`}
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {c.email || selectedClient.email}
+                                  </a>
+                                </div>
+                              )}
+                              {(c.phone || selectedClient.phone) && (
+                                <div className="flex items-center gap-2 text-gray-700">
+                                  <Phone className="w-4 h-4 text-gray-400" />
+                                  <span>
+                                    {`${c.phone_prefix || ""} ${c.phone || selectedClient.phone}`.trim()}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                <div>
+                  <div className="text-sm font-semibold mb-2">
+                    Quick Actions
+                  </div>
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
+                      onClick={() =>
+                        selectedClient?.email &&
+                        (window.location.href = `mailto:${selectedClient.email}`)
+                      }
+                      disabled={!selectedClient?.email}
+                    >
+                      <Mail className="w-4 h-4 mr-2" />
+                      Send Email
+                    </Button>
+                    <Button
+                      className="w-full justify-start"
+                      variant="outline"
+                      onClick={() =>
+                        telHref && (window.location.href = telHref)
+                      }
+                      disabled={!telHref}
+                    >
+                      <Phone className="w-4 h-4 mr-2" />
+                      Call Phone
+                    </Button>
+                    {(selectedClient?.website || selectedMeta.website) && (
+                      <Button
+                        className="w-full justify-start"
+                        variant="outline"
+                        onClick={() =>
+                          window.open(
+                            selectedClient?.website || selectedMeta.website,
+                            "_blank",
+                          )
+                        }
+                      >
+                        <Globe className="w-4 h-4 mr-2" />
+                        Open Website
+                      </Button>
+                    )}
+                    {selectedClient?.address && (
+                      <div className="text-xs text-gray-500 mt-2">
+                        <div className="font-medium text-gray-700 mb-1">
+                          Address
+                        </div>
+                        <div className="rounded-md border bg-gray-50 p-2">
+                          {selectedClient.address}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

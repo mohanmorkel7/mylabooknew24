@@ -9,10 +9,11 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     hmr: {
-      timeout: 15000, // Increased timeout to prevent premature disconnections
+      timeout: 20000,
       overlay: false,
-      clientPort: 8080, // Explicit client port to avoid connection issues
-      port: 8080, // Ensure HMR port matches server port
+      protocol: "wss",
+      clientPort: 443,
+      port: 8080,
     },
     fs: {
       allow: ["./client", "./shared"],

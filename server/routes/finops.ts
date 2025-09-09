@@ -323,18 +323,54 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ) as subtasks
         FROM finops_tasks t
         LEFT JOIN finops_subtasks st ON t.id = st.task_id
-          ${dateParam ? "AND st.scheduled_date = $1::date" : ""}
         WHERE t.deleted_at IS NULL
         GROUP BY t.id
         ORDER BY t.created_at DESC
       `;
 
       const result = await pool.query(query, dateParam ? [dateParam] : []);
-      const tasks = result.rows.map((row) => ({
-        ...row,
-        subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
-        client_name: row.client_name || "Unknown Client",
-      }));
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const tasks = result.rows.map((row) => {
+        const rawSubtasks = Array.isArray(row.subtasks) ? row.subtasks : [];
+        const isDaily = String(row.duration || "").toLowerCase() === "daily";
+
+        // If a date is provided, show only subtasks for that date
+        const dateFiltered = dateParam
+          ? rawSubtasks.filter((st: any) => {
+              const sd = st.scheduled_date
+                ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+                : null;
+              return sd === dateParam;
+            })
+          : rawSubtasks;
+
+        // For today's view without explicit date, reset daily subtasks from previous days to pending
+        const normalizedSubtasks = dateParam
+          ? dateFiltered
+          : dateFiltered.map((st: any) => {
+              if (isDaily) {
+                const sd = st.scheduled_date
+                  ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+                  : todayStr;
+                if (sd !== todayStr) {
+                  return {
+                    ...st,
+                    status: "pending",
+                    started_at: null,
+                    completed_at: null,
+                    scheduled_date: todayStr,
+                  };
+                }
+              }
+              return st;
+            });
+
+        return {
+          ...row,
+          subtasks: normalizedSubtasks,
+          client_name: row.client_name || "Unknown Client",
+        };
+      });
 
       console.log(
         `✅ Successfully fetched ${tasks.length} FinOps tasks from database`,
@@ -359,7 +395,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
-      console.log("📋 Database connection refused - using mock data");
+      console.log("�� Database connection refused - using mock data");
       return res.json(mockFinOpsTasks);
     }
 

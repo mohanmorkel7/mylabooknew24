@@ -4,6 +4,47 @@ import { isDatabaseAvailable, pool, withTimeout } from "../database/connection";
 
 const router = Router();
 
+// IST helpers for chat timestamps
+const IST_TZ = "Asia/Kolkata";
+function toISTDate(d: any): Date | null {
+  if (!d) return null;
+  const date = new Date(d);
+  if (isNaN(date.getTime())) return null;
+  const utcMs = date.getTime();
+  const istMs = utcMs + 5.5 * 60 * 60 * 1000;
+  return new Date(istMs);
+}
+function istDisplay(d: any): string | null {
+  const date = toISTDate(d);
+  if (!date) return null;
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone: IST_TZ,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const parts = new Intl.DateTimeFormat("en-IN", opts).formatToParts(date);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+  return `${get("day")} ${get("month")} ${get("year")}, ${get("hour")}:${get("minute")} ${get("dayPeriod")?.toUpperCase()}`;
+}
+function istISO(d: any): string | null {
+  const date = toISTDate(d);
+  if (!date) return null;
+  return date.toISOString().replace(/Z$/, "+05:30");
+}
+function withIstChat(row: any) {
+  if (!row || typeof row !== "object") return row;
+  const r = { ...row };
+  r.created_at_ist = istDisplay(r.created_at);
+  r.created_at_ist_iso = istISO(r.created_at);
+  r.updated_at_ist = istDisplay(r.updated_at);
+  r.updated_at_ist_iso = istISO(r.updated_at);
+  return r;
+}
+
 // Progress data for Fund Raises (for dashboard charts)
 router.get("/progress", async (_req: Request, res: Response) => {
   try {
@@ -386,13 +427,57 @@ router.put("/:id", async (req: Request, res: Response) => {
 // Delete by id
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    if (await isDatabaseAvailable()) {
-      const id = parseInt(req.params.id);
-      const ok = await FundRaiseRepository.delete(id);
-      return res.json({ success: ok });
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
+    await pool.query("BEGIN");
+
+    // Collect related step ids
+    const stepsRes = await pool.query(
+      `SELECT id FROM fund_raise_steps WHERE fund_raise_id = $1`,
+      [id],
+    );
+    const stepIds: number[] = stepsRes.rows.map((r: any) => r.id);
+
+    if (stepIds.length > 0) {
+      // Delete follow-ups linked to these steps (both storage patterns)
+      await pool.query(
+        `DELETE FROM follow_ups WHERE vc_step_id = ANY($1::int[])`,
+        [stepIds],
+      );
+      await pool.query(
+        `DELETE FROM follow_ups WHERE message_id = ANY($1::int[])`,
+        [stepIds],
+      );
+
+      // Delete step chats
+      await pool.query(
+        `DELETE FROM fund_raise_step_chats WHERE step_id = ANY($1::int[])`,
+        [stepIds],
+      );
+
+      // Delete steps
+      await pool.query(
+        `DELETE FROM fund_raise_steps WHERE id = ANY($1::int[])`,
+        [stepIds],
+      );
     }
-    return res.status(503).json({ error: "Database unavailable" });
+
+    // Finally delete the fund raise record
+    const frDel = await pool.query(`DELETE FROM fund_raises WHERE id = $1`, [
+      id,
+    ]);
+
+    await pool.query("COMMIT");
+
+    return res.json({ success: frDel.rowCount > 0 });
   } catch (error: any) {
+    try {
+      await pool.query("ROLLBACK");
+    } catch {}
     console.error("Error deleting fund_raise:", error.message);
     return res.status(500).json({ error: "Failed" });
   }
@@ -577,11 +662,30 @@ router.delete("/steps/:stepId", async (req: Request, res: Response) => {
     const stepId = parseInt(req.params.stepId);
     if (isNaN(stepId))
       return res.status(400).json({ error: "Invalid step id" });
+
+    await pool.query("BEGIN");
+
+    // Delete follow-ups linked to this step (both storage patterns)
+    await pool.query(`DELETE FROM follow_ups WHERE vc_step_id = $1`, [stepId]);
+    await pool.query(`DELETE FROM follow_ups WHERE message_id = $1`, [stepId]);
+
+    // Delete step chats
+    await pool.query(`DELETE FROM fund_raise_step_chats WHERE step_id = $1`, [
+      stepId,
+    ]);
+
+    // Delete the step itself
     const r = await pool.query(`DELETE FROM fund_raise_steps WHERE id = $1`, [
       stepId,
     ]);
+
+    await pool.query("COMMIT");
+
     res.json({ success: r.rowCount > 0 });
   } catch (error: any) {
+    try {
+      await pool.query("ROLLBACK");
+    } catch {}
     console.error("Error deleting fund raise step:", error.message);
     res.status(500).json({ error: "Failed" });
   }
@@ -602,7 +706,7 @@ router.get("/steps/:stepId/chats", async (req: Request, res: Response) => {
        ORDER BY created_at ASC`,
       [stepId],
     );
-    res.json(r.rows || []);
+    res.json((r.rows || []).map((row: any) => withIstChat(row)));
   } catch (error: any) {
     console.error("Error fetching fund raise step chats:", error.message);
     res.status(500).json({ error: "Failed" });
@@ -713,7 +817,7 @@ router.post("/steps/:stepId/chats", async (req: Request, res: Response) => {
       user_name: r.rows[0].user_name,
     });
 
-    res.status(201).json(r.rows[0]);
+    res.status(201).json(withIstChat(r.rows[0]));
   } catch (error: any) {
     console.error("❌ Error creating fund raise step chat:", error);
     console.error("❌ Error details:", {
@@ -750,7 +854,7 @@ router.put("/chats/:id", async (req: Request, res: Response) => {
         [message.trim(), !!is_rich_text, id],
       );
       if (r.rowCount === 0) return res.status(404).json({ error: "Not found" });
-      return res.json(r.rows[0]);
+      return res.json(withIstChat(r.rows[0]));
     } catch (err: any) {
       const msg = (err && err.message) || "";
       if (err?.code === "42703" || msg.includes("updated_at")) {

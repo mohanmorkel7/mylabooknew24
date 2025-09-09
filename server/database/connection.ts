@@ -443,6 +443,62 @@ export async function initializeDatabase() {
       );
     }
 
+    // Business Offerings table migration
+    try {
+      const boMigrationPath = path.join(
+        __dirname,
+        "create-business-offerings-table.sql",
+      );
+      if (fs.existsSync(boMigrationPath)) {
+        const sql = fs.readFileSync(boMigrationPath, "utf8");
+        await client.query(sql);
+        console.log("Business Offerings table migration applied successfully");
+      }
+    } catch (boErr) {
+      console.log(
+        "Business Offerings table migration already applied or error:",
+        (boErr as any).message,
+      );
+    }
+
+    // Business Offer Steps table migration
+    try {
+      const boStepsPath = path.join(
+        __dirname,
+        "create-business-offer-steps.sql",
+      );
+      if (fs.existsSync(boStepsPath)) {
+        const sql = fs.readFileSync(boStepsPath, "utf8");
+        await client.query(sql);
+        console.log(
+          "Business Offer Steps table migration applied successfully",
+        );
+      }
+    } catch (boStepsErr) {
+      console.log(
+        "Business Offer Steps table migration already applied or error:",
+        (boStepsErr as any).message,
+      );
+    }
+
+    // Connections table migration
+    try {
+      const connectionsPath = path.join(
+        __dirname,
+        "create-connections-table.sql",
+      );
+      if (fs.existsSync(connectionsPath)) {
+        const sql = fs.readFileSync(connectionsPath, "utf8");
+        await client.query(sql);
+        console.log("Connections table migration applied successfully");
+      }
+    } catch (connectionsErr) {
+      console.log(
+        "Connections table migration already applied or error:",
+        (connectionsErr as any).message,
+      );
+    }
+
     // Extend fund_raises with all fields
     try {
       const fundRaisesAlterPath = path.join(

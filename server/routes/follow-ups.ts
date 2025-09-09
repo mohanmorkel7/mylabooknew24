@@ -4,6 +4,48 @@ import { normalizeUserId } from "../services/mockData";
 
 const router = Router();
 
+// IST helpers
+const IST_TIMEZONE = "Asia/Kolkata";
+function toISTDate(date: any): Date | null {
+  if (!date) return null;
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return null;
+  const utcMs = d.getTime();
+  const istMs = utcMs + 5.5 * 60 * 60 * 1000;
+  return new Date(istMs);
+}
+function toISTDisplay(date: any): string | null {
+  const d = toISTDate(date);
+  if (!d) return null;
+  const opts: Intl.DateTimeFormatOptions = {
+    timeZone: IST_TIMEZONE,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  const parts = new Intl.DateTimeFormat("en-IN", opts).formatToParts(d);
+  const get = (t: string) => parts.find((p) => p.type === t)?.value || "";
+  return `${get("day")} ${get("month")} ${get("year")}, ${get("hour")}:${get("minute")} ${get("dayPeriod")?.toUpperCase()}`;
+}
+function toISTISO(date: any): string | null {
+  const d = toISTDate(date);
+  if (!d) return null;
+  return d.toISOString().replace(/Z$/, "+05:30");
+}
+function addISTFields(row: any) {
+  if (!row || typeof row !== "object") return row;
+  const fields = ["due_date", "created_at", "updated_at", "completed_at"];
+  for (const f of fields) {
+    const v = (row as any)[f];
+    (row as any)[`${f}_ist`] = toISTDisplay(v);
+    (row as any)[`${f}_ist_iso`] = toISTISO(v);
+  }
+  return row;
+}
+
 // Enhanced helper function with better error handling and timeout
 async function isDatabaseAvailable() {
   try {
@@ -31,6 +73,8 @@ router.post("/", async (req: Request, res: Response) => {
       step_id,
       vc_id,
       vc_step_id,
+      business_offering_id,
+      business_offering_step_id,
       title,
       description,
       due_date,
@@ -42,15 +86,37 @@ router.post("/", async (req: Request, res: Response) => {
 
     if (await isDatabaseAvailable()) {
       try {
-        // Check if VC columns exist in follow_ups table
+        // Check if VC and business offering columns exist in follow_ups table
         const columnCheck = await pool.query(`
           SELECT column_name
           FROM information_schema.columns
           WHERE table_name = 'follow_ups'
-          AND column_name IN ('vc_id', 'vc_step_id')
+          AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id', 'assigned_to_list')
         `);
 
-        const hasVCColumns = columnCheck.rows.length === 2;
+        const hasVCColumns = columnCheck.rows.some((row) =>
+          ["vc_id", "vc_step_id"].includes(row.column_name),
+        );
+        const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
+          ["business_offering_id", "business_offering_step_id"].includes(
+            row.column_name,
+          ),
+        );
+        let hasAssignedList = columnCheck.rows.some(
+          (row) => row.column_name === "assigned_to_list",
+        );
+
+        // Ensure assigned_to_list column exists
+        if (!hasAssignedList) {
+          try {
+            await pool.query(
+              `ALTER TABLE follow_ups ADD COLUMN IF NOT EXISTS assigned_to_list JSONB DEFAULT '[]'::jsonb`,
+            );
+            hasAssignedList = true;
+          } catch (e: any) {
+            console.warn("Could not add assigned_to_list column:", e.message);
+          }
+        }
 
         let query, values;
 
@@ -98,13 +164,22 @@ router.post("/", async (req: Request, res: Response) => {
             }
           }
 
-          // Full query with VC support
-          query = `
+          // Full query with VC and business offering support
+          query = hasAssignedList
+            ? `
             INSERT INTO follow_ups (
-              client_id, lead_id, step_id, vc_id, vc_step_id, title, description, due_date,
-              follow_up_type, assigned_to, created_by, message_id
+              client_id, lead_id, step_id, vc_id, vc_step_id, business_offering_id, business_offering_step_id,
+              title, description, due_date, follow_up_type, assigned_to, created_by, message_id, assigned_to_list
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            RETURNING *
+          `
+            : `
+            INSERT INTO follow_ups (
+              client_id, lead_id, step_id, vc_id, vc_step_id, business_offering_id, business_offering_step_id,
+              title, description, due_date, follow_up_type, assigned_to, created_by, message_id
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *
           `;
 
@@ -123,9 +198,40 @@ router.post("/", async (req: Request, res: Response) => {
             );
           }
 
+          // Handle business offering step resolution
+          let resolvedBusinessOfferingId = business_offering_id;
+          let finalBusinessOfferingStepId = business_offering_step_id;
+
+          // For business offering steps, store the business_offering_step_id in message_id field for reference
+          if (business_offering_step_id && !finalMessageId) {
+            try {
+              // Check if it's a business offering step and get the business offering ID
+              const businessOfferingStepResult = await pool.query(
+                `SELECT business_offering_id FROM business_offer_steps WHERE id = $1`,
+                [business_offering_step_id],
+              );
+
+              if (businessOfferingStepResult.rows.length > 0) {
+                resolvedBusinessOfferingId =
+                  businessOfferingStepResult.rows[0].business_offering_id;
+                finalMessageId = business_offering_step_id; // Store step id in message_id for reference
+                console.log(
+                  `📋 Resolved business_offering_id ${resolvedBusinessOfferingId} for business_offering_step ${business_offering_step_id}`,
+                );
+              }
+            } catch (error) {
+              console.log(
+                "Could not resolve business offering step:",
+                error.message,
+              );
+            }
+          }
+
           console.log(`📋 Creating follow-up with:`, {
             vc_id: resolvedVcId,
             vc_step_id: resolvedVcStepId,
+            business_offering_id: resolvedBusinessOfferingId,
+            business_offering_step_id: finalBusinessOfferingStepId,
             fund_raise_step_id: finalMessageId,
             title,
           });
@@ -135,7 +241,9 @@ router.post("/", async (req: Request, res: Response) => {
             lead_id || null,
             step_id || null,
             resolvedVcId || null,
-            resolvedVcStepId || null, // This will be null for fund raise steps
+            resolvedVcStepId || null,
+            resolvedBusinessOfferingId || null,
+            finalBusinessOfferingStepId || null,
             title,
             description || null,
             defaultDueDate,
@@ -144,6 +252,9 @@ router.post("/", async (req: Request, res: Response) => {
             created_by,
             finalMessageId,
           ];
+          if (hasAssignedList) {
+            values.push(JSON.stringify(req.body.assigned_to_list || []));
+          }
         } else {
           // Legacy query without VC support
           if (vc_id || vc_step_id) {
@@ -182,7 +293,7 @@ router.post("/", async (req: Request, res: Response) => {
         const result = await pool.query(query, values);
         const followUp = result.rows[0];
 
-        res.status(201).json(followUp);
+        res.status(201).json(addISTFields({ ...followUp }));
       } catch (dbError) {
         console.error("Database insertion error:", dbError.message);
         // If database error (like missing column), run migration and fall back to mock
@@ -200,7 +311,9 @@ router.post("/", async (req: Request, res: Response) => {
               ADD COLUMN IF NOT EXISTS lead_id INTEGER REFERENCES leads(id),
               ADD COLUMN IF NOT EXISTS step_id INTEGER REFERENCES lead_steps(id),
               ADD COLUMN IF NOT EXISTS message_id INTEGER,
-              ADD COLUMN IF NOT EXISTS follow_up_type VARCHAR(50) DEFAULT 'general'
+              ADD COLUMN IF NOT EXISTS follow_up_type VARCHAR(50) DEFAULT 'general',
+              ADD COLUMN IF NOT EXISTS business_offering_id INTEGER,
+              ADD COLUMN IF NOT EXISTS business_offering_step_id INTEGER
             `);
 
             // Drop and recreate constraints
@@ -219,16 +332,18 @@ router.post("/", async (req: Request, res: Response) => {
             // Retry the insert with fallback query (without VC columns)
             const retryQuery = `
               INSERT INTO follow_ups (
-                client_id, lead_id, step_id, title, description, due_date,
-                follow_up_type, assigned_to, created_by, message_id
+                client_id, lead_id, step_id, business_offering_id, business_offering_step_id,
+                title, description, due_date, follow_up_type, assigned_to, created_by, message_id
               )
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
               RETURNING *
             `;
             const retryValues = [
               client_id || null,
               lead_id || null,
               step_id || null,
+              business_offering_id || null,
+              business_offering_step_id || null,
               title,
               description || null,
               due_date || null,
@@ -244,6 +359,59 @@ router.post("/", async (req: Request, res: Response) => {
           }
         }
 
+        // Handle strict context constraint preventing business offering follow-ups
+        if (
+          ((dbError as any).code === "23514" &&
+            dbError.message.includes("chk_follow_up_context")) ||
+          dbError.message.includes("chk_follow_up_context")
+        ) {
+          try {
+            await pool.query(`
+              ALTER TABLE follow_ups DROP CONSTRAINT IF EXISTS chk_follow_up_context;
+              ALTER TABLE follow_ups
+              ADD CONSTRAINT chk_follow_up_context
+              CHECK (
+                ((CASE WHEN lead_id IS NOT NULL THEN 1 ELSE 0 END) +
+                 (CASE WHEN vc_id IS NOT NULL THEN 1 ELSE 0 END) +
+                 (CASE WHEN business_offering_id IS NOT NULL THEN 1 ELSE 0 END)) = 1
+              ) NOT VALID;
+            `);
+            // Re-attempt insert with a safe fallback insert (business offering aware)
+            const retryQuery2 = `
+              INSERT INTO follow_ups (
+                client_id, lead_id, step_id, business_offering_id, business_offering_step_id,
+                title, description, due_date, follow_up_type, assigned_to, created_by, message_id
+              )
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+              RETURNING *
+            `;
+            const fallbackDueDate =
+              (due_date as any) ||
+              new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+            const retryValues2 = [
+              client_id || null,
+              lead_id || null,
+              step_id || null,
+              business_offering_id || null,
+              business_offering_step_id || null,
+              title,
+              description || null,
+              fallbackDueDate,
+              follow_up_type,
+              assigned_to || null,
+              created_by,
+              message_id || null,
+            ];
+            const retry = await pool.query(retryQuery2, retryValues2 as any[]);
+            return res.status(201).json(retry.rows[0]);
+          } catch (constraintError: any) {
+            console.error(
+              "Failed to update chk_follow_up_context:",
+              constraintError.message,
+            );
+          }
+        }
+
         // Fallback to mock response
         throw dbError;
       }
@@ -254,6 +422,8 @@ router.post("/", async (req: Request, res: Response) => {
         client_id,
         lead_id,
         step_id,
+        business_offering_id,
+        business_offering_step_id,
         title,
         description,
         due_date,
@@ -267,7 +437,7 @@ router.post("/", async (req: Request, res: Response) => {
       };
 
       console.log("Database unavailable, returning mock follow-up response");
-      res.status(201).json(mockFollowUp);
+      res.status(201).json(addISTFields({ ...mockFollowUp }));
     }
   } catch (error) {
     console.error("Error creating follow-up:", error);
@@ -290,7 +460,7 @@ router.post("/", async (req: Request, res: Response) => {
     };
 
     console.log("Database error, returning mock follow-up response");
-    res.status(201).json(mockFollowUp);
+    res.status(201).json(addISTFields({ ...mockFollowUp }));
   }
 });
 
@@ -312,7 +482,7 @@ router.get("/client/:clientId", async (req: Request, res: Response) => {
       `;
 
       const result = await pool.query(query, [clientId]);
-      res.json(result.rows);
+      res.json(result.rows.map((row: any) => addISTFields({ ...row })));
     } else {
       // Return empty array when database is unavailable
       console.log("Database unavailable, returning empty follow-ups array");
@@ -343,7 +513,7 @@ router.get("/lead/:leadId", async (req: Request, res: Response) => {
       `;
 
       const result = await pool.query(query, [leadId]);
-      res.json(result.rows);
+      res.json(result.rows.map((row: any) => addISTFields({ ...row })));
     } else {
       // Return empty array when database is unavailable
       console.log("Database unavailable, returning empty follow-ups array");
@@ -368,7 +538,7 @@ router.get("/:id", async (req: Request, res: Response) => {
       ]);
       if (r.rows.length === 0)
         return res.status(404).json({ error: "Not found" });
-      return res.json(r.rows[0]);
+      return res.json(addISTFields({ ...r.rows[0] }));
     }
     // Mock when DB down
     return res.json({ id, status: "pending" });
@@ -459,19 +629,77 @@ router.get("/", async (req: Request, res: Response) => {
         queryParams.push(parseInt(assigned_to as string));
       }
 
-      // Check if VC columns exist in follow_ups table
+      // Check if VC, business offering and assigned list columns exist in follow_ups table
       const columnCheck = await pool.query(`
         SELECT column_name
         FROM information_schema.columns
         WHERE table_name = 'follow_ups'
-        AND column_name IN ('vc_id', 'vc_step_id')
+        AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id', 'assigned_to_list')
       `);
 
-      const hasVCColumns = columnCheck.rows.length === 2;
+      const hasVCColumns = columnCheck.rows.some((row) =>
+        ["vc_id", "vc_step_id"].includes(row.column_name),
+      );
+      const hasBusinessOfferingColumns = columnCheck.rows.some((row) =>
+        ["business_offering_id", "business_offering_step_id"].includes(
+          row.column_name,
+        ),
+      );
+      const hasAssignedList = columnCheck.rows.some(
+        (row) => row.column_name === "assigned_to_list",
+      );
+
+      // If business offering columns are missing, add them
+      let finalHasBusinessOfferingColumns = hasBusinessOfferingColumns;
+      if (!hasBusinessOfferingColumns) {
+        try {
+          console.log(
+            "Adding missing business offering columns to follow_ups table...",
+          );
+          await pool.query(`
+            ALTER TABLE follow_ups
+            ADD COLUMN IF NOT EXISTS business_offering_id INTEGER,
+            ADD COLUMN IF NOT EXISTS business_offering_step_id INTEGER
+          `);
+          console.log("✅ Business offering columns added successfully");
+          finalHasBusinessOfferingColumns = true; // Update flag after successful migration
+        } catch (migrationError) {
+          console.error(
+            "❌ Failed to add business offering columns:",
+            migrationError.message,
+          );
+        }
+      }
 
       let query;
       if (hasVCColumns) {
-        // Full query with VC and Fund Raise support
+        // Build query based on available columns
+        const businessOfferingSelect = finalHasBusinessOfferingColumns
+          ? `, bo.solution as business_offering_solution,
+               bo.product as business_offering_product,
+               bos.name as business_offering_step_name,
+               bo.id as business_offering_id`
+          : `, NULL as business_offering_solution,
+               NULL as business_offering_product,
+               NULL as business_offering_step_name,
+               NULL as business_offering_id`;
+
+        const businessOfferingJoins = finalHasBusinessOfferingColumns
+          ? `LEFT JOIN business_offerings bo ON f.business_offering_id = bo.id
+             LEFT JOIN business_offer_steps bos ON f.business_offering_step_id = bos.id`
+          : "";
+
+        const assignedListSelect = hasAssignedList
+          ? `, f.assigned_to_list,
+              (
+                SELECT string_agg(CONCAT(u2.first_name, ' ', u2.last_name), ', ')
+                FROM users u2
+                JOIN LATERAL jsonb_array_elements_text(f.assigned_to_list) AS j(uid) ON true
+                WHERE u2.id = (j.uid)::int
+              ) as assigned_users_names`
+          : `, NULL as assigned_to_list, NULL as assigned_users_names`;
+
+        // Full query with VC, Fund Raise and conditional Business Offering support
         query = `
           SELECT f.*,
                  CONCAT(u.first_name, ' ', u.last_name) as assigned_user_name,
@@ -483,7 +711,8 @@ router.get("/", async (req: Request, res: Response) => {
                  COALESCE(fr.investor_name, v.investor_name) as investor_name,
                  vs.name as vc_step_name,
                  fr.round_stage as fund_raise_stage,
-                 fr.id as fund_raise_id
+                 fr.id as fund_raise_id${businessOfferingSelect}
+                 ${assignedListSelect}
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
@@ -497,6 +726,7 @@ router.get("/", async (req: Request, res: Response) => {
             AND frs.id = f.message_id
           )
           LEFT JOIN fund_raises fr ON fr.id = frs.fund_raise_id
+          ${businessOfferingJoins}
           ${whereClause}
           ORDER BY f.created_at DESC
         `;
@@ -550,7 +780,7 @@ router.get("/", async (req: Request, res: Response) => {
         );
       }
 
-      res.json(result.rows);
+      res.json(result.rows.map((row: any) => addISTFields({ ...row })));
     } else {
       // Return mock data from MockDataService when database is unavailable
       console.log("Database unavailable, returning mock follow-ups");

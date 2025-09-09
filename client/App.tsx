@@ -29,11 +29,22 @@ class AuthErrorBoundary extends React.Component<
     console.error("Auth Error Boundary caught an error:", error, errorInfo);
 
     // Check if it's an auth-related error
-    if (
+    const isAuthCtxError =
       error.message?.includes("useAuth") ||
-      error.message?.includes("AuthProvider")
-    ) {
+      error.message?.includes("AuthProvider");
+    if (isAuthCtxError) {
       console.warn("Auth context error detected - possible HMR issue");
+      try {
+        const key = "__auth_error_reloaded";
+        if (typeof window !== "undefined" && !sessionStorage.getItem(key)) {
+          sessionStorage.setItem(key, "1");
+          setTimeout(() => {
+            window.location.reload();
+          }, 150);
+        } else {
+          // Do not loop; allow manual retry
+        }
+      } catch {}
     }
   }
 
@@ -48,12 +59,25 @@ class AuthErrorBoundary extends React.Component<
             <p className="text-gray-600 mb-4">
               There was an issue with authentication. Please refresh the page.
             </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Refresh Page
-            </button>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => {
+                  try {
+                    sessionStorage.removeItem("__auth_error_reloaded");
+                  } catch {}
+                  this.setState({ hasError: false, error: undefined });
+                }}
+                className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+              >
+                Try Again
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Refresh Page
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -106,7 +130,14 @@ import CreateClient from "@/pages/CreateClient";
 import FundRaiseDashboard from "@/pages/FundRaiseDashboard";
 import CreateFundRaise from "@/pages/CreateFundRaise";
 import FundRaiseDetails from "@/pages/FundRaiseDetails";
+import BusinessOfferings from "@/pages/BusinessOfferings";
+import BusinessOfferingsDashboard from "@/pages/BusinessOfferingsDashboard";
+import BusinessOfferingsEdit from "@/pages/BusinessOfferingsEdit";
+import BusinessOfferingsDetails from "@/pages/BusinessOfferingsDetails";
 import FundRaiseEdit from "@/pages/FundRaiseEdit";
+import Connections from "@/pages/Connections";
+import ConnectionNew from "@/pages/ConnectionNew";
+import ConnectionEdit from "@/pages/ConnectionEdit";
 import ProposalNew from "@/pages/ProposalNew";
 import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
@@ -677,6 +708,48 @@ function AppRoutes() {
       />
 
       <Route
+        path="/business-offerings"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <BusinessOfferingsDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business-offerings/create"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <BusinessOfferings />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/business-offerings/:id/edit"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <BusinessOfferingsEdit />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/business-offerings/:id"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <BusinessOfferingsDetails />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/fundraise"
         element={
           <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
@@ -715,6 +788,39 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={["admin", "sales"]}>
             <DashboardLayout>
               <FundRaiseEdit />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/connections"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <Connections />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/connections/new"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ConnectionNew />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/connections/:id/edit"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <ConnectionEdit />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -963,7 +1069,7 @@ function AppRoutes() {
       />
 
       {/* Root redirect */}
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<Navigate to="/login" replace />} />
 
       {/* 404 Page */}
       <Route

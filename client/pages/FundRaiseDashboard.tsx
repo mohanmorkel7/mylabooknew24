@@ -975,8 +975,6 @@ export default function FundRaiseDashboard() {
           );
         })()}
 
-
-
       <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardHeader>
@@ -1036,8 +1034,21 @@ export default function FundRaiseDashboard() {
                       list.forEach((fr: any) => {
                         const s = (fr.investor_status || "").trim() || "N/A";
                         statusCount[s] = (statusCount[s] || 0) + 1;
-                        const f = parseFloat(fr.fund_mn);
-                        if (!isNaN(f)) totalFund += f;
+                        const tr = parseFloat(fr.total_raise_mn);
+                        if (!isNaN(tr)) {
+                          totalFund += tr;
+                        } else if (
+                          Array.isArray(fr.investors) &&
+                          fr.investors.length
+                        ) {
+                          fr.investors.forEach((iv: any) => {
+                            const f = parseFloat(iv?.fund_mn ?? "");
+                            if (!isNaN(f)) totalFund += f;
+                          });
+                        } else {
+                          const f = parseFloat(fr.fund_mn);
+                          if (!isNaN(f)) totalFund += f;
+                        }
                       });
                       return (
                         <AccordionItem key={k} value={k}>
@@ -1063,13 +1074,6 @@ export default function FundRaiseDashboard() {
                                   {s}: {c}
                                 </Badge>
                               ))}
-                              <Badge
-                                variant="outline"
-                                className="bg-blue-50 text-blue-700"
-                              >
-                                <DollarSign className="w-3 h-3 mr-1 inline" />{" "}
-                                {totalFund.toFixed(2)} Mn
-                              </Badge>
                             </div>
 
                             <div className="space-y-2">
@@ -1087,6 +1091,42 @@ export default function FundRaiseDashboard() {
                                   0,
                                   Math.min(100, completedProb),
                                 );
+                                // Per-card aggregates
+                                const investorList =
+                                  Array.isArray(fr.investors) &&
+                                  fr.investors.length
+                                    ? fr.investors
+                                    : [
+                                        {
+                                          investor_name: fr.investor_name,
+                                          fund_mn: fr.fund_mn,
+                                          investor_status: fr.investor_status,
+                                        },
+                                      ];
+                                let closedCount = investorList.filter(
+                                  (iv: any) =>
+                                    (iv.investor_status || "").toLowerCase() ===
+                                    "closed",
+                                ).length;
+                                if (
+                                  closedCount === 0 &&
+                                  (fr.investor_status || "").toLowerCase() ===
+                                    "closed"
+                                ) {
+                                  closedCount = 1;
+                                }
+                                let totalFundMn = investorList.reduce(
+                                  (sum: number, iv: any) => {
+                                    const v = parseFloat(iv?.fund_mn ?? "");
+                                    return sum + (isNaN(v) ? 0 : v);
+                                  },
+                                  0,
+                                );
+                                if (totalFundMn === 0) {
+                                  const fallback = parseFloat(fr.fund_mn);
+                                  totalFundMn = isNaN(fallback) ? 0 : fallback;
+                                }
+
                                 return (
                                   <div
                                     key={fr.id}
@@ -1155,12 +1195,6 @@ export default function FundRaiseDashboard() {
                                               <span className="font-medium text-gray-800">
                                                 {iv.investor_name}
                                               </span>
-                                              {iv.fund_mn && (
-                                                <Badge className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
-                                                  <DollarSign className="w-3 h-3 mr-1 inline" />{" "}
-                                                  {iv.fund_mn} Mn
-                                                </Badge>
-                                              )}
                                               {iv.investor_status && (
                                                 <Badge className="text-[10px] bg-amber-50 text-amber-700 border-amber-200">
                                                   {iv.investor_status}
@@ -1170,6 +1204,47 @@ export default function FundRaiseDashboard() {
                                           ))}
                                         </div>
                                         <div className="text-[11px] text-gray-600 mt-1 flex flex-wrap gap-3">
+                                          <Badge
+                                            variant="outline"
+                                            className="text-[10px] bg-gray-50 text-gray-700 border-gray-200"
+                                          >
+                                            Closed: {closedCount}
+                                          </Badge>
+                                          <Badge
+                                            className="text-[10px] bg-blue-50 text-blue-700 border-blue-200"
+                                            variant="outline"
+                                          >
+                                            Total Fund Raise : $
+                                            {Number.isFinite(totalFundMn)
+                                              ? totalFundMn.toFixed(3)
+                                              : "0.000"}
+                                          </Badge>
+                                          <Badge
+                                            className="text-[10px] bg-green-50 text-green-700 border-green-200"
+                                            variant="outline"
+                                          >
+                                            Valuation $ Mn: $
+                                            {Number.isFinite(
+                                              parseFloat(fr.valuation_mn),
+                                            )
+                                              ? parseFloat(
+                                                  fr.valuation_mn,
+                                                ).toFixed(3)
+                                              : "0.000"}
+                                          </Badge>
+                                          <Badge
+                                            className="text-[10px] bg-purple-50 text-purple-700 border-purple-200"
+                                            variant="outline"
+                                          >
+                                            Fund $ Mn: $
+                                            {Number.isFinite(
+                                              parseFloat(fr.fund_mn),
+                                            )
+                                              ? parseFloat(fr.fund_mn).toFixed(
+                                                  3,
+                                                )
+                                              : "0.000"}
+                                          </Badge>
                                           {fr.start_date && (
                                             <span className="inline-flex items-center gap-1">
                                               <Calendar className="w-3 h-3 text-gray-400" />
@@ -1238,7 +1313,7 @@ export default function FundRaiseDashboard() {
           </CardContent>
         </Card>
       </div>
-      
+
       {/* Follow-up Status Cards (cloned from VC) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {(() => {
@@ -1503,8 +1578,6 @@ export default function FundRaiseDashboard() {
           );
         })()}
       </div>
-
-      
     </div>
   );
 }

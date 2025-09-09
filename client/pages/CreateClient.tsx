@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -131,6 +131,10 @@ export default function CreateClient() {
     product_tag_info: "",
   });
 
+  const [referenceConnections, setReferenceConnections] = useState<string[]>(
+    [],
+  );
+
   const [contacts, setContacts] = useState<
     Array<{
       contact_name: string;
@@ -179,6 +183,11 @@ export default function CreateClient() {
     }
     return out;
   }, [JSON.stringify(cities)]);
+
+  const { data: connections } = useQuery({
+    queryKey: ["connections"],
+    queryFn: () => apiClient.getConnections(),
+  });
 
   const errors = useMemo(() => {
     const e: Record<string, string> = {};
@@ -275,7 +284,12 @@ export default function CreateClient() {
           geography: clientInfo.geography,
           txn_volume: clientInfo.txn_volume,
           product_tag_info: clientInfo.product_tag_info,
-          source_value: clientInfo.source_value || undefined,
+          source_value:
+            clientInfo.source === "Reference"
+              ? referenceConnections.length
+                ? referenceConnections.join(", ")
+                : undefined
+              : clientInfo.source_value || undefined,
           contacts,
         }),
         status: "active",
@@ -442,13 +456,14 @@ export default function CreateClient() {
                     <Label>Source *</Label>
                     <Select
                       value={clientInfo.source}
-                      onValueChange={(v) =>
+                      onValueChange={(v) => {
                         setClientInfo((p) => ({
                           ...p,
                           source: v,
                           source_value: "",
-                        }))
-                      }
+                        }));
+                        if (v !== "Reference") setReferenceConnections([]);
+                      }}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select source" />
@@ -470,6 +485,37 @@ export default function CreateClient() {
                   {clientInfo.source &&
                     (() => {
                       const src = clientInfo.source;
+                      if (src === "Reference") {
+                        return (
+                          <div className="space-y-1">
+                            <Label>Referred by (select one or more)</Label>
+                            <div className="flex items-start gap-2">
+                              <div className="flex-1">
+                                <MultiSelect
+                                  options={(Array.isArray(connections)
+                                    ? connections
+                                    : []
+                                  ).map((c: any) => c.name)}
+                                  value={referenceConnections}
+                                  onChange={setReferenceConnections}
+                                  placeholder="Select connections"
+                                  className="mt-1"
+                                />
+                              </div>
+                              <Button
+                                type="button"
+                                onClick={() =>
+                                  navigate(
+                                    `/connections/new?returnTo=${encodeURIComponent("/clients/create")}`,
+                                  )
+                                }
+                              >
+                                Add connection
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      }
                       const meta = (() => {
                         if (src.startsWith("Email"))
                           return {
@@ -499,13 +545,6 @@ export default function CreateClient() {
                           return {
                             label: "Team Member Name",
                             placeholder: "Enter internal team member name",
-                            type: "text" as const,
-                          };
-                        if (src === "Reference")
-                          return {
-                            label: "Reference Person",
-                            placeholder:
-                              "Enter reference person's name or contact",
                             type: "text" as const,
                           };
                         if (src === "General List")

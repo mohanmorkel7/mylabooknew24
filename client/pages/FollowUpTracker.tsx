@@ -71,7 +71,7 @@ interface FollowUp {
   updated_at?: string;
   completed_at?: string;
   notes?: string;
-  type?: "lead" | "vc"; // Add type to distinguish between lead and VC follow-ups
+  type?: "lead" | "vc" | "sales"; // Add 'sales' for business offering follow-ups
 }
 
 // Mock follow-up data with both leads and VC follow-ups
@@ -239,13 +239,18 @@ export default function FollowUpTracker() {
   const canViewFollowUp = (followUp: FollowUp) => {
     const followUpType =
       followUp.type ||
-      (followUp.vc_id || followUp.vc_round_title || followUp.investor_name
-        ? "vc"
-        : "lead");
+      ((followUp as any).business_offering_id ||
+      (followUp as any).business_offering_solution ||
+      (followUp as any).business_offering_product
+        ? "sales"
+        : followUp.vc_id || followUp.vc_round_title || followUp.investor_name
+          ? "vc"
+          : "lead");
 
     if (isAdmin) return true; // Admin sees all
     if (followUpType === "vc" && !isVC) return false; // VC follow-ups only for VC/admin
     if (followUpType === "lead" && isVC) return false; // Lead follow-ups hidden from VC role
+    if (followUpType === "sales" && isVC) return false; // Hide sales from VC role
     return true;
   };
 
@@ -288,7 +293,13 @@ export default function FollowUpTracker() {
             // Determine type based on available fields if not explicitly set
             type:
               f.type ||
-              (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead"),
+              (f.business_offering_id ||
+              f.business_offering_solution ||
+              f.business_offering_product
+                ? "sales"
+                : f.vc_id || f.vc_round_title || f.investor_name
+                  ? "vc"
+                  : "lead"),
           }));
 
           // Debug VC follow-ups to check stepId fields
@@ -298,7 +309,7 @@ export default function FollowUpTracker() {
           );
           if (vcFollowUps.length > 0) {
             console.log(
-              "🔍 VC Follow-ups fetched:",
+              "�� VC Follow-ups fetched:",
               vcFollowUps.map((f: any) => ({
                 id: f.id,
                 title: f.title,
@@ -315,7 +326,7 @@ export default function FollowUpTracker() {
           formattedFollowUps.forEach((f: any) => {
             const compositeKey =
               f.id ??
-              `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+              `${f.type || (f.business_offering_id || f.business_offering_solution || f.business_offering_product ? "sales" : f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${(f as any).business_offering_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
             uniqueMap.set(compositeKey, f);
           });
           setFollowUps(Array.from(uniqueMap.values()));
@@ -340,7 +351,7 @@ export default function FollowUpTracker() {
           formattedMockFollowUps.forEach((f: any) => {
             const compositeKey =
               f.id ??
-              `${f.type || (f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
+              `${f.type || (f.business_offering_id || f.business_offering_solution || f.business_offering_product ? "sales" : f.vc_id || f.vc_round_title || f.investor_name ? "vc" : "lead")}-${f.lead_id ?? ""}-${f.vc_id ?? ""}-${(f as any).business_offering_id ?? ""}-${f.step_id ?? f.message_id ?? ""}-${f.created_at}`;
             uniqueMockMap.set(compositeKey, f);
           });
           setFollowUps(Array.from(uniqueMockMap.values()));
@@ -406,44 +417,66 @@ export default function FollowUpTracker() {
       console.log("Found follow-up for status update:", followUp);
 
       if (followUp && user) {
-        // Determine if this is a VC follow-up
+        // Determine if this is a VC, business offering, or lead follow-up
         const followUpType =
           followUp.type ||
-          (followUp.vc_id || followUp.vc_round_title || followUp.investor_name
-            ? "vc"
-            : "lead");
+          ((followUp as any).business_offering_id ||
+          (followUp as any).business_offering_solution ||
+          (followUp as any).business_offering_product
+            ? "sales"
+            : followUp.vc_id ||
+                followUp.vc_round_title ||
+                followUp.investor_name
+              ? "vc"
+              : "lead");
 
         // Derive the correct stepId and API base for notifications
-        let stepApiBase: "vc" | "fund-raises" | "leads" = "leads";
+        let stepApiBase: "vc" | "fund-raises" | "leads" | "business-offerings" =
+          "leads";
         let stepIdValue: number | undefined = followUp.step_id;
 
-        if (followUpType === "vc") {
+        if (followUpType === "sales") {
+          // Business offering follow-up handling
+          const businessOfferingStepId = (followUp as any)
+            .business_offering_step_id;
+          const messageId = followUp.message_id;
+
+          if (businessOfferingStepId) {
+            stepIdValue = businessOfferingStepId;
+            stepApiBase = "business-offerings";
+          } else if (messageId) {
+            stepIdValue = messageId;
+            stepApiBase = "business-offerings";
+          } else {
+            stepIdValue = followUp.step_id;
+            stepApiBase = "business-offerings";
+          }
+        } else if (
+          // Explicit fund-raise context
+          (followUp as any).fund_raise_id ||
+          (followUp as any).fund_raise_stage
+        ) {
+          const frStepId =
+            followUp.message_id ||
+            (followUp as any).vc_step_id ||
+            followUp.step_id;
+          stepIdValue = frStepId;
+          stepApiBase = "fund-raises";
+        } else if (followUpType === "vc") {
           // VC-related follow-up handling
           const vcStepId = (followUp as any).vc_step_id;
           const messageId = followUp.message_id;
 
-          console.log("Analyzing VC follow-up step data:", {
-            vc_step_id: vcStepId,
-            message_id: messageId,
-            step_id: followUp.step_id,
-            vc_id: (followUp as any).vc_id,
-          });
-
-          if (vcStepId) {
-            // This is a real VC step
-            stepIdValue = vcStepId;
-            stepApiBase = "vc";
-            console.log("Using vc_step_id for real VC step:", stepIdValue);
-          } else if (messageId) {
-            // This is a fund-raise step (backend stores fund_raise_step_id in message_id)
+          if (messageId) {
+            // Stored as fund-raise step id
             stepIdValue = messageId;
             stepApiBase = "fund-raises";
-            console.log("Using message_id for fund-raise step:", stepIdValue);
+          } else if (vcStepId) {
+            stepIdValue = vcStepId;
+            stepApiBase = "vc";
           } else {
-            // Fallback to step_id
             stepIdValue = followUp.step_id;
-            stepApiBase = "fund-raises"; // Default to fund-raises for VC type
-            console.log("Fallback to step_id for VC follow-up:", stepIdValue);
+            stepApiBase = "vc";
           }
         } else {
           stepApiBase = "leads";
@@ -518,14 +551,44 @@ export default function FollowUpTracker() {
           return;
         }
 
-        // Use the utility function that includes chat notification
-        await updateFollowUpStatusWithNotification(
-          followUpId,
-          { status: newStatus, completed_at: completedAt },
-          notificationData,
-        );
+        // Update status
+        const resp = await fetch(`/api/follow-ups/${followUpId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: newStatus,
+            completed_at: completedAt,
+          }),
+        });
+        if (!resp.ok) throw new Error("Failed to update status");
+
+        // Post unified system message to the appropriate team chat
+        const statusDisplayMap: Record<string, string> = {
+          pending: "Pending",
+          in_progress: "In Progress",
+          completed: "Completed",
+          overdue: "Overdue",
+        };
+        const oldDisplay =
+          statusDisplayMap[(followUp as any).status] ||
+          (followUp as any).status;
+        const newDisplay = statusDisplayMap[newStatus] || newStatus;
+        const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user.name}`;
+
+        await apiClient.request(`/${stepApiBase}/steps/${stepIdValue}/chats`, {
+          method: "POST",
+          body: JSON.stringify({
+            user_id: parseInt(user.id),
+            user_name: "System",
+            message: sysMsg,
+            message_type: "system",
+            is_rich_text: false,
+            attachments: [],
+          }),
+        });
+
         console.log(
-          "Follow-up status update with notification completed successfully",
+          "Follow-up status update and chat notification completed successfully",
         );
       } else {
         // Fallback to original method if follow-up not found or no user
@@ -567,9 +630,13 @@ export default function FollowUpTracker() {
     // Determine follow-up type with fallback logic
     const followUpType =
       followUp.type ||
-      (followUp.vc_id || followUp.vc_round_title || followUp.investor_name
-        ? "vc"
-        : "lead");
+      ((followUp as any).business_offering_id ||
+      (followUp as any).business_offering_solution ||
+      (followUp as any).business_offering_product
+        ? "sales"
+        : followUp.vc_id || followUp.vc_round_title || followUp.investor_name
+          ? "vc"
+          : "lead");
 
     // Role-based filtering for follow-up visibility
     if (!canViewFollowUp(followUp)) {
@@ -667,10 +734,23 @@ export default function FollowUpTracker() {
     });
   }, [filteredFollowUps]);
 
-  const myFollowUps = React.useMemo(
-    () => filteredFollowUps.filter((f) => f.assigned_user_name === user?.name),
-    [filteredFollowUps, user?.name],
-  );
+  const myFollowUps = React.useMemo(() => {
+    const myId = parseInt(user?.id || "0");
+    const myName = user?.name || "";
+    return filteredFollowUps.filter((f: any) => {
+      const byName = f.assigned_user_name === myName;
+      const byId =
+        (f.assigned_to && myId && parseInt(f.assigned_to) === myId) || false;
+      const list = f.assigned_to_list;
+      const inList = Array.isArray(list)
+        ? list.some((x: any) => parseInt(String(x)) === myId)
+        : false;
+      const names = f.assigned_users_names || "";
+      const inNames =
+        typeof names === "string" && names.split(", ").includes(myName);
+      return byName || byId || inList || inNames;
+    });
+  }, [filteredFollowUps, user?.id, user?.name]);
   const assignedByMe = React.useMemo(
     () => filteredFollowUps.filter((f) => f.created_by_name === user?.name),
     [filteredFollowUps, user?.name],
@@ -715,7 +795,11 @@ export default function FollowUpTracker() {
           </h1>
           <p className="text-gray-600 mt-1">
             Track and manage follow-up tasks from{" "}
-            {isAdmin ? "leads and VC rounds" : isVC ? "VC rounds" : "leads"}
+            {isAdmin
+              ? "leads, business offerings, and VC rounds"
+              : isVC
+                ? "VC rounds"
+                : "leads"}
           </p>
         </div>
         <div className="flex items-center space-x-2">
@@ -831,6 +915,7 @@ export default function FollowUpTracker() {
                     <SelectItem value="all">All Types</SelectItem>
                     <SelectItem value="lead">Lead</SelectItem>
                     <SelectItem value="vc">Fund Raise</SelectItem>
+                    <SelectItem value="sales">Business Offering</SelectItem>
                   </SelectContent>
                 </Select>
               )}
@@ -963,17 +1048,21 @@ export default function FollowUpTracker() {
                 // Determine follow-up type with fallback logic
                 const followUpType =
                   followUp.type ||
-                  (followUp.vc_id ||
-                  followUp.vc_round_title ||
-                  followUp.investor_name
-                    ? "vc"
-                    : "lead");
+                  ((followUp as any).business_offering_id ||
+                  (followUp as any).business_offering_solution ||
+                  (followUp as any).business_offering_product
+                    ? "sales"
+                    : followUp.vc_id ||
+                        followUp.vc_round_title ||
+                        followUp.investor_name
+                      ? "vc"
+                      : "lead");
 
                 return (
                   <Card
                     key={
                       followUp.id ??
-                      `${followUp.type || (followUp.vc_id || followUp.vc_round_title || followUp.investor_name ? "vc" : "lead")}-${followUp.lead_id ?? ""}-${(followUp as any).vc_id ?? ""}-${followUp.step_id ?? followUp.message_id ?? ""}-${followUp.created_at}`
+                      `${followUp.type || ((followUp as any).business_offering_id || (followUp as any).business_offering_solution || (followUp as any).business_offering_product ? "sales" : followUp.vc_id || followUp.vc_round_title || followUp.investor_name ? "vc" : "lead")}-${followUp.lead_id ?? ""}-${(followUp as any).vc_id ?? ""}-${(followUp as any).business_offering_id ?? ""}-${followUp.step_id ?? followUp.message_id ?? ""}-${followUp.created_at}`
                     }
                     className={`hover:shadow-md transition-shadow border-l-4 ${
                       isAssignedToMe
@@ -1026,6 +1115,21 @@ export default function FollowUpTracker() {
                                     return `${stage} • ${investorName}`;
                                   })()}
                                 </>
+                              ) : followUpType === "sales" ? (
+                                <>
+                                  <Badge
+                                    variant="secondary"
+                                    className="mr-2 bg-green-100 text-green-700"
+                                  >
+                                    Business Offering
+                                  </Badge>
+                                  {(followUp as any)
+                                    .business_offering_solution ||
+                                    (followUp as any)
+                                      .business_offering_product ||
+                                    followUp.client_name ||
+                                    "Business Offering"}
+                                </>
                               ) : (
                                 <>
                                   <Badge
@@ -1075,7 +1179,9 @@ export default function FollowUpTracker() {
                               <span>
                                 Assigned to:{" "}
                                 <strong>
-                                  {followUp.assigned_user_name || "Unassigned"}
+                                  {(followUp as any).assigned_users_names ||
+                                    followUp.assigned_user_name ||
+                                    "Unassigned"}
                                 </strong>
                               </span>
                             </span>
@@ -1135,6 +1241,42 @@ export default function FollowUpTracker() {
                             >
                               <ExternalLink className="w-3 h-3 mr-1" />
                               View Message
+                            </Button>
+                          ) : followUpType === "sales" ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const businessOfferingId = (followUp as any)
+                                  .business_offering_id;
+                                if (businessOfferingId) {
+                                  const stepId =
+                                    (followUp as any)
+                                      .business_offering_step_id ||
+                                    (followUp as any).message_id ||
+                                    (followUp as any).step_id;
+                                  const params = new URLSearchParams();
+                                  if (stepId)
+                                    params.set("focusStepId", String(stepId));
+                                  params.set(
+                                    "focusFollowUpId",
+                                    String(followUp.id),
+                                  );
+                                  navigate(
+                                    `/business-offerings/${businessOfferingId}?${params.toString()}`,
+                                    {
+                                      state: {
+                                        focusFollowUpId: followUp.id,
+                                        focusStepId: stepId,
+                                      },
+                                    },
+                                  );
+                                }
+                              }}
+                              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            >
+                              <ExternalLink className="w-3 h-3 mr-1" />
+                              View Business Offering
                             </Button>
                           ) : (
                             (() => {

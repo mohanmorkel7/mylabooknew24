@@ -68,19 +68,6 @@ import {
 } from "lucide-react";
 import { StepItem } from "@/components/StepItem";
 
-const statusColors = {
-  active: "bg-green-100 text-green-700",
-  inactive: "bg-gray-100 text-gray-700",
-  onboarding: "bg-blue-100 text-blue-700",
-  completed: "bg-purple-100 text-purple-700",
-};
-
-const priorityColors = {
-  low: "bg-gray-100 text-gray-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  high: "bg-orange-100 text-orange-700",
-  urgent: "bg-red-100 text-red-700",
-};
 
 // Mock follow-up data
 const mockFollowUps = [
@@ -321,6 +308,8 @@ export default function ClientDetails() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column - Client Information */}
         <div className="lg:col-span-3 space-y-6">
+
+
           {/* Client Overview */}
           <Card>
             <CardHeader>

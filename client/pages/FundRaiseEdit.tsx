@@ -282,7 +282,38 @@ export default function FundRaiseEdit() {
       updated_by: parseInt(user?.id || "1"),
     };
     try {
-      const investors = queueItems.map((it) => {
+      // Separate existing vs new investors based on original fund raise data
+      const originalSet = new Set<string>(
+        (
+          (Array.isArray((current as any)?.investors) &&
+          (current as any).investors.length
+            ? (current as any).investors
+            : [{ investor_name: current?.investor_name }]) as any[]
+        )
+          .map((it: any) =>
+            String(it?.investor_name || "")
+              .trim()
+              .toLowerCase(),
+          )
+          .filter(Boolean),
+      );
+
+      const normalizedQueue = queueItems.filter(
+        (it) => it.vc_investor && it.fund_mn && it.investor_status,
+      );
+
+      const existingRows = normalizedQueue.filter((it) =>
+        originalSet.has(it.vc_investor.trim().toLowerCase()),
+      );
+      const newRows = normalizedQueue.filter(
+        (it) => !originalSet.has(it.vc_investor.trim().toLowerCase()),
+      );
+
+      const mapRow = (it: {
+        vc_investor: string;
+        fund_mn: string;
+        investor_status: string;
+      }) => {
         const matched = (vcList || []).find(
           (vc: any) =>
             (vc.investor_name || "").trim() === it.vc_investor.trim(),
@@ -294,17 +325,52 @@ export default function FundRaiseEdit() {
           fund_mn: it.fund_mn,
           investor_status: it.investor_status || null,
         };
-      });
-      const first = investors[0] || {};
+      };
 
+      const existingInvestors = existingRows.length
+        ? existingRows.map(mapRow)
+        : [];
+
+      const first = existingInvestors[0] || {
+        vc_id: current?.vc_id ?? null,
+        investor_name: current?.investor_name ?? null,
+        fund_mn: current?.fund_mn ?? null,
+        investor_status: current?.investor_status ?? null,
+      };
+
+      // Update current fund raise with only existing investors
       await updateMutation.mutateAsync({
         ...base,
         vc_id: first.vc_id ?? null,
         investor_name: first.investor_name ?? null,
         fund_mn: first.fund_mn ?? null,
         investor_status: first.investor_status ?? null,
-        investors,
+        investors: existingInvestors.length ? existingInvestors : [first],
       });
+
+      // Create separate fund raise entries for newly added investors (avoid duplicates)
+      if (newRows.length) {
+        const items = newRows.map((r) => mapRow(r));
+        const baseForNew = {
+          ui_status: form.status,
+          round_stage: form.round_stage,
+          total_raise_mn: form.total_raise_mn,
+          valuation_mn: form.valuation_mn,
+          start_date: form.start_date || null,
+          end_date: form.end_date || null,
+          reason: form.reason,
+          template_id: form.template_id || 1,
+          created_by: parseInt(user?.id || "1"),
+        } as any;
+        try {
+          await apiClient.request("/fund-raises", {
+            method: "POST",
+            body: JSON.stringify({ base: baseForNew, items }),
+          });
+        } catch (e) {
+          console.error("Failed to batch-create new fund raises", e);
+        }
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["fund-raises"] });
       await queryClient.invalidateQueries({ queryKey: ["fundraise", id] });

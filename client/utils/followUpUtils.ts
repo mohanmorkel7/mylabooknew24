@@ -8,7 +8,7 @@ export interface FollowUpStatusChangeData {
   userName: string;
   followUpTitle?: string;
   isVC?: boolean;
-  stepApiBase?: "vc" | "fund-raises" | "leads";
+  stepApiBase?: "vc" | "fund-raises" | "leads" | "business-offerings";
 }
 
 /**
@@ -39,18 +39,19 @@ export async function notifyFollowUpStatusChange(
   let message = "";
   let messageType: "system" | "text" = "system";
 
+  // Unified plain system message without emojis
   switch (newStatus) {
     case "completed":
-      message = `✅ Follow-up task completed: "${followUpTitle || `Follow-up #${followUpId}`}" by ${userName}`;
+      message = `Step status changed to "Completed" by ${userName}`;
       break;
     case "in_progress":
-      message = `🔄 Follow-up task started: "${followUpTitle || `Follow-up #${followUpId}`}" by ${userName}`;
+      message = `Step status changed to "In Progress" by ${userName}`;
       break;
     case "overdue":
-      message = `⚠️ Follow-up task overdue: "${followUpTitle || `Follow-up #${followUpId}`}"`;
+      message = `Step status changed to "Overdue" by ${userName}`;
       break;
     default:
-      message = `📋 Follow-up task status changed to "${newStatus}": "${followUpTitle || `Follow-up #${followUpId}`}" by ${userName}`;
+      message = `Step status changed to "${newStatus}" by ${userName}`;
       break;
   }
 
@@ -71,14 +72,6 @@ export async function notifyFollowUpStatusChange(
     );
     // Determine API base
     const base = stepApiBase || (isVC ? "vc" : "leads");
-
-    // For fund-raises, do not create follow-up chat notifications
-    if (base === "fund-raises") {
-      console.log(
-        "Skipping follow-up chat notification in fund-raises context",
-      );
-      return null;
-    }
 
     const endpoint = `/${base}/steps/${stepId}/chats`;
     console.log("Using endpoint:", endpoint);

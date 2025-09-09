@@ -32,11 +32,13 @@ async function fixFollowUpsConstraint() {
     // Add the corrected constraint
     console.log("Adding corrected constraint...");
     await client.query(`
-      ALTER TABLE follow_ups 
-      ADD CONSTRAINT chk_follow_up_context 
+      ALTER TABLE follow_ups
+      ADD CONSTRAINT chk_follow_up_context
       CHECK (
-        NOT (lead_id IS NOT NULL AND vc_id IS NOT NULL)
-      )
+        ((CASE WHEN lead_id IS NOT NULL THEN 1 ELSE 0 END) +
+         (CASE WHEN vc_id IS NOT NULL THEN 1 ELSE 0 END) +
+         (CASE WHEN business_offering_id IS NOT NULL THEN 1 ELSE 0 END)) = 1
+      ) NOT VALID
     `);
     console.log("✅ Added corrected constraint");
 

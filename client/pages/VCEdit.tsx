@@ -817,12 +817,6 @@ export default function VCEdit() {
     if (!vcData.industry) {
       newErrors.industry = "Sector Focus is required";
     }
-    if (!vcData.minimum_size) {
-      newErrors.minimum_size = "Min.Chq Size is required";
-    }
-    if (!vcData.maximum_size) {
-      newErrors.maximum_size = "Max.Chq Size is required";
-    }
     if (!vcData.country) {
       newErrors.country = "Country is required";
     }
@@ -1157,7 +1151,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn *</Label>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1209,7 +1203,7 @@ export default function VCEdit() {
                   </div>
 
                   <div>
-                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn *</Label>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button

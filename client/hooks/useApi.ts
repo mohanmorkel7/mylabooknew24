@@ -1330,14 +1330,25 @@ export function useCreateStepChat() {
       stepId,
       chatData,
       isVC = false,
+      stepApiBase,
     }: {
       stepId: number;
       chatData: any;
       isVC?: boolean;
+      stepApiBase?: "vc" | "fund-raises" | "business-offerings";
     }) => {
-      if (isVC) {
+      if (stepApiBase === "business-offerings") {
+        // Use business offering step chat endpoint
+        return apiClient.createBusinessOfferingStepChat(stepId, chatData);
+      } else if (isVC || stepApiBase === "vc") {
         // Use VC step chat endpoint
         return apiClient.request(`/vc/steps/${stepId}/chats`, {
+          method: "POST",
+          body: JSON.stringify(chatData),
+        });
+      } else if (stepApiBase === "fund-raises") {
+        // Use fund raise step chat endpoint
+        return apiClient.request(`/fund-raises/steps/${stepId}/chats`, {
           method: "POST",
           body: JSON.stringify(chatData),
         });
@@ -1346,12 +1357,19 @@ export function useCreateStepChat() {
         return apiClient.createStepChat(stepId, chatData);
       }
     },
-    onSuccess: (data, { stepId, isVC = false }) => {
+    onSuccess: (data, { stepId, isVC = false, stepApiBase }) => {
       console.log("Chat created successfully:", data);
       // Invalidate and refetch the chat query
-      const queryKey = isVC
-        ? ["vc-step-chats", stepId]
-        : ["step-chats", stepId];
+      let queryKey;
+      if (stepApiBase === "business-offerings") {
+        queryKey = ["business-offering-step-chats", stepId];
+      } else if (stepApiBase === "fund-raises") {
+        queryKey = ["fund-raise-step-chats", stepId];
+      } else if (isVC || stepApiBase === "vc") {
+        queryKey = ["vc-step-chats", stepId];
+      } else {
+        queryKey = ["step-chats", stepId];
+      }
       queryClient.invalidateQueries({ queryKey });
       // Also trigger an immediate refetch
       queryClient.refetchQueries({ queryKey });

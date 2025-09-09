@@ -1118,10 +1118,6 @@ export default function CreateVC() {
         (newErrors as any).investor_category = "VC Type is required";
       if (!(vcData as any).industry)
         (newErrors as any).industry = "Sector Focus is required";
-      if (!vcData.minimum_size)
-        newErrors.minimum_size = "Min.Chq Size is required";
-      if (!vcData.maximum_size)
-        newErrors.maximum_size = "Max.Chq Size is required";
       setErrors(newErrors);
       if (Object.keys(newErrors).length > 0) return;
     }
@@ -1272,12 +1268,6 @@ export default function CreateVC() {
     }
     if (!(vcData as any).industry) {
       (newErrors as any).industry = "Sector Focus is required";
-    }
-    if (!vcData.minimum_size) {
-      newErrors.minimum_size = "Min.Chq Size is required";
-    }
-    if (!vcData.maximum_size) {
-      newErrors.maximum_size = "Max.Chq Size is required";
     }
     if (!vcData.country) {
       newErrors.country = "Country is required";
@@ -1731,7 +1721,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn *</Label>
+                    <Label htmlFor="minimum_size">Min.Chq Size $ Mn</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button
@@ -1788,7 +1778,7 @@ export default function CreateVC() {
                   </div>
 
                   <div>
-                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn *</Label>
+                    <Label htmlFor="maximum_size">Max.Chq Size $ Mn</Label>
                     <Popover>
                       <PopoverTrigger asChild>
                         <Button

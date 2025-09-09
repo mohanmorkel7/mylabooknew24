@@ -648,6 +648,120 @@ export class ApiClient {
     return this.request("/clients/stats");
   }
 
+  // Connections
+  async getConnections(filters?: { q?: string; type?: string }) {
+    const params = new URLSearchParams();
+    if (filters?.q) params.append("q", filters.q);
+    if (filters?.type) params.append("type", filters.type);
+    const qs = params.toString();
+    return this.request(`/connections${qs ? `?${qs}` : ""}`);
+  }
+
+  async createConnection(data: any) {
+    return this.request("/connections", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateConnection(id: number, data: any) {
+    return this.request(`/connections/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteConnection(id: number) {
+    return this.request(`/connections/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getConnection(id: number) {
+    return this.request(`/connections/${id}`);
+  }
+
+  // Business Offerings
+  async getBusinessOfferings() {
+    return this.request("/business-offerings");
+  }
+  async getBusinessOffering(id: number) {
+    return this.request(`/business-offerings/${id}`);
+  }
+  async createBusinessOffering(data: any) {
+    return this.request("/business-offerings", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+  async updateBusinessOffering(id: number, data: any) {
+    return this.request(`/business-offerings/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+  async deleteBusinessOffering(id: number) {
+    return this.request(`/business-offerings/${id}`, {
+      method: "DELETE",
+    });
+  }
+
+  // Business Offering Steps
+  async getBusinessOfferingSteps(boId: number) {
+    return this.request(`/business-offerings/${boId}/steps`);
+  }
+  async createBusinessOfferingStep(boId: number, data: any) {
+    return this.request(`/business-offerings/${boId}/steps`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+  async updateBusinessOfferingStep(stepId: number, data: any) {
+    return this.request(`/business-offerings/steps/${stepId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+  async deleteBusinessOfferingStep(stepId: number) {
+    return this.request(`/business-offerings/steps/${stepId}`, {
+      method: "DELETE",
+    });
+  }
+  async reorderBusinessOfferingSteps(
+    boId: number,
+    stepOrders: { id: number; order?: number; order_index?: number }[],
+  ) {
+    return this.request(`/business-offerings/${boId}/steps/reorder`, {
+      method: "PUT",
+      body: JSON.stringify({ stepOrders }),
+    });
+  }
+
+  // Business Offering Step Chats
+  async getBusinessOfferingStepChats(stepId: number) {
+    return this.request(`/business-offerings/steps/${stepId}/chats`);
+  }
+  async createBusinessOfferingStepChat(stepId: number, chatData: any) {
+    return this.request(`/business-offerings/steps/${stepId}/chats`, {
+      method: "POST",
+      body: JSON.stringify(chatData),
+    });
+  }
+  async updateBusinessOfferingStepChat(
+    chatId: number,
+    updateData: { message: string; is_rich_text: boolean },
+  ) {
+    return this.request(`/business-offerings/chats/${chatId}`, {
+      method: "PUT",
+      body: JSON.stringify(updateData),
+    });
+  }
+  async deleteBusinessOfferingStepChat(chatId: number) {
+    return this.request(`/business-offerings/chats/${chatId}`, {
+      method: "DELETE",
+    });
+  }
+
   // Template methods
   async getTemplates() {
     return this.request("/templates");
@@ -927,12 +1041,15 @@ export class ApiClient {
   }
 
   // FinOps Task Management methods with enhanced error handling
-  async getFinOpsTasks() {
+  async getFinOpsTasks(date?: string) {
     try {
-      console.log("🔍 Fetching FinOps tasks...");
+      console.log("🔍 Fetching FinOps tasks...", date ? `(date=${date})` : "");
 
+      const path = date
+        ? `/finops-production/tasks?date=${encodeURIComponent(date)}`
+        : "/finops-production/tasks";
       // Use request with retry for better reliability
-      const result = await this.requestWithRetry("/finops/tasks", {}, 3);
+      const result = await this.requestWithRetry(path, {}, 3);
 
       console.log(
         "✅ FinOps tasks fetched successfully:",

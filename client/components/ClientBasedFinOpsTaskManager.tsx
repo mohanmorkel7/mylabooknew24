@@ -31,6 +31,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from "@/components/ui/use-toast";
 import {
   DndContext,
   closestCenter,
@@ -720,6 +721,7 @@ export default function ClientBasedFinOpsTaskManager() {
     escalation_managers: [] as string[],
     effective_from: new Date().toISOString().split("T")[0],
     duration: "daily" as "daily" | "weekly" | "monthly",
+    weekly_days: [] as string[],
     is_active: true,
     subtasks: [] as ClientBasedFinOpsSubTask[],
   });
@@ -731,11 +733,11 @@ export default function ClientBasedFinOpsTaskManager() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["client-finops-tasks"],
+    queryKey: ["client-finops-tasks", dateFilter],
     queryFn: async () => {
       try {
-        console.log("🔍 Fetching FinOps tasks...");
-        const result = await apiClient.getFinOpsTasks();
+        console.log("🔍 Fetching FinOps tasks...", { dateFilter });
+        const result = await apiClient.getFinOpsTasks(dateFilter);
         console.log(
           "✅ FinOps tasks query successful:",
           Array.isArray(result) ? result.length : "unknown",
@@ -969,6 +971,7 @@ export default function ClientBasedFinOpsTaskManager() {
       escalation_managers: [],
       effective_from: new Date().toISOString().split("T")[0],
       duration: "daily",
+      weekly_days: [],
       is_active: true,
       subtasks: [],
     });
@@ -1022,6 +1025,46 @@ export default function ClientBasedFinOpsTaskManager() {
       (subtask) => subtask.id === subtaskId,
     );
     const currentStatus = currentSubtask?.status;
+
+    // Enforce active-day rule: allow status change only on scheduled day(s)
+    const dayNames = [
+      "sunday",
+      "monday",
+      "tuesday",
+      "wednesday",
+      "thursday",
+      "friday",
+      "saturday",
+    ];
+    const today = dateFilter ? new Date(dateFilter) : new Date();
+    const taskStart = currentTask?.effective_from
+      ? new Date(currentTask.effective_from)
+      : today;
+    const isActiveToday = (() => {
+      if (!currentTask) return true;
+      if (currentTask.duration === "daily") return taskStart <= today;
+      if (currentTask.duration === "weekly") {
+        const days = Array.isArray((currentTask as any).weekly_days)
+          ? ((currentTask as any).weekly_days as string[]).map((d) =>
+              d.toLowerCase(),
+            )
+          : [];
+        if (days.length === 0) return false;
+        const day = dayNames[today.getDay()];
+        return taskStart <= today && days.includes(day);
+      }
+      return taskStart.toDateString() === today.toDateString();
+    })();
+
+    if (!isActiveToday) {
+      toast({
+        title: "Not scheduled today",
+        description:
+          "This weekly task can only be updated on its scheduled day(s).",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Check if status is changing FROM "overdue" TO any other status
     if (currentStatus === "overdue" && newStatus !== "overdue") {
@@ -1151,7 +1194,9 @@ export default function ClientBasedFinOpsTaskManager() {
       if (remaining <= 15) {
         return "need to start";
       }
-      return `Starts in ${remaining} min`;
+      const h = Math.floor(remaining / 60);
+      const m = remaining % 60;
+      return h > 0 ? `Starts in ${h}h ${m}m` : `Starts in ${m}m`;
     } else if (diffMinutes <= 15) {
       // Show "need to start" for the first 15 minutes after start time
       return "need to start";
@@ -1161,6 +1206,30 @@ export default function ClientBasedFinOpsTaskManager() {
       const hours = Math.floor(diffMinutes / 60);
       return `${hours}h ${diffMinutes % 60}m ago`;
     }
+  };
+
+  const getTimeSinceStartStrict = (startTime: string) => {
+    if (!startTime || typeof startTime !== "string") return "";
+
+    const [hours, minutes] = startTime.split(":").map(Number);
+    const taskStartTime = new Date();
+    taskStartTime.setHours(hours, minutes, 0, 0);
+
+    const diffMs = currentTime.getTime() - taskStartTime.getTime();
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+
+    if (diffMinutes < 0) {
+      const remaining = Math.abs(diffMinutes);
+      const h = Math.floor(remaining / 60);
+      const m = remaining % 60;
+      return h > 0 ? `Starts in ${h}h ${m}m` : `Starts in ${m}m`;
+    }
+    if (diffMinutes < 60) {
+      return `${diffMinutes} min ago`;
+    }
+    const h = Math.floor(diffMinutes / 60);
+    const m = diffMinutes % 60;
+    return `${h}h ${m}m ago`;
   };
 
   const getSLAWarning = (startTime: string, status: string) => {
@@ -1411,6 +1480,9 @@ export default function ClientBasedFinOpsTaskManager() {
         ? new Date(task.effective_from).toISOString().split("T")[0]
         : new Date().toISOString().split("T")[0],
       duration: task.duration || "daily",
+      weekly_days: Array.isArray((task as any).weekly_days)
+        ? (task as any).weekly_days
+        : [],
       is_active: task.is_active ?? true,
       subtasks: (task.subtasks || []).map((subtask) => ({
         ...subtask,
@@ -1476,19 +1548,36 @@ export default function ClientBasedFinOpsTaskManager() {
         effective_from: task.effective_from,
       });
 
-      // For daily tasks, check if task should run on the selected date
-      if (task.duration === "daily") {
-        // Daily task should show if it started on or before the selected date
-        if (taskDate > filterDate) {
-          console.log("Filtering out daily task - not started yet");
-          return false; // Task hasn't started yet
+      // Determine if task is active on the selected date (supports weekly days)
+      const dayNames = [
+        "sunday",
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+      ];
+      const isActiveOnDate = (() => {
+        if (task.duration === "daily") {
+          return taskDate <= filterDate;
         }
-      } else {
-        // For non-daily tasks, check if the date matches exactly
-        if (taskDate.toDateString() !== filterDate.toDateString()) {
-          console.log("Filtering out non-daily task - date doesn't match");
-          return false;
+        if (task.duration === "weekly") {
+          const days = Array.isArray((task as any).weekly_days)
+            ? ((task as any).weekly_days as string[]).map((d) =>
+                d.toLowerCase(),
+              )
+            : [];
+          if (days.length === 0) return false;
+          const day = dayNames[filterDate.getDay()];
+          return taskDate <= filterDate && days.includes(day);
         }
+        // monthly and others: fallback to exact date match
+        return taskDate.toDateString() === filterDate.toDateString();
+      })();
+      if (!isActiveOnDate) {
+        console.log("Filtering out task - not active on selected date");
+        return false;
       }
       console.log("Task passed date filter");
     }
@@ -2118,7 +2207,7 @@ export default function ClientBasedFinOpsTaskManager() {
                                       .join(", ")
                                   : "Unassigned";
 
-                              console.log("�� Final result:", result);
+                              console.log("��� Final result:", result);
                               return result;
                             })()}
                           </span>
@@ -2293,41 +2382,107 @@ export default function ClientBasedFinOpsTaskManager() {
                                   }
                                   isInline={true}
                                 />
-                                {(slaWarning || subtask.start_time) && (
-                                  <Alert
-                                    className={`mt-2 p-2 ${
-                                      slaWarning?.type === "overdue"
-                                        ? "border-red-200 bg-red-50"
-                                        : slaWarning?.type === "warning"
-                                          ? "border-orange-200 bg-orange-50"
-                                          : "border-blue-200 bg-blue-50"
-                                    }`}
-                                  >
-                                    <div className="flex items-center gap-1">
-                                      <Clock
-                                        className={`h-3 w-3 flex-shrink-0 ${
-                                          slaWarning?.type === "overdue"
-                                            ? "text-red-600"
-                                            : slaWarning?.type === "warning"
-                                              ? "text-orange-600"
-                                              : "text-blue-600"
-                                        }`}
-                                      />
-                                      <AlertDescription
-                                        className={`text-xs ${
-                                          slaWarning?.type === "overdue"
-                                            ? "text-red-700"
-                                            : slaWarning?.type === "warning"
-                                              ? "text-orange-700"
-                                              : "text-blue-700"
-                                        }`}
-                                      >
-                                        {slaWarning?.message || "Status"} •{" "}
-                                        {getTimeSinceStart(subtask.start_time)}
-                                      </AlertDescription>
-                                    </div>
-                                  </Alert>
-                                )}
+                                {(slaWarning || subtask.start_time) &&
+                                  (() => {
+                                    const dayNames = [
+                                      "sunday",
+                                      "monday",
+                                      "tuesday",
+                                      "wednesday",
+                                      "thursday",
+                                      "friday",
+                                      "saturday",
+                                    ];
+                                    const today = dateFilter
+                                      ? new Date(dateFilter)
+                                      : new Date();
+                                    const taskStart = task.effective_from
+                                      ? new Date(task.effective_from)
+                                      : today;
+                                    const show = (() => {
+                                      if (task.duration === "daily")
+                                        return taskStart <= today;
+                                      if (task.duration === "weekly") {
+                                        const days = Array.isArray(
+                                          (task as any).weekly_days,
+                                        )
+                                          ? (
+                                              (task as any)
+                                                .weekly_days as string[]
+                                            ).map((d) => d.toLowerCase())
+                                          : [];
+                                        if (days.length === 0) return false;
+                                        const day = dayNames[today.getDay()];
+                                        return (
+                                          taskStart <= today &&
+                                          days.includes(day)
+                                        );
+                                      }
+                                      return (
+                                        taskStart.toDateString() ===
+                                        today.toDateString()
+                                      );
+                                    })();
+                                    return show;
+                                  })() && (
+                                    <Alert
+                                      className={`mt-2 p-2 ${
+                                        slaWarning?.type === "overdue" ||
+                                        subtask.status === "overdue"
+                                          ? "border-red-200 bg-red-50"
+                                          : slaWarning?.type === "warning"
+                                            ? "border-orange-200 bg-orange-50"
+                                            : "border-blue-200 bg-blue-50"
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-1">
+                                        <Clock
+                                          className={`h-3 w-3 flex-shrink-0 ${
+                                            slaWarning?.type === "overdue" ||
+                                            subtask.status === "overdue"
+                                              ? "text-red-600"
+                                              : slaWarning?.type === "warning"
+                                                ? "text-orange-600"
+                                                : "text-blue-600"
+                                          }`}
+                                        />
+                                        <AlertDescription
+                                          className={`text-xs ${
+                                            slaWarning?.type === "overdue" ||
+                                            subtask.status === "overdue"
+                                              ? "text-red-700"
+                                              : slaWarning?.type === "warning"
+                                                ? "text-orange-700"
+                                                : "text-blue-700"
+                                          }`}
+                                        >
+                                          {(() => {
+                                            const overdue =
+                                              slaWarning?.type === "overdue" ||
+                                              subtask.status === "overdue";
+                                            const timeText = subtask.start_time
+                                              ? overdue
+                                                ? getTimeSinceStartStrict(
+                                                    subtask.start_time,
+                                                  )
+                                                : getTimeSinceStart(
+                                                    subtask.start_time,
+                                                  )
+                                              : "";
+                                            if (overdue) {
+                                              return `Overdue${timeText ? " • " + timeText : ""}`;
+                                            }
+                                            if (slaWarning?.message) {
+                                              return `${slaWarning.message}${timeText ? " • " + timeText : ""}`;
+                                            }
+                                            return timeText
+                                              ? `Status • ${timeText}`
+                                              : "Status";
+                                          })()}
+                                        </AlertDescription>
+                                      </div>
+                                    </Alert>
+                                  )}
                               </div>
                             );
                           });
@@ -2525,6 +2680,70 @@ export default function ClientBasedFinOpsTaskManager() {
                     <SelectItem value="monthly">Monthly</SelectItem>
                   </SelectContent>
                 </Select>
+
+                {taskForm.duration === "weekly" && (
+                  <div className="mt-3">
+                    <Label>Select day(s)</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Select
+                        onValueChange={(value) => {
+                          const v = value.toLowerCase();
+                          setTaskForm((prev) => ({
+                            ...prev,
+                            weekly_days: prev.weekly_days.includes(v)
+                              ? prev.weekly_days
+                              : prev.weekly_days.length < 2
+                                ? [...prev.weekly_days, v]
+                                : prev.weekly_days,
+                          }));
+                        }}
+                      >
+                        <SelectTrigger className="w-52">
+                          <SelectValue placeholder="Select day (max 2)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[
+                            "Sunday",
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday",
+                          ].map((d) => (
+                            <SelectItem key={d} value={d}>
+                              {d}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <div className="flex flex-wrap gap-2">
+                        {taskForm.weekly_days.map((d, idx) => (
+                          <Badge
+                            key={`${d}-${idx}`}
+                            variant="secondary"
+                            className="cursor-pointer"
+                            onClick={() =>
+                              setTaskForm((prev) => ({
+                                ...prev,
+                                weekly_days: prev.weekly_days.filter(
+                                  (x) => x !== d,
+                                ),
+                              }))
+                            }
+                          >
+                            {d.charAt(0).toUpperCase() + d.slice(1)} ×
+                          </Badge>
+                        ))}
+                      </div>
+                      {taskForm.weekly_days.length === 0 && (
+                        <span className="text-xs text-gray-500">
+                          Pick up to two days
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>

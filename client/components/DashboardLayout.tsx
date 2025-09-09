@@ -29,6 +29,9 @@ import {
   Megaphone,
   HandCoins,
   Building,
+  Briefcase,
+  UserPlus,
+  Layers,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiClient } from "@/lib/api";
@@ -49,6 +52,7 @@ interface NavigationItem {
 }
 
 const navigationItems: NavigationItem[] = [
+  // a) Overview
   {
     name: "Overview",
     href: "/dashboard",
@@ -56,27 +60,22 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["leads", "vc", "product"],
   },
+  // b) Templates (was Admin Panel)
   {
-    name: "Admin Panel",
+    name: "Templates",
     href: "/admin",
-    icon: Users,
+    icon: Layers,
     roles: ["admin"],
     permissions: ["admin"],
   },
+  // c) Connections
   {
-    name: "Sales",
-    href: "/leads",
-    icon: Target,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads"],
+    name: "Connections",
+    href: "/connections",
+    icon: UserPlus,
+    roles: ["admin", "sales", "product", "finance"],
   },
-  {
-    name: "Clients",
-    href: "/clients",
-    icon: Building,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads"],
-  },
+  // d) VC
   {
     name: "VC",
     href: "/vc",
@@ -84,6 +83,7 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["vc"],
   },
+  // e) Fund Raise
   {
     name: "Fund Raise",
     href: "/fundraise",
@@ -91,6 +91,23 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["vc"],
   },
+  // f) Clients
+  {
+    name: "Clients",
+    href: "/clients",
+    icon: Building,
+    roles: ["admin", "sales", "product"],
+    permissions: ["leads"],
+  },
+  // g) Sales (was Business Offerings)
+  {
+    name: "Sales",
+    href: "/business-offerings",
+    icon: Briefcase,
+    roles: ["admin", "sales", "product"],
+    permissions: ["vc"],
+  },
+  // h) Follow-ups
   {
     name: "Follow-ups",
     href: "/follow-ups",
@@ -98,36 +115,42 @@ const navigationItems: NavigationItem[] = [
     roles: ["admin", "sales", "product"],
     permissions: ["leads", "vc"],
   },
+  // i) FinOps
   {
     name: "FinOps",
     href: "/finops",
     icon: DollarSign,
     roles: ["admin", "finance"],
   },
+  // j) Product Management
   {
     name: "Product Management",
     href: "/product",
     icon: Grid3X3,
     roles: ["admin", "product"],
   },
+  // Keep Proposals (not specified in ordering list)
   {
     name: "Proposals",
     href: "/proposals",
     icon: FileText,
     roles: ["admin", "sales", "product"],
   },
+  // k) Support tickets
   {
     name: "Support Tickets",
     href: "/tickets",
     icon: Ticket,
     roles: ["admin", "sales", "product"],
   },
+  // l) Alerts & notifications
   {
     name: "Alerts & Notifications",
     href: "/alerts",
     icon: Bell,
     roles: ["admin", "sales", "product"],
   },
+  // m) Settings
   {
     name: "Settings",
     icon: Settings,
@@ -227,12 +250,25 @@ const getNotificationsFromFollowUps = async (
     const notifications: Notification[] = [];
     const currentDate = new Date();
 
+    const myId = parseInt(userId || "0");
     followUps.forEach((followUp: any) => {
-      // Check if user is assigned to this follow-up
-      if (
-        followUp.assigned_user_name === userName &&
-        followUp.status === "pending"
-      ) {
+      const myNameAssigned = followUp.assigned_user_name === userName;
+      const byId =
+        (followUp.assigned_to &&
+          myId &&
+          parseInt(followUp.assigned_to) === myId) ||
+        false;
+      const list = followUp.assigned_to_list;
+      const inList = Array.isArray(list)
+        ? list.some((x: any) => parseInt(String(x)) === myId)
+        : false;
+      const names = followUp.assigned_users_names || "";
+      const inNames =
+        typeof names === "string" && names.split(", ").includes(userName);
+      const isMine = myNameAssigned || byId || inList || inNames;
+
+      // Assigned notification
+      if (isMine && followUp.status === "pending") {
         notifications.push({
           id: followUp.id,
           type: "follow_up_assigned",
@@ -245,9 +281,9 @@ const getNotificationsFromFollowUps = async (
         });
       }
 
-      // Check if follow-up is overdue
+      // Overdue notification
       if (
-        followUp.assigned_user_name === userName &&
+        isMine &&
         followUp.status !== "completed" &&
         followUp.due_date &&
         new Date(followUp.due_date) < currentDate
@@ -671,7 +707,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                     variant="ghost"
                     size="sm"
                     className="w-full text-xs"
-                    onClick={() => navigate("/alerts")}
+                    onClick={() => navigate("/follow-ups")}
                   >
                     View All Notifications
                   </Button>
