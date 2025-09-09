@@ -431,7 +431,7 @@ export function VCEnhancedStepItem({
         .filter(Boolean)
         .join(" | ");
 
-      const systemMessageText = `📋 Follow-up created: "${followUpNotes}" ��� ${details}`;
+      const systemMessageText = `📋 Follow-up created: "${followUpNotes}" ${details}`;
       const chatApiUrl = `/${stepApiBase}/steps/${step.id}/chats`;
 
       console.log("💬 Preparing to send system message to team chat:", {
