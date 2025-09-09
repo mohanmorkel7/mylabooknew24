@@ -11,7 +11,7 @@ async function ensureFinOpsSettings() {
     CREATE TABLE IF NOT EXISTS finops_settings (
       id SERIAL PRIMARY KEY,
       initial_overdue_call_delay_minutes INTEGER DEFAULT 0,
-      repeat_overdue_call_interval_minutes INTEGER DEFAULT 10,
+      repeat_overdue_call_interval_minutes INTEGER DEFAULT 15,
       only_repeat_when_single_overdue BOOLEAN DEFAULT false,
       updated_at TIMESTAMP DEFAULT NOW()
     )
