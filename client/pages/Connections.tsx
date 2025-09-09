@@ -620,7 +620,7 @@ export default function Connections() {
                 {c.country || ""}
               </CardDescription>
             </CardHeader>
-            <CardContent className="h-full pb-16 relative">
+            <CardContent className="flex-1">
               <div className="space-y-1 text-sm">
                 <div>
                   <span className="text-gray-500">Phone:</span> {c.phone_prefix}{" "}
@@ -632,51 +632,45 @@ export default function Connections() {
                   </div>
                 )}
               </div>
-
-              {/* separator above actions for visual gap */}
-              <div className="absolute left-4 right-4 bottom-14 border-t border-gray-100 dark:border-gray-800 opacity-80" />
-
-              {/* Actions anchored to bottom-right to avoid misalignment */}
-              <div className="absolute right-4 bottom-4 flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/connections/${c.id}/edit`)}
-                >
-                  <Edit className="w-4 h-4 mr-1" /> Edit
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Delete"
-                      title="Delete"
-                      className="p-2 border border-red-600 text-red-600 hover:bg-red-50 rounded-md"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Delete connection?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to delete "{c.name}"? This action
-                        cannot be undone.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={() => deleteMutation.mutate(c.id)}
-                      >
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
             </CardContent>
+
+            <CardFooter className="pt-4 justify-end gap-2 border-t border-gray-100 dark:border-gray-800">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/connections/${c.id}/edit`)}
+              >
+                <Edit className="w-4 h-4 mr-1" /> Edit
+              </Button>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Delete"
+                    title="Delete"
+                    className="p-2 border border-red-600 text-red-600 hover:bg-red-50 rounded-md"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete connection?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete "{c.name}"? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => deleteMutation.mutate(c.id)}>
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardFooter>
           </Card>
         ))}
       </div>
