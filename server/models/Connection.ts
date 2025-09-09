@@ -16,6 +16,7 @@ export interface ConnectionRecord {
   phone_prefix: string;
   phone: string;
   email: string | null;
+  designation: string | null;
   country: string | null;
   state: string | null;
   city: string | null;
@@ -29,6 +30,7 @@ export interface CreateConnectionData {
   phone_prefix: string;
   phone: string;
   email?: string | null;
+  designation?: string | null;
   country?: string | null;
   state?: string | null;
   city?: string | null;
@@ -40,6 +42,7 @@ export interface UpdateConnectionData {
   phone_prefix?: string;
   phone?: string;
   email?: string | null;
+  designation?: string | null;
   country?: string | null;
   state?: string | null;
   city?: string | null;
@@ -97,7 +100,7 @@ export class ConnectionRepository {
 
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const query = `
-      SELECT id, name, type, phone_prefix, phone, email, country, state, city, created_at, updated_at
+      SELECT id, name, type, phone_prefix, phone, email, designation, country, state, city, created_at, updated_at
       FROM connections
       ${whereSql}
       ORDER BY created_at DESC
@@ -108,7 +111,7 @@ export class ConnectionRepository {
 
   static async findById(id: number): Promise<ConnectionRecord | null> {
     const result = await pool.query(
-      `SELECT id, name, type, phone_prefix, phone, email, country, state, city, created_at, updated_at
+      `SELECT id, name, type, phone_prefix, phone, email, designation, country, state, city, created_at, updated_at
        FROM connections WHERE id = $1`,
       [id],
     );
@@ -118,15 +121,16 @@ export class ConnectionRepository {
   static async create(data: CreateConnectionData): Promise<ConnectionRecord> {
     await this.ensureTypeConstraint();
     const result = await pool.query(
-      `INSERT INTO connections (name, type, phone_prefix, phone, email, country, state, city)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-       RETURNING id, name, type, phone_prefix, phone, email, country, state, city, created_at, updated_at`,
+      `INSERT INTO connections (name, type, phone_prefix, phone, email, designation, country, state, city)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING id, name, type, phone_prefix, phone, email, designation, country, state, city, created_at, updated_at`,
       [
         data.name,
         data.type ?? null,
         data.phone_prefix,
         data.phone,
         data.email ?? null,
+        data.designation ?? null,
         data.country ?? null,
         data.state ?? null,
         data.city ?? null,
@@ -159,7 +163,7 @@ export class ConnectionRepository {
     params.push(id);
 
     const result = await pool.query(
-      `UPDATE connections SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, name, type, phone_prefix, phone, email, country, state, city, created_at, updated_at`,
+      `UPDATE connections SET ${sets.join(", ")} WHERE id = $${idx} RETURNING id, name, type, phone_prefix, phone, email, designation, country, state, city, created_at, updated_at`,
       params,
     );
     return result.rows[0] || null;
