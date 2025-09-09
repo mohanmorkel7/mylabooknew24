@@ -72,17 +72,8 @@ export async function notifyFollowUpStatusChange(
     // Determine API base
     const base = stepApiBase || (isVC ? "vc" : "leads");
 
-    // For fund-raises, do not create follow-up chat notifications
-    // (fund-raises are handled specially in VCEnhancedStepItem)
-    if (base === "fund-raises") {
-      console.log(
-        "Skipping follow-up chat notification in fund-raises context",
-      );
-      return null;
-    }
-
     const endpoint = `/${base}/steps/${stepId}/chats`;
-    console.log("Using endpoint:", endpoint);
+  console.log("Using endpoint:", endpoint);
 
     const result = await apiClient.request<any>(endpoint, {
       method: "POST",
