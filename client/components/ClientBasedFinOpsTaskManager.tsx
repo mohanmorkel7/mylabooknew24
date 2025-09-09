@@ -1610,22 +1610,30 @@ export default function ClientBasedFinOpsTaskManager() {
   useEffect(() => {
     const initial: Record<number, number> = { ...overdueTimers };
     filteredTasks.forEach((task: ClientBasedFinOpsTask) => {
-      const hasOverdue = (task.subtasks || []).some((st) => st.status === "overdue");
+      const hasOverdue = (task.subtasks || []).some(
+        (st) => st.status === "overdue",
+      );
       const key = `finops_next_call_${task.id}`;
       if (hasOverdue) {
-        const stored = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        const stored =
+          typeof window !== "undefined" ? localStorage.getItem(key) : null;
         if (stored) {
           const nextMs = parseInt(stored, 10);
           const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
           initial[task.id] = !isNaN(diff) ? diff : 15 * 60;
         } else {
           const next = Date.now() + 15 * 60 * 1000;
-          try { if (typeof window !== "undefined") localStorage.setItem(key, String(next)); } catch {}
+          try {
+            if (typeof window !== "undefined")
+              localStorage.setItem(key, String(next));
+          } catch {}
           initial[task.id] = 15 * 60;
         }
       } else {
         if (initial[task.id]) delete initial[task.id];
-        try { if (typeof window !== "undefined") localStorage.removeItem(key); } catch {}
+        try {
+          if (typeof window !== "undefined") localStorage.removeItem(key);
+        } catch {}
       }
     });
     setOverdueTimers(initial);
@@ -1685,7 +1693,10 @@ export default function ClientBasedFinOpsTaskManager() {
           });
         // schedule next call 15 minutes from now and persist
         const nextMs = Date.now() + 15 * 60 * 1000;
-        try { if (typeof window !== "undefined") localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs)); } catch {}
+        try {
+          if (typeof window !== "undefined")
+            localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs));
+        } catch {}
         // reset timer
         setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
       }
@@ -2362,10 +2373,18 @@ export default function ClientBasedFinOpsTaskManager() {
                                 // compute from persisted next-call if available
                                 let seconds = overdueTimers[task.id] || 15 * 60;
                                 try {
-                                  const stored = typeof window !== "undefined" ? localStorage.getItem(`finops_next_call_${task.id}`) : null;
+                                  const stored =
+                                    typeof window !== "undefined"
+                                      ? localStorage.getItem(
+                                          `finops_next_call_${task.id}`,
+                                        )
+                                      : null;
                                   if (stored) {
                                     const nextMs = parseInt(stored, 10);
-                                    const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
+                                    const diff = Math.max(
+                                      0,
+                                      Math.ceil((nextMs - Date.now()) / 1000),
+                                    );
                                     if (!isNaN(diff)) seconds = diff;
                                   }
                                 } catch {}

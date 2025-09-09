@@ -257,7 +257,8 @@ export default function FinOpsTaskManager({
       const slaStatus = getSLAStatus(task);
       const key = `finops_next_call_${task.id}`;
       if (slaStatus === "overdue") {
-        const stored = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        const stored =
+          typeof window !== "undefined" ? localStorage.getItem(key) : null;
         let secondsRemaining = 15 * 60;
         if (stored) {
           const nextCallMs = parseInt(stored, 10);
@@ -355,7 +356,10 @@ export default function FinOpsTaskManager({
           const nextMs = Date.now() + 15 * 60 * 1000;
           try {
             if (typeof window !== "undefined")
-              localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs));
+              localStorage.setItem(
+                `finops_next_call_${taskId}`,
+                String(nextMs),
+              );
           } catch {}
           setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
         }
@@ -659,10 +663,18 @@ export default function FinOpsTaskManager({
                                 // compute from persisted next-call if available
                                 let seconds = overdueTimers[task.id] || 15 * 60;
                                 try {
-                                  const stored = typeof window !== "undefined" ? localStorage.getItem(`finops_next_call_${task.id}`) : null;
+                                  const stored =
+                                    typeof window !== "undefined"
+                                      ? localStorage.getItem(
+                                          `finops_next_call_${task.id}`,
+                                        )
+                                      : null;
                                   if (stored) {
                                     const nextMs = parseInt(stored, 10);
-                                    const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
+                                    const diff = Math.max(
+                                      0,
+                                      Math.ceil((nextMs - Date.now()) / 1000),
+                                    );
                                     if (!isNaN(diff)) seconds = diff;
                                   }
                                 } catch {}
