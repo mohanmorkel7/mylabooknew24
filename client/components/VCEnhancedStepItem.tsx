@@ -404,9 +404,13 @@ export function VCEnhancedStepItem({
         baseFollowUp.follow_up_type = "sales";
         baseFollowUp.business_offering_id = step.business_offering_id;
         baseFollowUp.business_offering_step_id = step.id;
-      } else {
-        // Fund raise follow-up (existing logic)
+      } else if (stepApiBase === "fund-raises") {
+        // Fund raise follow-up: tie to fund_raise_step via message_id
         baseFollowUp.title = `Fund Raise Follow-up: ${step.name}`;
+        baseFollowUp.message_id = step.id;
+      } else {
+        // VC follow-up
+        baseFollowUp.title = `VC Follow-up: ${step.name}`;
         baseFollowUp.vc_id = step.vc_id;
         baseFollowUp.vc_step_id = step.id;
       }
@@ -435,7 +439,9 @@ export function VCEnhancedStepItem({
         const actionUrl =
           stepApiBase === "business-offerings"
             ? `/business-offerings/${step.business_offering_id}`
-            : `/fundraise/${step.vc_id}`;
+            : stepApiBase === "fund-raises"
+              ? `/fundraise/${step.fund_raise_id || step.fund_raise || step.vc_id}`
+              : `/vc/${step.vc_id}`;
         for (const uid of uniqueIds) {
           await apiClient.request(`/notifications-production`, {
             method: "POST",
