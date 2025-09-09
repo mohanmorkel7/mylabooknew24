@@ -845,10 +845,10 @@ async function sendReplicaDownAlertOnce(
     `);
 
     const reserve = await pool.query(
-      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
-       RETURNING id`,
+      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+         VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+         RETURNING id`,
       [taskId, Number(subtaskId), "replica_down_overdue", title],
     );
 
