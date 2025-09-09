@@ -619,7 +619,7 @@ export default function Connections() {
                 {c.country || ""}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-16 relative">
+            <CardContent className="h-full pb-16 relative">
               <div className="space-y-1 text-sm">
                 <div>
                   <span className="text-gray-500">Phone:</span> {c.phone_prefix}{" "}
