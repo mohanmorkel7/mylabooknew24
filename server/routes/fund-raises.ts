@@ -419,9 +419,10 @@ router.delete("/:id", async (req: Request, res: Response) => {
       );
 
       // Delete steps
-      await pool.query(`DELETE FROM fund_raise_steps WHERE id = ANY($1::int[])`, [
-        stepIds,
-      ]);
+      await pool.query(
+        `DELETE FROM fund_raise_steps WHERE id = ANY($1::int[])`,
+        [stepIds],
+      );
     }
 
     // Finally delete the fund raise record
