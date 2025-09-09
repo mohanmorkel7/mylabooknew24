@@ -5,11 +5,25 @@ export const IST_TIMEZONE = "Asia/Kolkata";
 /**
  * Formats a date to IST timezone with various options
  */
+const parseToDateUTC = (date: string | Date): Date => {
+  if (date instanceof Date) return date;
+  if (typeof date !== "string") return new Date(date as any);
+  const trimmed = date.trim();
+  const hasTZ = /[zZ]$|[+-]\d{2}:?\d{2}$/.test(trimmed);
+  const isISO = /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?$/.test(trimmed);
+  if (isISO && !hasTZ) {
+    // Treat bare timestamps from DB as UTC
+    const normalized = trimmed.replace(" ", "T") + "Z";
+    return new Date(normalized);
+  }
+  return new Date(trimmed);
+};
+
 export const formatToIST = (
   date: string | Date,
   options: Intl.DateTimeFormatOptions = {},
 ): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = parseToDateUTC(date);
 
   const defaultOptions: Intl.DateTimeFormatOptions = {
     timeZone: IST_TIMEZONE,
@@ -29,7 +43,7 @@ export const formatToISTDateTime = (
   date: string | Date,
   options: Intl.DateTimeFormatOptions = {},
 ): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = parseToDateUTC(date);
 
   if (isNaN(dateObj.getTime())) return "Invalid Date";
 
@@ -44,7 +58,6 @@ export const formatToISTDateTime = (
     ...options,
   };
 
-  // Use Intl to format directly in IST to avoid double-offset issues
   const parts = new Intl.DateTimeFormat("en-IN", fmt).formatToParts(dateObj);
   const get = (type: string) => parts.find((p) => p.type === type)?.value || "";
 
@@ -62,14 +75,15 @@ export const formatToISTDateTime = (
  * Formats a date to just the date part in IST (YYYY-MM-DD format)
  */
 export const formatToISTDateOnly = (date: string | Date): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-
-  // Convert to IST and extract date part
-  const istDate = new Date(
-    dateObj.toLocaleString("en-US", { timeZone: IST_TIMEZONE }),
-  );
-
-  return istDate.toISOString().split("T")[0];
+  const dateObj = parseToDateUTC(date);
+  const ist = new Intl.DateTimeFormat("en-CA", {
+    timeZone: IST_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(dateObj);
+  // en-CA gives YYYY-MM-DD
+  return ist;
 };
 
 /**
@@ -136,7 +150,7 @@ export const isOverdue = (dueDate: string | Date): boolean => {
  * Gets relative time in IST (e.g., "2 hours ago", "in 3 days")
  */
 export const getRelativeTimeIST = (date: string | Date): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = parseToDateUTC(date);
   const currentIST = getCurrentISTTimestamp();
 
   // Convert the event time to IST as well to compare in the same timezone
@@ -161,10 +175,7 @@ export const getRelativeTimeIST = (date: string | Date): string => {
  * Converts any date to IST timezone and returns as Date object
  */
 export const convertToIST = (date: string | Date): Date => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
-
-  // Convert to IST by adding 5.5 hours directly to UTC time
-  // dateObj.getTime() already returns UTC milliseconds, no need for getTimezoneOffset
+  const dateObj = parseToDateUTC(date);
   const istMs = dateObj.getTime() + 5.5 * 60 * 60 * 1000; // Add 5.5 hours for IST (+05:30)
   return new Date(istMs);
 };
@@ -173,7 +184,7 @@ export const convertToIST = (date: string | Date): Date => {
  * Formats date for API queries (YYYY-MM-DD in IST)
  */
 export const formatDateForAPI = (date: Date | string): string => {
-  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const dateObj = parseToDateUTC(date as any);
   const istDate = convertToIST(dateObj);
   return istDate.toISOString().split("T")[0];
 };
