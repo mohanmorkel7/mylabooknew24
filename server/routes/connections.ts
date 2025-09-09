@@ -84,6 +84,7 @@ router.post("/", async (req: Request, res: Response) => {
       phone_prefix: data.phone_prefix.trim(),
       phone: String(data.phone).trim(),
       email: data.email ? data.email.trim() : null,
+      designation: data.designation ? data.designation.trim() : null,
       country: data.country ? data.country.trim() : null,
       state: data.state ? data.state.trim() : null,
       city: data.city ? data.city.trim() : null,
@@ -128,6 +129,10 @@ router.put("/:id", async (req: Request, res: Response) => {
         data.phone_prefix !== undefined ? data.phone_prefix.trim() : undefined,
       phone: data.phone !== undefined ? String(data.phone).trim() : undefined,
       email: data.email !== undefined ? data.email?.trim() || null : undefined,
+      designation:
+        data.designation !== undefined
+          ? data.designation?.trim() || null
+          : undefined,
       country:
         data.country !== undefined ? data.country?.trim() || null : undefined,
       state: data.state !== undefined ? data.state?.trim() || null : undefined,
