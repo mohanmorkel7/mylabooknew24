@@ -482,7 +482,7 @@ router.get("/client/:clientId", async (req: Request, res: Response) => {
       `;
 
       const result = await pool.query(query, [clientId]);
-      res.json(result.rows);
+      res.json(result.rows.map((row: any) => addISTFields({ ...row })));
     } else {
       // Return empty array when database is unavailable
       console.log("Database unavailable, returning empty follow-ups array");
