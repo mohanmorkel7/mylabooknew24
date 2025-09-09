@@ -460,7 +460,7 @@ router.post("/", async (req: Request, res: Response) => {
     };
 
     console.log("Database error, returning mock follow-up response");
-    res.status(201).json(mockFollowUp);
+    res.status(201).json(addISTFields({ ...mockFollowUp }));
   }
 });
 
