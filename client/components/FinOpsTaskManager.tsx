@@ -246,7 +246,9 @@ export default function FinOpsTaskManager({
   });
 
   // Overdue direct-call timers (seconds remaining)
-  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>({});
+  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>(
+    {},
+  );
 
   // Initialize timers for overdue tasks to 15 minutes (900 seconds) when tasks change
   useEffect(() => {
@@ -319,7 +321,10 @@ export default function FinOpsTaskManager({
                   }),
                 });
               } catch (err) {
-                console.warn("Failed to trigger direct-call for overdue subtask:", err);
+                console.warn(
+                  "Failed to trigger direct-call for overdue subtask:",
+                  err,
+                );
               }
             });
 
@@ -621,8 +626,10 @@ export default function FinOpsTaskManager({
                           <div className="flex items-center gap-1">
                             <Timer className="w-4 h-4" />
                             <span className="text-red-600">
-                              Next call in: {(() => {
-                                const seconds = overdueTimers[task.id] || 15 * 60;
+                              Next call in:{" "}
+                              {(() => {
+                                const seconds =
+                                  overdueTimers[task.id] || 15 * 60;
                                 const mins = Math.floor(seconds / 60);
                                 const secs = seconds % 60;
                                 return `${mins}m ${secs.toString().padStart(2, "0")}s`;
@@ -821,8 +828,9 @@ export default function FinOpsTaskManager({
                   </SelectTrigger>
                   <SelectContent>
                     {users
-                      .filter((user: any, index: number, arr: any[]) =>
-                        arr.findIndex(u => u.id === user.id) === index
+                      .filter(
+                        (user: any, index: number, arr: any[]) =>
+                          arr.findIndex((u) => u.id === user.id) === index,
                       )
                       .map((user: any, index: number) => (
                         <SelectItem
