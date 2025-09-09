@@ -386,13 +386,56 @@ router.put("/:id", async (req: Request, res: Response) => {
 // Delete by id
 router.delete("/:id", async (req: Request, res: Response) => {
   try {
-    if (await isDatabaseAvailable()) {
-      const id = parseInt(req.params.id);
-      const ok = await FundRaiseRepository.delete(id);
-      return res.json({ success: ok });
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+
+    await pool.query("BEGIN");
+
+    // Collect related step ids
+    const stepsRes = await pool.query(
+      `SELECT id FROM fund_raise_steps WHERE fund_raise_id = $1`,
+      [id],
+    );
+    const stepIds: number[] = stepsRes.rows.map((r: any) => r.id);
+
+    if (stepIds.length > 0) {
+      // Delete follow-ups linked to these steps (both storage patterns)
+      await pool.query(
+        `DELETE FROM follow_ups WHERE vc_step_id = ANY($1::int[])`,
+        [stepIds],
+      );
+      await pool.query(
+        `DELETE FROM follow_ups WHERE message_id = ANY($1::int[])`,
+        [stepIds],
+      );
+
+      // Delete step chats
+      await pool.query(
+        `DELETE FROM fund_raise_step_chats WHERE step_id = ANY($1::int[])`,
+        [stepIds],
+      );
+
+      // Delete steps
+      await pool.query(`DELETE FROM fund_raise_steps WHERE id = ANY($1::int[])`, [
+        stepIds,
+      ]);
     }
-    return res.status(503).json({ error: "Database unavailable" });
+
+    // Finally delete the fund raise record
+    const frDel = await pool.query(`DELETE FROM fund_raises WHERE id = $1`, [
+      id,
+    ]);
+
+    await pool.query("COMMIT");
+
+    return res.json({ success: frDel.rowCount > 0 });
   } catch (error: any) {
+    try {
+      await pool.query("ROLLBACK");
+    } catch {}
     console.error("Error deleting fund_raise:", error.message);
     return res.status(500).json({ error: "Failed" });
   }
@@ -577,11 +620,30 @@ router.delete("/steps/:stepId", async (req: Request, res: Response) => {
     const stepId = parseInt(req.params.stepId);
     if (isNaN(stepId))
       return res.status(400).json({ error: "Invalid step id" });
+
+    await pool.query("BEGIN");
+
+    // Delete follow-ups linked to this step (both storage patterns)
+    await pool.query(`DELETE FROM follow_ups WHERE vc_step_id = $1`, [stepId]);
+    await pool.query(`DELETE FROM follow_ups WHERE message_id = $1`, [stepId]);
+
+    // Delete step chats
+    await pool.query(`DELETE FROM fund_raise_step_chats WHERE step_id = $1`, [
+      stepId,
+    ]);
+
+    // Delete the step itself
     const r = await pool.query(`DELETE FROM fund_raise_steps WHERE id = $1`, [
       stepId,
     ]);
+
+    await pool.query("COMMIT");
+
     res.json({ success: r.rowCount > 0 });
   } catch (error: any) {
+    try {
+      await pool.query("ROLLBACK");
+    } catch {}
     console.error("Error deleting fund raise step:", error.message);
     res.status(500).json({ error: "Failed" });
   }
