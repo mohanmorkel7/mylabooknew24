@@ -917,7 +917,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
     for (const row of overdue.rows) {
       const taskName = row.task_name || "Unknown Task";
       const clientName = row.client_name || "Unknown Client";
-      const title = `Take immediate action on the overdue subtask "${row.subtask_name}" (Task: "${taskName}", Client: "${clientName}")`;
+      const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
 
       // Reserve to avoid duplicates
       const reserve = await pool.query(
