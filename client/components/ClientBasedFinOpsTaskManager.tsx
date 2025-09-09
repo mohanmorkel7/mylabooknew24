@@ -1602,13 +1602,17 @@ export default function ClientBasedFinOpsTaskManager() {
   );
 
   // Overdue direct-call timers (seconds remaining per task)
-  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>({});
+  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>(
+    {},
+  );
 
   // Initialize timers for overdue tasks when filteredTasks change
   useEffect(() => {
     const initial: Record<number, number> = { ...overdueTimers };
     filteredTasks.forEach((task: ClientBasedFinOpsTask) => {
-      const hasOverdue = (task.subtasks || []).some((st) => st.status === "overdue");
+      const hasOverdue = (task.subtasks || []).some(
+        (st) => st.status === "overdue",
+      );
       if (hasOverdue) {
         if (!initial[task.id]) initial[task.id] = 15 * 60;
       } else {
@@ -1641,21 +1645,35 @@ export default function ClientBasedFinOpsTaskManager() {
       if (seconds === 0) {
         const task = filteredTasks.find((t) => t.id === taskId);
         if (!task) return;
-        (task.subtasks || []).filter((st) => st.status === "overdue").forEach(async (subtask) => {
-          try {
-            const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name || "Unknown Client"}.`;
+        (task.subtasks || [])
+          .filter((st) => st.status === "overdue")
+          .forEach(async (subtask) => {
             try {
-              await apiClient.sendFinOpsManualAlert(task.id, subtask.id, "sla_overdue", title);
-            } catch {}
-            await fetch("https://pulsealerts.mylapay.com/direct-call", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: [] }),
-            });
-          } catch (err) {
-            console.warn("Failed to trigger direct-call for overdue subtask:", err);
-          }
-        });
+              const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name || "Unknown Client"}.`;
+              try {
+                await apiClient.sendFinOpsManualAlert(
+                  task.id,
+                  subtask.id,
+                  "sla_overdue",
+                  title,
+                );
+              } catch {}
+              await fetch("https://pulsealerts.mylapay.com/direct-call", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  receiver: "CRM_Switch",
+                  title,
+                  user_ids: [],
+                }),
+              });
+            } catch (err) {
+              console.warn(
+                "Failed to trigger direct-call for overdue subtask:",
+                err,
+              );
+            }
+          });
         // reset timer
         setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
       }
@@ -1665,11 +1683,7 @@ export default function ClientBasedFinOpsTaskManager() {
 
   // End timers setup
 
-  console.log(
-    filteredTasks.length,
-    "Date filter:",
-    dateFilter,
-  );
+  console.log(filteredTasks.length, "Date filter:", dateFilter);
 
   // Calculate summary statistics
   const getOverallSummary = () => {
@@ -2331,8 +2345,10 @@ export default function ClientBasedFinOpsTaskManager() {
                           <div className="flex items-center gap-1">
                             <Timer className="w-4 h-4" />
                             <span className="text-red-600">
-                              Next call in: {(() => {
-                                const seconds = overdueTimers[task.id] || 15 * 60;
+                              Next call in:{" "}
+                              {(() => {
+                                const seconds =
+                                  overdueTimers[task.id] || 15 * 60;
                                 const mins = Math.floor(seconds / 60);
                                 const secs = seconds % 60;
                                 return `${mins}m ${secs.toString().padStart(2, "0")}s`;
