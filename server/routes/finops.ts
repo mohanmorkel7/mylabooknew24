@@ -2357,7 +2357,7 @@ router.get("/config", async (_req: Request, res: Response) => {
     if (!(await isDatabaseAvailable())) {
       return res.json({
         initial_overdue_call_delay_minutes: 0,
-        repeat_overdue_call_interval_minutes: 10,
+        repeat_overdue_call_interval_minutes: 15,
         only_repeat_when_single_overdue: false,
       });
     }
