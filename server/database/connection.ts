@@ -499,6 +499,24 @@ export async function initializeDatabase() {
       );
     }
 
+    // Ensure connections.designation column exists
+    try {
+      const addDesignationPath = path.join(
+        __dirname,
+        "alter-connections-add-designation.sql",
+      );
+      if (fs.existsSync(addDesignationPath)) {
+        const sql = fs.readFileSync(addDesignationPath, "utf8");
+        await client.query(sql);
+        console.log("Connections designation column ensured successfully");
+      }
+    } catch (designationErr) {
+      console.log(
+        "Connections designation migration already applied or error:",
+        (designationErr as any).message,
+      );
+    }
+
     // Extend fund_raises with all fields
     try {
       const fundRaisesAlterPath = path.join(
