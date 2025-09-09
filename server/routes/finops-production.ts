@@ -442,7 +442,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         const row = meta.rows[0] || {};
         const taskName = row.task_name || "Unknown Task";
         const clientName = row.client_name || "Unknown Client";
-        const title = `Take immediate action on the overdue subtask "${subtask.name}" (Task: "${taskName}", Client: "${clientName}")`;
+        const title = `Please take immediate action on the overdue subtask "${subtask.name}" under the task "${taskName}" for the client "${clientName}".`;
         const managerNames = Array.from(
           new Set([
             ...parseManagers(row.reporting_managers),
