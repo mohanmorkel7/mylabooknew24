@@ -351,7 +351,12 @@ export default function FinOpsTaskManager({
               }
             });
 
-          // reset timer to 15 minutes
+          // schedule next call 15 minutes from now and persist
+          const nextMs = Date.now() + 15 * 60 * 1000;
+          try {
+            if (typeof window !== "undefined")
+              localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs));
+          } catch {}
           setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
         }
       }
