@@ -1683,6 +1683,9 @@ export default function ClientBasedFinOpsTaskManager() {
               );
             }
           });
+        // schedule next call 15 minutes from now and persist
+        const nextMs = Date.now() + 15 * 60 * 1000;
+        try { if (typeof window !== "undefined") localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs)); } catch {}
         // reset timer
         setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
       }
