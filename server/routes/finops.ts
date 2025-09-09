@@ -2480,4 +2480,39 @@ router.get("/test", (req: Request, res: Response) => {
   });
 });
 
+// Get all external alert next_call timestamps
+router.get("/next-calls", async (req: Request, res: Response) => {
+  try {
+    // Add CORS headers for FullStory compatibility
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader(
+      "Access-Control-Allow-Methods",
+      "GET, POST, PUT, DELETE, OPTIONS",
+    );
+    res.setHeader(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
+
+    if (await isDatabaseAvailable()) {
+      const { alert_key } = req.query;
+      const params: any[] = [];
+      let query = `SELECT task_id, subtask_id, alert_key, next_call_at, created_at FROM finops_external_alerts`;
+      if (alert_key) {
+        query += ` WHERE alert_key = $1`;
+        params.push(String(alert_key));
+      }
+      query += ` ORDER BY next_call_at ASC NULLS LAST`;
+
+      const result = await pool.query(query, params);
+      res.json(result.rows);
+    } else {
+      res.json([]);
+    }
+  } catch (error: any) {
+    console.error("Error fetching next calls:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
