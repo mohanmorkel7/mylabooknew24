@@ -128,15 +128,18 @@ export default function ConnectionForm({
 
   return (
     <div className="space-y-4">
+      {/* Row 1: Name full width */}
+      <div>
+        <Label>Name *</Label>
+        <Input
+          value={(form.name as string) || ""}
+          onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+          placeholder="Member name"
+        />
+      </div>
+
+      {/* Row 2: Designation | Type */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label>Name *</Label>
-          <Input
-            value={(form.name as string) || ""}
-            onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="Member name"
-          />
-        </div>
         <div>
           <Label>Designation</Label>
           <Input
@@ -165,39 +168,35 @@ export default function ConnectionForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="md:col-span-2">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label>Phone Prefix *</Label>
-              <Select
-                value={form.phone_prefix as string}
-                onValueChange={(v) =>
-                  setForm((f) => ({ ...f, phone_prefix: v }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select prefix" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PHONE_PREFIXES.map((p) => (
-                    <SelectItem key={p.code} value={p.code}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="md:col-span-2">
-              <Label>Phone *</Label>
-              <Input
-                value={(form.phone as string) || ""}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, phone: e.target.value }))
-                }
-                placeholder="Phone number"
-              />
-            </div>
-          </div>
+      </div>
+
+      {/* Row 3: Phone Prefix | Phone | Email */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <Label>Phone Prefix *</Label>
+          <Select
+            value={form.phone_prefix as string}
+            onValueChange={(v) => setForm((f) => ({ ...f, phone_prefix: v }))}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select prefix" />
+            </SelectTrigger>
+            <SelectContent>
+              {PHONE_PREFIXES.map((p) => (
+                <SelectItem key={p.code} value={p.code}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label>Phone *</Label>
+          <Input
+            value={(form.phone as string) || ""}
+            onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+            placeholder="Phone number"
+          />
         </div>
         <div>
           <Label>Email</Label>
@@ -210,6 +209,7 @@ export default function ConnectionForm({
         </div>
       </div>
 
+      {/* Row 4: Location (Country / State / City) */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <Label>Country</Label>
