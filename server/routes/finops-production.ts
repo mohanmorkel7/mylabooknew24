@@ -924,8 +924,8 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
 
       // Reserve to avoid duplicates
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title)
-         VALUES ($1, $2, 'replica_down_overdue', $3)
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+         VALUES ($1, $2, 'replica_down_overdue', $3, NOW() + INTERVAL '15 minutes')
          ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],
