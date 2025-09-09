@@ -309,7 +309,7 @@ export default function FollowUpTracker() {
           );
           if (vcFollowUps.length > 0) {
             console.log(
-              "🔍 VC Follow-ups fetched:",
+              "�� VC Follow-ups fetched:",
               vcFollowUps.map((f: any) => ({
                 id: f.id,
                 title: f.title,
@@ -727,10 +727,21 @@ export default function FollowUpTracker() {
     });
   }, [filteredFollowUps]);
 
-  const myFollowUps = React.useMemo(
-    () => filteredFollowUps.filter((f) => f.assigned_user_name === user?.name),
-    [filteredFollowUps, user?.name],
-  );
+  const myFollowUps = React.useMemo(() => {
+    const myId = parseInt(user?.id || "0");
+    const myName = user?.name || "";
+    return filteredFollowUps.filter((f: any) => {
+      const byName = f.assigned_user_name === myName;
+      const byId = (f.assigned_to && myId && parseInt(f.assigned_to) === myId) || false;
+      const list = f.assigned_to_list;
+      const inList = Array.isArray(list)
+        ? list.some((x: any) => parseInt(String(x)) === myId)
+        : false;
+      const names = f.assigned_users_names || "";
+      const inNames = typeof names === "string" && names.split(", ").includes(myName);
+      return byName || byId || inList || inNames;
+    });
+  }, [filteredFollowUps, user?.id, user?.name]);
   const assignedByMe = React.useMemo(
     () => filteredFollowUps.filter((f) => f.created_by_name === user?.name),
     [filteredFollowUps, user?.name],
