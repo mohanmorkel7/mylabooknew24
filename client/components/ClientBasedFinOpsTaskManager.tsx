@@ -1606,17 +1606,26 @@ export default function ClientBasedFinOpsTaskManager() {
     {},
   );
 
-  // Initialize timers for overdue tasks when filteredTasks change
+  // Initialize timers for overdue tasks when filteredTasks change (use persisted next-call)
   useEffect(() => {
     const initial: Record<number, number> = { ...overdueTimers };
     filteredTasks.forEach((task: ClientBasedFinOpsTask) => {
-      const hasOverdue = (task.subtasks || []).some(
-        (st) => st.status === "overdue",
-      );
+      const hasOverdue = (task.subtasks || []).some((st) => st.status === "overdue");
+      const key = `finops_next_call_${task.id}`;
       if (hasOverdue) {
-        if (!initial[task.id]) initial[task.id] = 15 * 60;
+        const stored = typeof window !== "undefined" ? localStorage.getItem(key) : null;
+        if (stored) {
+          const nextMs = parseInt(stored, 10);
+          const diff = Math.max(0, Math.ceil((nextMs - Date.now()) / 1000));
+          initial[task.id] = !isNaN(diff) ? diff : 15 * 60;
+        } else {
+          const next = Date.now() + 15 * 60 * 1000;
+          try { if (typeof window !== "undefined") localStorage.setItem(key, String(next)); } catch {}
+          initial[task.id] = 15 * 60;
+        }
       } else {
         if (initial[task.id]) delete initial[task.id];
+        try { if (typeof window !== "undefined") localStorage.removeItem(key); } catch {}
       }
     });
     setOverdueTimers(initial);
