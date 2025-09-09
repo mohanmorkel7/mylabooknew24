@@ -1072,76 +1072,52 @@ export function VCEnhancedStepItem({
                                                           return;
                                                         }
 
-                                                        const statusMsg =
-                                                          val === "completed"
-                                                            ? `✅ Follow-up task completed: "#${fid}" by ${user?.name || "User"}`
-                                                            : val ===
-                                                                "in_progress"
-                                                              ? `🔄 Follow-up task started: "#${fid}" by ${user?.name || "User"}`
-                                                              : `📋 Follow-up task status changed to "${val}": "#${fid}" by ${user?.name || "User"}`;
+                                                        const statusDisplayMap: Record<string, string> = {
+                                                          pending: "Pending",
+                                                          in_progress: "In Progress",
+                                                          completed: "Completed",
+                                                          overdue: "Overdue",
+                                                        };
+                                                        const oldDisplay = statusDisplayMap[current] || current;
+                                                        const newDisplay = statusDisplayMap[val] || val;
+                                                        const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user?.name || "User"}`;
                                                         const optimistic = {
                                                           id: Date.now(),
-                                                          user_id: parseInt(
-                                                            user?.id || "0",
-                                                          ),
+                                                          user_id: parseInt(user?.id || "0"),
                                                           user_name: "System",
-                                                          message: statusMsg,
-                                                          message_type:
-                                                            "system" as const,
+                                                          message: sysMsg,
+                                                          message_type: "system" as const,
                                                           is_rich_text: false,
-                                                          created_at:
-                                                            new Date().toISOString(),
+                                                          created_at: new Date().toISOString(),
                                                         } as any;
-                                                        setChatMessages(
-                                                          (prev) => [
-                                                            ...prev,
-                                                            optimistic,
-                                                          ],
-                                                        );
+                                                        setChatMessages((prev) => [...prev, optimistic]);
                                                         try {
-                                                          await updateFollowUpStatus.mutateAsync(
+                                                          await updateFollowUpStatus.mutateAsync({
+                                                            followUpId: fid,
+                                                            statusData: {
+                                                              status: val,
+                                                              completed_at: val === "completed" ? new Date().toISOString() : null,
+                                                            },
+                                                          });
+                                                          const created = await apiClient.request(
+                                                            `/${stepApiBase}/steps/${step.id}/chats`,
                                                             {
-                                                              followUpId: fid,
-                                                              statusData: {
-                                                                status: val,
-                                                                completed_at:
-                                                                  val ===
-                                                                  "completed"
-                                                                    ? new Date().toISOString()
-                                                                    : null,
-                                                              },
+                                                              method: "POST",
+                                                              body: JSON.stringify({
+                                                                user_id: parseInt(user?.id || "0"),
+                                                                user_name: "System",
+                                                                message: sysMsg,
+                                                                message_type: "system",
+                                                                is_rich_text: false,
+                                                                attachments: [],
+                                                              }),
                                                             },
                                                           );
-                                                          const created =
-                                                            await notifyFollowUpStatusChange(
-                                                              {
-                                                                followUpId: fid,
-                                                                newStatus: val,
-                                                                stepId: step.id,
-                                                                userId:
-                                                                  parseInt(
-                                                                    user?.id ||
-                                                                      "0",
-                                                                  ),
-                                                                userName:
-                                                                  user?.name ||
-                                                                  "User",
-                                                                stepApiBase:
-                                                                  stepApiBase as any,
-                                                              },
-                                                            );
-                                                          if (
-                                                            created &&
-                                                            (created as any).id
-                                                          ) {
-                                                            setChatMessages(
-                                                              (prev) =>
-                                                                prev.map((m) =>
-                                                                  m.id ===
-                                                                  optimistic.id
-                                                                    ? (created as any)
-                                                                    : m,
-                                                                ),
+                                                          if (created && (created as any).id) {
+                                                            setChatMessages((prev) =>
+                                                              prev.map((m) =>
+                                                                m.id === optimistic.id ? (created as any) : m,
+                                                              ),
                                                             );
                                                           }
                                                         } catch (e) {
