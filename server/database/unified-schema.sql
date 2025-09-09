@@ -315,7 +315,7 @@ CREATE TABLE IF NOT EXISTS finops_tasks (
     effective_from DATE NOT NULL,
     duration VARCHAR(20) NOT NULL CHECK (duration IN ('daily', 'weekly', 'monthly')),
     is_active BOOLEAN DEFAULT true,
-    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'completed', 'overdue')),
+    status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'in_progress', 'completed', 'overdue')),
     last_run_at TIMESTAMP,
     next_run_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
