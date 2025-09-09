@@ -555,7 +555,10 @@ export default function FollowUpTracker() {
         const resp = await fetch(`/api/follow-ups/${followUpId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus, completed_at: completedAt }),
+          body: JSON.stringify({
+            status: newStatus,
+            completed_at: completedAt,
+          }),
         });
         if (!resp.ok) throw new Error("Failed to update status");
 
@@ -566,7 +569,9 @@ export default function FollowUpTracker() {
           completed: "Completed",
           overdue: "Overdue",
         };
-        const oldDisplay = statusDisplayMap[(followUp as any).status] || (followUp as any).status;
+        const oldDisplay =
+          statusDisplayMap[(followUp as any).status] ||
+          (followUp as any).status;
         const newDisplay = statusDisplayMap[newStatus] || newStatus;
         const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user.name}`;
 
@@ -582,7 +587,9 @@ export default function FollowUpTracker() {
           }),
         });
 
-        console.log("Follow-up status update and chat notification completed successfully");
+        console.log(
+          "Follow-up status update and chat notification completed successfully",
+        );
       } else {
         // Fallback to original method if follow-up not found or no user
         const response = await fetch(`/api/follow-ups/${followUpId}`, {

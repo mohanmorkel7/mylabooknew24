@@ -852,11 +852,14 @@ export function VCEnhancedStepItem({
                       !chatError &&
                       sortedMessages.map((message, index) => {
                         const isStatusChange =
-                          message.message_type === "system" && (() => {
-                            const txt = (message.message || "");
-                            return /Step status changed/i.test(txt) ||
+                          message.message_type === "system" &&
+                          (() => {
+                            const txt = message.message || "";
+                            return (
+                              /Step status changed/i.test(txt) ||
                               /Follow-up task (completed|started)/i.test(txt) ||
-                              /Follow-up task status changed/i.test(txt);
+                              /Follow-up task status changed/i.test(txt)
+                            );
                           })();
                         const isFocusAnchor =
                           !!focusFollowUpId &&
@@ -1072,52 +1075,97 @@ export function VCEnhancedStepItem({
                                                           return;
                                                         }
 
-                                                        const statusDisplayMap: Record<string, string> = {
+                                                        const statusDisplayMap: Record<
+                                                          string,
+                                                          string
+                                                        > = {
                                                           pending: "Pending",
-                                                          in_progress: "In Progress",
-                                                          completed: "Completed",
+                                                          in_progress:
+                                                            "In Progress",
+                                                          completed:
+                                                            "Completed",
                                                           overdue: "Overdue",
                                                         };
-                                                        const oldDisplay = statusDisplayMap[current] || current;
-                                                        const newDisplay = statusDisplayMap[val] || val;
+                                                        const oldDisplay =
+                                                          statusDisplayMap[
+                                                            current
+                                                          ] || current;
+                                                        const newDisplay =
+                                                          statusDisplayMap[
+                                                            val
+                                                          ] || val;
                                                         const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user?.name || "User"}`;
                                                         const optimistic = {
                                                           id: Date.now(),
-                                                          user_id: parseInt(user?.id || "0"),
+                                                          user_id: parseInt(
+                                                            user?.id || "0",
+                                                          ),
                                                           user_name: "System",
                                                           message: sysMsg,
-                                                          message_type: "system" as const,
+                                                          message_type:
+                                                            "system" as const,
                                                           is_rich_text: false,
-                                                          created_at: new Date().toISOString(),
+                                                          created_at:
+                                                            new Date().toISOString(),
                                                         } as any;
-                                                        setChatMessages((prev) => [...prev, optimistic]);
+                                                        setChatMessages(
+                                                          (prev) => [
+                                                            ...prev,
+                                                            optimistic,
+                                                          ],
+                                                        );
                                                         try {
-                                                          await updateFollowUpStatus.mutateAsync({
-                                                            followUpId: fid,
-                                                            statusData: {
-                                                              status: val,
-                                                              completed_at: val === "completed" ? new Date().toISOString() : null,
-                                                            },
-                                                          });
-                                                          const created = await apiClient.request(
-                                                            `/${stepApiBase}/steps/${step.id}/chats`,
+                                                          await updateFollowUpStatus.mutateAsync(
                                                             {
-                                                              method: "POST",
-                                                              body: JSON.stringify({
-                                                                user_id: parseInt(user?.id || "0"),
-                                                                user_name: "System",
-                                                                message: sysMsg,
-                                                                message_type: "system",
-                                                                is_rich_text: false,
-                                                                attachments: [],
-                                                              }),
+                                                              followUpId: fid,
+                                                              statusData: {
+                                                                status: val,
+                                                                completed_at:
+                                                                  val ===
+                                                                  "completed"
+                                                                    ? new Date().toISOString()
+                                                                    : null,
+                                                              },
                                                             },
                                                           );
-                                                          if (created && (created as any).id) {
-                                                            setChatMessages((prev) =>
-                                                              prev.map((m) =>
-                                                                m.id === optimistic.id ? (created as any) : m,
-                                                              ),
+                                                          const created =
+                                                            await apiClient.request(
+                                                              `/${stepApiBase}/steps/${step.id}/chats`,
+                                                              {
+                                                                method: "POST",
+                                                                body: JSON.stringify(
+                                                                  {
+                                                                    user_id:
+                                                                      parseInt(
+                                                                        user?.id ||
+                                                                          "0",
+                                                                      ),
+                                                                    user_name:
+                                                                      "System",
+                                                                    message:
+                                                                      sysMsg,
+                                                                    message_type:
+                                                                      "system",
+                                                                    is_rich_text:
+                                                                      false,
+                                                                    attachments:
+                                                                      [],
+                                                                  },
+                                                                ),
+                                                              },
+                                                            );
+                                                          if (
+                                                            created &&
+                                                            (created as any).id
+                                                          ) {
+                                                            setChatMessages(
+                                                              (prev) =>
+                                                                prev.map((m) =>
+                                                                  m.id ===
+                                                                  optimistic.id
+                                                                    ? (created as any)
+                                                                    : m,
+                                                                ),
                                                             );
                                                           }
                                                         } catch (e) {
