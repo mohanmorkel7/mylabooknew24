@@ -891,6 +891,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
       SELECT
         t.id as task_id,
         t.task_name,
+        t.client_name,
         t.assigned_to,
         t.reporting_managers,
         t.escalation_managers,
