@@ -1050,7 +1050,7 @@ router.patch(
             if (status === "overdue") {
               const taskNameMock = task.task_name || "Unknown Task";
               const clientNameMock = task.client_name || "Unknown Client";
-              const title = `Please take immediate action on the overdue subtask "${subtask.name}" under the task "${taskNameMock}" for the client "${clientNameMock}".`;
+              const title = `Please take immediate action on the overdue subtask ${subtask.name} under the task ${taskNameMock} for the client ${clientNameMock}.`;
               await sendReplicaDownAlertOnce(taskId, subtaskId, title, []);
             }
 
