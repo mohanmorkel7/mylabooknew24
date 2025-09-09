@@ -422,7 +422,7 @@ export function VCEnhancedStepItem({
 
       // Create a single follow-up (team task) with a primary assignee for ownership
       const primaryAssigneeId = uniqueIds.length > 0 ? uniqueIds[0] : null;
-      const payload = { ...baseFollowUp, assigned_to: primaryAssigneeId };
+      const payload = { ...baseFollowUp, assigned_to: primaryAssigneeId, assigned_to_list: uniqueIds };
       const created = await createFollowUpMutation.mutateAsync(payload);
       const createdId: number | null = (created as any)?.id ?? null;
 

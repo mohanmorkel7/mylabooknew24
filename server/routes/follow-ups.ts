@@ -49,7 +49,7 @@ router.post("/", async (req: Request, res: Response) => {
           SELECT column_name
           FROM information_schema.columns
           WHERE table_name = 'follow_ups'
-          AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id')
+          AND column_name IN ('vc_id', 'vc_step_id', 'business_offering_id', 'business_offering_step_id', 'assigned_to_list')
         `);
 
         const hasVCColumns = columnCheck.rows.some((row) =>
@@ -60,6 +60,21 @@ router.post("/", async (req: Request, res: Response) => {
             row.column_name,
           ),
         );
+        let hasAssignedList = columnCheck.rows.some(
+          (row) => row.column_name === "assigned_to_list",
+        );
+
+        // Ensure assigned_to_list column exists
+        if (!hasAssignedList) {
+          try {
+            await pool.query(
+              `ALTER TABLE follow_ups ADD COLUMN IF NOT EXISTS assigned_to_list JSONB DEFAULT '[]'::jsonb`,
+            );
+            hasAssignedList = true;
+          } catch (e: any) {
+            console.warn("Could not add assigned_to_list column:", e.message);
+          }
+        }
 
         let query, values;
 
@@ -108,7 +123,16 @@ router.post("/", async (req: Request, res: Response) => {
           }
 
           // Full query with VC and business offering support
-          query = `
+          query = hasAssignedList
+            ? `
+            INSERT INTO follow_ups (
+              client_id, lead_id, step_id, vc_id, vc_step_id, business_offering_id, business_offering_step_id,
+              title, description, due_date, follow_up_type, assigned_to, created_by, message_id, assigned_to_list
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            RETURNING *
+          `
+            : `
             INSERT INTO follow_ups (
               client_id, lead_id, step_id, vc_id, vc_step_id, business_offering_id, business_offering_step_id,
               title, description, due_date, follow_up_type, assigned_to, created_by, message_id
@@ -175,7 +199,7 @@ router.post("/", async (req: Request, res: Response) => {
             lead_id || null,
             step_id || null,
             resolvedVcId || null,
-            resolvedVcStepId || null, // This will be null for fund raise steps
+            resolvedVcStepId || null,
             resolvedBusinessOfferingId || null,
             finalBusinessOfferingStepId || null,
             title,
@@ -186,6 +210,9 @@ router.post("/", async (req: Request, res: Response) => {
             created_by,
             finalMessageId,
           ];
+          if (hasAssignedList) {
+            values.push(JSON.stringify(req.body.assigned_to_list || []));
+          }
         } else {
           // Legacy query without VC support
           if (vc_id || vc_step_id) {
@@ -617,6 +644,22 @@ router.get("/", async (req: Request, res: Response) => {
              LEFT JOIN business_offer_steps bos ON f.business_offering_step_id = bos.id`
           : "";
 
+        const assignedListSelect = `,
+          CASE WHEN EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'follow_ups' AND column_name = 'assigned_to_list'
+          ) THEN f.assigned_to_list ELSE NULL END as assigned_to_list,
+          CASE WHEN EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'follow_ups' AND column_name = 'assigned_to_list'
+          ) THEN (
+            SELECT string_agg(CONCAT(u2.first_name, ' ', u2.last_name), ', ')
+            FROM users u2
+            WHERE u2.id = ANY (
+              SELECT ARRAY(SELECT (jsonb_array_elements_text(f.assigned_to_list))::int)
+            )
+          ) ELSE NULL END as assigned_users_names`;
+
         // Full query with VC, Fund Raise and conditional Business Offering support
         query = `
           SELECT f.*,
@@ -630,6 +673,7 @@ router.get("/", async (req: Request, res: Response) => {
                  vs.name as vc_step_name,
                  fr.round_stage as fund_raise_stage,
                  fr.id as fund_raise_id${businessOfferingSelect}
+                 ${assignedListSelect}
           FROM follow_ups f
           LEFT JOIN users u ON f.assigned_to = u.id
           LEFT JOIN users c ON f.created_by = c.id
