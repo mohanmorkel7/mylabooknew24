@@ -470,6 +470,7 @@ class FinOpsAlertService {
             "sla_overdue_repeat",
             "all",
             minutes,
+            title,
           );
         }
       }
