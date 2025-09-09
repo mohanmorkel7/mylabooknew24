@@ -998,4 +998,25 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
   }
 });
 
+// Get all external alert next_call timestamps
+router.get("/next-calls", async (req: Request, res: Response) => {
+  try {
+    await requireDatabase();
+    const { alert_key } = req.query;
+    const params: any[] = [];
+    let query = `SELECT task_id, subtask_id, alert_key, next_call_at, created_at FROM finops_external_alerts`;
+    if (alert_key) {
+      query += ` WHERE alert_key = $1`;
+      params.push(String(alert_key));
+    }
+    query += ` ORDER BY next_call_at ASC NULLS LAST`;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (error: any) {
+    console.error("Error fetching next calls:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
