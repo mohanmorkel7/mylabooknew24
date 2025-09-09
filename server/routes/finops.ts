@@ -1639,10 +1639,39 @@ router.post(
         );
         console.log(`Alert type: ${alert_type}, Message: ${message}`);
 
+        const recipients = (() => {
+          const val = taskData.reporting_managers;
+          if (!val) return [] as string[];
+          if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
+          if (typeof val === "string") {
+            let s = val.trim();
+            if (s.startsWith("{") && s.endsWith("}")) {
+              s = s.slice(1, -1);
+              return s
+                .split(",")
+                .map((x) => x.trim())
+                .map((x) => x.replace(/^\"|\"$/g, ""))
+                .filter(Boolean);
+            }
+            try {
+              const parsed = JSON.parse(s);
+              if (Array.isArray(parsed))
+                return parsed.map(String).map((x) => x.trim()).filter(Boolean);
+            } catch {}
+            return s.split(",").map((x) => x.trim()).filter(Boolean);
+          }
+          try {
+            const parsed = JSON.parse(val);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [] as string[];
+          }
+        })();
+
         res.json({
           message: "Manual alert sent successfully",
           alert_type: alert_type,
-          recipients: JSON.parse(taskData.reporting_managers || "[]"),
+          recipients,
         });
       } else {
         res.json({
