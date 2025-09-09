@@ -436,11 +436,13 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
 
         // External Pulse alert with managers and assignees
         const meta = await client.query(
-          `SELECT task_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
+          `SELECT task_name, client_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
           [subtask.task_id],
         );
         const row = meta.rows[0] || {};
-        const title = `Take immediate action on the overdue subtask ${subtask.name}`;
+        const taskName = row.task_name || "Unknown Task";
+        const clientName = row.client_name || "Unknown Client";
+        const title = `Take immediate action on the overdue subtask "${subtask.name}" (Task: "${taskName}", Client: "${clientName}")`;
         const managerNames = Array.from(
           new Set([
             ...parseManagers(row.reporting_managers),
