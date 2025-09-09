@@ -79,14 +79,17 @@ export function MultiSelect({
               className="w-full px-2 py-1 text-sm border rounded"
               onChange={(e) => {
                 const term = e.target.value.toLowerCase();
-                const container = e.currentTarget.parentElement?.nextElementSibling as HTMLElement | null;
+                const container = e.currentTarget.parentElement
+                  ?.nextElementSibling as HTMLElement | null;
                 if (!container) return;
-                Array.from(container.querySelectorAll('[data-option]')).forEach(
+                Array.from(container.querySelectorAll("[data-option]")).forEach(
                   (el) => {
-                    const text = (el.getAttribute('data-option') || '').toLowerCase();
+                    const text = (
+                      el.getAttribute("data-option") || ""
+                    ).toLowerCase();
                     (el as HTMLElement).style.display = text.includes(term)
-                      ? 'flex'
-                      : 'none';
+                      ? "flex"
+                      : "none";
                   },
                 );
               }}

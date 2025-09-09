@@ -368,7 +368,11 @@ export function VCEnhancedStepItem({
   };
 
   const handleCreateFollowUp = async () => {
-    if (!followUpNotes.trim() || followUpAssignees.length === 0 || !followUpDueDate) {
+    if (
+      !followUpNotes.trim() ||
+      followUpAssignees.length === 0 ||
+      !followUpDueDate
+    ) {
       alert("Please fill in all follow-up fields");
       return;
     }
@@ -1349,7 +1353,9 @@ export function VCEnhancedStepItem({
                             />
                             <div className="grid grid-cols-2 gap-3">
                               <MultiSelect
-                                options={teamMembers.map((m) => `${m.name} (#${m.id})`)}
+                                options={teamMembers.map(
+                                  (m) => `${m.name} (#${m.id})`,
+                                )}
                                 value={followUpAssignees}
                                 onChange={setFollowUpAssignees}
                                 placeholder="Assign to users..."
