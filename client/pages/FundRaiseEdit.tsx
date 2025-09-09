@@ -350,46 +350,25 @@ export default function FundRaiseEdit() {
 
       // Create separate fund raise entries for newly added investors (avoid duplicates)
       if (newRows.length) {
-        for (const r of newRows) {
-          const alreadyExists = (allFundRaises as any[]).some((fr: any) => {
-            const nameMatch =
-              (fr.investor_name || "").trim().toLowerCase() ===
-              r.vc_investor.trim().toLowerCase();
-            const stageMatch = (fr.round_stage || "") === form.round_stage;
-            return nameMatch && stageMatch;
+        const items = newRows.map((r) => mapRow(r));
+        const baseForNew = {
+          ui_status: form.status,
+          round_stage: form.round_stage,
+          total_raise_mn: form.total_raise_mn,
+          valuation_mn: form.valuation_mn,
+          start_date: form.start_date || null,
+          end_date: form.end_date || null,
+          reason: form.reason,
+          template_id: form.template_id || 1,
+          created_by: parseInt(user?.id || "1"),
+        } as any;
+        try {
+          await apiClient.request("/fund-raises", {
+            method: "POST",
+            body: JSON.stringify({ base: baseForNew, items }),
           });
-          if (alreadyExists) continue;
-
-          const row = mapRow(r);
-          const newPayload: any = {
-            ui_status: form.status,
-            round_stage: form.round_stage,
-            total_raise_mn: form.total_raise_mn,
-            valuation_mn: form.valuation_mn,
-            start_date: form.start_date || null,
-            end_date: form.end_date || null,
-            reason: form.reason,
-            template_id: form.template_id || 1,
-            vc_id: row.vc_id ?? null,
-            investor_name: row.investor_name ?? null,
-            investor_status: row.investor_status ?? null,
-            fund_mn: row.fund_mn ?? null,
-            investors: [row],
-            created_by: parseInt(user?.id || "1"),
-          };
-
-          try {
-            await apiClient.request("/fund-raises", {
-              method: "POST",
-              body: JSON.stringify(newPayload),
-            });
-          } catch (e) {
-            console.error(
-              "Failed to create new fund raise for investor:",
-              r.vc_investor,
-              e,
-            );
-          }
+        } catch (e) {
+          console.error("Failed to batch-create new fund raises", e);
         }
       }
 
