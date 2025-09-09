@@ -165,6 +165,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     const query = `
       SELECT
         t.*,
+        (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) AS next_call_at,
         json_agg(
           json_build_object(
             'id', st.id,
