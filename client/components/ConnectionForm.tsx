@@ -190,7 +190,7 @@ export default function ConnectionForm({
             </SelectContent>
           </Select>
         </div>
-        <div className="md:col-span-3">
+        <div className="md:col-span-2">
           <Label>Phone *</Label>
           <Input
             value={(form.phone as string) || ""}
@@ -198,7 +198,7 @@ export default function ConnectionForm({
             placeholder="Phone number"
           />
         </div>
-        <div className="md:col-span-2">
+        <div className="md:col-span-3">
           <Label>Email</Label>
           <Input
             type="email"
