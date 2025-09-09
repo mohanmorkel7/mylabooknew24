@@ -394,6 +394,7 @@ class FinOpsAlertService {
                 "sla_overdue_initial",
                 "all",
                 minutes,
+                title,
               );
             } else {
               console.warn(
