@@ -835,6 +835,7 @@ class FinOpsAlertService {
     alertType: string,
     recipients: string,
     minutesData: number,
+    customMessage?: string,
   ): Promise<void> {
     try {
       const level = alertType.includes("overdue")
@@ -842,7 +843,8 @@ class FinOpsAlertService {
         : alertType.includes("warning")
           ? "warning"
           : "info";
-      const message = `${alertType} • ${minutesData} min`;
+      const defaultMessage = `${alertType} • ${minutesData} min`;
+      const messageToStore = customMessage || defaultMessage;
       const recipsArray = recipients
         .split(",")
         .map((s) => s.trim())
@@ -858,7 +860,7 @@ class FinOpsAlertService {
           subtaskId,
           alertType,
           level,
-          message,
+          messageToStore,
           JSON.stringify(recipsArray),
           JSON.stringify(metadata),
         ],
