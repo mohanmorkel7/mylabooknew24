@@ -437,7 +437,7 @@ router.post("/", async (req: Request, res: Response) => {
       };
 
       console.log("Database unavailable, returning mock follow-up response");
-      res.status(201).json(mockFollowUp);
+      res.status(201).json(addISTFields({ ...mockFollowUp }));
     }
   } catch (error) {
     console.error("Error creating follow-up:", error);
