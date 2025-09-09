@@ -358,7 +358,7 @@ class FinOpsAlertService {
             const userIds = await this.getUserIdsFromNames(names);
             const taskName = row.task_name || "Unknown Task";
             const clientName = row.client_name || "Unknown Client";
-            const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
+            const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
             console.log("Direct-call payload (service initial)", {
               taskId: row.task_id,
@@ -426,7 +426,7 @@ class FinOpsAlertService {
 
           const taskName = row.task_name || "Unknown Task";
           const clientName = row.client_name || "Unknown Client";
-          const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
+          const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
           console.log("Direct-call payload (service repeat)", {
             taskId: row.task_id,
