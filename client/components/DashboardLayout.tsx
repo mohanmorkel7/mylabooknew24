@@ -253,13 +253,18 @@ const getNotificationsFromFollowUps = async (
     const myId = parseInt(userId || "0");
     followUps.forEach((followUp: any) => {
       const myNameAssigned = followUp.assigned_user_name === userName;
-      const byId = (followUp.assigned_to && myId && parseInt(followUp.assigned_to) === myId) || false;
+      const byId =
+        (followUp.assigned_to &&
+          myId &&
+          parseInt(followUp.assigned_to) === myId) ||
+        false;
       const list = followUp.assigned_to_list;
       const inList = Array.isArray(list)
         ? list.some((x: any) => parseInt(String(x)) === myId)
         : false;
       const names = followUp.assigned_users_names || "";
-      const inNames = typeof names === "string" && names.split(", ").includes(userName);
+      const inNames =
+        typeof names === "string" && names.split(", ").includes(userName);
       const isMine = myNameAssigned || byId || inList || inNames;
 
       // Assigned notification

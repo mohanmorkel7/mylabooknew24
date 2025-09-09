@@ -732,13 +732,15 @@ export default function FollowUpTracker() {
     const myName = user?.name || "";
     return filteredFollowUps.filter((f: any) => {
       const byName = f.assigned_user_name === myName;
-      const byId = (f.assigned_to && myId && parseInt(f.assigned_to) === myId) || false;
+      const byId =
+        (f.assigned_to && myId && parseInt(f.assigned_to) === myId) || false;
       const list = f.assigned_to_list;
       const inList = Array.isArray(list)
         ? list.some((x: any) => parseInt(String(x)) === myId)
         : false;
       const names = f.assigned_users_names || "";
-      const inNames = typeof names === "string" && names.split(", ").includes(myName);
+      const inNames =
+        typeof names === "string" && names.split(", ").includes(myName);
       return byName || byId || inList || inNames;
     });
   }, [filteredFollowUps, user?.id, user?.name]);
