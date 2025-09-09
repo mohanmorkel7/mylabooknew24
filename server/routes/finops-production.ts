@@ -5,6 +5,25 @@ import finopsScheduler from "../services/finopsScheduler";
 
 const router = Router();
 
+// Ensure finops_external_alerts table and required columns exist
+async function ensureExternalAlertsSchema(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finops_external_alerts (
+      id SERIAL PRIMARY KEY,
+      task_id INTEGER NOT NULL,
+      subtask_id INTEGER NOT NULL,
+      alert_key TEXT NOT NULL,
+      title TEXT,
+      next_call_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(task_id, subtask_id, alert_key)
+    )
+  `);
+  await pool.query(
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`
+  );
+}
+
 // Production database availability check - fail fast if no database
 async function requireDatabase() {
   try {
@@ -162,10 +181,12 @@ router.get("/tasks", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
 
+    await ensureExternalAlertsSchema();
+
     const query = `
       SELECT
         t.*,
-        CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'finops_external_alerts' AND column_name = 'next_call_at') THEN (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) ELSE NULL END AS next_call_at,
+        (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) AS next_call_at,
         json_agg(
           json_build_object(
             'id', st.id,
