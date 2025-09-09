@@ -631,11 +631,11 @@ export default function Connections() {
                 <Button
                   variant="destructive"
                   size="sm"
-                  onClick={() => {
-                    deleteMutation.mutate(c.id);
-                  }}
+                  onClick={() => deleteMutation.mutate(c.id)}
+                  aria-label="Delete"
+                  title="Delete"
                 >
-                  <Trash2 className="w-4 h-4 mr-1" /> Delete
+                  <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
             </CardContent>
