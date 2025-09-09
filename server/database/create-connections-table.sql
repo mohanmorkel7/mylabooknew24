@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS connections (
     'VC',
     'Advisory Board',
     'Consultants',
+    'Client',
     'General'
   )),
   phone_prefix VARCHAR(10) NOT NULL,
