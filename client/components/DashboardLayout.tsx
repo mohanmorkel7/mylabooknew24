@@ -250,12 +250,20 @@ const getNotificationsFromFollowUps = async (
     const notifications: Notification[] = [];
     const currentDate = new Date();
 
+    const myId = parseInt(userId || "0");
     followUps.forEach((followUp: any) => {
-      // Check if user is assigned to this follow-up
-      if (
-        followUp.assigned_user_name === userName &&
-        followUp.status === "pending"
-      ) {
+      const myNameAssigned = followUp.assigned_user_name === userName;
+      const byId = (followUp.assigned_to && myId && parseInt(followUp.assigned_to) === myId) || false;
+      const list = followUp.assigned_to_list;
+      const inList = Array.isArray(list)
+        ? list.some((x: any) => parseInt(String(x)) === myId)
+        : false;
+      const names = followUp.assigned_users_names || "";
+      const inNames = typeof names === "string" && names.split(", ").includes(userName);
+      const isMine = myNameAssigned || byId || inList || inNames;
+
+      // Assigned notification
+      if (isMine && followUp.status === "pending") {
         notifications.push({
           id: followUp.id,
           type: "follow_up_assigned",
@@ -268,9 +276,9 @@ const getNotificationsFromFollowUps = async (
         });
       }
 
-      // Check if follow-up is overdue
+      // Overdue notification
       if (
-        followUp.assigned_user_name === userName &&
+        isMine &&
         followUp.status !== "completed" &&
         followUp.due_date &&
         new Date(followUp.due_date) < currentDate
