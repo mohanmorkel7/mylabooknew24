@@ -996,7 +996,7 @@ router.patch(
             );
             const taskName = trow.rows[0]?.task_name || "Unknown Task";
             const clientName = trow.rows[0]?.client_name || "Unknown Client";
-            const title = `Take immediate action on the overdue subtask "${subtaskName}" (Task: "${taskName}", Client: "${clientName}")`;
+            const title = `Please take immediate action on the overdue subtask "${subtaskName}" under the task "${taskName}" for the client "${clientName}".`;
 
             const managerNames = Array.from(
               new Set([
@@ -1050,7 +1050,7 @@ router.patch(
             if (status === "overdue") {
               const taskNameMock = task.task_name || "Unknown Task";
               const clientNameMock = task.client_name || "Unknown Client";
-              const title = `Take immediate action on the overdue subtask "${subtask.name}" (Task: "${taskNameMock}", Client: "${clientNameMock}")`;
+              const title = `Please take immediate action on the overdue subtask "${subtask.name}" under the task "${taskNameMock}" for the client "${clientNameMock}".`;
               await sendReplicaDownAlertOnce(taskId, subtaskId, title, []);
             }
 

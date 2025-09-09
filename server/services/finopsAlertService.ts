@@ -358,7 +358,7 @@ class FinOpsAlertService {
             const userIds = await this.getUserIdsFromNames(names);
             const taskName = row.task_name || "Unknown Task";
             const clientName = row.client_name || "Unknown Client";
-            const title = `Take immediate action on the overdue subtask "${row.subtask_name}" (Task: "${taskName}", Client: "${clientName}")`;
+            const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
 
             console.log("Direct-call payload (service initial)", {
               taskId: row.task_id,
@@ -426,7 +426,7 @@ class FinOpsAlertService {
 
           const taskName = row.task_name || "Unknown Task";
           const clientName = row.client_name || "Unknown Client";
-          const title = `Take immediate action on the overdue subtask "${row.subtask_name}" (Task: "${taskName}", Client: "${clientName}")`;
+          const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
 
           console.log("Direct-call payload (service repeat)", {
             taskId: row.task_id,
@@ -909,7 +909,7 @@ class FinOpsAlertService {
       // Build human-readable status change message (special phrasing for overdue)
       const statusChangeMessage =
         status === "overdue"
-          ? `Take immediate action on the overdue subtask "${subtaskName}" (Task: "${taskName}", Client: "${clientName}")`
+          ? `Please take immediate action on the overdue subtask "${subtaskName}" under the task "${taskName}" for the client "${clientName}".`
           : `Subtask "${subtaskName}" status changed from "${previousStatus}" to "${status}"`;
 
       await this.logActivity(
