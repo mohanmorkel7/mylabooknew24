@@ -1642,7 +1642,11 @@ router.post(
         const recipients = (() => {
           const val = taskData.reporting_managers;
           if (!val) return [] as string[];
-          if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
+          if (Array.isArray(val))
+            return val
+              .map(String)
+              .map((s) => s.trim())
+              .filter(Boolean);
           if (typeof val === "string") {
             let s = val.trim();
             if (s.startsWith("{") && s.endsWith("}")) {
@@ -1656,9 +1660,15 @@ router.post(
             try {
               const parsed = JSON.parse(s);
               if (Array.isArray(parsed))
-                return parsed.map(String).map((x) => x.trim()).filter(Boolean);
+                return parsed
+                  .map(String)
+                  .map((x) => x.trim())
+                  .filter(Boolean);
             } catch {}
-            return s.split(",").map((x) => x.trim()).filter(Boolean);
+            return s
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean);
           }
           try {
             const parsed = JSON.parse(val);
