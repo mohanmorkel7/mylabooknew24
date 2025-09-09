@@ -616,6 +616,19 @@ export default function FinOpsTaskManager({
                               : "Not scheduled"}
                           </span>
                         </div>
+                        {slaStatus === "overdue" && (
+                          <div className="flex items-center gap-1">
+                            <Timer className="w-4 h-4" />
+                            <span className="text-red-600">
+                              Next call in: {(() => {
+                                const seconds = overdueTimers[task.id] || 15 * 60;
+                                const mins = Math.floor(seconds / 60);
+                                const secs = seconds % 60;
+                                return `${mins}m ${secs.toString().padStart(2, "0")}s`;
+                              })()}
+                            </span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <Timer className="w-4 h-4" />
                           <span>{task.subtasks.length} subtasks</span>
