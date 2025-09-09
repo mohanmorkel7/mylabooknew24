@@ -1048,7 +1048,9 @@ router.patch(
 
             // External alert for overdue in mock mode as well
             if (status === "overdue") {
-              const title = `Take immediate action on the overdue subtask ${subtask.name}`;
+              const taskNameMock = task.task_name || "Unknown Task";
+              const clientNameMock = task.client_name || "Unknown Client";
+              const title = `Take immediate action on the overdue subtask "${subtask.name}" (Task: "${taskNameMock}", Client: "${clientNameMock}")`;
               await sendReplicaDownAlertOnce(taskId, subtaskId, title, []);
             }
 
