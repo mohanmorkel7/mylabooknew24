@@ -284,10 +284,17 @@ export default function FundRaiseEdit() {
     try {
       // Separate existing vs new investors based on original fund raise data
       const originalSet = new Set<string>(
-        ((Array.isArray((current as any)?.investors) && (current as any).investors.length
-          ? (current as any).investors
-          : [{ investor_name: current?.investor_name }]) as any[])
-          .map((it: any) => String(it?.investor_name || "").trim().toLowerCase())
+        (
+          (Array.isArray((current as any)?.investors) &&
+          (current as any).investors.length
+            ? (current as any).investors
+            : [{ investor_name: current?.investor_name }]) as any[]
+        )
+          .map((it: any) =>
+            String(it?.investor_name || "")
+              .trim()
+              .toLowerCase(),
+          )
           .filter(Boolean),
       );
 
@@ -308,7 +315,8 @@ export default function FundRaiseEdit() {
         investor_status: string;
       }) => {
         const matched = (vcList || []).find(
-          (vc: any) => (vc.investor_name || "").trim() === it.vc_investor.trim(),
+          (vc: any) =>
+            (vc.investor_name || "").trim() === it.vc_investor.trim(),
         );
         const linkedVcId: number | null = matched?.id ?? null;
         return {
