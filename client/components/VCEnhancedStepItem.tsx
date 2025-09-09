@@ -887,7 +887,9 @@ export function VCEnhancedStepItem({
                                       {message.message_type === "system" &&
                                         (() => {
                                           const matches = Array.from(
-                                            (message.message || "").matchAll(/#(\d+)/g),
+                                            (message.message || "").matchAll(
+                                              /#(\d+)/g,
+                                            ),
                                           );
                                           if (matches.length === 0) return null;
                                           return (
@@ -895,78 +897,142 @@ export function VCEnhancedStepItem({
                                               {matches.map((mm, idx) => {
                                                 const fid = parseInt(mm[1]);
                                                 const current =
-                                                  followUpStatuses[fid] || "pending";
+                                                  followUpStatuses[fid] ||
+                                                  "pending";
                                                 return (
                                                   <div
                                                     key={`status-${fid}-${idx}`}
                                                     className="flex items-center space-x-1"
                                                   >
-                                                    <Badge variant="outline" className="text-[10px]">#{fid}</Badge>
+                                                    <Badge
+                                                      variant="outline"
+                                                      className="text-[10px]"
+                                                    >
+                                                      #{fid}
+                                                    </Badge>
                                                     <Select
                                                       value={current}
-                                                      onValueChange={async (val) => {
-                                                        setFollowUpStatuses((s) => ({
-                                                          ...s,
-                                                          [fid]: val,
-                                                        }));
+                                                      onValueChange={async (
+                                                        val,
+                                                      ) => {
+                                                        setFollowUpStatuses(
+                                                          (s) => ({
+                                                            ...s,
+                                                            [fid]: val,
+                                                          }),
+                                                        );
                                                         const isFundRaises =
-                                                          (stepApiBase as any) === "fund-raises";
+                                                          (stepApiBase as any) ===
+                                                          "fund-raises";
                                                         const isBusinessOfferings =
-                                                          (stepApiBase as any) === "business-offerings";
+                                                          (stepApiBase as any) ===
+                                                          "business-offerings";
 
-                                                        if (isFundRaises || isBusinessOfferings) {
+                                                        if (
+                                                          isFundRaises ||
+                                                          isBusinessOfferings
+                                                        ) {
                                                           try {
-                                                            await updateFollowUpStatus.mutateAsync({
-                                                              followUpId: fid,
-                                                              statusData: {
-                                                                status: val,
-                                                                completed_at:
-                                                                  val === "completed"
-                                                                    ? new Date().toISOString()
-                                                                    : null,
+                                                            await updateFollowUpStatus.mutateAsync(
+                                                              {
+                                                                followUpId: fid,
+                                                                statusData: {
+                                                                  status: val,
+                                                                  completed_at:
+                                                                    val ===
+                                                                    "completed"
+                                                                      ? new Date().toISOString()
+                                                                      : null,
+                                                                },
                                                               },
-                                                            });
+                                                            );
 
-                                                            const statusDisplayMap: Record<string, string> = {
-                                                              pending: "Pending",
-                                                              in_progress: "In Progress",
-                                                              completed: "Completed",
-                                                              overdue: "Overdue",
+                                                            const statusDisplayMap: Record<
+                                                              string,
+                                                              string
+                                                            > = {
+                                                              pending:
+                                                                "Pending",
+                                                              in_progress:
+                                                                "In Progress",
+                                                              completed:
+                                                                "Completed",
+                                                              overdue:
+                                                                "Overdue",
                                                             };
-                                                            const oldDisplay = statusDisplayMap[current] || current;
-                                                            const newDisplay = statusDisplayMap[val] || val;
+                                                            const oldDisplay =
+                                                              statusDisplayMap[
+                                                                current
+                                                              ] || current;
+                                                            const newDisplay =
+                                                              statusDisplayMap[
+                                                                val
+                                                              ] || val;
                                                             const sysMsg = `Step status changed from "${oldDisplay}" to "${newDisplay}" by ${user?.name || "User"}`;
 
                                                             const optimistic = {
                                                               id: Date.now(),
-                                                              user_id: parseInt(user?.id || "0"),
-                                                              user_name: "System",
+                                                              user_id: parseInt(
+                                                                user?.id || "0",
+                                                              ),
+                                                              user_name:
+                                                                "System",
                                                               message: sysMsg,
-                                                              message_type: "system" as const,
-                                                              is_rich_text: false,
-                                                              created_at: new Date().toISOString(),
+                                                              message_type:
+                                                                "system" as const,
+                                                              is_rich_text:
+                                                                false,
+                                                              created_at:
+                                                                new Date().toISOString(),
                                                             } as any;
-                                                            setChatMessages((prev) => [...prev, optimistic]);
-
-                                                            const created = await apiClient.request(
-                                                              `/${stepApiBase}/steps/${step.id}/chats`,
-                                                              {
-                                                                method: "POST",
-                                                                body: JSON.stringify({
-                                                                  user_id: parseInt(user?.id || "0"),
-                                                                  user_name: "System",
-                                                                  message: sysMsg,
-                                                                  message_type: "system",
-                                                                  is_rich_text: false,
-                                                                  attachments: [],
-                                                                }),
-                                                              },
+                                                            setChatMessages(
+                                                              (prev) => [
+                                                                ...prev,
+                                                                optimistic,
+                                                              ],
                                                             );
-                                                            if (created && (created as any).id) {
-                                                              setChatMessages((prev) =>
-                                                                prev.map((m) =>
-                                                                  m.id === optimistic.id ? (created as any) : m,
-                                                                ),
+
+                                                            const created =
+                                                              await apiClient.request(
+                                                                `/${stepApiBase}/steps/${step.id}/chats`,
+                                                                {
+                                                                  method:
+                                                                    "POST",
+                                                                  body: JSON.stringify(
+                                                                    {
+                                                                      user_id:
+                                                                        parseInt(
+                                                                          user?.id ||
+                                                                            "0",
+                                                                        ),
+                                                                      user_name:
+                                                                        "System",
+                                                                      message:
+                                                                        sysMsg,
+                                                                      message_type:
+                                                                        "system",
+                                                                      is_rich_text:
+                                                                        false,
+                                                                      attachments:
+                                                                        [],
+                                                                    },
+                                                                  ),
+                                                                },
+                                                              );
+                                                            if (
+                                                              created &&
+                                                              (created as any)
+                                                                .id
+                                                            ) {
+                                                              setChatMessages(
+                                                                (prev) =>
+                                                                  prev.map(
+                                                                    (m) =>
+                                                                      m.id ===
+                                                                      optimistic.id
+                                                                        ? (created as any)
+                                                                        : m,
+                                                                  ),
                                                               );
                                                             }
                                                           } catch (e) {}
@@ -976,43 +1042,73 @@ export function VCEnhancedStepItem({
                                                         const statusMsg =
                                                           val === "completed"
                                                             ? `✅ Follow-up task completed: "#${fid}" by ${user?.name || "User"}`
-                                                            : val === "in_progress"
+                                                            : val ===
+                                                                "in_progress"
                                                               ? `🔄 Follow-up task started: "#${fid}" by ${user?.name || "User"}`
                                                               : `📋 Follow-up task status changed to "${val}": "#${fid}" by ${user?.name || "User"}`;
                                                         const optimistic = {
                                                           id: Date.now(),
-                                                          user_id: parseInt(user?.id || "0"),
+                                                          user_id: parseInt(
+                                                            user?.id || "0",
+                                                          ),
                                                           user_name: "System",
                                                           message: statusMsg,
-                                                          message_type: "system" as const,
+                                                          message_type:
+                                                            "system" as const,
                                                           is_rich_text: false,
-                                                          created_at: new Date().toISOString(),
+                                                          created_at:
+                                                            new Date().toISOString(),
                                                         } as any;
-                                                        setChatMessages((prev) => [...prev, optimistic]);
+                                                        setChatMessages(
+                                                          (prev) => [
+                                                            ...prev,
+                                                            optimistic,
+                                                          ],
+                                                        );
                                                         try {
-                                                          await updateFollowUpStatus.mutateAsync({
-                                                            followUpId: fid,
-                                                            statusData: {
-                                                              status: val,
-                                                              completed_at:
-                                                                val === "completed"
-                                                                  ? new Date().toISOString()
-                                                                  : null,
+                                                          await updateFollowUpStatus.mutateAsync(
+                                                            {
+                                                              followUpId: fid,
+                                                              statusData: {
+                                                                status: val,
+                                                                completed_at:
+                                                                  val ===
+                                                                  "completed"
+                                                                    ? new Date().toISOString()
+                                                                    : null,
+                                                              },
                                                             },
-                                                          });
-                                                          const created = await notifyFollowUpStatusChange({
-                                                            followUpId: fid,
-                                                            newStatus: val,
-                                                            stepId: step.id,
-                                                            userId: parseInt(user?.id || "0"),
-                                                            userName: user?.name || "User",
-                                                            stepApiBase: stepApiBase as any,
-                                                          });
-                                                          if (created && (created as any).id) {
-                                                            setChatMessages((prev) =>
-                                                              prev.map((m) =>
-                                                                m.id === optimistic.id ? (created as any) : m,
-                                                              ),
+                                                          );
+                                                          const created =
+                                                            await notifyFollowUpStatusChange(
+                                                              {
+                                                                followUpId: fid,
+                                                                newStatus: val,
+                                                                stepId: step.id,
+                                                                userId:
+                                                                  parseInt(
+                                                                    user?.id ||
+                                                                      "0",
+                                                                  ),
+                                                                userName:
+                                                                  user?.name ||
+                                                                  "User",
+                                                                stepApiBase:
+                                                                  stepApiBase as any,
+                                                              },
+                                                            );
+                                                          if (
+                                                            created &&
+                                                            (created as any).id
+                                                          ) {
+                                                            setChatMessages(
+                                                              (prev) =>
+                                                                prev.map((m) =>
+                                                                  m.id ===
+                                                                  optimistic.id
+                                                                    ? (created as any)
+                                                                    : m,
+                                                                ),
                                                             );
                                                           }
                                                         } catch (e) {
@@ -1024,9 +1120,15 @@ export function VCEnhancedStepItem({
                                                         <SelectValue placeholder="Update status" />
                                                       </SelectTrigger>
                                                       <SelectContent>
-                                                        <SelectItem value="pending">Pending</SelectItem>
-                                                        <SelectItem value="in_progress">In Progress</SelectItem>
-                                                        <SelectItem value="completed">Completed</SelectItem>
+                                                        <SelectItem value="pending">
+                                                          Pending
+                                                        </SelectItem>
+                                                        <SelectItem value="in_progress">
+                                                          In Progress
+                                                        </SelectItem>
+                                                        <SelectItem value="completed">
+                                                          Completed
+                                                        </SelectItem>
                                                       </SelectContent>
                                                     </Select>
                                                   </div>
