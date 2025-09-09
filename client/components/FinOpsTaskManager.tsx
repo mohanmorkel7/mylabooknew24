@@ -244,6 +244,92 @@ export default function FinOpsTaskManager({
     refetchInterval: 30000, // Refresh every 30 seconds for SLA monitoring
   });
 
+  // Overdue direct-call timers (seconds remaining)
+  const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>({});
+
+  // Initialize timers for overdue tasks to 15 minutes (900 seconds) when tasks change
+  useEffect(() => {
+    const initialTimers: Record<number, number> = { ...overdueTimers };
+    finopsTasks.forEach((task: FinOpsTask) => {
+      const slaStatus = getSLAStatus(task);
+      if (slaStatus === "overdue") {
+        if (!initialTimers[task.id]) {
+          initialTimers[task.id] = 15 * 60; // 15 minutes
+        }
+      } else {
+        // clear non-overdue timers
+        if (initialTimers[task.id]) delete initialTimers[task.id];
+      }
+    });
+    setOverdueTimers(initialTimers);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finopsTasks]);
+
+  // Countdown interval that decrements every second and triggers direct-call when 0
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setOverdueTimers((prev) => {
+        const updated: Record<number, number> = { ...prev };
+        Object.keys(updated).forEach((k) => {
+          const id = Number(k);
+          updated[id] = Math.max(0, (updated[id] || 0) - 1);
+        });
+        return updated;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Trigger direct-call when a timer reaches 0
+  useEffect(() => {
+    Object.entries(overdueTimers).forEach(([taskIdStr, seconds]) => {
+      const taskId = Number(taskIdStr);
+      if (seconds === 0) {
+        const task = finopsTasks.find((t: FinOpsTask) => t.id === taskId);
+        if (task) {
+          // For each overdue subtask, call the external direct-call API and log an alert
+          task.subtasks
+            .filter((st) => st.status === "overdue")
+            .forEach(async (subtask) => {
+              try {
+                const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name || "Unknown Client"}.`;
+
+                // Call server to log manual alert (keeps server activity log consistent)
+                try {
+                  await apiClient.sendFinOpsManualAlert(
+                    task.id,
+                    subtask.id,
+                    "sla_overdue",
+                    title,
+                  );
+                } catch (e) {
+                  // swallow - still attempt external call
+                }
+
+                // Call external direct-call API (server also dedupes on its side)
+                await fetch("https://pulsealerts.mylapay.com/direct-call", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    receiver: "CRM_Switch",
+                    title,
+                    user_ids: [],
+                  }),
+                });
+              } catch (err) {
+                console.warn("Failed to trigger direct-call for overdue subtask:", err);
+              }
+            });
+
+          // reset timer to 15 minutes
+          setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [overdueTimers]);
+
   // Fetch users for assignment
   const { data: users = [] } = useQuery({
     queryKey: ["users"],
