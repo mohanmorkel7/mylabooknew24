@@ -62,14 +62,14 @@ export class ConnectionRepository {
           ) THEN
             EXECUTE 'ALTER TABLE connections DROP CONSTRAINT connections_type_check';
           END IF;
-        END $$;`
+        END $$;`,
       );
       await pool.query(
         `ALTER TABLE connections
          ADD CONSTRAINT connections_type_check
          CHECK (type IN (
            'Business Team', 'Internal Team', 'VC', 'Advisory Board', 'Consultants', 'Client', 'General'
-         ))`
+         ))`,
       );
       this.constraintEnsured = true;
     } catch (e) {
