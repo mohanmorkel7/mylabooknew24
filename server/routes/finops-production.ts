@@ -1125,7 +1125,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
   )
     `);
 
-    // Find overdue subtasks that haven't been sent to Pulse yet
+    // Find overdue subtasks from finops_tracker (today's run_date) that haven't been sent to Pulse yet
     const overdue = await pool.query(
       `
       SELECT
@@ -1135,18 +1135,19 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
         t.assigned_to,
         t.reporting_managers,
         t.escalation_managers,
-        st.id as subtask_id,
-        st.name as subtask_name
-      FROM finops_subtasks st
-      JOIN finops_tasks t ON t.id = st.task_id
-      WHERE st.status = 'overdue'
+        ft.subtask_id,
+        ft.subtask_name
+      FROM finops_tracker ft
+      JOIN finops_tasks t ON t.id = ft.task_id
+      WHERE ft.status = 'overdue'
+        AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         AND t.is_active = true
         AND t.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM finops_external_alerts fea
-          WHERE fea.task_id = t.id AND fea.subtask_id = st.id AND fea.alert_key = 'replica_down_overdue'
+          WHERE fea.task_id = ft.task_id AND fea.subtask_id = ft.subtask_id AND fea.alert_key = 'replica_down_overdue'
         )
-      ORDER BY st.id DESC
+      ORDER BY ft.subtask_id DESC
       LIMIT 100
     `,
     );
