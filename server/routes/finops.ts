@@ -1542,7 +1542,9 @@ router.get("/scheduler-status", async (req: Request, res: Response) => {
 router.post("/tracker/seed", async (req: Request, res: Response) => {
   try {
     const { date } = req.body as { date?: string };
-    const runDate = (date ? new Date(date) : new Date()).toISOString().slice(0,10);
+    const runDate = (date ? new Date(date) : new Date())
+      .toISOString()
+      .slice(0, 10);
 
     if (await isDatabaseAvailable()) {
       await pool.query(`
@@ -1576,15 +1578,28 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
       let inserted = 0;
       for (const row of tasksRes.rows) {
         if (!row.subtask_id) continue;
-        const initialStatus = runDate === new Date().toISOString().slice(0,10) ? 'pending' : 'completed';
-        const period = String(row.duration || 'daily');
+        const initialStatus =
+          runDate === new Date().toISOString().slice(0, 10)
+            ? "pending"
+            : "completed";
+        const period = String(row.duration || "daily");
         const result = await pool.query(
           `INSERT INTO finops_tracker (
              run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
            ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
            RETURNING id`,
-          [runDate, period, row.id, row.task_name || '', row.subtask_id, row.subtask_name || '', initialStatus, row.start_time || null, runDate]
+          [
+            runDate,
+            period,
+            row.id,
+            row.task_name || "",
+            row.subtask_id,
+            row.subtask_name || "",
+            initialStatus,
+            row.start_time || null,
+            runDate,
+          ],
         );
         if (result.rows.length > 0) inserted++;
       }
@@ -1593,11 +1608,19 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
     } else {
       // Mock: compute how many would be inserted from mockFinOpsTasks
       const mockTasks = mockFinOpsTasks || [];
-      const total = mockTasks.reduce((acc, t) => acc + (t.subtasks?.length || 0), 0);
-      res.json({ success: true, run_date: runDate, inserted: total, mock: true });
+      const total = mockTasks.reduce(
+        (acc, t) => acc + (t.subtasks?.length || 0),
+        0,
+      );
+      res.json({
+        success: true,
+        run_date: runDate,
+        inserted: total,
+        mock: true,
+      });
     }
-  } catch (e:any) {
-    console.error('Error seeding finops_tracker:', e);
+  } catch (e: any) {
+    console.error("Error seeding finops_tracker:", e);
     res.status(500).json({ success: false, error: e.message });
   }
 });

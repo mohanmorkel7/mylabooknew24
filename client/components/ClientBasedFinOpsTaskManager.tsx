@@ -1885,13 +1885,18 @@ export default function ClientBasedFinOpsTaskManager() {
                   variant="outline"
                   onClick={async () => {
                     try {
-                      const resp = await apiClient.seedFinOpsTracker(dateFilter);
+                      const resp =
+                        await apiClient.seedFinOpsTracker(dateFilter);
                       toast({
                         title: "Tracker seeded",
                         description: `Date ${dateFilter}: inserted ${resp.inserted ?? 0} row(s)`,
                       });
-                    } catch (e:any) {
-                      toast({ title: "Seeding failed", description: e.message, variant: "destructive" });
+                    } catch (e: any) {
+                      toast({
+                        title: "Seeding failed",
+                        description: e.message,
+                        variant: "destructive",
+                      });
                     }
                   }}
                 >

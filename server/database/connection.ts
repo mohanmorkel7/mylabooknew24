@@ -556,9 +556,12 @@ export async function initializeDatabase() {
           UNIQUE(run_date, period, task_id, subtask_id)
         );
       `);
-      console.log('finops_tracker table ensured');
+      console.log("finops_tracker table ensured");
     } catch (trackerErr) {
-      console.log('finops_tracker ensure skipped or failed:', (trackerErr as any).message);
+      console.log(
+        "finops_tracker ensure skipped or failed:",
+        (trackerErr as any).message,
+      );
     }
 
     // await client.query(schema);
