@@ -763,12 +763,12 @@ export default function ClientBasedFinOpsTaskManager() {
         const result = await apiClient.getFinOpsTasks(dateFilter);
         if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
           console.log(
-            "✅ FinOps tasks query successful:",
+            "��� FinOps tasks query successful:",
             Array.isArray(result) ? result.length : "unknown",
           );
         return Array.isArray(result) ? result : [];
       } catch (error) {
-        console.error("❌ FinOps tasks query failed:", error);
+        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("❌ FinOps tasks query failed:", error);
         // Return empty array to prevent UI crashes
         return [];
       }
@@ -778,7 +778,7 @@ export default function ClientBasedFinOpsTaskManager() {
     retryDelay: 3000, // Wait 3 seconds before retry
     staleTime: 30000, // Consider data stale after 30 seconds
     onError: (error) => {
-      console.error("🚨 FinOps tasks query error:", error);
+      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("🚨 FinOps tasks query error:", error);
     },
     onSuccess: (data) => {
       if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
@@ -877,7 +877,7 @@ export default function ClientBasedFinOpsTaskManager() {
         const finopsClients = await apiClient.getFinOpsClients();
         return finopsClients;
       } catch (error) {
-        console.error("❌ Error fetching FinOps clients:", error);
+        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("❌ Error fetching FinOps clients:", error);
         // Return empty array if API fails
         return [];
       }
@@ -909,7 +909,7 @@ export default function ClientBasedFinOpsTaskManager() {
         uniqueClients.length,
       );
     if (rawClients.length !== uniqueClients.length) {
-      console.warn(
+      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
         "Duplicate clients detected and removed:",
         rawClients.length - uniqueClients.length,
         "\nDuplicates:",
@@ -934,7 +934,7 @@ export default function ClientBasedFinOpsTaskManager() {
       try {
         return await apiClient.getUsers();
       } catch (error) {
-        console.error("❌ Error fetching users:", error);
+        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("❌ Error fetching users:", error);
         return [];
       }
     },
@@ -1164,7 +1164,7 @@ export default function ClientBasedFinOpsTaskManager() {
       setOverdueReasonData(null);
       setOverdueReason("");
     } catch (error) {
-      console.error("Failed to submit overdue reason:", error);
+      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("Failed to submit overdue reason:", error);
       alert("Failed to submit overdue reason. Please try again.");
     }
   };
@@ -1732,7 +1732,7 @@ export default function ClientBasedFinOpsTaskManager() {
                 }),
               });
             } catch (err) {
-              console.warn(
+              if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
                 "Failed to trigger direct-call for overdue subtask:",
                 err,
               );
