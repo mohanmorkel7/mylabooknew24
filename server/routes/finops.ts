@@ -1008,14 +1008,14 @@ router.patch(
           DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
           `,
           [
-            String(subtaskData.duration || 'daily'),
+            String(subtaskData.duration || "daily"),
             taskId,
-            subtaskData.task_name || '',
+            subtaskData.task_name || "",
             Number(subtaskId),
-            subtaskName || '',
+            subtaskName || "",
             status,
-            status === 'in_progress' ? new Date() : null,
-            status === 'completed' ? new Date() : null,
+            status === "in_progress" ? new Date() : null,
+            status === "completed" ? new Date() : null,
             subtaskData.start_time || null,
           ],
         );
