@@ -280,7 +280,7 @@ const mockActivityLog = [
 // Get all FinOps tasks with enhanced error handling
 router.get("/tasks", async (req: Request, res: Response) => {
   try {
-    console.log("�� FinOps tasks requested");
+    console.log("��� FinOps tasks requested");
 
     // Add CORS headers for FullStory compatibility
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -919,6 +919,14 @@ router.patch(
       const userName = user_name || "Unknown User";
 
       if (await isDatabaseAvailable()) {
+        // Ensure datewise tracking columns exist
+        await pool.query(`
+          ALTER TABLE finops_subtasks
+            ADD COLUMN IF NOT EXISTS scheduled_date DATE,
+            ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
+        `);
         // Get current subtask and task information
         const currentSubtask = await pool.query(
           `
@@ -939,7 +947,11 @@ router.patch(
         const subtaskName = subtaskData.name;
 
         // Build dynamic update query
-        let updateFields = ["status = $1", "updated_at = CURRENT_TIMESTAMP"];
+        let updateFields = [
+          "status = $1",
+          "updated_at = CURRENT_TIMESTAMP",
+          "scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date"
+        ];
         let queryParams = [status, taskId, subtaskId];
         let paramIndex = 4;
 
