@@ -298,52 +298,81 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
       // Optional date filter (YYYY-MM-DD) to view historical daily statuses
       const dateParam = (req.query.date as string) || null;
-
-      // Simplified query with better error handling
-      const query = `
-        SELECT
-          t.*,
-          CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'finops_external_alerts' AND column_name = 'next_call_at') THEN (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) ELSE NULL END AS next_call_at,
-          COALESCE(
-            json_agg(
-              json_build_object(
-                'id', st.id,
-                'name', st.name,
-                'description', st.description,
-                'start_time', st.start_time,
-                'sla_hours', st.sla_hours,
-                'sla_minutes', st.sla_minutes,
-                'order_position', st.order_position,
-                'status', st.status,
-                'started_at', st.started_at,
-                'completed_at', st.completed_at,
-                'scheduled_date', st.scheduled_date
-              ) ORDER BY st.order_position
-            ) FILTER (WHERE st.id IS NOT NULL),
-            '[]'::json
-          ) as subtasks
-        FROM finops_tasks t
-        LEFT JOIN finops_subtasks st ON t.id = st.task_id
-        WHERE t.deleted_at IS NULL
-        GROUP BY t.id
-        ORDER BY t.created_at DESC
-      `;
-
-      const result = await pool.query(query, dateParam ? [dateParam] : []);
       const todayStr = new Date().toISOString().slice(0, 10);
+
+      let result;
+
+      if (dateParam) {
+        // When a specific date is requested, use finops_tracker to show historical statuses
+        const trackerQuery = `
+          SELECT
+            t.*,
+            COALESCE(
+              json_agg(
+                json_build_object(
+                  'id', ft.subtask_id,
+                  'name', ft.subtask_name,
+                  'description', NULL,
+                  'start_time', ft.scheduled_time,
+                  'sla_hours', NULL,
+                  'sla_minutes', NULL,
+                  'order_position', ft.subtask_id,
+                  'status', ft.status,
+                  'started_at', ft.started_at,
+                  'completed_at', ft.completed_at,
+                  'scheduled_date', ft.subtask_scheduled_date
+                ) ORDER BY ft.subtask_id
+              ) FILTER (WHERE ft.subtask_id IS NOT NULL),
+              '[]'::json
+            ) as subtasks
+          FROM finops_tasks t
+          LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
+          WHERE t.deleted_at IS NULL
+          GROUP BY t.id
+          ORDER BY t.created_at DESC
+        `;
+
+        result = await pool.query(trackerQuery, [dateParam]);
+      } else {
+        // Simplified query with better error handling for current view
+        const query = `
+          SELECT
+            t.*,
+            CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'finops_external_alerts' AND column_name = 'next_call_at') THEN (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) ELSE NULL END AS next_call_at,
+            COALESCE(
+              json_agg(
+                json_build_object(
+                  'id', st.id,
+                  'name', st.name,
+                  'description', st.description,
+                  'start_time', st.start_time,
+                  'sla_hours', st.sla_hours,
+                  'sla_minutes', st.sla_minutes,
+                  'order_position', st.order_position,
+                  'status', st.status,
+                  'started_at', st.started_at,
+                  'completed_at', st.completed_at,
+                  'scheduled_date', st.scheduled_date
+                ) ORDER BY st.order_position
+              ) FILTER (WHERE st.id IS NOT NULL),
+              '[]'::json
+            ) as subtasks
+          FROM finops_tasks t
+          LEFT JOIN finops_subtasks st ON t.id = st.task_id
+          WHERE t.deleted_at IS NULL
+          GROUP BY t.id
+          ORDER BY t.created_at DESC
+        `;
+
+        result = await pool.query(query);
+      }
+
       const tasks = result.rows.map((row) => {
         const rawSubtasks = Array.isArray(row.subtasks) ? row.subtasks : [];
         const isDaily = String(row.duration || "").toLowerCase() === "daily";
 
-        // If a date is provided, show only subtasks for that date
-        const dateFiltered = dateParam
-          ? rawSubtasks.filter((st: any) => {
-              const sd = st.scheduled_date
-                ? new Date(st.scheduled_date).toISOString().slice(0, 10)
-                : null;
-              return sd === dateParam;
-            })
-          : rawSubtasks;
+        // If a date is provided, subtasks already come from finops_tracker
+        const dateFiltered = dateParam ? rawSubtasks : rawSubtasks;
 
         // For today's view without explicit date, reset daily subtasks from previous days to pending
         const normalizedSubtasks = dateParam
