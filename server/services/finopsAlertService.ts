@@ -727,25 +727,9 @@ class FinOpsAlertService {
           ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
       `);
 
-      // Reset all subtasks to pending status for daily execution (IST date)
+      // Upsert tracker rows for today's IST date for each subtask (do not mutate finops_subtasks)
       for (const subtask of subtasks.rows) {
-        await pool.query(
-          `
-          UPDATE finops_subtasks
-          SET status = 'pending',
-              started_at = NULL,
-              completed_at = NULL,
-              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date,
-              notification_sent_15min = false,
-              notification_sent_start = false,
-              notification_sent_escalation = false,
-              updated_at = CURRENT_TIMESTAMP
-          WHERE id = $1
-        `,
-          [subtask.id],
-        );
-
-        // Ensure tracking table exists
+        // Ensure tracking table exists with expanded columns (no-op if already created)
         await pool.query(`
           CREATE TABLE IF NOT EXISTS finops_tracker (
             id SERIAL PRIMARY KEY,
@@ -760,19 +744,32 @@ class FinOpsAlertService {
             completed_at TIMESTAMP NULL,
             scheduled_time TIME NULL,
             subtask_scheduled_date DATE NULL,
+            description TEXT,
+            sla_hours INTEGER,
+            sla_minutes INTEGER,
+            order_position INTEGER,
+            delay_reason TEXT,
+            delay_notes TEXT,
+            notification_sent_15min BOOLEAN DEFAULT false,
+            notification_sent_start BOOLEAN DEFAULT false,
+            notification_sent_escalation BOOLEAN DEFAULT false,
+            auto_notify BOOLEAN DEFAULT true,
+            assigned_to TEXT,
+            reporting_managers TEXT,
+            escalation_managers TEXT,
             created_at TIMESTAMP DEFAULT NOW(),
             updated_at TIMESTAMP DEFAULT NOW(),
             UNIQUE(run_date, period, task_id, subtask_id)
           );
         `);
 
-        // Upsert into finops_tracker for datewise tracking
+        // Upsert into finops_tracker for datewise tracking (do not touch finops_subtasks table)
         await pool.query(
           `
           INSERT INTO finops_tracker (
-            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
+            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position
           ) VALUES (
-            (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+            (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $7, $8, $9, $10
           )
           ON CONFLICT (run_date, period, task_id, subtask_id)
           DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
@@ -784,6 +781,10 @@ class FinOpsAlertService {
             subtask.id,
             subtask.name || "",
             subtask.start_time || null,
+            subtask.description || null,
+            subtask.sla_hours || null,
+            subtask.sla_minutes || null,
+            subtask.order_position || null,
           ],
         );
       }
