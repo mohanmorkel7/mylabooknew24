@@ -220,7 +220,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
             const sd = st.scheduled_date
               ? new Date(st.scheduled_date).toISOString().slice(0, 10)
               : null;
-            return sd === dateFilter;
+            // If no scheduled_date yet (newly created or not reset by scheduler), include it
+            return sd ? sd === dateFilter : true;
           })
         : raw;
       return { ...row, subtasks: filtered };
