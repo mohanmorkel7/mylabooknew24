@@ -309,16 +309,17 @@ class FinOpsAlertService {
           t.reporting_managers,
           t.escalation_managers,
           t.assigned_to,
-          st.id as subtask_id,
-          st.name as subtask_name,
-          st.updated_at as overdue_since,
-          st.status
-        FROM finops_subtasks st
-        JOIN finops_tasks t ON t.id = st.task_id
-        WHERE st.status = 'overdue'
+          ft.subtask_id,
+          ft.subtask_name,
+          ft.updated_at as overdue_since,
+          ft.status
+        FROM finops_tracker ft
+        JOIN finops_tasks t ON t.id = ft.task_id
+        WHERE ft.status = 'overdue'
+          AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           AND t.is_active = true
           AND t.deleted_at IS NULL
-          AND (st.scheduled_date IS NULL OR st.scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
+          AND (ft.subtask_scheduled_date IS NULL OR ft.subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
       `,
       );
 
