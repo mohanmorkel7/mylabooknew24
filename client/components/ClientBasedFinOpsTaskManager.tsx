@@ -85,113 +85,49 @@ import {
   isAfter,
 } from "date-fns";
 
-// Helper function to extract name from "Name (email)" format or JSON stringified format
-const extractNameFromValue = (value: string, depth: number = 0): string => {
-  if (!value) return value;
-
-  // Prevent infinite recursion
+// Helper function to extract name from "Name (email)" format or messy JSON-like strings (silent + memoized)
+const __nameParseCache = new Map<string, string>();
+const extractNameFromValue = (raw: string, depth: number = 0): string => {
+  if (!raw) return raw;
+  const cached = __nameParseCache.get(raw);
+  if (cached) return cached;
   if (depth > 5) {
-    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-      console.log("⚠️ Max recursion depth reached, returning:", value);
-    return value;
+    __nameParseCache.set(raw, raw);
+    return raw;
   }
+  let value = String(raw).trim();
 
-  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-    console.log(
-      `🔍 extractNameFromValue input (depth ${depth}):`,
-      JSON.stringify(value),
-    );
-
-  // Handle malformed JSON objects like {"John Doe"} - extract content between braces
+  // Strip surrounding braces {..} or quotes ".."
   if (value.startsWith("{") && value.endsWith("}")) {
-    // First try normal JSON parsing
-    try {
-      const parsed = JSON.parse(value);
-      if (typeof parsed === "object" && parsed !== null) {
-        const values = Object.values(parsed);
-        const firstString = values.find((v) => typeof v === "string");
-        if (firstString) {
-          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-            console.log("✅ JSON object parsed:", firstString);
-          return extractNameFromValue(firstString, depth + 1);
-        }
-      }
-      if (typeof parsed === "string") {
-        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-          console.log("✅ JSON string parsed:", parsed);
-        return extractNameFromValue(parsed, depth + 1);
-      }
-    } catch (e) {
-      // If JSON parsing fails, try to extract content manually
-      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-        console.log("⚠️ JSON parsing failed, trying manual extraction");
-      const content = value.slice(1, -1); // Remove { and }
-
-      // Handle cases like {"John Doe"} where John Doe might be quoted or unquoted
-      if (content.startsWith('"') && content.endsWith('"')) {
-        const extracted = content.slice(1, -1); // Remove quotes
-        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-          console.log("�� Manual extraction with quotes:", extracted);
-        // Recursively parse in case there are more nested levels
-        return extractNameFromValue(extracted, depth + 1);
-      } else {
-        // Handle unquoted content
-        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-          console.log("�� Manual extraction without quotes:", content);
-        // Recursively parse in case there are more nested levels
-        return extractNameFromValue(content, depth + 1);
-      }
-    }
+    value = value.slice(1, -1).trim();
+  }
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    value = value.slice(1, -1);
   }
 
-  // Handle JSON stringified values like "{\"Sanjay Kumar\"}" or nested like "{"{\"Sanjay Kumar\"}"}"
-  if (value.startsWith('"{') && value.endsWith('}"')) {
-    try {
-      const parsed = JSON.parse(value);
-      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-        console.log("✅ Stringified JSON parsed:", parsed);
-      return typeof parsed === "string"
-        ? extractNameFromValue(parsed, depth + 1)
-        : value;
-    } catch (e) {
-      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-        console.log("⚠️ Stringified JSON parsing failed");
-    }
-  }
-
-  // Handle regular JSON strings like "Sanjay Kumar" (quoted strings)
-  if (value.startsWith('"') && value.endsWith('"')) {
-    try {
-      const parsed = JSON.parse(value);
-      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-        console.log("✅ Quoted string parsed:", parsed);
-      return typeof parsed === "string"
-        ? extractNameFromValue(parsed, depth + 1)
-        : value;
-    } catch (e) {
-      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-        console.log("⚠�� Quoted string parsing failed");
-    }
-  }
-
-  // Handle escaped quotes like \"Sanjay Kumar\"
+  // Unescape common escaped quotes \"...\"
   if (value.startsWith('\\"') && value.endsWith('\\"')) {
-    const unescaped = value.slice(2, -2); // Remove \" and \"
-    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-      console.log("✅ Escaped quotes removed:", unescaped);
-    return extractNameFromValue(unescaped, depth + 1);
+    value = value.slice(2, -2);
   }
 
-  // Handle "Name (email)" format
-  const match = value.match(/^(.+)\s\([^)]+\)$/);
-  if (match) {
-    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-      console.log("✅ Email format matched:", match[1]);
-    return match[1];
+  // If still looks like JSON string, try parse once
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("{") && value.endsWith("}"))) {
+    try {
+      const parsed = JSON.parse(value);
+      const res = typeof parsed === "string" ? extractNameFromValue(parsed, depth + 1) : raw;
+      __nameParseCache.set(raw, res);
+      return res;
+    } catch {}
   }
 
-  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-    console.log("✅ Returning original value:", value);
+  // Name (email) => take name only
+  const m = value.match(/^(.+)\s\([^)]+\)$/);
+  if (m) {
+    __nameParseCache.set(raw, m[1]);
+    return m[1];
+  }
+
+  __nameParseCache.set(raw, value);
   return value;
 };
 
