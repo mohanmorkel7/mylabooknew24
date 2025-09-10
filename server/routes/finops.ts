@@ -1493,6 +1493,66 @@ router.get("/scheduler-status", async (req: Request, res: Response) => {
   }
 });
 
+// Get tracker entries (datewise)
+router.get('/tracker', async (req: Request, res: Response) => {
+  try {
+    const dateParam = (req.query.date as string) || null;
+    const period = (req.query.period as string) || null;
+    const taskId = req.query.task_id ? parseInt(req.query.task_id as string) : null;
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_tracker (
+        id SERIAL PRIMARY KEY,
+        run_date DATE NOT NULL,
+        period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+        task_id INTEGER NOT NULL,
+        task_name TEXT,
+        subtask_id INTEGER NOT NULL DEFAULT 0,
+        subtask_name TEXT,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        scheduled_time TIME NULL,
+        subtask_scheduled_date DATE NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(run_date, period, task_id, subtask_id)
+      );
+    `);
+
+    const params: any[] = [];
+    let where = 'WHERE 1=1';
+    if (dateParam) { params.push(dateParam); where += ` AND run_date = $${params.length}`; }
+    if (period) { params.push(period); where += ` AND period = $${params.length}`; }
+    if (taskId) { params.push(taskId); where += ` AND task_id = $${params.length}`; }
+
+    const query = `
+      SELECT task_id, max(task_name) as task_name, period, run_date,
+             json_agg(
+               json_build_object(
+                 'subtask_id', subtask_id,
+                 'subtask_name', subtask_name,
+                 'status', status,
+                 'started_at', started_at,
+                 'completed_at', completed_at,
+                 'scheduled_time', scheduled_time,
+                 'subtask_scheduled_date', subtask_scheduled_date
+               ) ORDER BY subtask_id
+             ) as subtasks
+      FROM finops_tracker
+      ${where}
+      GROUP BY task_id, period, run_date
+      ORDER BY run_date DESC, task_id ASC;
+    `;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (e: any) {
+    console.error('Error fetching finops tracker:', e);
+    res.status(500).json({ error: 'Failed to fetch tracker', message: e.message });
+  }
+});
+
 // Get enhanced task summary with alert information
 router.get("/tasks/:id/summary", async (req: Request, res: Response) => {
   try {
