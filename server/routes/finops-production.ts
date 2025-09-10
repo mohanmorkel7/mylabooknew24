@@ -214,16 +214,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
     const result = await pool.query(query);
     const tasks = result.rows.map((row) => {
       const raw = Array.isArray(row.subtasks) ? row.subtasks : [];
-      const dateFilter = dateParam ? String(dateParam).slice(0, 10) : null;
-      const filtered = dateFilter
-        ? raw.filter((st: any) => {
-            const sd = st.scheduled_date
-              ? new Date(st.scheduled_date).toISOString().slice(0, 10)
-              : null;
-            return sd === dateFilter;
-          })
-        : raw;
-      return { ...row, subtasks: filtered };
+      // Do not filter by scheduled_date; always return current subtasks for the task
+      return { ...row, subtasks: raw };
     });
 
     res.json(tasks);
@@ -1165,6 +1157,81 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
 });
 
 // Get all external alert next_call timestamps
+// Seed finops_tracker for a given date (idempotent)
+router.post("/tracker/seed", async (req: Request, res: Response) => {
+  try {
+    await requireDatabase();
+    const { date } = req.body as { date?: string };
+    const runDate = (date ? new Date(date) : new Date())
+      .toISOString()
+      .slice(0, 10);
+
+    // Ensure table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_tracker (
+        id SERIAL PRIMARY KEY,
+        run_date DATE NOT NULL,
+        period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+        task_id INTEGER NOT NULL,
+        task_name TEXT,
+        subtask_id INTEGER NOT NULL DEFAULT 0,
+        subtask_name TEXT,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        scheduled_time TIME NULL,
+        subtask_scheduled_date DATE NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(run_date, period, task_id, subtask_id)
+      );
+    `);
+
+    // Fetch active tasks with subtasks
+    const tasksRes = await pool.query(`
+      SELECT t.*, st.id as subtask_id, st.name as subtask_name, st.start_time
+      FROM finops_tasks t
+      LEFT JOIN finops_subtasks st ON t.id = st.task_id
+      WHERE t.is_active = true AND t.deleted_at IS NULL
+      ORDER BY t.id, st.order_position
+    `);
+
+    let inserted = 0;
+    for (const row of tasksRes.rows) {
+      if (!row.subtask_id) continue;
+      const initialStatus =
+        runDate === new Date().toISOString().slice(0, 10)
+          ? "pending"
+          : "completed";
+      const period = String(row.duration || "daily");
+      const result = await pool.query(
+        `INSERT INTO finops_tracker (
+           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+         RETURNING id`,
+        [
+          runDate,
+          period,
+          row.id,
+          row.task_name || "",
+          row.subtask_id,
+          row.subtask_name || "",
+          initialStatus,
+          row.start_time || null,
+          runDate,
+        ],
+      );
+      if (result.rows.length > 0) inserted++;
+    }
+
+    res.json({ success: true, run_date: runDate, inserted });
+  } catch (e: any) {
+    console.error("Error seeding finops_tracker:", e);
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 router.get("/next-calls", async (req: Request, res: Response) => {
   try {
     await requireDatabase();

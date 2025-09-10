@@ -15,7 +15,8 @@ export class ApiClient {
     this.lastFailureTime = 0;
     this.isOfflineMode = false;
     this.offlineDetectedAt = 0;
-    console.log("Circuit breaker reset");
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("Circuit breaker reset");
   }
 
   // Check if we should enter offline mode
@@ -23,12 +24,14 @@ export class ApiClient {
     if (this.failureCount >= this.OFFLINE_THRESHOLD && !this.isOfflineMode) {
       this.isOfflineMode = true;
       this.offlineDetectedAt = Date.now();
-      console.warn(
-        "🔴 Offline mode activated - backend server appears to be down",
-      );
-      console.warn(
-        "���� The app will show cached/mock data until the server is restored",
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "🔴 Offline mode activated - backend server appears to be down",
+        );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "���� The app will show cached/mock data until the server is restored",
+        );
     }
   }
 
@@ -49,7 +52,8 @@ export class ApiClient {
   private preserveOriginalFetch() {
     if (typeof window !== "undefined" && !(window as any).__originalFetch) {
       (window as any).__originalFetch = window.fetch.bind(window);
-      console.log("🔒 Original fetch preserved for FullStory protection");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("🔒 Original fetch preserved for FullStory protection");
     }
   }
 
@@ -62,9 +66,10 @@ export class ApiClient {
     this.preserveOriginalFetch();
     // Offline mode check
     if (this.isOfflineMode && !this.shouldRetryConnection()) {
-      console.warn(
-        `🔴 Request to ${endpoint} blocked - app is in offline mode`,
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          `🔴 Request to ${endpoint} blocked - app is in offline mode`,
+        );
       throw new Error("Offline mode: Backend server is unavailable");
     }
 
@@ -91,8 +96,10 @@ export class ApiClient {
     };
 
     try {
-      console.log("Making API request to:", url);
-      console.log("Request config:", JSON.stringify(config, null, 2));
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("Making API request to:", url);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("Request config:", JSON.stringify(config, null, 2));
 
       let response: Response;
 
@@ -110,30 +117,33 @@ export class ApiClient {
         const isFullStoryActive =
           hasFS || hasFullStoryScript || fetchContainsFullStory;
 
-        console.log("🔍 FullStory detection:", {
-          hasFS,
-          hasFullStoryScript,
-          fetchContainsFullStory,
-          hasPreservedFetch,
-          isFullStoryActive,
-          fetchSource: window.fetch.toString().substring(0, 100) + "...",
-        });
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("🔍 FullStory detection:", {
+            hasFS,
+            hasFullStoryScript,
+            fetchContainsFullStory,
+            hasPreservedFetch,
+            isFullStoryActive,
+            fetchSource: window.fetch.toString().substring(0, 100) + "...",
+          });
 
         // Try to use preserved original fetch first
         const originalFetch =
           (window as any).__originalFetch || window.fetch.bind(window);
 
         if (isFullStoryActive && !(window as any).__originalFetch) {
-          console.warn(
-            "🚨 FullStory detected and no preserved fetch - using XMLHttpRequest fallback",
-          );
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(
+              "🚨 FullStory detected and no preserved fetch - using XMLHttpRequest fallback",
+            );
           response = await this.xmlHttpRequestFallback(url, config);
         } else {
-          console.log(
-            "🔒 Using",
-            (window as any).__originalFetch ? "preserved" : "current",
-            "fetch for request",
-          );
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log(
+              "🔒 Using",
+              (window as any).__originalFetch ? "preserved" : "current",
+              "fetch for request",
+            );
 
           // Add timeout to prevent hanging requests - longer for notifications and login
           const timeoutMs =
@@ -149,12 +159,13 @@ export class ApiClient {
           response = await Promise.race([fetchPromise, timeoutPromise]);
         }
       } catch (fetchError) {
-        console.warn(
-          "Primary fetch failed for URL:",
-          url,
-          "Error:",
-          fetchError,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn(
+            "Primary fetch failed for URL:",
+            url,
+            "Error:",
+            fetchError,
+          );
 
         // Check if it's FullStory interference
         const isFullStoryError =
@@ -164,13 +175,15 @@ export class ApiClient {
             fetchError.message.includes("Failed to fetch"));
 
         if (isFullStoryError) {
-          console.warn(
-            "🚨 FullStory interference detected - using XMLHttpRequest fallback",
-          );
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(
+              "🚨 FullStory interference detected - using XMLHttpRequest fallback",
+            );
           try {
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.warn("XMLHttpRequest fallback also failed:", xhrError);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.warn("XMLHttpRequest fallback also failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
@@ -180,20 +193,24 @@ export class ApiClient {
           fetchError instanceof TypeError &&
           fetchError.message.includes("Failed to fetch")
         ) {
-          console.warn("Network connectivity issue detected");
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn("Network connectivity issue detected");
           this.failureCount++;
           this.lastFailureTime = Date.now();
           this.checkOfflineMode();
           // Try XMLHttpRequest fallback first
           try {
-            console.log("Trying XMLHttpRequest fallback for network error");
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log("Trying XMLHttpRequest fallback for network error");
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.warn("XMLHttpRequest fallback failed:", xhrError);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.warn("XMLHttpRequest fallback failed:", xhrError);
             return this.getEmptyFallbackResponse(endpoint);
           }
         } else if (fetchError.message === "Request timeout") {
-          console.warn("Request timed out - server may be unresponsive");
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn("Request timed out - server may be unresponsive");
           // For timeouts, increment failure count for circuit breaker
           this.failureCount++;
           this.lastFailureTime = Date.now();
@@ -202,10 +219,14 @@ export class ApiClient {
         } else {
           // For other errors, try XMLHttpRequest fallback
           try {
-            console.log("Using XMLHttpRequest fallback for other fetch error");
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log(
+                "Using XMLHttpRequest fallback for other fetch error",
+              );
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            console.warn("XMLHttpRequest fallback failed:", xhrError);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.warn("XMLHttpRequest fallback failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
@@ -216,17 +237,19 @@ export class ApiClient {
 
       // Handle null response from network errors
       if (response === null) {
-        console.warn("Network error - returning empty response");
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn("Network error - returning empty response");
         return this.getEmptyFallbackResponse(endpoint);
       }
 
       if (!response.ok) {
-        console.log(
-          "API Response not OK. Status:",
-          response.status,
-          "StatusText:",
-          response.statusText,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            "API Response not OK. Status:",
+            response.status,
+            "StatusText:",
+            response.statusText,
+          );
 
         // Handle specific status codes
         if (response.status === 401) {
@@ -239,15 +262,18 @@ export class ApiClient {
         try {
           // Read response body immediately without cloning to avoid conflicts
           errorText = await response.text();
-          console.log("Server error response:", errorText);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log("Server error response:", errorText);
 
           // Try to parse as JSON if possible
           if (errorText.trim()) {
             try {
               errorData = JSON.parse(errorText);
-              console.log("Parsed error data:", errorData);
+              if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+                console.log("Parsed error data:", errorData);
             } catch (parseError) {
-              console.log("Error response is not JSON");
+              if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+                console.log("Error response is not JSON");
             }
           }
         } catch (textError) {
@@ -331,7 +357,8 @@ export class ApiClient {
         const result = JSON.parse(responseText);
         // Reset failure count and offline mode on successful request
         if (this.isOfflineMode) {
-          console.log("🟢 Connection restored - exiting offline mode");
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log("🟢 Connection restored - exiting offline mode");
           this.isOfflineMode = false;
           this.offlineDetectedAt = 0;
         }
@@ -369,7 +396,8 @@ export class ApiClient {
         error.message.includes("Failed to fetch") &&
         retryCount < 2
       ) {
-        console.log(`Retrying request ${retryCount + 1}/2 for ${url}`);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(`Retrying request ${retryCount + 1}/2 for ${url}`);
         await new Promise((resolve) =>
           setTimeout(resolve, 1000 * (retryCount + 1)),
         ); // Exponential backoff
@@ -408,7 +436,8 @@ export class ApiClient {
     url: string,
     config: RequestInit,
   ): Promise<Response> {
-    console.log("🔧 Using XMLHttpRequest fallback for:", url);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("🔧 Using XMLHttpRequest fallback for:", url);
 
     return new Promise((resolve, reject) => {
       try {
@@ -435,18 +464,20 @@ export class ApiClient {
                 xhr.setRequestHeader(key, value as string);
               }
             } catch (headerError) {
-              console.warn(`⚠️ Could not set header ${key}:`, headerError);
+              if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+                console.warn(`⚠️ Could not set header ${key}:`, headerError);
             }
           });
         }
 
         xhr.onload = () => {
           try {
-            console.log(
-              "✅ XMLHttpRequest success:",
-              xhr.status,
-              xhr.statusText,
-            );
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log(
+                "✅ XMLHttpRequest success:",
+                xhr.status,
+                xhr.statusText,
+              );
 
             // Parse response headers
             const headers = new Headers();
@@ -499,9 +530,10 @@ export class ApiClient {
   }
 
   private getEmptyFallbackResponse(endpoint: string): any {
-    console.log(
-      `🔄 Providing empty fallback response for endpoint: ${endpoint}`,
-    );
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log(
+        `🔄 Providing empty fallback response for endpoint: ${endpoint}`,
+      );
 
     // Return appropriate empty structures based on endpoint
     if (
@@ -922,18 +954,23 @@ export class ApiClient {
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        console.log(
-          `Attempt ${attempt}/${maxRetries} for endpoint: ${endpoint}`,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            `Attempt ${attempt}/${maxRetries} for endpoint: ${endpoint}`,
+          );
         const result = await this.request<T>(endpoint, options);
-        console.log(`Success on attempt ${attempt} for endpoint: ${endpoint}`);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            `Success on attempt ${attempt} for endpoint: ${endpoint}`,
+          );
         return result;
       } catch (error) {
         lastError = error as Error;
-        console.warn(
-          `Attempt ${attempt}/${maxRetries} failed for ${endpoint}:`,
-          error,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn(
+            `Attempt ${attempt}/${maxRetries} failed for ${endpoint}:`,
+            error,
+          );
 
         // If it's the last attempt, don't retry
         if (attempt === maxRetries) {
@@ -942,7 +979,8 @@ export class ApiClient {
 
         // Wait before retrying (exponential backoff)
         const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
-        console.log(`Waiting ${delay}ms before retry...`);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(`Waiting ${delay}ms before retry...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
@@ -1043,27 +1081,45 @@ export class ApiClient {
   // FinOps Task Management methods with enhanced error handling
   async getFinOpsTasks(date?: string) {
     try {
-      console.log("🔍 Fetching FinOps tasks...", date ? `(date=${date})` : "");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "🔍 Fetching FinOps tasks...",
+          date ? `(date=${date})` : "",
+        );
 
-      const path = date
+      const prodPath = date
         ? `/finops-production/tasks?date=${encodeURIComponent(date)}`
         : "/finops-production/tasks";
-      // Use request with retry for better reliability
-      const result = await this.requestWithRetry(path, {}, 3);
+      // Try production endpoint first
+      const result = await this.requestWithRetry(prodPath, {}, 3);
 
-      console.log(
-        "✅ FinOps tasks fetched successfully:",
-        Array.isArray(result) ? result.length : "unknown count",
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "✅ FinOps tasks fetched successfully:",
+          Array.isArray(result) ? result.length : "unknown count",
+        );
       return result || [];
     } catch (error) {
-      console.error(
-        "❌ Failed to fetch FinOps tasks after all retries:",
-        error,
-      );
-
-      // Return empty array as graceful fallback to prevent UI crashes
-      return [];
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "❌ Production FinOps tasks failed, falling back to non-production endpoint:",
+          error,
+        );
+      try {
+        const fallbackPath = date
+          ? `/finops/tasks?date=${encodeURIComponent(date)}`
+          : "/finops/tasks";
+        const fallback = await this.requestWithRetry(fallbackPath, {}, 2);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            "✅ Fallback FinOps tasks fetched successfully:",
+            Array.isArray(fallback) ? fallback.length : "unknown count",
+          );
+        return fallback || [];
+      } catch (e2) {
+        console.error("❌ Fallback FinOps tasks also failed:", e2);
+        return [];
+      }
     }
   }
 
@@ -1145,6 +1201,23 @@ export class ApiClient {
     return this.request("/finops/trigger-daily", {
       method: "POST",
     });
+  }
+
+  async seedFinOpsTracker(date?: string) {
+    const body = JSON.stringify({ date });
+    try {
+      return await this.request("/finops-production/tracker/seed", {
+        method: "POST",
+        body,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return await this.request("/finops/tracker/seed", {
+        method: "POST",
+        body,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
   }
 
   async getFinOpsSchedulerStatus() {
@@ -1286,7 +1359,8 @@ export class ApiClient {
     try {
       const response = await fetch(url);
       const result = await response.text();
-      console.log("Upload endpoint test:", response.status, result);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("Upload endpoint test:", response.status, result);
       return { status: response.status, result };
     } catch (error) {
       console.error("Upload endpoint test failed:", error);
@@ -1303,18 +1377,20 @@ export class ApiClient {
     const testBlob = new Blob(["test file content"], { type: "text/plain" });
     const testFile = new File([testBlob], "test.txt", { type: "text/plain" });
 
-    console.log(
-      "Testing with simple file:",
-      testFile.name,
-      testFile.size,
-      testFile.type,
-    );
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log(
+        "Testing with simple file:",
+        testFile.name,
+        testFile.size,
+        testFile.type,
+      );
 
     // Test different field names
     const fieldNames = ["files", "file", "upload", "document"];
 
     for (const fieldName of fieldNames) {
-      console.log(`Testing field name: ${fieldName}`);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(`Testing field name: ${fieldName}`);
       const testFormData = new FormData();
       testFormData.append(fieldName, testFile);
 
@@ -1324,17 +1400,21 @@ export class ApiClient {
           body: testFormData,
         });
 
-        console.log(`Field ${fieldName}: Status ${response.status}`);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(`Field ${fieldName}: Status ${response.status}`);
 
         if (response.ok) {
           const result = await response.json();
-          console.log(`✅ Success with field name: ${fieldName}`, result);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log(`✅ Success with field name: ${fieldName}`, result);
           return { fieldName, success: true, result };
         } else {
-          console.log(`❌ Failed with field name: ${fieldName}`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log(`❌ Failed with field name: ${fieldName}`);
         }
       } catch (error) {
-        console.log(`❌ Error with field name: ${fieldName}:`, error);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(`❌ Error with field name: ${fieldName}:`, error);
       }
     }
 
@@ -1348,18 +1428,20 @@ export class ApiClient {
       throw new Error("No files provided for upload");
     }
 
-    console.log(`Starting upload of ${files.length} files`);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log(`Starting upload of ${files.length} files`);
 
     const formData = new FormData();
 
     // Use consistent field name that multer expects
     Array.from(files).forEach((file, index) => {
-      console.log(`Adding file ${index + 1} to FormData:`, {
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        lastModified: file.lastModified,
-      });
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(`Adding file ${index + 1} to FormData:`, {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          lastModified: file.lastModified,
+        });
       formData.append("files", file);
     });
 
@@ -1369,54 +1451,66 @@ export class ApiClient {
       for (const entry of formData.entries()) {
         formDataEntryCount++;
       }
-      console.log(`FormData contains ${formDataEntryCount} entries`);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(`FormData contains ${formDataEntryCount} entries`);
     } catch (e) {
-      console.warn("Cannot iterate FormData entries in this browser");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn("Cannot iterate FormData entries in this browser");
     }
 
     const url = `${API_BASE_URL}/files/upload`;
 
     try {
-      console.log(`Uploading ${files.length} files to ${url}`);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(`Uploading ${files.length} files to ${url}`);
 
       // Log file details for debugging
       Array.from(files).forEach((file, index) => {
-        console.log(
-          `File ${index + 1}: ${file.name} (${file.size} bytes, ${file.type}, last modified: ${new Date(file.lastModified)})`,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            `File ${index + 1}: ${file.name} (${file.size} bytes, ${file.type}, last modified: ${new Date(file.lastModified)})`,
+          );
 
         // Check for potential issues
         if (file.size === 0) {
-          console.warn(`⚠️  File ${file.name} is empty (0 bytes)`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(`⚠️  File ${file.name} is empty (0 bytes)`);
         }
         if (file.size > 50 * 1024 * 1024) {
-          console.warn(`⚠️  File ${file.name} exceeds 50MB limit`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(`⚠️  File ${file.name} exceeds 50MB limit`);
         }
         if (!file.type) {
-          console.warn(`⚠️  File ${file.name} has no MIME type`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(`⚠️  File ${file.name} has no MIME type`);
         }
       });
 
       // Debug FormData contents
-      console.log("FormData created with files under 'files' field");
-      console.log(
-        "FormData has entries:",
-        Array.from(formData.entries()).length,
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("FormData created with files under 'files' field");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "FormData has entries:",
+          Array.from(formData.entries()).length,
+        );
 
       // Try to log FormData entries (modern browsers)
       try {
         for (const [key, value] of formData.entries()) {
           if (value instanceof File) {
-            console.log(
-              `FormData entry: ${key} = File(${value.name}, ${value.size} bytes)`,
-            );
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log(
+                `FormData entry: ${key} = File(${value.name}, ${value.size} bytes)`,
+              );
           } else {
-            console.log(`FormData entry: ${key} = ${value}`);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log(`FormData entry: ${key} = ${value}`);
           }
         }
       } catch (e) {
-        console.log("Cannot inspect FormData entries in this browser");
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("Cannot inspect FormData entries in this browser");
       }
 
       // Create AbortController for timeout
@@ -1432,31 +1526,38 @@ export class ApiClient {
 
       clearTimeout(timeoutId);
 
-      console.log(`Upload response status: ${response.status}`);
-      console.log(
-        "Response headers:",
-        Object.fromEntries(response.headers.entries()),
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(`Upload response status: ${response.status}`);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "Response headers:",
+          Object.fromEntries(response.headers.entries()),
+        );
 
       // Read response body IMMEDIATELY to avoid stream conflicts
       let responseText = "";
       let responseData = null;
 
       try {
-        console.log("Reading response body immediately...");
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("Reading response body immediately...");
         responseText = await response.text();
-        console.log("Raw response text:", responseText);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("Raw response text:", responseText);
 
         // Try to parse as JSON if we have content
         if (responseText.trim()) {
           try {
             responseData = JSON.parse(responseText);
-            console.log("Parsed response data:", responseData);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log("Parsed response data:", responseData);
           } catch (parseError) {
-            console.log("Response is not JSON, treating as text");
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log("Response is not JSON, treating as text");
           }
         } else {
-          console.log("Response body is empty");
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log("Response body is empty");
         }
       } catch (readError) {
         console.error("Failed to read response body:", readError);
@@ -1516,10 +1617,12 @@ export class ApiClient {
 
       // Handle successful response using already-read data
       if (responseData) {
-        console.log("Upload successful:", responseData);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("Upload successful:", responseData);
         return responseData;
       } else {
-        console.log("Success response but no valid JSON data");
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("Success response but no valid JSON data");
         return {
           success: true,
           message: "Upload completed successfully",
@@ -1560,7 +1663,8 @@ export class ApiClient {
       const queryString = searchParams.toString();
       const endpoint = `/follow-ups${queryString ? `?${queryString}` : ""}`;
 
-      console.log("Fetching follow-ups from:", endpoint);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("Fetching follow-ups from:", endpoint);
 
       // Add a timeout and retry logic specifically for follow-ups
       const timeoutPromise = new Promise((_, reject) => {
@@ -1571,14 +1675,16 @@ export class ApiClient {
       try {
         const requestPromise = this.request(endpoint);
         const result = await Promise.race([requestPromise, timeoutPromise]);
-        console.log(
-          "Follow-ups fetch successful, got",
-          Array.isArray(result) ? result.length : "non-array",
-          "items",
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            "Follow-ups fetch successful, got",
+            Array.isArray(result) ? result.length : "non-array",
+            "items",
+          );
         return result;
       } catch (error) {
-        console.warn("Follow-ups request failed:", error);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn("Follow-ups request failed:", error);
         // Return empty array immediately on timeout/error
         return [];
       }
