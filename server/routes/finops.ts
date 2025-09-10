@@ -280,7 +280,7 @@ const mockActivityLog = [
 // Get all FinOps tasks with enhanced error handling
 router.get("/tasks", async (req: Request, res: Response) => {
   try {
-    console.log("�� FinOps tasks requested");
+    console.log("��� FinOps tasks requested");
 
     // Add CORS headers for FullStory compatibility
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -919,10 +919,18 @@ router.patch(
       const userName = user_name || "Unknown User";
 
       if (await isDatabaseAvailable()) {
+        // Ensure datewise tracking columns exist
+        await pool.query(`
+          ALTER TABLE finops_subtasks
+            ADD COLUMN IF NOT EXISTS scheduled_date DATE,
+            ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
+        `);
         // Get current subtask and task information
         const currentSubtask = await pool.query(
           `
-        SELECT st.*, t.task_name, t.reporting_managers, t.escalation_managers, t.assigned_to
+        SELECT st.*, t.task_name, t.duration, t.start_time, t.reporting_managers, t.escalation_managers, t.assigned_to
         FROM finops_subtasks st
         JOIN finops_tasks t ON st.task_id = t.id
         WHERE st.task_id = $1 AND st.id = $2
@@ -939,7 +947,11 @@ router.patch(
         const subtaskName = subtaskData.name;
 
         // Build dynamic update query
-        let updateFields = ["status = $1", "updated_at = CURRENT_TIMESTAMP"];
+        let updateFields = [
+          "status = $1",
+          "updated_at = CURRENT_TIMESTAMP",
+          "scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+        ];
         let queryParams = [status, taskId, subtaskId];
         let paramIndex = 4;
 
@@ -962,6 +974,51 @@ router.patch(
       `;
 
         await pool.query(query, queryParams);
+
+        // Ensure tracker table exists
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS finops_tracker (
+            id SERIAL PRIMARY KEY,
+            run_date DATE NOT NULL,
+            period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+            task_id INTEGER NOT NULL,
+            task_name TEXT,
+            subtask_id INTEGER NOT NULL DEFAULT 0,
+            subtask_name TEXT,
+            status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+            started_at TIMESTAMP NULL,
+            completed_at TIMESTAMP NULL,
+            scheduled_time TIME NULL,
+            subtask_scheduled_date DATE NULL,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(run_date, period, task_id, subtask_id)
+          );
+        `);
+
+        // Upsert tracker row for today's IST date
+        await pool.query(
+          `
+          INSERT INTO finops_tracker (
+            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
+          ) VALUES (
+            (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+          )
+          ON CONFLICT (run_date, period, task_id, subtask_id)
+          DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+          `,
+          [
+            String(subtaskData.duration || "daily"),
+            taskId,
+            subtaskData.task_name || "",
+            Number(subtaskId),
+            subtaskName || "",
+            status,
+            status === "in_progress" ? new Date() : null,
+            status === "completed" ? new Date() : null,
+            subtaskData.start_time || null,
+          ],
+        );
 
         // Enhanced activity logging
         let logDetails = `Subtask "${subtaskName}" status changed from "${oldStatus}" to "${status}"`;
@@ -1481,6 +1538,79 @@ router.get("/scheduler-status", async (req: Request, res: Response) => {
   }
 });
 
+// Get tracker entries (datewise)
+router.get("/tracker", async (req: Request, res: Response) => {
+  try {
+    const dateParam = (req.query.date as string) || null;
+    const period = (req.query.period as string) || null;
+    const taskId = req.query.task_id
+      ? parseInt(req.query.task_id as string)
+      : null;
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_tracker (
+        id SERIAL PRIMARY KEY,
+        run_date DATE NOT NULL,
+        period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+        task_id INTEGER NOT NULL,
+        task_name TEXT,
+        subtask_id INTEGER NOT NULL DEFAULT 0,
+        subtask_name TEXT,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        scheduled_time TIME NULL,
+        subtask_scheduled_date DATE NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(run_date, period, task_id, subtask_id)
+      );
+    `);
+
+    const params: any[] = [];
+    let where = "WHERE 1=1";
+    if (dateParam) {
+      params.push(dateParam);
+      where += ` AND run_date = $${params.length}`;
+    }
+    if (period) {
+      params.push(period);
+      where += ` AND period = $${params.length}`;
+    }
+    if (taskId) {
+      params.push(taskId);
+      where += ` AND task_id = $${params.length}`;
+    }
+
+    const query = `
+      SELECT task_id, max(task_name) as task_name, period, run_date,
+             json_agg(
+               json_build_object(
+                 'subtask_id', subtask_id,
+                 'subtask_name', subtask_name,
+                 'status', status,
+                 'started_at', started_at,
+                 'completed_at', completed_at,
+                 'scheduled_time', scheduled_time,
+                 'subtask_scheduled_date', subtask_scheduled_date
+               ) ORDER BY subtask_id
+             ) as subtasks
+      FROM finops_tracker
+      ${where}
+      GROUP BY task_id, period, run_date
+      ORDER BY run_date DESC, task_id ASC;
+    `;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (e: any) {
+    console.error("Error fetching finops tracker:", e);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch tracker", message: e.message });
+  }
+});
+
 // Get enhanced task summary with alert information
 router.get("/tasks/:id/summary", async (req: Request, res: Response) => {
   try {
@@ -1639,10 +1769,49 @@ router.post(
         );
         console.log(`Alert type: ${alert_type}, Message: ${message}`);
 
+        const recipients = (() => {
+          const val = taskData.reporting_managers;
+          if (!val) return [] as string[];
+          if (Array.isArray(val))
+            return val
+              .map(String)
+              .map((s) => s.trim())
+              .filter(Boolean);
+          if (typeof val === "string") {
+            let s = val.trim();
+            if (s.startsWith("{") && s.endsWith("}")) {
+              s = s.slice(1, -1);
+              return s
+                .split(",")
+                .map((x) => x.trim())
+                .map((x) => x.replace(/^\"|\"$/g, ""))
+                .filter(Boolean);
+            }
+            try {
+              const parsed = JSON.parse(s);
+              if (Array.isArray(parsed))
+                return parsed
+                  .map(String)
+                  .map((x) => x.trim())
+                  .filter(Boolean);
+            } catch {}
+            return s
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean);
+          }
+          try {
+            const parsed = JSON.parse(val);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [] as string[];
+          }
+        })();
+
         res.json({
           message: "Manual alert sent successfully",
           alert_type: alert_type,
-          recipients: JSON.parse(taskData.reporting_managers || "[]"),
+          recipients,
         });
       } else {
         res.json({

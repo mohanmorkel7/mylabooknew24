@@ -5,6 +5,25 @@ import finopsScheduler from "../services/finopsScheduler";
 
 const router = Router();
 
+// Ensure finops_external_alerts table and required columns exist
+async function ensureExternalAlertsSchema(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS finops_external_alerts (
+      id SERIAL PRIMARY KEY,
+      task_id INTEGER NOT NULL,
+      subtask_id INTEGER NOT NULL,
+      alert_key TEXT NOT NULL,
+      title TEXT,
+      next_call_at TIMESTAMP,
+      created_at TIMESTAMP DEFAULT NOW(),
+      UNIQUE(task_id, subtask_id, alert_key)
+    )
+  `);
+  await pool.query(
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
+  );
+}
+
 // Production database availability check - fail fast if no database
 async function requireDatabase() {
   try {
@@ -162,10 +181,12 @@ router.get("/tasks", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
 
+    await ensureExternalAlertsSchema();
+
     const query = `
       SELECT
         t.*,
-        CASE WHEN EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'finops_external_alerts' AND column_name = 'next_call_at') THEN (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) ELSE NULL END AS next_call_at,
+        (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) AS next_call_at,
         json_agg(
           json_build_object(
             'id', st.id,
@@ -178,7 +199,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
             'started_at', st.started_at,
             'completed_at', st.completed_at,
             'due_at', st.due_at,
-            'start_time', st.start_time
+            'start_time', st.start_time,
+            'scheduled_date', st.scheduled_date
           ) ORDER BY st.order_position
         ) FILTER (WHERE st.id IS NOT NULL) as subtasks
       FROM finops_tasks t
@@ -188,11 +210,21 @@ router.get("/tasks", async (req: Request, res: Response) => {
       ORDER BY t.created_at DESC
     `;
 
+    const dateParam = (req.query.date as string) || null;
     const result = await pool.query(query);
-    const tasks = result.rows.map((row) => ({
-      ...row,
-      subtasks: row.subtasks || [],
-    }));
+    const tasks = result.rows.map((row) => {
+      const raw = Array.isArray(row.subtasks) ? row.subtasks : [];
+      const dateFilter = dateParam ? String(dateParam).slice(0, 10) : null;
+      const filtered = dateFilter
+        ? raw.filter((st: any) => {
+            const sd = st.scheduled_date
+              ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+              : null;
+            return sd === dateFilter;
+          })
+        : raw;
+      return { ...row, subtasks: filtered };
+    });
 
     res.json(tasks);
   } catch (error) {
@@ -368,6 +400,15 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
     try {
       await client.query("BEGIN");
 
+      // Ensure datewise tracking columns exist
+      await client.query(`
+        ALTER TABLE finops_subtasks
+          ADD COLUMN IF NOT EXISTS scheduled_date DATE,
+          ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
+      `);
+
       // Update subtask
       let updateQuery = "";
       let queryParams = [];
@@ -375,7 +416,8 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       if (status === "in_progress") {
         updateQuery = `
           UPDATE finops_subtasks 
-          SET status = $1, started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+          SET status = $1, started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE id = $2
           RETURNING *
         `;
@@ -383,7 +425,8 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       } else if (status === "completed") {
         updateQuery = `
           UPDATE finops_subtasks 
-          SET status = $1, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+          SET status = $1, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE id = $2
           RETURNING *
         `;
@@ -391,7 +434,8 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       } else {
         updateQuery = `
           UPDATE finops_subtasks 
-          SET status = $1, updated_at = CURRENT_TIMESTAMP
+          SET status = $1, updated_at = CURRENT_TIMESTAMP,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE id = $2
           RETURNING *
         `;
@@ -424,6 +468,54 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
           "updated",
           user_name || "System",
           activityDetails,
+        ],
+      );
+
+      // Upsert finops_tracker for datewise tracking
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS finops_tracker (
+          id SERIAL PRIMARY KEY,
+          run_date DATE NOT NULL,
+          period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+          task_id INTEGER NOT NULL,
+          task_name TEXT,
+          subtask_id INTEGER NOT NULL DEFAULT 0,
+          subtask_name TEXT,
+          status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+          started_at TIMESTAMP NULL,
+          completed_at TIMESTAMP NULL,
+          scheduled_time TIME NULL,
+          subtask_scheduled_date DATE NULL,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(run_date, period, task_id, subtask_id)
+        );
+      `);
+      const taskMeta = await client.query(
+        `SELECT task_name, duration, start_time FROM finops_tasks WHERE id = $1`,
+        [subtask.task_id],
+      );
+      const trow = taskMeta.rows[0] || {};
+      await client.query(
+        `
+        INSERT INTO finops_tracker (
+          run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
+        ) VALUES (
+          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+        )
+        ON CONFLICT (run_date, period, task_id, subtask_id)
+        DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+        `,
+        [
+          String(trow.duration || "daily"),
+          subtask.task_id,
+          trow.task_name || "",
+          subtask.id,
+          subtask.name || "",
+          status,
+          status === "in_progress" ? new Date() : null,
+          status === "completed" ? new Date() : null,
+          trow.start_time || null,
         ],
       );
 
@@ -530,6 +622,80 @@ router.get("/activity-log", async (req: Request, res: Response) => {
 });
 
 // Get clients from leads table for dropdown
+// Get tracker entries (datewise)
+router.get("/tracker", async (req: Request, res: Response) => {
+  try {
+    await requireDatabase();
+    const dateParam = (req.query.date as string) || null;
+    const period = (req.query.period as string) || null;
+    const taskId = req.query.task_id
+      ? parseInt(req.query.task_id as string)
+      : null;
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_tracker (
+        id SERIAL PRIMARY KEY,
+        run_date DATE NOT NULL,
+        period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+        task_id INTEGER NOT NULL,
+        task_name TEXT,
+        subtask_id INTEGER NOT NULL DEFAULT 0,
+        subtask_name TEXT,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        scheduled_time TIME NULL,
+        subtask_scheduled_date DATE NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(run_date, period, task_id, subtask_id)
+      );
+    `);
+
+    const params: any[] = [];
+    let where = "WHERE 1=1";
+    if (dateParam) {
+      params.push(dateParam);
+      where += ` AND run_date = $${params.length}`;
+    }
+    if (period) {
+      params.push(period);
+      where += ` AND period = $${params.length}`;
+    }
+    if (taskId) {
+      params.push(taskId);
+      where += ` AND task_id = $${params.length}`;
+    }
+
+    const query = `
+      SELECT task_id, max(task_name) as task_name, period, run_date,
+             json_agg(
+               json_build_object(
+                 'subtask_id', subtask_id,
+                 'subtask_name', subtask_name,
+                 'status', status,
+                 'started_at', started_at,
+                 'completed_at', completed_at,
+                 'scheduled_time', scheduled_time,
+                 'subtask_scheduled_date', subtask_scheduled_date
+               ) ORDER BY subtask_id
+             ) as subtasks
+      FROM finops_tracker
+      ${where}
+      GROUP BY task_id, period, run_date
+      ORDER BY run_date DESC, task_id ASC;
+    `;
+
+    const result = await pool.query(query, params);
+    res.json(result.rows);
+  } catch (e: any) {
+    console.error("Error fetching finops tracker:", e);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch tracker", message: e.message });
+  }
+});
+
 router.get("/clients", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
