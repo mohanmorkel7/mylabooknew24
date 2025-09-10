@@ -1045,11 +1045,11 @@ export class ApiClient {
     try {
       console.log("🔍 Fetching FinOps tasks...", date ? `(date=${date})` : "");
 
-      const path = date
+      const prodPath = date
         ? `/finops-production/tasks?date=${encodeURIComponent(date)}`
         : "/finops-production/tasks";
-      // Use request with retry for better reliability
-      const result = await this.requestWithRetry(path, {}, 3);
+      // Try production endpoint first
+      const result = await this.requestWithRetry(prodPath, {}, 3);
 
       console.log(
         "✅ FinOps tasks fetched successfully:",
@@ -1057,13 +1057,24 @@ export class ApiClient {
       );
       return result || [];
     } catch (error) {
-      console.error(
-        "❌ Failed to fetch FinOps tasks after all retries:",
+      console.warn(
+        "❌ Production FinOps tasks failed, falling back to non-production endpoint:",
         error,
       );
-
-      // Return empty array as graceful fallback to prevent UI crashes
-      return [];
+      try {
+        const fallbackPath = date
+          ? `/finops/tasks?date=${encodeURIComponent(date)}`
+          : "/finops/tasks";
+        const fallback = await this.requestWithRetry(fallbackPath, {}, 2);
+        console.log(
+          "✅ Fallback FinOps tasks fetched successfully:",
+          Array.isArray(fallback) ? fallback.length : "unknown count",
+        );
+        return fallback || [];
+      } catch (e2) {
+        console.error("❌ Fallback FinOps tasks also failed:", e2);
+        return [];
+      }
     }
   }
 
