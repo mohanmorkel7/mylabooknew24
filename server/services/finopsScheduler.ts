@@ -185,18 +185,53 @@ class FinOpsScheduler {
         [task.id],
       );
 
+      // Ensure tracking table exists
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS finops_tracker (
+          id SERIAL PRIMARY KEY,
+          run_date DATE NOT NULL,
+          period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+          task_id INTEGER NOT NULL,
+          task_name TEXT,
+          subtask_id INTEGER NOT NULL DEFAULT 0,
+          subtask_name TEXT,
+          status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+          started_at TIMESTAMP NULL,
+          completed_at TIMESTAMP NULL,
+          scheduled_time TIME NULL,
+          subtask_scheduled_date DATE NULL,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(run_date, period, task_id, subtask_id)
+        );
+      `);
+
       // Reset all subtasks to pending status for new execution cycle
       for (const subtask of subtasks.rows) {
         await pool.query(
           `
-          UPDATE finops_subtasks 
-          SET status = 'pending', 
-              started_at = NULL, 
+          UPDATE finops_subtasks
+          SET status = 'pending',
+              started_at = NULL,
               completed_at = NULL,
               updated_at = CURRENT_TIMESTAMP
           WHERE id = $1
         `,
           [subtask.id],
+        );
+
+        // Upsert into finops_tracker
+        await pool.query(
+          `
+          INSERT INTO finops_tracker (
+            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
+          ) VALUES (
+            (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+          )
+          ON CONFLICT (run_date, period, task_id, subtask_id)
+          DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+          `,
+          [String(period), task.id, task.task_name || '', subtask.id, subtask.name || '', subtask.start_time || null],
         );
       }
 
