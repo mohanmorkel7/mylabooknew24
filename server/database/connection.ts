@@ -551,11 +551,44 @@ export async function initializeDatabase() {
           completed_at TIMESTAMP NULL,
           scheduled_time TIME NULL,
           subtask_scheduled_date DATE NULL,
+          -- Additional fields mirrored from finops_subtasks for richer tracking
+          description TEXT,
+          sla_hours INTEGER,
+          sla_minutes INTEGER,
+          order_position INTEGER,
+          delay_reason TEXT,
+          delay_notes TEXT,
+          notification_sent_15min BOOLEAN DEFAULT false,
+          notification_sent_start BOOLEAN DEFAULT false,
+          notification_sent_escalation BOOLEAN DEFAULT false,
+          auto_notify BOOLEAN DEFAULT true,
+          assigned_to TEXT,
+          reporting_managers TEXT,
+          escalation_managers TEXT,
           created_at TIMESTAMP DEFAULT NOW(),
           updated_at TIMESTAMP DEFAULT NOW(),
           UNIQUE(run_date, period, task_id, subtask_id)
         );
       `);
+
+      // In case older deployments already had the table, ensure missing columns exist
+      await pool.query(`
+        ALTER TABLE finops_tracker
+          ADD COLUMN IF NOT EXISTS description TEXT,
+          ADD COLUMN IF NOT EXISTS sla_hours INTEGER,
+          ADD COLUMN IF NOT EXISTS sla_minutes INTEGER,
+          ADD COLUMN IF NOT EXISTS order_position INTEGER,
+          ADD COLUMN IF NOT EXISTS delay_reason TEXT,
+          ADD COLUMN IF NOT EXISTS delay_notes TEXT,
+          ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS auto_notify BOOLEAN DEFAULT true,
+          ADD COLUMN IF NOT EXISTS assigned_to TEXT,
+          ADD COLUMN IF NOT EXISTS reporting_managers TEXT,
+          ADD COLUMN IF NOT EXISTS escalation_managers TEXT;
+      `);
+
       console.log("finops_tracker table ensured");
     } catch (trackerErr) {
       console.log(
