@@ -214,17 +214,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
     const result = await pool.query(query);
     const tasks = result.rows.map((row) => {
       const raw = Array.isArray(row.subtasks) ? row.subtasks : [];
-      const dateFilter = dateParam ? String(dateParam).slice(0, 10) : null;
-      const filtered = dateFilter
-        ? raw.filter((st: any) => {
-            const sd = st.scheduled_date
-              ? new Date(st.scheduled_date).toISOString().slice(0, 10)
-              : null;
-            // If no scheduled_date yet (newly created or not reset by scheduler), include it
-            return sd ? sd === dateFilter : true;
-          })
-        : raw;
-      return { ...row, subtasks: filtered };
+      // Do not filter by scheduled_date; always return current subtasks for the task
+      return { ...row, subtasks: raw };
     });
 
     res.json(tasks);
