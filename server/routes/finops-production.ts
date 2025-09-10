@@ -199,7 +199,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
             'started_at', st.started_at,
             'completed_at', st.completed_at,
             'due_at', st.due_at,
-            'start_time', st.start_time
+            'start_time', st.start_time,
+            'scheduled_date', st.scheduled_date
           ) ORDER BY st.order_position
         ) FILTER (WHERE st.id IS NOT NULL) as subtasks
       FROM finops_tasks t
@@ -209,11 +210,21 @@ router.get("/tasks", async (req: Request, res: Response) => {
       ORDER BY t.created_at DESC
     `;
 
+    const dateParam = (req.query.date as string) || null;
     const result = await pool.query(query);
-    const tasks = result.rows.map((row) => ({
-      ...row,
-      subtasks: row.subtasks || [],
-    }));
+    const tasks = result.rows.map((row) => {
+      const raw = Array.isArray(row.subtasks) ? row.subtasks : [];
+      const dateFilter = dateParam ? String(dateParam).slice(0, 10) : null;
+      const filtered = dateFilter
+        ? raw.filter((st: any) => {
+            const sd = st.scheduled_date
+              ? new Date(st.scheduled_date).toISOString().slice(0, 10)
+              : null;
+            return sd === dateFilter;
+          })
+        : raw;
+      return { ...row, subtasks: filtered };
+    });
 
     res.json(tasks);
   } catch (error) {
