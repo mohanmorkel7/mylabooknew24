@@ -535,6 +535,32 @@ export async function initializeDatabase() {
       );
     }
 
+    // Ensure finops_tracker table exists for daily tracking
+    try {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS finops_tracker (
+          id SERIAL PRIMARY KEY,
+          run_date DATE NOT NULL,
+          period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+          task_id INTEGER NOT NULL,
+          task_name TEXT,
+          subtask_id INTEGER NOT NULL DEFAULT 0,
+          subtask_name TEXT,
+          status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+          started_at TIMESTAMP NULL,
+          completed_at TIMESTAMP NULL,
+          scheduled_time TIME NULL,
+          subtask_scheduled_date DATE NULL,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(run_date, period, task_id, subtask_id)
+        );
+      `);
+      console.log('finops_tracker table ensured');
+    } catch (trackerErr) {
+      console.log('finops_tracker ensure skipped or failed:', (trackerErr as any).message);
+    }
+
     // await client.query(schema);
     console.log("Database initialized successfully");
     client.release();
