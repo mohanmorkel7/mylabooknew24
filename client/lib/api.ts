@@ -1203,6 +1203,23 @@ export class ApiClient {
     });
   }
 
+  async seedFinOpsTracker(date?: string) {
+    const body = JSON.stringify({ date });
+    try {
+      return await this.request("/finops-production/tracker/seed", {
+        method: "POST",
+        body,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (e) {
+      return await this.request("/finops/tracker/seed", {
+        method: "POST",
+        body,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+  }
+
   async getFinOpsSchedulerStatus() {
     return this.request("/finops/scheduler-status");
   }
