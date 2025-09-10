@@ -316,12 +316,19 @@ class FinOpsScheduler {
         // Update task status if it has changed
         await pool.query(
           `
-          UPDATE finops_tasks 
-          SET status = $1, updated_at = CURRENT_TIMESTAMP 
+          UPDATE finops_tasks
+          SET status = $1, updated_at = CURRENT_TIMESTAMP
           WHERE id = $2 AND status != $1
         `,
           [newStatus, task.id],
         );
+      }
+
+      // After syncing statuses, rollover fully completed daily tasks to the next day
+      try {
+        await this.rolloverCompletedDailyTasks();
+      } catch (err) {
+        console.error("Error during rollover of completed daily tasks:", err);
       }
     } catch (error) {
       console.error("Error syncing task statuses:", error);
