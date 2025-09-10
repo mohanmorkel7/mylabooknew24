@@ -1244,9 +1244,9 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
       SELECT t.*, st.id as subtask_id, st.name as subtask_name, st.start_time
       FROM finops_tasks t
       LEFT JOIN finops_subtasks st ON t.id = st.task_id
-      WHERE t.is_active = true AND t.deleted_at IS NULL
+      WHERE t.is_active = true AND t.deleted_at IS NULL AND t.effective_from <= $1
       ORDER BY t.id, st.order_position
-    `);
+    `, [runDate]);
 
     let inserted = 0;
     for (const row of tasksRes.rows) {
