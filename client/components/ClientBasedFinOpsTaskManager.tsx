@@ -91,14 +91,16 @@ const extractNameFromValue = (value: string, depth: number = 0): string => {
 
   // Prevent infinite recursion
   if (depth > 5) {
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("⚠️ Max recursion depth reached, returning:", value);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("⚠️ Max recursion depth reached, returning:", value);
     return value;
   }
 
-  if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-    `🔍 extractNameFromValue input (depth ${depth}):`,
-    JSON.stringify(value),
-  );
+  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+    console.log(
+      `🔍 extractNameFromValue input (depth ${depth}):`,
+      JSON.stringify(value),
+    );
 
   // Handle malformed JSON objects like {"John Doe"} - extract content between braces
   if (value.startsWith("{") && value.endsWith("}")) {
@@ -109,28 +111,33 @@ const extractNameFromValue = (value: string, depth: number = 0): string => {
         const values = Object.values(parsed);
         const firstString = values.find((v) => typeof v === "string");
         if (firstString) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ JSON object parsed:", firstString);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log("✅ JSON object parsed:", firstString);
           return extractNameFromValue(firstString, depth + 1);
         }
       }
       if (typeof parsed === "string") {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ JSON string parsed:", parsed);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("✅ JSON string parsed:", parsed);
         return extractNameFromValue(parsed, depth + 1);
       }
     } catch (e) {
       // If JSON parsing fails, try to extract content manually
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("⚠️ JSON parsing failed, trying manual extraction");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("⚠️ JSON parsing failed, trying manual extraction");
       const content = value.slice(1, -1); // Remove { and }
 
       // Handle cases like {"John Doe"} where John Doe might be quoted or unquoted
       if (content.startsWith('"') && content.endsWith('"')) {
         const extracted = content.slice(1, -1); // Remove quotes
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("�� Manual extraction with quotes:", extracted);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("�� Manual extraction with quotes:", extracted);
         // Recursively parse in case there are more nested levels
         return extractNameFromValue(extracted, depth + 1);
       } else {
         // Handle unquoted content
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("�� Manual extraction without quotes:", content);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("�� Manual extraction without quotes:", content);
         // Recursively parse in case there are more nested levels
         return extractNameFromValue(content, depth + 1);
       }
@@ -141,12 +148,14 @@ const extractNameFromValue = (value: string, depth: number = 0): string => {
   if (value.startsWith('"{') && value.endsWith('}"')) {
     try {
       const parsed = JSON.parse(value);
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ Stringified JSON parsed:", parsed);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("✅ Stringified JSON parsed:", parsed);
       return typeof parsed === "string"
         ? extractNameFromValue(parsed, depth + 1)
         : value;
     } catch (e) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("⚠️ Stringified JSON parsing failed");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("⚠️ Stringified JSON parsing failed");
     }
   }
 
@@ -154,30 +163,35 @@ const extractNameFromValue = (value: string, depth: number = 0): string => {
   if (value.startsWith('"') && value.endsWith('"')) {
     try {
       const parsed = JSON.parse(value);
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ Quoted string parsed:", parsed);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("✅ Quoted string parsed:", parsed);
       return typeof parsed === "string"
         ? extractNameFromValue(parsed, depth + 1)
         : value;
     } catch (e) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("⚠�� Quoted string parsing failed");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("⚠�� Quoted string parsing failed");
     }
   }
 
   // Handle escaped quotes like \"Sanjay Kumar\"
   if (value.startsWith('\\"') && value.endsWith('\\"')) {
     const unescaped = value.slice(2, -2); // Remove \" and \"
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ Escaped quotes removed:", unescaped);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("✅ Escaped quotes removed:", unescaped);
     return extractNameFromValue(unescaped, depth + 1);
   }
 
   // Handle "Name (email)" format
   const match = value.match(/^(.+)\s\([^)]+\)$/);
   if (match) {
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ Email format matched:", match[1]);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("✅ Email format matched:", match[1]);
     return match[1];
   }
 
-  if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ Returning original value:", value);
+  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+    console.log("✅ Returning original value:", value);
   return value;
 };
 
@@ -744,12 +758,14 @@ export default function ClientBasedFinOpsTaskManager() {
     queryKey: ["client-finops-tasks", dateFilter],
     queryFn: async () => {
       try {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🔍 Fetching FinOps tasks...", { dateFilter });
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("🔍 Fetching FinOps tasks...", { dateFilter });
         const result = await apiClient.getFinOpsTasks(dateFilter);
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-          "✅ FinOps tasks query successful:",
-          Array.isArray(result) ? result.length : "unknown",
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            "✅ FinOps tasks query successful:",
+            Array.isArray(result) ? result.length : "unknown",
+          );
         return Array.isArray(result) ? result : [];
       } catch (error) {
         console.error("❌ FinOps tasks query failed:", error);
@@ -765,7 +781,12 @@ export default function ClientBasedFinOpsTaskManager() {
       console.error("🚨 FinOps tasks query error:", error);
     },
     onSuccess: (data) => {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("�� FinOps tasks query success:", data?.length || 0, "tasks");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "�� FinOps tasks query success:",
+          data?.length || 0,
+          "tasks",
+        );
     },
   });
 
@@ -799,10 +820,11 @@ export default function ClientBasedFinOpsTaskManager() {
 
       // Automatic status updates for overdue tasks
       if (finopsTasks && finopsTasks.length > 0) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-          "🔄 Checking for overdue tasks at",
-          now.toLocaleTimeString(),
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            "🔄 Checking for overdue tasks at",
+            now.toLocaleTimeString(),
+          );
 
         finopsTasks.forEach((task) => {
           if (!task.subtasks) return;
@@ -817,9 +839,13 @@ export default function ClientBasedFinOpsTaskManager() {
 
               // If task is overdue but status is still pending, auto-update it
               if (slaWarning && slaWarning.type === "overdue") {
-                if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-                  `🚨 Auto-updating task ${subtask.name} from pending to overdue`,
-                );
+                if (
+                  typeof window !== "undefined" &&
+                  (window as any).__APP_DEBUG
+                )
+                  console.log(
+                    `🚨 Auto-updating task ${subtask.name} from pending to overdue`,
+                  );
 
                 // Trigger status update mutation
                 updateSubTaskMutation.mutate({
@@ -875,12 +901,13 @@ export default function ClientBasedFinOpsTaskManager() {
         return firstIndex === index;
       },
     );
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-      "Raw clients count:",
-      rawClients.length,
-      "Unique clients count:",
-      uniqueClients.length,
-    );
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log(
+        "Raw clients count:",
+        rawClients.length,
+        "Unique clients count:",
+        uniqueClients.length,
+      );
     if (rawClients.length !== uniqueClients.length) {
       console.warn(
         "Duplicate clients detected and removed:",
@@ -919,7 +946,8 @@ export default function ClientBasedFinOpsTaskManager() {
   // Control refetch intervals based on error states
   useEffect(() => {
     if (error || clientsError || usersError) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🚫 Errors detected, reducing refetch frequency");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("🚫 Errors detected, reducing refetch frequency");
       // Could implement more sophisticated error-based refetch control here
     }
   }, [error, clientsError, usersError]);
@@ -1076,9 +1104,10 @@ export default function ClientBasedFinOpsTaskManager() {
 
     // Check if status is changing FROM "overdue" TO any other status
     if (currentStatus === "overdue" && newStatus !== "overdue") {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-        "🚨 Status change from overdue detected, showing reason dialog",
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "🚨 Status change from overdue detected, showing reason dialog",
+        );
 
       // Store the data and show the reason dialog
       setOverdueReasonData({
@@ -1142,7 +1171,8 @@ export default function ClientBasedFinOpsTaskManager() {
 
   // Force update all overdue statuses immediately
   const forceUpdateOverdueStatuses = () => {
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🔧 Force updating all overdue statuses...");
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("🔧 Force updating all overdue statuses...");
     let updatedCount = 0;
 
     finopsTasks?.forEach((task) => {
@@ -1153,7 +1183,8 @@ export default function ClientBasedFinOpsTaskManager() {
           const slaWarning = getSLAWarning(subtask.start_time, subtask.status);
 
           if (slaWarning && slaWarning.type === "overdue") {
-            if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(`🚨 Force updating ${subtask.name} to overdue`);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log(`🚨 Force updating ${subtask.name} to overdue`);
             updatedCount++;
 
             updateSubTaskMutation.mutate({
@@ -1168,9 +1199,11 @@ export default function ClientBasedFinOpsTaskManager() {
     });
 
     if (updatedCount === 0) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ No overdue tasks found that need status updates");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("✅ No overdue tasks found that need status updates");
     } else {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(`✅ Force updated ${updatedCount} tasks to overdue status`);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(`✅ Force updated ${updatedCount} tasks to overdue status`);
     }
   };
 
@@ -1252,12 +1285,13 @@ export default function ClientBasedFinOpsTaskManager() {
     const diffMs = currentTime.getTime() - taskStartTime.getTime();
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(`⏰ SLA check for task starting at ${startTime}:`, {
-      taskStartTime: taskStartTime.toLocaleTimeString(),
-      currentTime: currentTime.toLocaleTimeString(),
-      diffMinutes,
-      status,
-    });
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log(`⏰ SLA check for task starting at ${startTime}:`, {
+        taskStartTime: taskStartTime.toLocaleTimeString(),
+        currentTime: currentTime.toLocaleTimeString(),
+        diffMinutes,
+        status,
+      });
 
     // Task is overdue if it's past start time (for both pending and overdue status)
     if (diffMinutes > 0 && (status === "pending" || status === "overdue")) {
@@ -1440,10 +1474,11 @@ export default function ClientBasedFinOpsTaskManager() {
       description: task.description || "",
       client_id: task.client_id?.toString() || "",
       assigned_to: (() => {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-          "🔍 Edit form - raw task.assigned_to:",
-          JSON.stringify(task.assigned_to),
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log(
+            "🔍 Edit form - raw task.assigned_to:",
+            JSON.stringify(task.assigned_to),
+          );
 
         let assignedArray = [];
 
@@ -1452,7 +1487,11 @@ export default function ClientBasedFinOpsTaskManager() {
         } else if (task.assigned_to) {
           // Extract and parse the assigned_to value
           const extracted = extractNameFromValue(task.assigned_to);
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🔄 Edit form - after extractNameFromValue:", extracted);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.log(
+              "🔄 Edit form - after extractNameFromValue:",
+              extracted,
+            );
 
           // Check if it contains comma-separated names
           if (
@@ -1465,7 +1504,8 @@ export default function ClientBasedFinOpsTaskManager() {
               .split(/,\s*"?|",\s*"?|"\s*,\s*"?/)
               .map((name) => name.replace(/^"|"$/g, "").trim())
               .filter((name) => name.length > 0);
-            if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🔄 Edit form - split names:", assignedArray);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.log("🔄 Edit form - split names:", assignedArray);
           } else {
             // Single name
             assignedArray = [extracted];
@@ -1475,7 +1515,8 @@ export default function ClientBasedFinOpsTaskManager() {
         const result = assignedArray.map((name) =>
           convertNameToValueFormat(extractNameFromValue(name), users),
         );
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("✅ Edit form - final assigned_to array:", result);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("✅ Edit form - final assigned_to array:", result);
         return result;
       })(),
       reporting_managers: (task.reporting_managers || []).map((name) =>
@@ -1512,7 +1553,8 @@ export default function ClientBasedFinOpsTaskManager() {
 
   // Filter tasks based on client, status, search, and date
   const filteredTasks = finopsTasks.filter((task: ClientBasedFinOpsTask) => {
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Processing task:", task.task_name, "for filtering");
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("Processing task:", task.task_name, "for filtering");
     // Client filter from summary (takes priority)
     if (selectedClientFromSummary) {
       if (task.client_name !== selectedClientFromSummary) return false;
@@ -1548,13 +1590,14 @@ export default function ClientBasedFinOpsTaskManager() {
       const filterDate = new Date(dateFilter);
       const taskDate = new Date(task.effective_from);
 
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Date filtering:", {
-        filterDate: filterDate.toDateString(),
-        taskDate: taskDate.toDateString(),
-        taskName: task.task_name,
-        duration: task.duration,
-        effective_from: task.effective_from,
-      });
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("Date filtering:", {
+          filterDate: filterDate.toDateString(),
+          taskDate: taskDate.toDateString(),
+          taskName: task.task_name,
+          duration: task.duration,
+          effective_from: task.effective_from,
+        });
 
       // Determine if task is active on the selected date (supports weekly days)
       const dayNames = [
@@ -1584,22 +1627,26 @@ export default function ClientBasedFinOpsTaskManager() {
         return taskDate.toDateString() === filterDate.toDateString();
       })();
       if (!isActiveOnDate) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Filtering out task - not active on selected date");
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.log("Filtering out task - not active on selected date");
         return false;
       }
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Task passed date filter");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log("Task passed date filter");
     }
 
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Task passed all filters:", task.task_name);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("Task passed all filters:", task.task_name);
     return true;
   });
 
-  if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-    "Total tasks:",
-    finopsTasks.length,
-    "Filtered tasks:",
-    filteredTasks.length,
-  );
+  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+    console.log(
+      "Total tasks:",
+      finopsTasks.length,
+      "Filtered tasks:",
+      filteredTasks.length,
+    );
 
   // Overdue direct-call timers (seconds remaining per task)
   const [overdueTimers, setOverdueTimers] = useState<Record<number, number>>(
@@ -1706,7 +1753,8 @@ export default function ClientBasedFinOpsTaskManager() {
 
   // End timers setup
 
-  if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(filteredTasks.length, "Date filter:", dateFilter);
+  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+    console.log(filteredTasks.length, "Date filter:", dateFilter);
 
   // Calculate summary statistics
   const getOverallSummary = () => {
@@ -1741,17 +1789,19 @@ export default function ClientBasedFinOpsTaskManager() {
   const getClientSummary = () => {
     const clientSummary: { [key: string]: any } = {};
 
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Filtered tasks for client summary:", filteredTasks);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("Filtered tasks for client summary:", filteredTasks);
 
     filteredTasks.forEach((task: ClientBasedFinOpsTask) => {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-        "Processing task:",
-        task.task_name,
-        "Client:",
-        task.client_name,
-        "Client ID:",
-        task.client_id,
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          "Processing task:",
+          task.task_name,
+          "Client:",
+          task.client_name,
+          "Client ID:",
+          task.client_id,
+        );
 
       // Resolve client name with proper fallback logic
       let clientName = "Unknown Client";
@@ -1778,9 +1828,10 @@ export default function ClientBasedFinOpsTaskManager() {
         }
       }
 
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-        `📝 Task "${task.task_name}" -> Client: "${clientName}" (ID: ${task.client_id})`,
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.log(
+          `📝 Task "${task.task_name}" -> Client: "${clientName}" (ID: ${task.client_id})`,
+        );
 
       if (!clientSummary[clientName]) {
         clientSummary[clientName] = {
@@ -1805,7 +1856,8 @@ export default function ClientBasedFinOpsTaskManager() {
       });
     });
 
-    if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("Client summary result:", clientSummary);
+    if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+      console.log("Client summary result:", clientSummary);
     return clientSummary;
   };
 
@@ -2268,29 +2320,41 @@ export default function ClientBasedFinOpsTaskManager() {
                           <span>
                             Assigned:{" "}
                             {(() => {
-                              if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-                                "🔍 Raw task.assigned_to:",
-                                JSON.stringify(task.assigned_to),
-                              );
+                              if (
+                                typeof window !== "undefined" &&
+                                (window as any).__APP_DEBUG
+                              )
+                                console.log(
+                                  "🔍 Raw task.assigned_to:",
+                                  JSON.stringify(task.assigned_to),
+                                );
 
                               // Handle various formats of assigned_to
                               let assignedArray = [];
 
                               if (Array.isArray(task.assigned_to)) {
-                                if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-                                  "✅ Already an array:",
-                                  task.assigned_to,
-                                );
+                                if (
+                                  typeof window !== "undefined" &&
+                                  (window as any).__APP_DEBUG
+                                )
+                                  console.log(
+                                    "✅ Already an array:",
+                                    task.assigned_to,
+                                  );
                                 assignedArray = task.assigned_to;
                               } else if (task.assigned_to) {
                                 // First try to extract using our helper function
                                 const extracted = extractNameFromValue(
                                   task.assigned_to,
                                 );
-                                if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log(
-                                  "🔄 After extractNameFromValue:",
-                                  extracted,
-                                );
+                                if (
+                                  typeof window !== "undefined" &&
+                                  (window as any).__APP_DEBUG
+                                )
+                                  console.log(
+                                    "🔄 After extractNameFromValue:",
+                                    extracted,
+                                  );
 
                                 // Check if the result looks like multiple names separated by comma
                                 if (
@@ -2305,7 +2369,11 @@ export default function ClientBasedFinOpsTaskManager() {
                                       name.replace(/^"|"$/g, "").trim(),
                                     )
                                     .filter((name) => name.length > 0);
-                                  if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🔄 Split names:", splitNames);
+                                  if (
+                                    typeof window !== "undefined" &&
+                                    (window as any).__APP_DEBUG
+                                  )
+                                    console.log("🔄 Split names:", splitNames);
                                   assignedArray = splitNames;
                                 } else {
                                   // Single name
@@ -2320,7 +2388,11 @@ export default function ClientBasedFinOpsTaskManager() {
                                       .join(", ")
                                   : "Unassigned";
 
-                              if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("��� Final result:", result);
+                              if (
+                                typeof window !== "undefined" &&
+                                (window as any).__APP_DEBUG
+                              )
+                                console.log("��� Final result:", result);
                               return result;
                             })()}
                           </span>
@@ -2733,13 +2805,17 @@ export default function ClientBasedFinOpsTaskManager() {
                     </SelectTrigger>
                     <SelectContent>
                       {(() => {
-                        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.log("🎯 Rendering client dropdown:", {
-                          isLoading: clientsLoading,
-                          clientsCount: clients.length,
-                          rawClientsCount: rawClients.length,
-                          hasError: !!clientsError,
-                          error: clientsError?.message,
-                        });
+                        if (
+                          typeof window !== "undefined" &&
+                          (window as any).__APP_DEBUG
+                        )
+                          console.log("🎯 Rendering client dropdown:", {
+                            isLoading: clientsLoading,
+                            clientsCount: clients.length,
+                            rawClientsCount: rawClients.length,
+                            hasError: !!clientsError,
+                            error: clientsError?.message,
+                          });
 
                         if (clientsLoading) {
                           return (
