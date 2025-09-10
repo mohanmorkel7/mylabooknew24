@@ -930,7 +930,7 @@ router.patch(
         // Get current subtask and task information
         const currentSubtask = await pool.query(
           `
-        SELECT st.*, t.task_name, t.duration, t.start_time, t.reporting_managers, t.escalation_managers, t.assigned_to
+        SELECT st.*, t.task_name, t.duration, t.reporting_managers, t.escalation_managers, t.assigned_to
         FROM finops_subtasks st
         JOIN finops_tasks t ON st.task_id = t.id
         WHERE st.task_id = $1 AND st.id = $2
