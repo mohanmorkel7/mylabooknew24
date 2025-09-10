@@ -1462,68 +1462,58 @@ async function handleStatusChangeNotifications(
 async function checkAndUpdateTaskStatus(taskId: number, userName: string) {
   try {
     if (await isDatabaseAvailable()) {
-      const subtasks = await pool.query(
+      // Prefer finops_tracker rows for today's date (IST). Fallback to finops_subtasks when tracker rows are missing.
+      const trackerRes = await pool.query(
         `
-        SELECT status FROM finops_subtasks WHERE task_id = $1
+        SELECT status FROM finops_tracker
+        WHERE task_id = $1 AND run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
       `,
         [taskId],
       );
 
-      const totalSubtasks = subtasks.rows.length;
-      const completedSubtasks = subtasks.rows.filter(
-        (st) => st.status === "completed",
-      ).length;
-      const overdueSubtasks = subtasks.rows.filter(
-        (st) => st.status === "overdue",
-      ).length;
-      const delayedSubtasks = subtasks.rows.filter(
-        (st) => st.status === "delayed",
-      ).length;
-      const inProgressSubtasks = subtasks.rows.filter(
-        (st) => st.status === "in_progress",
-      ).length;
+      let rows = trackerRes.rows;
 
-      let newTaskStatus = "active";
-      let statusDetails = "";
+      if (rows.length === 0) {
+        const subtasks = await pool.query(`SELECT status FROM finops_subtasks WHERE task_id = $1`, [taskId]);
+        rows = subtasks.rows;
+      }
+
+      const totalSubtasks = rows.length;
+      const completedSubtasks = rows.filter((st) => st.status === 'completed').length;
+      const overdueSubtasks = rows.filter((st) => st.status === 'overdue').length;
+      const delayedSubtasks = rows.filter((st) => st.status === 'delayed').length;
+      const inProgressSubtasks = rows.filter((st) => st.status === 'in_progress').length;
+
+      let newTaskStatus = 'active';
+      let statusDetails = '';
 
       if (overdueSubtasks > 0) {
-        newTaskStatus = "overdue";
-        // Do not create a notification entry for task-level overdue aggregation
-        statusDetails = "";
+        newTaskStatus = 'overdue';
+        statusDetails = '';
       } else if (delayedSubtasks > 0) {
-        newTaskStatus = "delayed";
+        newTaskStatus = 'delayed';
         statusDetails = `Task marked as delayed due to ${delayedSubtasks} delayed subtasks`;
       } else if (completedSubtasks === totalSubtasks && totalSubtasks > 0) {
-        newTaskStatus = "completed";
+        newTaskStatus = 'completed';
         statusDetails = `Task completed - all ${totalSubtasks} subtasks finished`;
       } else if (inProgressSubtasks > 0 || completedSubtasks > 0) {
-        newTaskStatus = "in_progress";
+        newTaskStatus = 'in_progress';
         statusDetails = `Task in progress - ${completedSubtasks}/${totalSubtasks} completed, ${inProgressSubtasks} in progress, ${delayedSubtasks} delayed`;
       }
 
       // Update task status
-      await pool.query(
-        `
+      await pool.query(`
         UPDATE finops_tasks
         SET status = $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
-      `,
-        [newTaskStatus, taskId],
-      );
+      `, [newTaskStatus, taskId]);
 
-      // Log the task status change only when we have a meaningful, user-facing message
       if (statusDetails) {
-        await logActivity(
-          taskId,
-          null,
-          "task_status_updated",
-          userName,
-          statusDetails,
-        );
+        await logActivity(taskId, null, 'task_status_updated', userName, statusDetails);
       }
     }
   } catch (error) {
-    console.error("Error checking task status:", error);
+    console.error('Error checking task status:', error);
   }
 }
 
