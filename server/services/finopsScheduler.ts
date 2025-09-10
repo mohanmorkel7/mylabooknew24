@@ -231,7 +231,14 @@ class FinOpsScheduler {
           ON CONFLICT (run_date, period, task_id, subtask_id)
           DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
           `,
-          [String(period), task.id, task.task_name || '', subtask.id, subtask.name || '', subtask.start_time || null],
+          [
+            String(period),
+            task.id,
+            task.task_name || "",
+            subtask.id,
+            subtask.name || "",
+            subtask.start_time || null,
+          ],
         );
       }
 

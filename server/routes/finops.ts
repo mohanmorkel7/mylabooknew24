@@ -950,7 +950,7 @@ router.patch(
         let updateFields = [
           "status = $1",
           "updated_at = CURRENT_TIMESTAMP",
-          "scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date"
+          "scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
         ];
         let queryParams = [status, taskId, subtaskId];
         let paramIndex = 4;
@@ -1494,11 +1494,13 @@ router.get("/scheduler-status", async (req: Request, res: Response) => {
 });
 
 // Get tracker entries (datewise)
-router.get('/tracker', async (req: Request, res: Response) => {
+router.get("/tracker", async (req: Request, res: Response) => {
   try {
     const dateParam = (req.query.date as string) || null;
     const period = (req.query.period as string) || null;
-    const taskId = req.query.task_id ? parseInt(req.query.task_id as string) : null;
+    const taskId = req.query.task_id
+      ? parseInt(req.query.task_id as string)
+      : null;
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_tracker (
@@ -1521,10 +1523,19 @@ router.get('/tracker', async (req: Request, res: Response) => {
     `);
 
     const params: any[] = [];
-    let where = 'WHERE 1=1';
-    if (dateParam) { params.push(dateParam); where += ` AND run_date = $${params.length}`; }
-    if (period) { params.push(period); where += ` AND period = $${params.length}`; }
-    if (taskId) { params.push(taskId); where += ` AND task_id = $${params.length}`; }
+    let where = "WHERE 1=1";
+    if (dateParam) {
+      params.push(dateParam);
+      where += ` AND run_date = $${params.length}`;
+    }
+    if (period) {
+      params.push(period);
+      where += ` AND period = $${params.length}`;
+    }
+    if (taskId) {
+      params.push(taskId);
+      where += ` AND task_id = $${params.length}`;
+    }
 
     const query = `
       SELECT task_id, max(task_name) as task_name, period, run_date,
@@ -1548,8 +1559,10 @@ router.get('/tracker', async (req: Request, res: Response) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (e: any) {
-    console.error('Error fetching finops tracker:', e);
-    res.status(500).json({ error: 'Failed to fetch tracker', message: e.message });
+    console.error("Error fetching finops tracker:", e);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch tracker", message: e.message });
   }
 });
 

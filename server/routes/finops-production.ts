@@ -491,7 +491,10 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
           UNIQUE(run_date, period, task_id, subtask_id)
         );
       `);
-      const taskMeta = await client.query(`SELECT task_name, duration, start_time FROM finops_tasks WHERE id = $1`, [subtask.task_id]);
+      const taskMeta = await client.query(
+        `SELECT task_name, duration, start_time FROM finops_tasks WHERE id = $1`,
+        [subtask.task_id],
+      );
       const trow = taskMeta.rows[0] || {};
       await client.query(
         `
@@ -503,7 +506,17 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         ON CONFLICT (run_date, period, task_id, subtask_id)
         DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
         `,
-        [String(trow.duration || 'daily'), subtask.task_id, trow.task_name || '', subtask.id, subtask.name || '', status, status === 'in_progress' ? new Date() : null, status === 'completed' ? new Date() : null, trow.start_time || null]
+        [
+          String(trow.duration || "daily"),
+          subtask.task_id,
+          trow.task_name || "",
+          subtask.id,
+          subtask.name || "",
+          status,
+          status === "in_progress" ? new Date() : null,
+          status === "completed" ? new Date() : null,
+          trow.start_time || null,
+        ],
       );
 
       // Trigger alerts if needed
@@ -610,12 +623,14 @@ router.get("/activity-log", async (req: Request, res: Response) => {
 
 // Get clients from leads table for dropdown
 // Get tracker entries (datewise)
-router.get('/tracker', async (req: Request, res: Response) => {
+router.get("/tracker", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
     const dateParam = (req.query.date as string) || null;
     const period = (req.query.period as string) || null;
-    const taskId = req.query.task_id ? parseInt(req.query.task_id as string) : null;
+    const taskId = req.query.task_id
+      ? parseInt(req.query.task_id as string)
+      : null;
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_tracker (
@@ -638,10 +653,19 @@ router.get('/tracker', async (req: Request, res: Response) => {
     `);
 
     const params: any[] = [];
-    let where = 'WHERE 1=1';
-    if (dateParam) { params.push(dateParam); where += ` AND run_date = $${params.length}`; }
-    if (period) { params.push(period); where += ` AND period = $${params.length}`; }
-    if (taskId) { params.push(taskId); where += ` AND task_id = $${params.length}`; }
+    let where = "WHERE 1=1";
+    if (dateParam) {
+      params.push(dateParam);
+      where += ` AND run_date = $${params.length}`;
+    }
+    if (period) {
+      params.push(period);
+      where += ` AND period = $${params.length}`;
+    }
+    if (taskId) {
+      params.push(taskId);
+      where += ` AND task_id = $${params.length}`;
+    }
 
     const query = `
       SELECT task_id, max(task_name) as task_name, period, run_date,
@@ -665,8 +689,10 @@ router.get('/tracker', async (req: Request, res: Response) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (e: any) {
-    console.error('Error fetching finops tracker:', e);
-    res.status(500).json({ error: 'Failed to fetch tracker', message: e.message });
+    console.error("Error fetching finops tracker:", e);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch tracker", message: e.message });
   }
 });
 
