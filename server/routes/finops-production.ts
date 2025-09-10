@@ -389,6 +389,15 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
     try {
       await client.query("BEGIN");
 
+      // Ensure datewise tracking columns exist
+      await client.query(`
+        ALTER TABLE finops_subtasks
+          ADD COLUMN IF NOT EXISTS scheduled_date DATE,
+          ADD COLUMN IF NOT EXISTS notification_sent_15min BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_start BOOLEAN DEFAULT false,
+          ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
+      `);
+
       // Update subtask
       let updateQuery = "";
       let queryParams = [];
@@ -396,7 +405,8 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       if (status === "in_progress") {
         updateQuery = `
           UPDATE finops_subtasks 
-          SET status = $1, started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+          SET status = $1, started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE id = $2
           RETURNING *
         `;
@@ -404,7 +414,8 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       } else if (status === "completed") {
         updateQuery = `
           UPDATE finops_subtasks 
-          SET status = $1, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+          SET status = $1, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE id = $2
           RETURNING *
         `;
@@ -412,7 +423,8 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       } else {
         updateQuery = `
           UPDATE finops_subtasks 
-          SET status = $1, updated_at = CURRENT_TIMESTAMP
+          SET status = $1, updated_at = CURRENT_TIMESTAMP,
+              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE id = $2
           RETURNING *
         `;
