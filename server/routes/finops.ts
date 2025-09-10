@@ -1111,8 +1111,19 @@ router.patch(
 
         await logActivity(taskId, subtaskId, 'status_changed', userName, logDetails);
 
+        // Normalize data for notification handler: ensure fields expected by handler are present
+        const notifyData = {
+          ... (updated || trackerRow),
+          id: (updated || trackerRow)?.subtask_id || Number(subtaskId),
+          task_id: (updated || trackerRow)?.task_id || taskId,
+          name: (updated || trackerRow)?.subtask_name || subtaskName,
+          reporting_managers: (updated || trackerRow)?.reporting_managers || null,
+          escalation_managers: (updated || trackerRow)?.escalation_managers || null,
+          assigned_to: (updated || trackerRow)?.assigned_to || null,
+        };
+
         // Send notifications based on status using updated tracker row
-        await handleStatusChangeNotifications(updated || trackerRow, status, delay_reason, delay_notes);
+        await handleStatusChangeNotifications(notifyData, status, delay_reason, delay_notes);
 
 
         // Enhanced activity logging
