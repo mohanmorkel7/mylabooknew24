@@ -1880,10 +1880,28 @@ export default function ClientBasedFinOpsTaskManager() {
           </div>
           <div className="flex gap-2">
             {user?.role === "admin" && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create Task
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      const resp = await apiClient.seedFinOpsTracker(dateFilter);
+                      toast({
+                        title: "Tracker seeded",
+                        description: `Date ${dateFilter}: inserted ${resp.inserted ?? 0} row(s)`,
+                      });
+                    } catch (e:any) {
+                      toast({ title: "Seeding failed", description: e.message, variant: "destructive" });
+                    }
+                  }}
+                >
+                  Seed Daily Tracker
+                </Button>
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Task
+                </Button>
+              </>
             )}
           </div>
         </div>
