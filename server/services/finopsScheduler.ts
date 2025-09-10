@@ -336,6 +336,70 @@ class FinOpsScheduler {
   }
 
   /**
+   * Rollover completed daily tasks to next day
+   */
+  private async rolloverCompletedDailyTasks(): Promise<void> {
+    try {
+      // Identify daily tasks where all today's subtasks are completed
+      const rolloverRes = await pool.query(
+        `
+        SELECT task_id
+        FROM finops_tracker
+        WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+          AND period = 'daily'
+        GROUP BY task_id
+        HAVING bool_and(status = 'completed')
+      `,
+      );
+
+      for (const row of rolloverRes.rows) {
+        const taskId = row.task_id;
+        // Insert next day's tracker entries for this task's subtasks, respecting task effective_from
+        await pool.query(
+          `
+          WITH next_date AS (SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '1 day' AS d)
+          INSERT INTO finops_tracker (
+            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
+          )
+          SELECT
+            nd.d::date,
+            'daily',
+            t.id,
+            t.task_name,
+            st.id,
+            st.name,
+            'pending',
+            NULL,
+            NULL,
+            st.start_time,
+            nd.d::date
+          FROM next_date nd
+          JOIN finops_tasks t ON t.id = $1 AND t.effective_from <= nd.d::date AND t.is_active = true AND t.deleted_at IS NULL
+          JOIN finops_subtasks st ON st.task_id = t.id
+          ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+        `,
+          [taskId],
+        );
+
+        // Update task next_run_at to reflect rollover
+        await pool.query(
+          `
+          UPDATE finops_tasks
+          SET next_run_at = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '1 day'
+          WHERE id = $1
+        `,
+          [taskId],
+        );
+
+        // Log activity
+        await this.logActivity(taskId, null, 'rollover', 'System', 'Rolled over completed daily subtasks to next day');
+      }
+    } catch (error) {
+      console.error('Error rolling over completed daily tasks:', error);
+    }
+  }
+
+  /**
    * Clean up old data
    */
   private async cleanupOldData(): Promise<void> {
