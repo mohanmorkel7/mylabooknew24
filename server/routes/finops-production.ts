@@ -548,9 +548,9 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
 
     // Trigger alerts if needed
       if (status === "overdue") {
-        // Existing DB alert
+        // Existing DB alert using tracker data
         await finopsAlertService.createSLABreachAlert(
-          subtask.task_id,
+          updated.task_id,
           subtaskId,
           delay_reason,
         );
@@ -558,22 +558,22 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         // External Pulse alert with managers and assignees
         const meta = await client.query(
           `SELECT task_name, client_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
-          [subtask.task_id],
+          [updated.task_id],
         );
         const row = meta.rows[0] || {};
         const taskName = row.task_name || "Unknown Task";
         const clientName = row.client_name || "Unknown Client";
-        const title = `Please take immediate action on the overdue subtask ${subtask.name} under the task ${taskName} for the client ${clientName}.`;
+        const title = `Please take immediate action on the overdue subtask ${updated.subtask_name || 'Unknown Subtask'} under the task ${taskName} for the client ${clientName}.`;
         const managerNames = Array.from(
           new Set([
             ...parseManagers(row.reporting_managers),
             ...parseManagers(row.escalation_managers),
-            ...parseManagers(row.assigned_to),
+            ...(row.assigned_to ? [String(row.assigned_to)] : []),
           ]),
         );
         const userIds = await getUserIdsFromNames(managerNames);
         await sendReplicaDownAlertOnce(
-          subtask.task_id,
+          updated.task_id,
           subtaskId,
           title,
           userIds,
@@ -581,7 +581,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       }
 
       await client.query("COMMIT");
-      res.json(subtask);
+      res.json(updated);
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
