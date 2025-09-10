@@ -928,25 +928,41 @@ class FinOpsAlertService {
     status: string,
   ): Promise<void> {
     try {
-      // Read current subtask status and name before updating
-      const currentResult = await pool.query(
+      // Read current subtask status and name from finops_tracker for today's date (fallback to finops_subtasks)
+      const trackerCurrent = await pool.query(
         `
-        SELECT status, name FROM finops_subtasks WHERE task_id = $1 AND id = $2
+        SELECT status, subtask_name as name FROM finops_tracker WHERE task_id = $1 AND subtask_id = $2 AND run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
       `,
         [taskId, subtaskId],
       );
-      const currentRow = currentResult.rows[0] || { status: null, name: "" };
-      const previousStatus = currentRow?.status || "unknown";
+
+      let currentRow = trackerCurrent.rows[0];
+
+      if (!currentRow) {
+        const fallback = await pool.query(
+          `SELECT status, name FROM finops_subtasks WHERE task_id = $1 AND id = $2 LIMIT 1`,
+          [taskId, subtaskId],
+        );
+        currentRow = fallback.rows[0] || { status: null, name: '' };
+      }
+
+      const previousStatus = currentRow?.status || 'unknown';
       const subtaskName = currentRow?.name || String(subtaskId);
 
-      // Update to the new status
+      // Upsert into finops_tracker for today's date
       await pool.query(
         `
-        UPDATE finops_subtasks
-        SET status = $1, updated_at = CURRENT_TIMESTAMP
-        WHERE task_id = $2 AND id = $3
+        INSERT INTO finops_tracker (run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date)
+        VALUES ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, 'daily', $2, (SELECT task_name FROM finops_tasks WHERE id = $2 LIMIT 1), $3, $4, $1,
+          CASE WHEN $1 = 'in_progress' THEN CURRENT_TIMESTAMP ELSE NULL END,
+          CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END,
+          NULL,
+          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+        )
+        ON CONFLICT (run_date, period, task_id, subtask_id)
+        DO UPDATE SET status = EXCLUDED.status, started_at = COALESCE(finops_tracker.started_at, EXCLUDED.started_at), completed_at = COALESCE(finops_tracker.completed_at, EXCLUDED.completed_at), updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
       `,
-        [status, taskId, subtaskId],
+        [status, taskId, subtaskId, subtaskName],
       );
 
       // Fetch task and client details for richer message
