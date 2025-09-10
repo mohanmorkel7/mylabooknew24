@@ -392,10 +392,16 @@ class FinOpsScheduler {
         );
 
         // Log activity
-        await this.logActivity(taskId, null, 'rollover', 'System', 'Rolled over completed daily subtasks to next day');
+        await this.logActivity(
+          taskId,
+          null,
+          "rollover",
+          "System",
+          "Rolled over completed daily subtasks to next day",
+        );
       }
     } catch (error) {
-      console.error('Error rolling over completed daily tasks:', error);
+      console.error("Error rolling over completed daily tasks:", error);
     }
   }
 
