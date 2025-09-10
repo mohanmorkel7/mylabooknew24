@@ -943,10 +943,10 @@ class FinOpsAlertService {
           `SELECT status, name FROM finops_subtasks WHERE task_id = $1 AND id = $2 LIMIT 1`,
           [taskId, subtaskId],
         );
-        currentRow = fallback.rows[0] || { status: null, name: '' };
+        currentRow = fallback.rows[0] || { status: null, name: "" };
       }
 
-      const previousStatus = currentRow?.status || 'unknown';
+      const previousStatus = currentRow?.status || "unknown";
       const subtaskName = currentRow?.name || String(subtaskId);
 
       // Upsert into finops_tracker for today's date

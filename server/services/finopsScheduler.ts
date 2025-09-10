@@ -314,42 +314,57 @@ class FinOpsScheduler {
         let total = parseInt(trackerCounts.rows[0].total_subtasks, 10);
         let completed = parseInt(trackerCounts.rows[0].completed_subtasks, 10);
         let overdue = parseInt(trackerCounts.rows[0].overdue_subtasks, 10);
-        let inProgress = parseInt(trackerCounts.rows[0].in_progress_subtasks, 10);
+        let inProgress = parseInt(
+          trackerCounts.rows[0].in_progress_subtasks,
+          10,
+        );
 
         // Fallback to finops_subtasks when no tracker rows for today
         if (total === 0) {
-          const subtasks = await pool.query(`SELECT status FROM finops_subtasks WHERE task_id = $1`, [t.id]);
+          const subtasks = await pool.query(
+            `SELECT status FROM finops_subtasks WHERE task_id = $1`,
+            [t.id],
+          );
           total = subtasks.rows.length;
-          completed = subtasks.rows.filter((st) => st.status === 'completed').length;
-          overdue = subtasks.rows.filter((st) => st.status === 'overdue').length;
-          inProgress = subtasks.rows.filter((st) => st.status === 'in_progress').length;
+          completed = subtasks.rows.filter(
+            (st) => st.status === "completed",
+          ).length;
+          overdue = subtasks.rows.filter(
+            (st) => st.status === "overdue",
+          ).length;
+          inProgress = subtasks.rows.filter(
+            (st) => st.status === "in_progress",
+          ).length;
         }
 
-        let newStatus = 'active';
+        let newStatus = "active";
         if (overdue > 0) {
-          newStatus = 'overdue';
+          newStatus = "overdue";
         } else if (completed === total && total > 0) {
-          newStatus = 'completed';
+          newStatus = "completed";
         } else if (inProgress > 0) {
-          newStatus = 'in_progress';
+          newStatus = "in_progress";
         }
 
         // Update task status if it has changed
-        await pool.query(`
+        await pool.query(
+          `
           UPDATE finops_tasks
           SET status = $1, updated_at = CURRENT_TIMESTAMP
           WHERE id = $2 AND status != $1
-        `, [newStatus, t.id]);
+        `,
+          [newStatus, t.id],
+        );
       }
 
       // After syncing statuses, rollover fully completed daily tasks to the next day
       try {
         await this.rolloverCompletedDailyTasks();
       } catch (err) {
-        console.error('Error during rollover of completed daily tasks:', err);
+        console.error("Error during rollover of completed daily tasks:", err);
       }
     } catch (error) {
-      console.error('Error syncing task statuses:', error);
+      console.error("Error syncing task statuses:", error);
     }
   }
 

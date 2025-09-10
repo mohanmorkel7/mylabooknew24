@@ -1058,9 +1058,9 @@ router.patch(
               st.task_name || "",
               st.id,
               st.name || "",
-              status || st.status || 'pending',
-              status === 'in_progress' ? new Date() : null,
-              status === 'completed' ? new Date() : null,
+              status || st.status || "pending",
+              status === "in_progress" ? new Date() : null,
+              status === "completed" ? new Date() : null,
               st.start_time || null,
               st.description || null,
               st.sla_hours || null,
@@ -1076,26 +1076,32 @@ router.patch(
         }
 
         // Now update the finops_tracker row with status change
-        let updateFields: string[] = ["status = $1", "updated_at = CURRENT_TIMESTAMP", "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date"];
+        let updateFields: string[] = [
+          "status = $1",
+          "updated_at = CURRENT_TIMESTAMP",
+          "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+        ];
         const params: any[] = [status, taskId, Number(subtaskId)];
         let pIdx = 4;
 
-        if (status === 'completed') {
-          updateFields.push('completed_at = CURRENT_TIMESTAMP');
+        if (status === "completed") {
+          updateFields.push("completed_at = CURRENT_TIMESTAMP");
         }
-        if (status === 'in_progress') {
+        if (status === "in_progress") {
           // Only set started_at if not already set
-          updateFields.push('started_at = COALESCE(started_at, CURRENT_TIMESTAMP)');
+          updateFields.push(
+            "started_at = COALESCE(started_at, CURRENT_TIMESTAMP)",
+          );
         }
-        if (status === 'delayed' && delay_reason) {
+        if (status === "delayed" && delay_reason) {
           updateFields.push(`delay_reason = $${pIdx++}`);
           updateFields.push(`delay_notes = $${pIdx++}`);
-          params.push(delay_reason, delay_notes || '');
+          params.push(delay_reason, delay_notes || "");
         }
 
         const updateQuery = `
           UPDATE finops_tracker
-          SET ${updateFields.join(', ')}
+          SET ${updateFields.join(", ")}
           WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND task_id = $2 AND subtask_id = $3
         `;
 
@@ -1111,27 +1117,43 @@ router.patch(
 
         // Enhanced activity logging
         const oldStatus = trackerRow?.status || null;
-        const subtaskName = trackerRow?.subtask_name || updated?.subtask_name || 'Unknown Subtask';
+        const subtaskName =
+          trackerRow?.subtask_name ||
+          updated?.subtask_name ||
+          "Unknown Subtask";
 
         let logDetails = `Subtask "${subtaskName}" status changed from "${oldStatus}" to "${status}"`;
-        if (status === 'delayed' && delay_reason) logDetails += ` (Reason: ${delay_reason})`;
+        if (status === "delayed" && delay_reason)
+          logDetails += ` (Reason: ${delay_reason})`;
 
-        await logActivity(taskId, subtaskId, 'status_changed', userName, logDetails);
+        await logActivity(
+          taskId,
+          subtaskId,
+          "status_changed",
+          userName,
+          logDetails,
+        );
 
         // Normalize data for notification handler: ensure fields expected by handler are present
         const notifyData = {
-          ... (updated || trackerRow),
+          ...(updated || trackerRow),
           id: (updated || trackerRow)?.subtask_id || Number(subtaskId),
           task_id: (updated || trackerRow)?.task_id || taskId,
           name: (updated || trackerRow)?.subtask_name || subtaskName,
-          reporting_managers: (updated || trackerRow)?.reporting_managers || null,
-          escalation_managers: (updated || trackerRow)?.escalation_managers || null,
+          reporting_managers:
+            (updated || trackerRow)?.reporting_managers || null,
+          escalation_managers:
+            (updated || trackerRow)?.escalation_managers || null,
           assigned_to: (updated || trackerRow)?.assigned_to || null,
         };
 
         // Send notifications based on status using updated tracker row
-        await handleStatusChangeNotifications(notifyData, status, delay_reason, delay_notes);
-
+        await handleStatusChangeNotifications(
+          notifyData,
+          status,
+          delay_reason,
+          delay_notes,
+        );
 
         // Enhanced activity logging
         let logDetails = `Subtask "${subtaskName}" status changed from "${oldStatus}" to "${status}"`;
@@ -1492,46 +1514,66 @@ async function checkAndUpdateTaskStatus(taskId: number, userName: string) {
       let rows = trackerRes.rows;
 
       if (rows.length === 0) {
-        const subtasks = await pool.query(`SELECT status FROM finops_subtasks WHERE task_id = $1`, [taskId]);
+        const subtasks = await pool.query(
+          `SELECT status FROM finops_subtasks WHERE task_id = $1`,
+          [taskId],
+        );
         rows = subtasks.rows;
       }
 
       const totalSubtasks = rows.length;
-      const completedSubtasks = rows.filter((st) => st.status === 'completed').length;
-      const overdueSubtasks = rows.filter((st) => st.status === 'overdue').length;
-      const delayedSubtasks = rows.filter((st) => st.status === 'delayed').length;
-      const inProgressSubtasks = rows.filter((st) => st.status === 'in_progress').length;
+      const completedSubtasks = rows.filter(
+        (st) => st.status === "completed",
+      ).length;
+      const overdueSubtasks = rows.filter(
+        (st) => st.status === "overdue",
+      ).length;
+      const delayedSubtasks = rows.filter(
+        (st) => st.status === "delayed",
+      ).length;
+      const inProgressSubtasks = rows.filter(
+        (st) => st.status === "in_progress",
+      ).length;
 
-      let newTaskStatus = 'active';
-      let statusDetails = '';
+      let newTaskStatus = "active";
+      let statusDetails = "";
 
       if (overdueSubtasks > 0) {
-        newTaskStatus = 'overdue';
-        statusDetails = '';
+        newTaskStatus = "overdue";
+        statusDetails = "";
       } else if (delayedSubtasks > 0) {
-        newTaskStatus = 'delayed';
+        newTaskStatus = "delayed";
         statusDetails = `Task marked as delayed due to ${delayedSubtasks} delayed subtasks`;
       } else if (completedSubtasks === totalSubtasks && totalSubtasks > 0) {
-        newTaskStatus = 'completed';
+        newTaskStatus = "completed";
         statusDetails = `Task completed - all ${totalSubtasks} subtasks finished`;
       } else if (inProgressSubtasks > 0 || completedSubtasks > 0) {
-        newTaskStatus = 'in_progress';
+        newTaskStatus = "in_progress";
         statusDetails = `Task in progress - ${completedSubtasks}/${totalSubtasks} completed, ${inProgressSubtasks} in progress, ${delayedSubtasks} delayed`;
       }
 
       // Update task status
-      await pool.query(`
+      await pool.query(
+        `
         UPDATE finops_tasks
         SET status = $1, updated_at = CURRENT_TIMESTAMP
         WHERE id = $2
-      `, [newTaskStatus, taskId]);
+      `,
+        [newTaskStatus, taskId],
+      );
 
       if (statusDetails) {
-        await logActivity(taskId, null, 'task_status_updated', userName, statusDetails);
+        await logActivity(
+          taskId,
+          null,
+          "task_status_updated",
+          userName,
+          statusDetails,
+        );
       }
     }
   } catch (error) {
-    console.error('Error checking task status:', error);
+    console.error("Error checking task status:", error);
   }
 }
 
