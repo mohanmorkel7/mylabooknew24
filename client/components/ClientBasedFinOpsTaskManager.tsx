@@ -101,7 +101,10 @@ const extractNameFromValue = (raw: string, depth: number = 0): string => {
   if (value.startsWith("{") && value.endsWith("}")) {
     value = value.slice(1, -1).trim();
   }
-  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
     value = value.slice(1, -1);
   }
 
@@ -111,10 +114,16 @@ const extractNameFromValue = (raw: string, depth: number = 0): string => {
   }
 
   // If still looks like JSON string, try parse once
-  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("{") && value.endsWith("}"))) {
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("{") && value.endsWith("}"))
+  ) {
     try {
       const parsed = JSON.parse(value);
-      const res = typeof parsed === "string" ? extractNameFromValue(parsed, depth + 1) : raw;
+      const res =
+        typeof parsed === "string"
+          ? extractNameFromValue(parsed, depth + 1)
+          : raw;
       __nameParseCache.set(raw, res);
       return res;
     } catch {}
@@ -704,7 +713,8 @@ export default function ClientBasedFinOpsTaskManager() {
           );
         return Array.isArray(result) ? result : [];
       } catch (error) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("❌ FinOps tasks query failed:", error);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.error("❌ FinOps tasks query failed:", error);
         // Return empty array to prevent UI crashes
         return [];
       }
@@ -714,7 +724,8 @@ export default function ClientBasedFinOpsTaskManager() {
     retryDelay: 3000, // Wait 3 seconds before retry
     staleTime: 30000, // Consider data stale after 30 seconds
     onError: (error) => {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("🚨 FinOps tasks query error:", error);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.error("🚨 FinOps tasks query error:", error);
     },
     onSuccess: (data) => {
       if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
@@ -813,7 +824,8 @@ export default function ClientBasedFinOpsTaskManager() {
         const finopsClients = await apiClient.getFinOpsClients();
         return finopsClients;
       } catch (error) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("❌ Error fetching FinOps clients:", error);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.error("❌ Error fetching FinOps clients:", error);
         // Return empty array if API fails
         return [];
       }
@@ -845,20 +857,23 @@ export default function ClientBasedFinOpsTaskManager() {
         uniqueClients.length,
       );
     if (rawClients.length !== uniqueClients.length) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-        "Duplicate clients detected and removed:",
-        rawClients.length - uniqueClients.length,
-        "\nDuplicates:",
-        rawClients.filter((client: any, index: number) => {
-          const clientName =
-            client.company_name || client.client_name || `Client ${client.id}`;
-          return !uniqueClients.some((uc: any) => {
-            const ucName =
-              uc.company_name || uc.client_name || `Client ${uc.id}`;
-            return ucName === clientName && uc.id === client.id;
-          });
-        }),
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "Duplicate clients detected and removed:",
+          rawClients.length - uniqueClients.length,
+          "\nDuplicates:",
+          rawClients.filter((client: any, index: number) => {
+            const clientName =
+              client.company_name ||
+              client.client_name ||
+              `Client ${client.id}`;
+            return !uniqueClients.some((uc: any) => {
+              const ucName =
+                uc.company_name || uc.client_name || `Client ${uc.id}`;
+              return ucName === clientName && uc.id === client.id;
+            });
+          }),
+        );
     }
     return uniqueClients;
   }, [rawClients]);
@@ -870,7 +885,8 @@ export default function ClientBasedFinOpsTaskManager() {
       try {
         return await apiClient.getUsers();
       } catch (error) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("❌ Error fetching users:", error);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.error("❌ Error fetching users:", error);
         return [];
       }
     },
@@ -1100,7 +1116,8 @@ export default function ClientBasedFinOpsTaskManager() {
       setOverdueReasonData(null);
       setOverdueReason("");
     } catch (error) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.error("Failed to submit overdue reason:", error);
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.error("Failed to submit overdue reason:", error);
       alert("Failed to submit overdue reason. Please try again.");
     }
   };
@@ -1668,10 +1685,11 @@ export default function ClientBasedFinOpsTaskManager() {
                 }),
               });
             } catch (err) {
-              if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-                "Failed to trigger direct-call for overdue subtask:",
-                err,
-              );
+              if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+                console.warn(
+                  "Failed to trigger direct-call for overdue subtask:",
+                  err,
+                );
             }
           });
         // schedule next call 15 minutes from now and persist

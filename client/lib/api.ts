@@ -24,12 +24,14 @@ export class ApiClient {
     if (this.failureCount >= this.OFFLINE_THRESHOLD && !this.isOfflineMode) {
       this.isOfflineMode = true;
       this.offlineDetectedAt = Date.now();
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-        "🔴 Offline mode activated - backend server appears to be down",
-      );
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-        "���� The app will show cached/mock data until the server is restored",
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "🔴 Offline mode activated - backend server appears to be down",
+        );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "���� The app will show cached/mock data until the server is restored",
+        );
     }
   }
 
@@ -64,9 +66,10 @@ export class ApiClient {
     this.preserveOriginalFetch();
     // Offline mode check
     if (this.isOfflineMode && !this.shouldRetryConnection()) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-        `🔴 Request to ${endpoint} blocked - app is in offline mode`,
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          `🔴 Request to ${endpoint} blocked - app is in offline mode`,
+        );
       throw new Error("Offline mode: Backend server is unavailable");
     }
 
@@ -129,9 +132,10 @@ export class ApiClient {
           (window as any).__originalFetch || window.fetch.bind(window);
 
         if (isFullStoryActive && !(window as any).__originalFetch) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-            "🚨 FullStory detected and no preserved fetch - using XMLHttpRequest fallback",
-          );
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(
+              "🚨 FullStory detected and no preserved fetch - using XMLHttpRequest fallback",
+            );
           response = await this.xmlHttpRequestFallback(url, config);
         } else {
           if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
@@ -155,12 +159,13 @@ export class ApiClient {
           response = await Promise.race([fetchPromise, timeoutPromise]);
         }
       } catch (fetchError) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-          "Primary fetch failed for URL:",
-          url,
-          "Error:",
-          fetchError,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn(
+            "Primary fetch failed for URL:",
+            url,
+            "Error:",
+            fetchError,
+          );
 
         // Check if it's FullStory interference
         const isFullStoryError =
@@ -170,13 +175,15 @@ export class ApiClient {
             fetchError.message.includes("Failed to fetch"));
 
         if (isFullStoryError) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-            "🚨 FullStory interference detected - using XMLHttpRequest fallback",
-          );
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(
+              "🚨 FullStory interference detected - using XMLHttpRequest fallback",
+            );
           try {
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("XMLHttpRequest fallback also failed:", xhrError);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.warn("XMLHttpRequest fallback also failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
@@ -186,7 +193,8 @@ export class ApiClient {
           fetchError instanceof TypeError &&
           fetchError.message.includes("Failed to fetch")
         ) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("Network connectivity issue detected");
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn("Network connectivity issue detected");
           this.failureCount++;
           this.lastFailureTime = Date.now();
           this.checkOfflineMode();
@@ -196,11 +204,13 @@ export class ApiClient {
               console.log("Trying XMLHttpRequest fallback for network error");
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("XMLHttpRequest fallback failed:", xhrError);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.warn("XMLHttpRequest fallback failed:", xhrError);
             return this.getEmptyFallbackResponse(endpoint);
           }
         } else if (fetchError.message === "Request timeout") {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("Request timed out - server may be unresponsive");
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn("Request timed out - server may be unresponsive");
           // For timeouts, increment failure count for circuit breaker
           this.failureCount++;
           this.lastFailureTime = Date.now();
@@ -215,7 +225,8 @@ export class ApiClient {
               );
             response = await this.xmlHttpRequestFallback(url, config);
           } catch (xhrError) {
-            if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("XMLHttpRequest fallback failed:", xhrError);
+            if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+              console.warn("XMLHttpRequest fallback failed:", xhrError);
             this.failureCount++;
             this.lastFailureTime = Date.now();
             this.checkOfflineMode();
@@ -226,7 +237,8 @@ export class ApiClient {
 
       // Handle null response from network errors
       if (response === null) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("Network error - returning empty response");
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn("Network error - returning empty response");
         return this.getEmptyFallbackResponse(endpoint);
       }
 
@@ -452,7 +464,8 @@ export class ApiClient {
                 xhr.setRequestHeader(key, value as string);
               }
             } catch (headerError) {
-              if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(`⚠️ Could not set header ${key}:`, headerError);
+              if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+                console.warn(`⚠️ Could not set header ${key}:`, headerError);
             }
           });
         }
@@ -953,10 +966,11 @@ export class ApiClient {
         return result;
       } catch (error) {
         lastError = error as Error;
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-          `Attempt ${attempt}/${maxRetries} failed for ${endpoint}:`,
-          error,
-        );
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn(
+            `Attempt ${attempt}/${maxRetries} failed for ${endpoint}:`,
+            error,
+          );
 
         // If it's the last attempt, don't retry
         if (attempt === maxRetries) {
@@ -1086,10 +1100,11 @@ export class ApiClient {
         );
       return result || [];
     } catch (error) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(
-        "❌ Production FinOps tasks failed, falling back to non-production endpoint:",
-        error,
-      );
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn(
+          "❌ Production FinOps tasks failed, falling back to non-production endpoint:",
+          error,
+        );
       try {
         const fallbackPath = date
           ? `/finops/tasks?date=${encodeURIComponent(date)}`
@@ -1422,7 +1437,8 @@ export class ApiClient {
       if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
         console.log(`FormData contains ${formDataEntryCount} entries`);
     } catch (e) {
-      if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("Cannot iterate FormData entries in this browser");
+      if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+        console.warn("Cannot iterate FormData entries in this browser");
     }
 
     const url = `${API_BASE_URL}/files/upload`;
@@ -1440,13 +1456,16 @@ export class ApiClient {
 
         // Check for potential issues
         if (file.size === 0) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(`⚠️  File ${file.name} is empty (0 bytes)`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(`⚠️  File ${file.name} is empty (0 bytes)`);
         }
         if (file.size > 50 * 1024 * 1024) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(`⚠️  File ${file.name} exceeds 50MB limit`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(`⚠️  File ${file.name} exceeds 50MB limit`);
         }
         if (!file.type) {
-          if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn(`⚠️  File ${file.name} has no MIME type`);
+          if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+            console.warn(`⚠️  File ${file.name} has no MIME type`);
         }
       });
 
@@ -1647,7 +1666,8 @@ export class ApiClient {
           );
         return result;
       } catch (error) {
-        if (typeof window !== 'undefined' && (window as any).__APP_DEBUG) console.warn("Follow-ups request failed:", error);
+        if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+          console.warn("Follow-ups request failed:", error);
         // Return empty array immediately on timeout/error
         return [];
       }
