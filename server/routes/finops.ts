@@ -1156,16 +1156,16 @@ router.patch(
         );
 
         // Enhanced activity logging
-        let logDetails = `Subtask "${subtaskName}" status changed from "${oldStatus}" to "${status}"`;
+        let logDetails1 = `Subtask "${subtaskName}" status changed from "${oldStatus}" to "${status}"`;
         if (status === "delayed" && delay_reason) {
-          logDetails += ` (Reason: ${delay_reason})`;
+          logDetails1 += ` (Reason: ${delay_reason})`;
         }
         await logActivity(
           taskId,
           subtaskId,
           "status_changed",
           userName,
-          logDetails,
+          logDetails1,
         );
 
         // Send notifications based on status
