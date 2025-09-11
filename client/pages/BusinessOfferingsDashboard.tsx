@@ -301,10 +301,16 @@ export default function BusinessOfferingsDashboard() {
                   <div className="font-medium truncate max-w-[220px]">
                     {row.client.client_name}
                   </div>
-                  <div className="text-xs text-gray-500">
-                    ₹ {row.mrrLacs.toFixed(2)} Lacs •{" "}
-                    {row.currArrUsdMn.toFixed(3)}
-                    Mn USD
+                  <div className="mt-1 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-600">
+                    <div>
+                      <span className="font-medium">Current MRR:</span> ₹ {row.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                    <div>
+                      <span className="font-medium">Current ARR:</span> {row.currArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                    <div>
+                      <span className="font-medium">Potential ARR:</span> {row.projArrUsdMn.toFixed(3)} Mn USD
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -389,7 +395,7 @@ export default function BusinessOfferingsDashboard() {
           <CardDescription>Totals with details on tap</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-md border">
+          <div className="relative overflow-hidden rounded-md border">
             <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
               <div className="px-3 py-2">Label</div>
               <div className="px-3 py-2 text-center">Total</div>
@@ -437,11 +443,8 @@ export default function BusinessOfferingsDashboard() {
                 </div>
               </div>
             </div>
-          </div>
-
-          <div className="flex justify-center mt-3">
             <button
-              className="inline-flex items-center justify-center w-8 h-8 rounded-full border hover:bg-accent"
+              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-full border bg-white hover:bg-accent shadow"
               aria-label="Expand details"
               onClick={() => setSheetOpen(true)}
             >
