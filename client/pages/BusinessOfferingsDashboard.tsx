@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LabelList } from "recharts";
 import { toast } from "@/components/ui/use-toast";
 import {
   Accordion,
@@ -561,36 +562,91 @@ export default function BusinessOfferingsDashboard() {
             if (groups.length === 0)
               return <div className="text-gray-600">No pipeline data</div>;
             return (
-              <div className="space-y-4">
-                {groups.slice(0, 5).map((g) => (
-                  <div key={g.label} className="p-3 border rounded-md bg-white">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                {groups.map((g) => (
+                  <div key={g.label} className="p-3 border rounded-lg bg-white">
                     <div className="flex items-center justify-between">
-                      <div className="font-medium truncate pr-3">{g.label}</div>
+                      <div className="text-xs text-gray-500 truncate pr-2">Stage</div>
                       <Badge variant="secondary">{g.items.length}</Badge>
                     </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {g.items.slice(0, 6).map((it, i) => (
+                    <div className="font-medium mt-1 truncate" title={g.label}>{g.label}</div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {g.items.slice(0, 3).map((it, i) => (
                         <Button
                           key={i}
                           variant="outline"
                           size="sm"
-                          className="h-7"
-                          onClick={() =>
-                            navigate(`/business-offerings/${it.offeringId}`)
-                          }
+                          className="h-6 text-[10px] px-2"
+                          onClick={() => navigate(`/business-offerings/${it.offeringId}`)}
                           title={it.client?.client_name || "View"}
                         >
                           {it.client?.client_name || `#${it.offeringId}`}
                         </Button>
                       ))}
-                      {g.items.length > 6 && (
-                        <div className="text-xs text-gray-500 self-center">
-                          +{g.items.length - 6} more
-                        </div>
+                      {g.items.length > 3 && (
+                        <div className="text-[10px] text-gray-500 self-center">+{g.items.length - 3} more</div>
                       )}
                     </div>
                   </div>
                 ))}
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Pipeline Status Overview (Bar)</CardTitle>
+          <CardDescription>Step-wise counts with client context</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            type StageRow = { name: string; count: number; clients: string[] };
+            const groupsMap: Record<string, StageRow> = {};
+            (data as any[]).forEach((o: any, idx: number) => {
+              const q = stepQueries[idx];
+              const steps = (q?.data as any[]) || [];
+              const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+              const current = sorted.find((s) => s.status !== "completed");
+              const label = current ? current.name || "In Progress" : "Completed";
+              const client = getClientForOffering(o);
+              const clientName = client?.client_name || `#${o.id}`;
+              if (!groupsMap[label]) groupsMap[label] = { name: label, count: 0, clients: [] };
+              groupsMap[label].count += 1;
+              if (groupsMap[label].clients.length < 50) groupsMap[label].clients.push(clientName);
+            });
+            const rows: StageRow[] = Object.values(groupsMap).sort((a, b) => b.count - a.count);
+            if (rows.length === 0) return <div className="text-gray-600">No pipeline data</div>;
+            return (
+              <div className="h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={rows} margin={{ top: 10, right: 20, left: 0, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" interval={0} angle={-30} textAnchor="end" height={60} tick={{ fontSize: 12 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
+                    <Tooltip
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const clients = (payload[0].payload as any).clients as string[];
+                        return (
+                          <div className="rounded-md border bg-white p-2 text-xs shadow">
+                            <div className="font-medium mb-1">{label}</div>
+                            <div className="max-w-[260px]">
+                              {clients.slice(0, 8).join(", ")}
+                              {clients.length > 8 && (
+                                <span className="text-gray-500"> {`+${clients.length - 8} more`}</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="count" fill="#60a5fa">
+                      <LabelList dataKey="count" position="top" className="text-xs" />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             );
           })()}
