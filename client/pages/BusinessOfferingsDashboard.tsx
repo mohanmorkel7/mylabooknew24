@@ -18,6 +18,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  ChevronRight,
 } from "lucide-react";
 import { useQuery, useQueryClient, useQueries } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
@@ -39,6 +40,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
 
 export default function BusinessOfferingsDashboard() {
   const navigate = useNavigate();
@@ -92,9 +100,14 @@ export default function BusinessOfferingsDashboard() {
 
   const stats = { total: (data as any[]).length };
 
-  const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
-  const toggleRow = (key: string) =>
-    setOpenRows((p) => ({ ...p, [key]: !p[key] }));
+  const [detailKey, setDetailKey] = useState<
+    "clients" | "mrr" | "curr_arr" | "pot_arr" | null
+  >(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const openDetails = (key: "clients" | "mrr" | "curr_arr" | "pot_arr") => {
+    setDetailKey(key);
+    setSheetOpen(true);
+  };
 
   const salesSummary = useMemo(() => {
     const domClientIds = new Set<number>();
@@ -387,129 +400,127 @@ export default function BusinessOfferingsDashboard() {
               <div className="px-3 py-2 text-center">Total</div>
             </div>
             <div className="divide-y text-sm">
-              {/* Clients Row */}
-              <button
-                className="w-full text-left"
-                onClick={() => toggleRow("clients")}
-              >
-                <div className="grid grid-cols-2 hover:bg-gray-50">
-                  <div className="px-3 py-2">No. of Clients</div>
-                  <div className="px-3 py-2 text-center font-semibold">
-                    {salesSummary.totals.domestic.clients +
-                      salesSummary.totals.international.clients}
-                  </div>
+              <div className="flex items-center hover:bg-gray-50">
+                <div className="px-3 py-2 flex-1">No. of Clients</div>
+                <div className="px-3 py-2 w-28 text-center font-semibold">
+                  {salesSummary.totals.domestic.clients +
+                    salesSummary.totals.international.clients}
                 </div>
-              </button>
-              {openRows["clients"] && (
-                <div className="bg-gray-50 border-t text-xs">
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">Domestic</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.clients}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">International</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.clients}
-                    </div>
-                  </div>
-                </div>
-              )}
+                <button
+                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
+                  aria-label="Expand clients"
+                  onClick={() => openDetails("clients")}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
 
-              {/* Current MRR Row */}
-              <button
-                className="w-full text-left"
-                onClick={() => toggleRow("mrr")}
-              >
-                <div className="grid grid-cols-2 hover:bg-gray-50">
-                  <div className="px-3 py-2">Current MRR</div>
-                  <div className="px-3 py-2 text-center">
-                    ₹ {(salesSummary.totals.domestic.mrrLacs +
-                      salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs
-                  </div>
+              <div className="flex items-center hover:bg-gray-50">
+                <div className="px-3 py-2 flex-1">Current MRR</div>
+                <div className="px-3 py-2 w-28 text-center">
+                  ₹ {(salesSummary.totals.domestic.mrrLacs +
+                    salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs
                 </div>
-              </button>
-              {openRows["mrr"] && (
-                <div className="bg-gray-50 border-t text-xs">
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">Domestic</div>
-                    <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">International</div>
-                    <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
-                    </div>
-                  </div>
-                </div>
-              )}
+                <button
+                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
+                  aria-label="Expand current MRR"
+                  onClick={() => openDetails("mrr")}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
 
-              {/* Current ARR Row */}
-              <button
-                className="w-full text-left"
-                onClick={() => toggleRow("curr_arr")}
-              >
-                <div className="grid grid-cols-2 hover:bg-gray-50">
-                  <div className="px-3 py-2">Current ARR</div>
-                  <div className="px-3 py-2 text-center">
-                    {(salesSummary.totals.domestic.currArrUsdMn +
-                      salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn USD
-                  </div>
+              <div className="flex items-center hover:bg-gray-50">
+                <div className="px-3 py-2 flex-1">Current ARR</div>
+                <div className="px-3 py-2 w-28 text-center">
+                  {(salesSummary.totals.domestic.currArrUsdMn +
+                    salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn USD
                 </div>
-              </button>
-              {openRows["curr_arr"] && (
-                <div className="bg-gray-50 border-t text-xs">
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">Domestic</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">International</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
-                    </div>
-                  </div>
-                </div>
-              )}
+                <button
+                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
+                  aria-label="Expand current ARR"
+                  onClick={() => openDetails("curr_arr")}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
 
-              {/* Potential ARR Row */}
-              <button
-                className="w-full text-left"
-                onClick={() => toggleRow("pot_arr")}
-              >
-                <div className="grid grid-cols-2 hover:bg-gray-50">
-                  <div className="px-3 py-2">Potential ARR</div>
-                  <div className="px-3 py-2 text-center">
-                    {(salesSummary.totals.domestic.projArrUsdMn +
-                      salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn USD
-                  </div>
+              <div className="flex items-center hover:bg-gray-50">
+                <div className="px-3 py-2 flex-1">Potential ARR</div>
+                <div className="px-3 py-2 w-28 text-center">
+                  {(salesSummary.totals.domestic.projArrUsdMn +
+                    salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn USD
                 </div>
-              </button>
-              {openRows["pot_arr"] && (
-                <div className="bg-gray-50 border-t text-xs">
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">Domestic</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2">
-                    <div className="px-3 py-2">International</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
-                    </div>
-                  </div>
-                </div>
-              )}
+                <button
+                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
+                  aria-label="Expand potential ARR"
+                  onClick={() => openDetails("pot_arr")}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
           <SeeList clients={salesSummary.topClients} />
+
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+            <SheetContent side="right" className="sm:max-w-lg w-full">
+              <SheetHeader>
+                <SheetTitle>
+                  {detailKey === "clients"
+                    ? "No. of Clients"
+                    : detailKey === "mrr"
+                      ? "Current MRR"
+                      : detailKey === "curr_arr"
+                        ? "Current ARR"
+                        : detailKey === "pot_arr"
+                          ? "Potential ARR"
+                          : "Details"}
+                </SheetTitle>
+                <SheetDescription>
+                  Domestic vs International
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-4 overflow-hidden rounded-md border">
+                <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
+                  <div className="px-3 py-2">Domestic</div>
+                  <div className="px-3 py-2">International</div>
+                </div>
+                <div className="grid grid-cols-2 text-sm">
+                  <div className="px-3 py-3 border-r">
+                    {detailKey === "clients" && (
+                      <div className="font-semibold">{salesSummary.totals.domestic.clients}</div>
+                    )}
+                    {detailKey === "mrr" && (
+                      <div>₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs</div>
+                    )}
+                    {detailKey === "curr_arr" && (
+                      <div>{salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD</div>
+                    )}
+                    {detailKey === "pot_arr" && (
+                      <div>{salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD</div>
+                    )}
+                  </div>
+                  <div className="px-3 py-3">
+                    {detailKey === "clients" && (
+                      <div className="font-semibold">{salesSummary.totals.international.clients}</div>
+                    )}
+                    {detailKey === "mrr" && (
+                      <div>₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs</div>
+                    )}
+                    {detailKey === "curr_arr" && (
+                      <div>{salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD</div>
+                    )}
+                    {detailKey === "pot_arr" && (
+                      <div>{salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD</div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
         </CardContent>
       </Card>
 
