@@ -338,6 +338,64 @@ export default function BusinessOfferingsDetails() {
             />
           </CardContent>
         </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Steps Status</CardTitle>
+            <CardDescription>Stepwise breakdown</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {(() => {
+              const all = (steps as any[]) || [];
+              const total = all.length;
+              const completed = all.filter(
+                (s: any) => s.status === "completed",
+              ).length;
+              const inProg = all.filter(
+                (s: any) => s.status === "in_progress",
+              ).length;
+              const pending = Math.max(0, total - completed - inProg);
+              const sorted = [...all].sort(
+                (a: any, b: any) => (a.order ?? 0) - (b.order ?? 0),
+              );
+              const current = sorted.find((s: any) => s.status !== "completed");
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 border rounded-md">
+                      <div className="text-xs text-gray-500">In Progress</div>
+                      <div className="text-xl font-semibold text-blue-700">
+                        {inProg}
+                      </div>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <div className="text-xs text-gray-500">Pending</div>
+                      <div className="text-xl font-semibold text-orange-600">
+                        {pending}
+                      </div>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <div className="text-xs text-gray-500">Completed</div>
+                      <div className="text-xl font-semibold text-green-600">
+                        {completed}
+                      </div>
+                    </div>
+                    <div className="p-3 border rounded-md">
+                      <div className="text-xs text-gray-500">Total Steps</div>
+                      <div className="text-xl font-semibold">{total}</div>
+                    </div>
+                  </div>
+                  <div className="text-sm">
+                    <div className="text-gray-500">Current Stage</div>
+                    <div className="font-medium">
+                      {current?.name || "Completed"}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

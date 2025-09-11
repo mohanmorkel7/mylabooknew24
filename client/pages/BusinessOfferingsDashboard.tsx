@@ -47,12 +47,32 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export default function BusinessOfferingsDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [productSearch, setProductSearch] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [stageDialogOpen, setStageDialogOpen] = useState(false);
+  const [stageDialogTitle, setStageDialogTitle] = useState("");
+  const [stageDialogRows, setStageDialogRows] = useState<any[]>([]);
+  const [listDialogOpen, setListDialogOpen] = useState(false);
+  const [listDialogRows, setListDialogRows] = useState<any[]>([]);
 
   const {
     data = [],
@@ -276,68 +296,102 @@ export default function BusinessOfferingsDashboard() {
     (f) => f.business_offering_id != null,
   );
 
-  function SeeList({ clients }: { clients: any[] }) {
+  function SeeList() {
     const navigate = useNavigate();
-    const [open, setOpen] = useState(false);
+    const openList = () => {
+      const rows = ((data as any[]) || []).map((offering: any, idx: number) => {
+        const client = getClientForOffering(offering);
+        const steps = (stepQueries[idx]?.data as any[]) || [];
+        const sorted = [...steps].sort(
+          (a, b) => (a.order ?? 0) - (b.order ?? 0),
+        );
+        const current = sorted.find((s) => s.status !== "completed");
+        const stage = current ? current.name || "In Progress" : "Completed";
+        const fo = (boFollowUps as any[]).filter(
+          (f: any) => f.business_offering_id === offering.id,
+        );
+        const last = fo
+          .filter((f: any) => !!f.created_at)
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          )[0];
+        const next = fo
+          .filter((f: any) => f.status !== "completed" && !!f.due_date)
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+          )[0];
+        return {
+          id: offering.id,
+          name: client?.client_name || "-",
+          product: offering.product || offering.solution || "-",
+          stage,
+          mrr: Number(offering.potential_mrr_lacs || 0),
+          arr: Number(offering.current_potential_arr_usd_mn || 0),
+          parr: Number(offering.projected_potential_arr_usd_mn || 0),
+          lastFollowUp: last?.created_at
+            ? new Date(last.created_at).toLocaleDateString("en-IN")
+            : "-",
+          nextFollowUp: next?.due_date
+            ? new Date(next.due_date).toLocaleDateString("en-IN")
+            : "-",
+        };
+      });
+      setListDialogRows(rows);
+      setListDialogOpen(true);
+    };
     return (
       <div className="mt-3">
         <button
           className="text-sm text-blue-600 hover:underline"
-          onClick={() => setOpen((v) => !v)}
+          onClick={openList}
         >
-          {open ? "Hide list" : "See list"}
+          See list
         </button>
-        {open && (
-          <div className="mt-3 space-y-2">
-            {clients.length === 0 && (
-              <div className="text-sm text-gray-500">No clients</div>
-            )}
-            {clients.map((row: any) => (
-              <div
-                key={row.client.id}
-                className="flex items-center justify-between p-3 border rounded-md bg-white"
-              >
-                <div className="min-w-0">
-                  <div className="font-medium truncate max-w-[220px]">
-                    {row.client.client_name}
-                  </div>
-                  <div className="mt-1 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-600">
-                    <div>
-                      <span className="font-medium">Current MRR:</span> ₹{" "}
-                      {row.mrrLacs.toFixed(2)} Lacs
-                    </div>
-                    <div>
-                      <span className="font-medium">Current ARR:</span>{" "}
-                      {row.currArrUsdMn.toFixed(3)} Mn USD
-                    </div>
-                    <div>
-                      <span className="font-medium">Potential ARR:</span>{" "}
-                      {row.projArrUsdMn.toFixed(3)} Mn USD
-                    </div>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => navigate(`/clients/${row.client.id}`)}
-                >
-                  View
-                </Button>
-              </div>
-            ))}
-            {Object.keys(salesSummary.totals.clientAgg).length > 5 && (
-              <div className="pt-1">
-                <Button
-                  variant="link"
-                  className="p-0 h-auto"
-                  onClick={() => navigate("/sales/clients")}
-                >
-                  Show more
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
+        <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
+          <DialogContent className="max-w-5xl">
+            <DialogHeader>
+              <DialogTitle>All Sales</DialogTitle>
+              <DialogDescription>Client wise offerings</DialogDescription>
+            </DialogHeader>
+            <div className="mt-2">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Product</TableHead>
+                    <TableHead>Stage</TableHead>
+                    <TableHead>MRR</TableHead>
+                    <TableHead>ARR</TableHead>
+                    <TableHead>Potential ARR</TableHead>
+                    <TableHead>Last follow-up</TableHead>
+                    <TableHead>Next follow-up</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {listDialogRows.map((r) => (
+                    <TableRow
+                      key={r.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/business-offerings/${r.id}`)}
+                    >
+                      <TableCell>{r.name}</TableCell>
+                      <TableCell>{r.product}</TableCell>
+                      <TableCell>{r.stage}</TableCell>
+                      <TableCell>₹ {r.mrr.toFixed(2)} L</TableCell>
+                      <TableCell>{r.arr.toFixed(3)} Mn</TableCell>
+                      <TableCell>{r.parr.toFixed(3)} Mn</TableCell>
+                      <TableCell>{r.lastFollowUp}</TableCell>
+                      <TableCell>{r.nextFollowUp}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     );
   }
@@ -393,9 +447,19 @@ export default function BusinessOfferingsDashboard() {
       </div>
 
       <Card className="mb-6 w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Sales Summary</CardTitle>
-          <CardDescription>Totals with details on tap</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Sales Summary - Step Pipeline</CardTitle>
+            <CardDescription>Totals with details on tap</CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Expand details"
+            onClick={() => setSheetOpen(true)}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="relative overflow-hidden rounded-md border">
@@ -446,16 +510,9 @@ export default function BusinessOfferingsDashboard() {
                 </div>
               </div>
             </div>
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-full border bg-white hover:bg-accent shadow"
-              aria-label="Expand details"
-              onClick={() => setSheetOpen(true)}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
 
-          <SeeList clients={salesSummary.topClients} />
+          <SeeList />
 
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetContent side="right" className="sm:max-w-lg w-full">
@@ -520,6 +577,210 @@ export default function BusinessOfferingsDashboard() {
               </div>
             </SheetContent>
           </Sheet>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Pipeline Status Overview</CardTitle>
+          <CardDescription>Step-wise cards with totals</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            type StageGroup = {
+              label: string;
+              items: { client: any; offering: any; stepName: string }[];
+              mrrLacs: number;
+              currArrUsdMn: number;
+              projArrUsdMn: number;
+            };
+            const groupsMap: Record<string, StageGroup> = {};
+
+            (data as any[]).forEach((o: any, idx: number) => {
+              const q = stepQueries[idx];
+              const steps = (q?.data as any[]) || [];
+              const sorted = [...steps].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0),
+              );
+              const current = sorted.find((s) => s.status !== "completed");
+              const label = current
+                ? current.name || "In Progress"
+                : "Completed";
+              if (!groupsMap[label]) {
+                groupsMap[label] = {
+                  label,
+                  items: [],
+                  mrrLacs: 0,
+                  currArrUsdMn: 0,
+                  projArrUsdMn: 0,
+                };
+              }
+              const client = getClientForOffering(o);
+              groupsMap[label].items.push({
+                client,
+                offering: o,
+                stepName: label,
+              });
+              groupsMap[label].mrrLacs += Number(o.potential_mrr_lacs || 0);
+              groupsMap[label].currArrUsdMn += Number(
+                o.current_potential_arr_usd_mn || 0,
+              );
+              groupsMap[label].projArrUsdMn += Number(
+                o.projected_potential_arr_usd_mn || 0,
+              );
+            });
+
+            const totalWithSteps = (data as any[]).length || 1;
+            const groups = Object.values(groupsMap).sort(
+              (a, b) => b.items.length - a.items.length,
+            );
+            if (groups.length === 0)
+              return <div className="text-gray-600">No pipeline data</div>;
+
+            const openStageDialog = (g: StageGroup) => {
+              const rows = g.items.map(({ client, offering }) => {
+                const fo = (boFollowUps as any[]).filter(
+                  (f: any) => f.business_offering_id === offering.id,
+                );
+                const last = fo
+                  .filter((f: any) => !!f.created_at)
+                  .sort(
+                    (a: any, b: any) =>
+                      new Date(b.created_at).getTime() -
+                      new Date(a.created_at).getTime(),
+                  )[0];
+                const next = fo
+                  .filter((f: any) => f.status !== "completed" && !!f.due_date)
+                  .sort(
+                    (a: any, b: any) =>
+                      new Date(a.due_date).getTime() -
+                      new Date(b.due_date).getTime(),
+                  )[0];
+                return {
+                  id: offering.id,
+                  name: client?.client_name || "-",
+                  product: offering.product || offering.solution || "-",
+                  stage: g.label,
+                  mrr: Number(offering.potential_mrr_lacs || 0),
+                  arr: Number(offering.current_potential_arr_usd_mn || 0),
+                  parr: Number(offering.projected_potential_arr_usd_mn || 0),
+                  lastFollowUp: last?.created_at
+                    ? new Date(last.created_at).toLocaleDateString("en-IN")
+                    : "-",
+                  nextFollowUp: next?.due_date
+                    ? new Date(next.due_date).toLocaleDateString("en-IN")
+                    : "-",
+                };
+              });
+              setStageDialogRows(rows);
+              setStageDialogTitle(`${g.label} • ${g.items.length} client(s)`);
+              setStageDialogOpen(true);
+            };
+
+            return (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                  {groups.map((g) => {
+                    const percent = Math.round(
+                      (g.items.length / totalWithSteps) * 100,
+                    );
+                    return (
+                      <button
+                        key={g.label}
+                        className="p-4 border rounded-lg bg-white text-left hover:shadow"
+                        onClick={() => openStageDialog(g)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div
+                            className="font-medium truncate pr-2"
+                            title={g.label}
+                          >
+                            {g.label}
+                          </div>
+                          <Badge variant="secondary">{g.items.length}</Badge>
+                        </div>
+                        <div className="mt-2 text-xs text-gray-600">
+                          {percent}% of pipeline
+                        </div>
+                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                          <div className="p-2 bg-gray-50 rounded">
+                            <div className="text-[10px] text-gray-500">MRR</div>
+                            <div className="font-semibold">
+                              ₹ {g.mrrLacs.toFixed(2)} L
+                            </div>
+                          </div>
+                          <div className="p-2 bg-gray-50 rounded">
+                            <div className="text-[10px] text-gray-500">ARR</div>
+                            <div className="font-semibold">
+                              {g.currArrUsdMn.toFixed(3)} Mn
+                            </div>
+                          </div>
+                          <div className="p-2 bg-gray-50 rounded">
+                            <div className="text-[10px] text-gray-500">
+                              Potential
+                            </div>
+                            <div className="font-semibold">
+                              {g.projArrUsdMn.toFixed(3)} Mn
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <Dialog
+                  open={stageDialogOpen}
+                  onOpenChange={setStageDialogOpen}
+                >
+                  <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                      <DialogTitle>{stageDialogTitle}</DialogTitle>
+                      <DialogDescription>
+                        Sales list for this stage
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-2">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Product</TableHead>
+                            <TableHead>Stage</TableHead>
+                            <TableHead>MRR</TableHead>
+                            <TableHead>ARR</TableHead>
+                            <TableHead>Potential ARR</TableHead>
+                            <TableHead>Last follow-up</TableHead>
+                            <TableHead>Next follow-up</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {stageDialogRows.map((r) => (
+                            <TableRow
+                              key={r.id}
+                              className="cursor-pointer"
+                              onClick={() =>
+                                navigate(`/business-offerings/${r.id}`)
+                              }
+                            >
+                              <TableCell>{r.name}</TableCell>
+                              <TableCell>{r.product}</TableCell>
+                              <TableCell>{r.stage}</TableCell>
+                              <TableCell>₹ {r.mrr.toFixed(2)} L</TableCell>
+                              <TableCell>{r.arr.toFixed(3)} Mn</TableCell>
+                              <TableCell>{r.parr.toFixed(3)} Mn</TableCell>
+                              <TableCell>{r.lastFollowUp}</TableCell>
+                              <TableCell>{r.nextFollowUp}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </>
+            );
+          })()}
         </CardContent>
       </Card>
 
