@@ -393,9 +393,19 @@ export default function BusinessOfferingsDashboard() {
       </div>
 
       <Card className="mb-6 w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Sales Summary</CardTitle>
-          <CardDescription>Totals with details on tap</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Sales Summary</CardTitle>
+            <CardDescription>Totals with details on tap</CardDescription>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Expand details"
+            onClick={() => setSheetOpen(true)}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="relative overflow-hidden rounded-md border">
@@ -446,13 +456,6 @@ export default function BusinessOfferingsDashboard() {
                 </div>
               </div>
             </div>
-            <button
-              className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center justify-center w-8 h-8 rounded-full border bg-white hover:bg-accent shadow"
-              aria-label="Expand details"
-              onClick={() => setSheetOpen(true)}
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
           </div>
 
           <SeeList clients={salesSummary.topClients} />
@@ -520,6 +523,63 @@ export default function BusinessOfferingsDashboard() {
               </div>
             </SheetContent>
           </Sheet>
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Pipeline Status Overview</CardTitle>
+          <CardDescription>Client-wise current stage summary</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {(() => {
+            // Build current stage per offering (first non-completed step, else Completed)
+            type StageGroup = { label: string; items: { client: any; offeringId: number }[] };
+            const groupsMap: Record<string, StageGroup> = {};
+
+            (data as any[]).forEach((o: any, idx: number) => {
+              const q = stepQueries[idx];
+              const steps = (q?.data as any[]) || [];
+              const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+              const current = sorted.find((s) => s.status !== "completed");
+              const label = current ? (current.name || "In Progress") : "Completed";
+              if (!groupsMap[label]) groupsMap[label] = { label, items: [] };
+              const client = getClientForOffering(o);
+              groupsMap[label].items.push({ client, offeringId: o.id });
+            });
+
+            const groups = Object.values(groupsMap).sort((a, b) => b.items.length - a.items.length);
+            if (groups.length === 0) return <div className="text-gray-600">No pipeline data</div>;
+            return (
+              <div className="space-y-4">
+                {groups.slice(0, 5).map((g) => (
+                  <div key={g.label} className="p-3 border rounded-md bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="font-medium truncate pr-3">{g.label}</div>
+                      <Badge variant="secondary">{g.items.length}</Badge>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {g.items.slice(0, 6).map((it, i) => (
+                        <Button
+                          key={i}
+                          variant="outline"
+                          size="sm"
+                          className="h-7"
+                          onClick={() => navigate(`/business-offerings/${it.offeringId}`)}
+                          title={it.client?.client_name || "View"}
+                        >
+                          {it.client?.client_name || `#${it.offeringId}`}
+                        </Button>
+                      ))}
+                      {g.items.length > 6 && (
+                        <div className="text-xs text-gray-500 self-center">+{g.items.length - 6} more</div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 
