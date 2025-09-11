@@ -41,13 +41,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -121,7 +114,7 @@ export default function BusinessOfferingsDashboard() {
 
   const stats = { total: (data as any[]).length };
 
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
 
   const salesSummary = useMemo(() => {
     const domClientIds = new Set<number>();
@@ -381,8 +374,8 @@ export default function BusinessOfferingsDashboard() {
                       <TableCell>{r.product}</TableCell>
                       <TableCell>{r.stage}</TableCell>
                       <TableCell>₹ {r.mrr.toFixed(2)} L</TableCell>
-                      <TableCell>{r.arr.toFixed(3)} Mn</TableCell>
-                      <TableCell>{r.parr.toFixed(3)} Mn</TableCell>
+                      <TableCell>$ {r.arr.toFixed(3)} Mn</TableCell>
+                      <TableCell>$ {r.parr.toFixed(3)} Mn</TableCell>
                       <TableCell>{r.lastFollowUp}</TableCell>
                       <TableCell>{r.nextFollowUp}</TableCell>
                     </TableRow>
@@ -456,7 +449,7 @@ export default function BusinessOfferingsDashboard() {
             variant="ghost"
             size="icon"
             aria-label="Expand details"
-            onClick={() => setSheetOpen(true)}
+            onClick={() => setSummaryExpanded((v) => !v)}
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -514,69 +507,53 @@ export default function BusinessOfferingsDashboard() {
 
           <SeeList />
 
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetContent side="right" className="sm:max-w-lg w-full">
-              <SheetHeader>
-                <SheetTitle>Sales Summary Details</SheetTitle>
-                <SheetDescription>Domestic vs International</SheetDescription>
-              </SheetHeader>
-
-              <div className="mt-4 overflow-hidden rounded-md border">
-                <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
-                  <div className="px-3 py-2">Label</div>
-                  <div className="px-3 py-2 text-center">Domestic</div>
-                  <div className="px-3 py-2 text-center">International</div>
+          {summaryExpanded && (
+            <div className="mt-4 overflow-hidden rounded-md border">
+              <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
+                <div className="px-3 py-2">Label</div>
+                <div className="px-3 py-2 text-center">Domestic</div>
+                <div className="px-3 py-2 text-center">International</div>
+              </div>
+              <div className="text-sm divide-y">
+                <div className="grid grid-cols-3">
+                  <div className="px-3 py-2">No. of Clients</div>
+                  <div className="px-3 py-2 text-center font-semibold">
+                    {salesSummary.totals.domestic.clients}
+                  </div>
+                  <div className="px-3 py-2 text-center font-semibold">
+                    {salesSummary.totals.international.clients}
+                  </div>
                 </div>
-                <div className="text-sm divide-y">
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">No. of Clients</div>
-                    <div className="px-3 py-2 text-center font-semibold">
-                      {salesSummary.totals.domestic.clients}
-                    </div>
-                    <div className="px-3 py-2 text-center font-semibold">
-                      {salesSummary.totals.international.clients}
-                    </div>
+                <div className="grid grid-cols-3">
+                  <div className="px-3 py-2">Current MRR</div>
+                  <div className="px-3 py-2 text-center">
+                    ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
                   </div>
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">Current MRR</div>
-                    <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
-                    </div>
-                    <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
-                      Lacs
-                    </div>
+                  <div className="px-3 py-2 text-center">
+                    ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
                   </div>
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">Current ARR</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn
-                      USD
-                    </div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.currArrUsdMn.toFixed(
-                        3,
-                      )}{" "}
-                      Mn USD
-                    </div>
+                </div>
+                <div className="grid grid-cols-3">
+                  <div className="px-3 py-2">Current ARR</div>
+                  <div className="px-3 py-2 text-center">
+                    {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
                   </div>
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">Potential ARR</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn
-                      USD
-                    </div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.projArrUsdMn.toFixed(
-                        3,
-                      )}{" "}
-                      Mn USD
-                    </div>
+                  <div className="px-3 py-2 text-center">
+                    {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+                  </div>
+                </div>
+                <div className="grid grid-cols-3">
+                  <div className="px-3 py-2">Potential ARR</div>
+                  <div className="px-3 py-2 text-center">
+                    {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+                  </div>
+                  <div className="px-3 py-2 text-center">
+                    {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
                   </div>
                 </div>
               </div>
-            </SheetContent>
-          </Sheet>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -589,12 +566,49 @@ export default function BusinessOfferingsDashboard() {
           {(() => {
             type StageGroup = {
               label: string;
+              order?: number;
+              weight?: number;
               items: { client: any; offering: any; stepName: string }[];
               mrrLacs: number;
               currArrUsdMn: number;
               projArrUsdMn: number;
             };
             const groupsMap: Record<string, StageGroup> = {};
+
+            // Pre-fill groups with all step names from templates to show all steps
+            (data as any[]).forEach((o: any, idx: number) => {
+              const steps = (stepQueries[idx]?.data as any[]) || [];
+              steps.forEach((s: any, sidx: number) => {
+                const name = s.name || `Step ${s.order_index || sidx + 1}`;
+                if (!groupsMap[name]) {
+                  groupsMap[name] = {
+                    label: name,
+                    order: Number(s.order_index ?? s.step_order ?? sidx + 1),
+                    weight: Number(s.probability_percent ?? 0),
+                    items: [],
+                    mrrLacs: 0,
+                    currArrUsdMn: 0,
+                    projArrUsdMn: 0,
+                  };
+                } else {
+                  if (groupsMap[name].order == null) {
+                    groupsMap[name].order = Number(
+                      s.order_index ?? s.step_order ?? sidx + 1,
+                    );
+                  } else {
+                    groupsMap[name].order = Math.min(
+                      groupsMap[name].order as number,
+                      Number(s.order_index ?? s.step_order ?? sidx + 1),
+                    );
+                  }
+                  if ((groupsMap[name].weight ?? 0) === 0) {
+                    groupsMap[name].weight = Number(
+                      s.probability_percent ?? 0,
+                    );
+                  }
+                }
+              });
+            });
 
             (data as any[]).forEach((o: any, idx: number) => {
               const q = stepQueries[idx];
@@ -609,6 +623,8 @@ export default function BusinessOfferingsDashboard() {
               if (!groupsMap[label]) {
                 groupsMap[label] = {
                   label,
+                  order: undefined,
+                  weight: undefined,
                   items: [],
                   mrrLacs: 0,
                   currArrUsdMn: 0,
@@ -632,7 +648,7 @@ export default function BusinessOfferingsDashboard() {
 
             const totalWithSteps = (data as any[]).length || 1;
             const groups = Object.values(groupsMap).sort(
-              (a, b) => b.items.length - a.items.length,
+              (a, b) => (a.order ?? 999) - (b.order ?? 999),
             );
             if (groups.length === 0)
               return <div className="text-gray-600">No pipeline data</div>;
@@ -681,9 +697,7 @@ export default function BusinessOfferingsDashboard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {groups.map((g) => {
-                    const percent = Math.round(
-                      (g.items.length / totalWithSteps) * 100,
-                    );
+                    const percent = Math.round(Number(g.weight ?? 0));
                     return (
                       <button
                         key={g.label}
@@ -699,19 +713,17 @@ export default function BusinessOfferingsDashboard() {
                           </div>
                           <Badge variant="secondary">{g.items.length}</Badge>
                         </div>
-                        <div className="mt-2 text-xs text-gray-600">
-                          {percent}% of pipeline
-                        </div>
+                        <div className="mt-2 text-xs text-gray-600">Weight: {percent}%</div>
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                           <div className="p-2 bg-gray-50 rounded">
                             <div className="text-[10px] text-gray-500">MRR</div>
-                            <div className="font-semibold">
+                            <div className="font-semibold whitespace-nowrap">
                               ₹ {g.mrrLacs.toFixed(2)} L
                             </div>
                           </div>
                           <div className="p-2 bg-gray-50 rounded">
                             <div className="text-[10px] text-gray-500">ARR</div>
-                            <div className="font-semibold">
+                            <div className="font-semibold whitespace-nowrap">
                               {g.currArrUsdMn.toFixed(3)} Mn
                             </div>
                           </div>
@@ -719,7 +731,7 @@ export default function BusinessOfferingsDashboard() {
                             <div className="text-[10px] text-gray-500">
                               Potential
                             </div>
-                            <div className="font-semibold">
+                            <div className="font-semibold whitespace-nowrap">
                               {g.projArrUsdMn.toFixed(3)} Mn
                             </div>
                           </div>
@@ -767,8 +779,8 @@ export default function BusinessOfferingsDashboard() {
                               <TableCell>{r.product}</TableCell>
                               <TableCell>{r.stage}</TableCell>
                               <TableCell>₹ {r.mrr.toFixed(2)} L</TableCell>
-                              <TableCell>{r.arr.toFixed(3)} Mn</TableCell>
-                              <TableCell>{r.parr.toFixed(3)} Mn</TableCell>
+                              <TableCell>$ {r.arr.toFixed(3)} Mn</TableCell>
+                              <TableCell>$ {r.parr.toFixed(3)} Mn</TableCell>
                               <TableCell>{r.lastFollowUp}</TableCell>
                               <TableCell>{r.nextFollowUp}</TableCell>
                             </TableRow>
