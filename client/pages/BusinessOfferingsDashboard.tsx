@@ -303,13 +303,16 @@ export default function BusinessOfferingsDashboard() {
                   </div>
                   <div className="mt-1 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs text-gray-600">
                     <div>
-                      <span className="font-medium">Current MRR:</span> ₹ {row.mrrLacs.toFixed(2)} Lacs
+                      <span className="font-medium">Current MRR:</span> ₹{" "}
+                      {row.mrrLacs.toFixed(2)} Lacs
                     </div>
                     <div>
-                      <span className="font-medium">Current ARR:</span> {row.currArrUsdMn.toFixed(3)} Mn USD
+                      <span className="font-medium">Current ARR:</span>{" "}
+                      {row.currArrUsdMn.toFixed(3)} Mn USD
                     </div>
                     <div>
-                      <span className="font-medium">Potential ARR:</span> {row.projArrUsdMn.toFixed(3)} Mn USD
+                      <span className="font-medium">Potential ARR:</span>{" "}
+                      {row.projArrUsdMn.toFixed(3)} Mn USD
                     </div>
                   </div>
                 </div>
