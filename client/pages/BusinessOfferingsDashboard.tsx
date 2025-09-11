@@ -534,22 +534,32 @@ export default function BusinessOfferingsDashboard() {
         <CardContent>
           {(() => {
             // Build current stage per offering (first non-completed step, else Completed)
-            type StageGroup = { label: string; items: { client: any; offeringId: number }[] };
+            type StageGroup = {
+              label: string;
+              items: { client: any; offeringId: number }[];
+            };
             const groupsMap: Record<string, StageGroup> = {};
 
             (data as any[]).forEach((o: any, idx: number) => {
               const q = stepQueries[idx];
               const steps = (q?.data as any[]) || [];
-              const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+              const sorted = [...steps].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0),
+              );
               const current = sorted.find((s) => s.status !== "completed");
-              const label = current ? (current.name || "In Progress") : "Completed";
+              const label = current
+                ? current.name || "In Progress"
+                : "Completed";
               if (!groupsMap[label]) groupsMap[label] = { label, items: [] };
               const client = getClientForOffering(o);
               groupsMap[label].items.push({ client, offeringId: o.id });
             });
 
-            const groups = Object.values(groupsMap).sort((a, b) => b.items.length - a.items.length);
-            if (groups.length === 0) return <div className="text-gray-600">No pipeline data</div>;
+            const groups = Object.values(groupsMap).sort(
+              (a, b) => b.items.length - a.items.length,
+            );
+            if (groups.length === 0)
+              return <div className="text-gray-600">No pipeline data</div>;
             return (
               <div className="space-y-4">
                 {groups.slice(0, 5).map((g) => (
@@ -565,14 +575,18 @@ export default function BusinessOfferingsDashboard() {
                           variant="outline"
                           size="sm"
                           className="h-7"
-                          onClick={() => navigate(`/business-offerings/${it.offeringId}`)}
+                          onClick={() =>
+                            navigate(`/business-offerings/${it.offeringId}`)
+                          }
                           title={it.client?.client_name || "View"}
                         >
                           {it.client?.client_name || `#${it.offeringId}`}
                         </Button>
                       ))}
                       {g.items.length > 6 && (
-                        <div className="text-xs text-gray-500 self-center">+{g.items.length - 6} more</div>
+                        <div className="text-xs text-gray-500 self-center">
+                          +{g.items.length - 6} more
+                        </div>
                       )}
                     </div>
                   </div>
