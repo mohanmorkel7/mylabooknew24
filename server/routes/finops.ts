@@ -1155,7 +1155,6 @@ router.patch(
           delay_notes,
         );
 
-
         // External alert: trigger only when marked overdue
         if (status === "overdue") {
           const settings = await getFinOpsSettings();

@@ -57,7 +57,8 @@ export default function SalesClientList() {
     (offerings as any[]).forEach((o: any) => {
       const cid = o.client_id;
       if (cid != null) {
-        if (!byClient[cid]) byClient[cid] = { client: null, offerings: [] } as any;
+        if (!byClient[cid])
+          byClient[cid] = { client: null, offerings: [] } as any;
         byClient[cid].offerings.push(o);
       }
     });
@@ -78,7 +79,9 @@ export default function SalesClientList() {
             Clients with their Business Offerings
           </p>
         </div>
-        <Button onClick={() => navigate("/clients/create")}>Create Client</Button>
+        <Button onClick={() => navigate("/clients/create")}>
+          Create Client
+        </Button>
       </div>
 
       <Card>
@@ -94,7 +97,10 @@ export default function SalesClientList() {
           ) : (
             <Accordion type="single" collapsible className="w-full">
               {grouped.map(({ client, offerings }) => (
-                <AccordionItem key={client?.id || Math.random()} value={String(client?.id || Math.random())}>
+                <AccordionItem
+                  key={client?.id || Math.random()}
+                  value={String(client?.id || Math.random())}
+                >
                   <AccordionTrigger>
                     <div className="flex items-center gap-3">
                       <span className="font-medium">
@@ -104,8 +110,16 @@ export default function SalesClientList() {
                         <Users className="w-3.5 h-3.5 mr-1" />
                         {offerings?.length || 0} products
                       </Badge>
-                      <Badge className={isDomesticByGeography(client) ? "bg-green-100 text-green-800" : "bg-purple-100 text-purple-800"}>
-                        {isDomesticByGeography(client) ? "Domestic" : "International"}
+                      <Badge
+                        className={
+                          isDomesticByGeography(client)
+                            ? "bg-green-100 text-green-800"
+                            : "bg-purple-100 text-purple-800"
+                        }
+                      >
+                        {isDomesticByGeography(client)
+                          ? "Domestic"
+                          : "International"}
                       </Badge>
                     </div>
                   </AccordionTrigger>
@@ -113,7 +127,9 @@ export default function SalesClientList() {
                     <div className="grid grid-cols-1 gap-4">
                       <Card className="bg-white">
                         <CardHeader className="pb-3">
-                          <CardTitle className="text-base">{client?.client_name}</CardTitle>
+                          <CardTitle className="text-base">
+                            {client?.client_name}
+                          </CardTitle>
                           <CardDescription>
                             {client?.city || client?.country || "Location N/A"}
                           </CardDescription>
@@ -126,8 +142,12 @@ export default function SalesClientList() {
                                   <th className="py-2 pr-4">Product</th>
                                   <th className="py-2 pr-4">Solution</th>
                                   <th className="py-2 pr-4">MRR (₹ Lacs)</th>
-                                  <th className="py-2 pr-4">Current ARR (USD Mn)</th>
-                                  <th className="py-2 pr-4">Potential ARR (USD Mn)</th>
+                                  <th className="py-2 pr-4">
+                                    Current ARR (USD Mn)
+                                  </th>
+                                  <th className="py-2 pr-4">
+                                    Potential ARR (USD Mn)
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y">
@@ -136,22 +156,44 @@ export default function SalesClientList() {
                                     <td className="py-2 pr-4">
                                       <button
                                         className="text-blue-600 hover:underline"
-                                        onClick={() => navigate(`/business-offerings/${o.id}`)}
+                                        onClick={() =>
+                                          navigate(
+                                            `/business-offerings/${o.id}`,
+                                          )
+                                        }
                                       >
                                         {o.product || o.solution || "Offering"}
                                       </button>
                                     </td>
-                                    <td className="py-2 pr-4">{o.solution || "-"}</td>
-                                    <td className="py-2 pr-4">{Number(o.potential_mrr_lacs || 0).toFixed(2)}</td>
-                                    <td className="py-2 pr-4">{Number(o.current_potential_arr_usd_mn || 0).toFixed(3)}</td>
-                                    <td className="py-2 pr-4">{Number(o.projected_potential_arr_usd_mn || 0).toFixed(3)}</td>
+                                    <td className="py-2 pr-4">
+                                      {o.solution || "-"}
+                                    </td>
+                                    <td className="py-2 pr-4">
+                                      {Number(
+                                        o.potential_mrr_lacs || 0,
+                                      ).toFixed(2)}
+                                    </td>
+                                    <td className="py-2 pr-4">
+                                      {Number(
+                                        o.current_potential_arr_usd_mn || 0,
+                                      ).toFixed(3)}
+                                    </td>
+                                    <td className="py-2 pr-4">
+                                      {Number(
+                                        o.projected_potential_arr_usd_mn || 0,
+                                      ).toFixed(3)}
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
                             </table>
                           </div>
                           <div className="mt-3">
-                            <Button variant="outline" size="sm" onClick={() => navigate(`/clients/${client?.id}`)}>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/clients/${client?.id}`)}
+                            >
                               View Client
                             </Button>
                           </div>

@@ -88,7 +88,8 @@ export default function BusinessOfferingsDashboard() {
   function isDomesticByGeography(client?: any): boolean {
     if (!client) return true;
     const meta = parseNotesMeta(client.notes);
-    const geography: string | undefined = meta.geography || meta.client_geography;
+    const geography: string | undefined =
+      meta.geography || meta.client_geography;
     if (!geography) return true;
     return String(geography).toLowerCase() === "domestic";
   }
@@ -301,7 +302,8 @@ export default function BusinessOfferingsDashboard() {
                     {row.client.client_name}
                   </div>
                   <div className="text-xs text-gray-500">
-                    ₹ {row.mrrLacs.toFixed(2)} Lacs • {row.currArrUsdMn.toFixed(3)}
+                    ₹ {row.mrrLacs.toFixed(2)} Lacs •{" "}
+                    {row.currArrUsdMn.toFixed(3)}
                     Mn USD
                   </div>
                 </div>
@@ -404,24 +406,34 @@ export default function BusinessOfferingsDashboard() {
               <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">Current MRR</div>
                 <div className="px-3 py-2 w-28 text-center">
-                  ₹ {(salesSummary.totals.domestic.mrrLacs +
-                    salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs
+                  ₹{" "}
+                  {(
+                    salesSummary.totals.domestic.mrrLacs +
+                    salesSummary.totals.international.mrrLacs
+                  ).toFixed(2)}{" "}
+                  Lacs
                 </div>
               </div>
 
               <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">Current ARR</div>
                 <div className="px-3 py-2 w-28 text-center">
-                  {(salesSummary.totals.domestic.currArrUsdMn +
-                    salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn USD
+                  {(
+                    salesSummary.totals.domestic.currArrUsdMn +
+                    salesSummary.totals.international.currArrUsdMn
+                  ).toFixed(3)}{" "}
+                  Mn USD
                 </div>
               </div>
 
               <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">Potential ARR</div>
                 <div className="px-3 py-2 w-28 text-center">
-                  {(salesSummary.totals.domestic.projArrUsdMn +
-                    salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn USD
+                  {(
+                    salesSummary.totals.domestic.projArrUsdMn +
+                    salesSummary.totals.international.projArrUsdMn
+                  ).toFixed(3)}{" "}
+                  Mn USD
                 </div>
               </div>
             </div>
@@ -468,25 +480,34 @@ export default function BusinessOfferingsDashboard() {
                       ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
                     </div>
                     <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
+                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
+                      Lacs
                     </div>
                   </div>
                   <div className="grid grid-cols-3">
                     <div className="px-3 py-2">Current ARR</div>
                     <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
+                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn
+                      USD
                     </div>
                     <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+                      {salesSummary.totals.international.currArrUsdMn.toFixed(
+                        3,
+                      )}{" "}
+                      Mn USD
                     </div>
                   </div>
                   <div className="grid grid-cols-3">
                     <div className="px-3 py-2">Potential ARR</div>
                     <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn
+                      USD
                     </div>
                     <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
+                      {salesSummary.totals.international.projArrUsdMn.toFixed(
+                        3,
+                      )}{" "}
+                      Mn USD
                     </div>
                   </div>
                 </div>
