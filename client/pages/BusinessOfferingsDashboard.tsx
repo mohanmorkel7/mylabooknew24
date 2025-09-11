@@ -302,16 +302,27 @@ export default function BusinessOfferingsDashboard() {
       const rows = ((data as any[]) || []).map((offering: any, idx: number) => {
         const client = getClientForOffering(offering);
         const steps = (stepQueries[idx]?.data as any[]) || [];
-        const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        const sorted = [...steps].sort(
+          (a, b) => (a.order ?? 0) - (b.order ?? 0),
+        );
         const current = sorted.find((s) => s.status !== "completed");
         const stage = current ? current.name || "In Progress" : "Completed";
-        const fo = (boFollowUps as any[]).filter((f: any) => f.business_offering_id === offering.id);
+        const fo = (boFollowUps as any[]).filter(
+          (f: any) => f.business_offering_id === offering.id,
+        );
         const last = fo
           .filter((f: any) => !!f.created_at)
-          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+          .sort(
+            (a: any, b: any) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime(),
+          )[0];
         const next = fo
           .filter((f: any) => f.status !== "completed" && !!f.due_date)
-          .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+          )[0];
         return {
           id: offering.id,
           name: client?.client_name || "-",
@@ -320,8 +331,12 @@ export default function BusinessOfferingsDashboard() {
           mrr: Number(offering.potential_mrr_lacs || 0),
           arr: Number(offering.current_potential_arr_usd_mn || 0),
           parr: Number(offering.projected_potential_arr_usd_mn || 0),
-          lastFollowUp: last?.created_at ? new Date(last.created_at).toLocaleDateString("en-IN") : "-",
-          nextFollowUp: next?.due_date ? new Date(next.due_date).toLocaleDateString("en-IN") : "-",
+          lastFollowUp: last?.created_at
+            ? new Date(last.created_at).toLocaleDateString("en-IN")
+            : "-",
+          nextFollowUp: next?.due_date
+            ? new Date(next.due_date).toLocaleDateString("en-IN")
+            : "-",
         };
       });
       setListDialogRows(rows);
@@ -329,7 +344,10 @@ export default function BusinessOfferingsDashboard() {
     };
     return (
       <div className="mt-3">
-        <button className="text-sm text-blue-600 hover:underline" onClick={openList}>
+        <button
+          className="text-sm text-blue-600 hover:underline"
+          onClick={openList}
+        >
           See list
         </button>
         <Dialog open={listDialogOpen} onOpenChange={setListDialogOpen}>
@@ -354,7 +372,11 @@ export default function BusinessOfferingsDashboard() {
                 </TableHeader>
                 <TableBody>
                   {listDialogRows.map((r) => (
-                    <TableRow key={r.id} className="cursor-pointer" onClick={() => navigate(`/business-offerings/${r.id}`)}>
+                    <TableRow
+                      key={r.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/business-offerings/${r.id}`)}
+                    >
                       <TableCell>{r.name}</TableCell>
                       <TableCell>{r.product}</TableCell>
                       <TableCell>{r.stage}</TableCell>
@@ -577,32 +599,63 @@ export default function BusinessOfferingsDashboard() {
             (data as any[]).forEach((o: any, idx: number) => {
               const q = stepQueries[idx];
               const steps = (q?.data as any[]) || [];
-              const sorted = [...steps].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+              const sorted = [...steps].sort(
+                (a, b) => (a.order ?? 0) - (b.order ?? 0),
+              );
               const current = sorted.find((s) => s.status !== "completed");
-              const label = current ? current.name || "In Progress" : "Completed";
+              const label = current
+                ? current.name || "In Progress"
+                : "Completed";
               if (!groupsMap[label]) {
-                groupsMap[label] = { label, items: [], mrrLacs: 0, currArrUsdMn: 0, projArrUsdMn: 0 };
+                groupsMap[label] = {
+                  label,
+                  items: [],
+                  mrrLacs: 0,
+                  currArrUsdMn: 0,
+                  projArrUsdMn: 0,
+                };
               }
               const client = getClientForOffering(o);
-              groupsMap[label].items.push({ client, offering: o, stepName: label });
+              groupsMap[label].items.push({
+                client,
+                offering: o,
+                stepName: label,
+              });
               groupsMap[label].mrrLacs += Number(o.potential_mrr_lacs || 0);
-              groupsMap[label].currArrUsdMn += Number(o.current_potential_arr_usd_mn || 0);
-              groupsMap[label].projArrUsdMn += Number(o.projected_potential_arr_usd_mn || 0);
+              groupsMap[label].currArrUsdMn += Number(
+                o.current_potential_arr_usd_mn || 0,
+              );
+              groupsMap[label].projArrUsdMn += Number(
+                o.projected_potential_arr_usd_mn || 0,
+              );
             });
 
             const totalWithSteps = (data as any[]).length || 1;
-            const groups = Object.values(groupsMap).sort((a, b) => b.items.length - a.items.length);
-            if (groups.length === 0) return <div className="text-gray-600">No pipeline data</div>;
+            const groups = Object.values(groupsMap).sort(
+              (a, b) => b.items.length - a.items.length,
+            );
+            if (groups.length === 0)
+              return <div className="text-gray-600">No pipeline data</div>;
 
             const openStageDialog = (g: StageGroup) => {
               const rows = g.items.map(({ client, offering }) => {
-                const fo = (boFollowUps as any[]).filter((f: any) => f.business_offering_id === offering.id);
+                const fo = (boFollowUps as any[]).filter(
+                  (f: any) => f.business_offering_id === offering.id,
+                );
                 const last = fo
                   .filter((f: any) => !!f.created_at)
-                  .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+                  .sort(
+                    (a: any, b: any) =>
+                      new Date(b.created_at).getTime() -
+                      new Date(a.created_at).getTime(),
+                  )[0];
                 const next = fo
                   .filter((f: any) => f.status !== "completed" && !!f.due_date)
-                  .sort((a: any, b: any) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0];
+                  .sort(
+                    (a: any, b: any) =>
+                      new Date(a.due_date).getTime() -
+                      new Date(b.due_date).getTime(),
+                  )[0];
                 return {
                   id: offering.id,
                   name: client?.client_name || "-",
@@ -611,8 +664,12 @@ export default function BusinessOfferingsDashboard() {
                   mrr: Number(offering.potential_mrr_lacs || 0),
                   arr: Number(offering.current_potential_arr_usd_mn || 0),
                   parr: Number(offering.projected_potential_arr_usd_mn || 0),
-                  lastFollowUp: last?.created_at ? new Date(last.created_at).toLocaleDateString("en-IN") : "-",
-                  nextFollowUp: next?.due_date ? new Date(next.due_date).toLocaleDateString("en-IN") : "-",
+                  lastFollowUp: last?.created_at
+                    ? new Date(last.created_at).toLocaleDateString("en-IN")
+                    : "-",
+                  nextFollowUp: next?.due_date
+                    ? new Date(next.due_date).toLocaleDateString("en-IN")
+                    : "-",
                 };
               });
               setStageDialogRows(rows);
@@ -624,7 +681,9 @@ export default function BusinessOfferingsDashboard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {groups.map((g) => {
-                    const percent = Math.round((g.items.length / totalWithSteps) * 100);
+                    const percent = Math.round(
+                      (g.items.length / totalWithSteps) * 100,
+                    );
                     return (
                       <button
                         key={g.label}
@@ -632,22 +691,37 @@ export default function BusinessOfferingsDashboard() {
                         onClick={() => openStageDialog(g)}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="font-medium truncate pr-2" title={g.label}>{g.label}</div>
+                          <div
+                            className="font-medium truncate pr-2"
+                            title={g.label}
+                          >
+                            {g.label}
+                          </div>
                           <Badge variant="secondary">{g.items.length}</Badge>
                         </div>
-                        <div className="mt-2 text-xs text-gray-600">{percent}% of pipeline</div>
+                        <div className="mt-2 text-xs text-gray-600">
+                          {percent}% of pipeline
+                        </div>
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                           <div className="p-2 bg-gray-50 rounded">
                             <div className="text-[10px] text-gray-500">MRR</div>
-                            <div className="font-semibold">₹ {g.mrrLacs.toFixed(2)} L</div>
+                            <div className="font-semibold">
+                              ₹ {g.mrrLacs.toFixed(2)} L
+                            </div>
                           </div>
                           <div className="p-2 bg-gray-50 rounded">
                             <div className="text-[10px] text-gray-500">ARR</div>
-                            <div className="font-semibold">{g.currArrUsdMn.toFixed(3)} Mn</div>
+                            <div className="font-semibold">
+                              {g.currArrUsdMn.toFixed(3)} Mn
+                            </div>
                           </div>
                           <div className="p-2 bg-gray-50 rounded">
-                            <div className="text-[10px] text-gray-500">Potential</div>
-                            <div className="font-semibold">{g.projArrUsdMn.toFixed(3)} Mn</div>
+                            <div className="text-[10px] text-gray-500">
+                              Potential
+                            </div>
+                            <div className="font-semibold">
+                              {g.projArrUsdMn.toFixed(3)} Mn
+                            </div>
                           </div>
                         </div>
                       </button>
@@ -655,11 +729,16 @@ export default function BusinessOfferingsDashboard() {
                   })}
                 </div>
 
-                <Dialog open={stageDialogOpen} onOpenChange={setStageDialogOpen}>
+                <Dialog
+                  open={stageDialogOpen}
+                  onOpenChange={setStageDialogOpen}
+                >
                   <DialogContent className="max-w-4xl">
                     <DialogHeader>
                       <DialogTitle>{stageDialogTitle}</DialogTitle>
-                      <DialogDescription>Sales list for this stage</DialogDescription>
+                      <DialogDescription>
+                        Sales list for this stage
+                      </DialogDescription>
                     </DialogHeader>
                     <div className="mt-2">
                       <Table>
@@ -677,7 +756,13 @@ export default function BusinessOfferingsDashboard() {
                         </TableHeader>
                         <TableBody>
                           {stageDialogRows.map((r) => (
-                            <TableRow key={r.id} className="cursor-pointer" onClick={() => navigate(`/business-offerings/${r.id}`)}>
+                            <TableRow
+                              key={r.id}
+                              className="cursor-pointer"
+                              onClick={() =>
+                                navigate(`/business-offerings/${r.id}`)
+                              }
+                            >
                               <TableCell>{r.name}</TableCell>
                               <TableCell>{r.product}</TableCell>
                               <TableCell>{r.stage}</TableCell>
