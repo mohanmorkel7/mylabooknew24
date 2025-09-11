@@ -183,40 +183,95 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     await ensureExternalAlertsSchema();
 
-    const query = `
-      SELECT
-        t.*,
-        (SELECT fe.next_call_at FROM finops_external_alerts fe WHERE fe.task_id = t.id AND fe.alert_key = 'replica_down_overdue' ORDER BY fe.created_at DESC LIMIT 1) AS next_call_at,
-        json_agg(
-          json_build_object(
-            'id', st.id,
-            'name', st.name,
-            'description', st.description,
-            'sla_hours', st.sla_hours,
-            'sla_minutes', st.sla_minutes,
-            'order_position', st.order_position,
-            'status', st.status,
-            'started_at', st.started_at,
-            'completed_at', st.completed_at,
-            'due_at', st.due_at,
-            'start_time', st.start_time,
-            'scheduled_date', st.scheduled_date
-          ) ORDER BY st.order_position
-        ) FILTER (WHERE st.id IS NOT NULL) as subtasks
-      FROM finops_tasks t
-      LEFT JOIN finops_subtasks st ON t.id = st.task_id
-      WHERE t.deleted_at IS NULL
-      GROUP BY t.id
-      ORDER BY t.created_at DESC
-    `;
-
     const dateParam = (req.query.date as string) || null;
-    const result = await pool.query(query);
-    const tasks = result.rows.map((row) => {
-      const raw = Array.isArray(row.subtasks) ? row.subtasks : [];
-      // Do not filter by scheduled_date; always return current subtasks for the task
-      return { ...row, subtasks: raw };
-    });
+
+    let result;
+    if (dateParam) {
+      // Historical view: read from finops_tracker for requested date
+      const trackerQuery = `
+        SELECT
+          t.*,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', ft.subtask_id,
+                'name', ft.subtask_name,
+                'description', ft.description,
+                'sla_hours', ft.sla_hours,
+                'sla_minutes', ft.sla_minutes,
+                'order_position', ft.order_position,
+                'status', ft.status,
+                'started_at', ft.started_at,
+                'completed_at', ft.completed_at,
+                'due_at', NULL,
+                'start_time', ft.scheduled_time,
+                'scheduled_date', ft.subtask_scheduled_date,
+                'delay_reason', ft.delay_reason,
+                'delay_notes', ft.delay_notes,
+                'notification_sent_15min', ft.notification_sent_15min,
+                'notification_sent_start', ft.notification_sent_start,
+                'notification_sent_escalation', ft.notification_sent_escalation,
+                'assigned_to', ft.assigned_to,
+                'reporting_managers', ft.reporting_managers,
+                'escalation_managers', ft.escalation_managers
+              ) ORDER BY ft.order_position
+            ) FILTER (WHERE ft.subtask_id IS NOT NULL),
+            '[]'::json
+          ) as subtasks
+        FROM finops_tasks t
+        LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
+        WHERE t.deleted_at IS NULL
+        GROUP BY t.id
+        ORDER BY t.created_at DESC
+      `;
+
+      result = await pool.query(trackerQuery, [dateParam]);
+    } else {
+      // Today's view: read from finops_tracker for today's IST date
+      const trackerTodayQuery = `
+        SELECT
+          t.*,
+          COALESCE(
+            json_agg(
+              json_build_object(
+                'id', ft.subtask_id,
+                'name', ft.subtask_name,
+                'description', ft.description,
+                'sla_hours', ft.sla_hours,
+                'sla_minutes', ft.sla_minutes,
+                'order_position', ft.order_position,
+                'status', ft.status,
+                'started_at', ft.started_at,
+                'completed_at', ft.completed_at,
+                'due_at', NULL,
+                'start_time', ft.scheduled_time,
+                'scheduled_date', ft.subtask_scheduled_date,
+                'delay_reason', ft.delay_reason,
+                'delay_notes', ft.delay_notes,
+                'notification_sent_15min', ft.notification_sent_15min,
+                'notification_sent_start', ft.notification_sent_start,
+                'notification_sent_escalation', ft.notification_sent_escalation,
+                'assigned_to', ft.assigned_to,
+                'reporting_managers', ft.reporting_managers,
+                'escalation_managers', ft.escalation_managers
+              ) ORDER BY ft.order_position
+            ) FILTER (WHERE ft.subtask_id IS NOT NULL),
+            '[]'::json
+          ) as subtasks
+        FROM finops_tasks t
+        LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+        WHERE t.deleted_at IS NULL
+        GROUP BY t.id
+        ORDER BY t.created_at DESC
+      `;
+
+      result = await pool.query(trackerTodayQuery);
+    }
+
+    const tasks = result.rows.map((row) => ({
+      ...row,
+      subtasks: Array.isArray(row.subtasks) ? row.subtasks : [],
+    }));
 
     res.json(tasks);
   } catch (error) {
@@ -401,61 +456,131 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
           ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
       `);
 
-      // Update subtask
-      let updateQuery = "";
-      let queryParams = [];
+      // Instead of mutating finops_subtasks directly, update finops_tracker for today's date
 
+      // Ensure finops_tracker exists with expanded columns
+      await client.query(`
+      CREATE TABLE IF NOT EXISTS finops_tracker (
+        id SERIAL PRIMARY KEY,
+        run_date DATE NOT NULL,
+        period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
+        task_id INTEGER NOT NULL,
+        task_name TEXT,
+        subtask_id INTEGER NOT NULL DEFAULT 0,
+        subtask_name TEXT,
+        status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+        started_at TIMESTAMP NULL,
+        completed_at TIMESTAMP NULL,
+        scheduled_time TIME NULL,
+        subtask_scheduled_date DATE NULL,
+        description TEXT,
+        sla_hours INTEGER,
+        sla_minutes INTEGER,
+        order_position INTEGER,
+        delay_reason TEXT,
+        delay_notes TEXT,
+        notification_sent_15min BOOLEAN DEFAULT false,
+        notification_sent_start BOOLEAN DEFAULT false,
+        notification_sent_escalation BOOLEAN DEFAULT false,
+        auto_notify BOOLEAN DEFAULT true,
+        assigned_to TEXT,
+        reporting_managers TEXT,
+        escalation_managers TEXT,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(run_date, period, task_id, subtask_id)
+      );
+    `);
+
+      // Try to find existing tracker row for today
+      const trackerRes = await client.query(
+        `SELECT * FROM finops_tracker WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND subtask_id = $1 LIMIT 1`,
+        [subtaskId],
+      );
+
+      let trackerRow = trackerRes.rows[0];
+
+      if (!trackerRow) {
+        // Create tracker row from finops_subtasks metadata
+        const stRes = await client.query(
+          `SELECT st.*, t.duration, t.task_name, t.reporting_managers, t.escalation_managers, t.assigned_to FROM finops_subtasks st JOIN finops_tasks t ON st.task_id = t.id WHERE st.id = $1 LIMIT 1`,
+          [subtaskId],
+        );
+        if (stRes.rows.length === 0) {
+          await client.query("ROLLBACK");
+          return res.status(404).json({ error: "Subtask not found" });
+        }
+        const st = stRes.rows[0];
+
+        const insertRes = await client.query(
+          `
+        INSERT INTO finops_tracker (
+          run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
+        ) VALUES (
+          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
+        )
+        ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+        RETURNING *
+      `,
+          [
+            String(st.duration || "daily"),
+            st.task_id,
+            st.task_name || "",
+            st.id,
+            st.name || "",
+            status || st.status || "pending",
+            status === "in_progress" ? new Date() : null,
+            status === "completed" ? new Date() : null,
+            st.start_time || null,
+            st.description || null,
+            st.sla_hours || null,
+            st.sla_minutes || null,
+            st.order_position || null,
+            st.assigned_to || null,
+            st.reporting_managers || null,
+            st.escalation_managers || null,
+          ],
+        );
+
+        trackerRow = insertRes.rows[0];
+      }
+
+      // Build update fields for tracker
+      const updateFields: string[] = [
+        "status = $1",
+        "updated_at = CURRENT_TIMESTAMP",
+        "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+      ];
+      const params: any[] = [status, subtaskId];
+      let pIdx = 3;
+
+      if (status === "completed") {
+        updateFields.push("completed_at = CURRENT_TIMESTAMP");
+      }
       if (status === "in_progress") {
-        updateQuery = `
-          UPDATE finops_subtasks 
-          SET status = $1, started_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
-              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-          WHERE id = $2
-          RETURNING *
-        `;
-        queryParams = [status, subtaskId];
-      } else if (status === "completed") {
-        updateQuery = `
-          UPDATE finops_subtasks 
-          SET status = $1, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP,
-              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-          WHERE id = $2
-          RETURNING *
-        `;
-        queryParams = [status, subtaskId];
-      } else {
-        updateQuery = `
-          UPDATE finops_subtasks 
-          SET status = $1, updated_at = CURRENT_TIMESTAMP,
-              scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-          WHERE id = $2
-          RETURNING *
-        `;
-        queryParams = [status, subtaskId];
+        updateFields.push(
+          "started_at = COALESCE(started_at, CURRENT_TIMESTAMP)",
+        );
+      }
+      if (status === "delayed" && delay_reason) {
+        updateFields.push(`delay_reason = $${pIdx++}`);
+        updateFields.push(`delay_notes = $${pIdx++}`);
+        params.push(delay_reason, delay_reason || "");
       }
 
-      const result = await client.query(updateQuery, queryParams);
-
-      if (result.rows.length === 0) {
-        await client.query("ROLLBACK");
-        return res.status(404).json({ error: "Subtask not found" });
-      }
-
-      const subtask = result.rows[0];
+      const updateQuery = `UPDATE finops_tracker SET ${updateFields.join(", ")} WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND subtask_id = $2 RETURNING *`;
+      const updatedRes = await client.query(updateQuery, params);
+      const updated = updatedRes.rows[0];
 
       // Log activity
-      let activityDetails = `Subtask "${subtask.name}" status changed to ${status}`;
-      if (delay_reason && status === "overdue") {
+      let activityDetails = `Subtask "${updated.subtask_name || trackerRow.subtask_name}" status changed to ${status}`;
+      if (delay_reason && status === "overdue")
         activityDetails += `. Delay reason: ${delay_reason}`;
-      }
 
       await client.query(
-        `
-        INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-        VALUES ($1, $2, $3, $4, $5)
-      `,
+        `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details) VALUES ($1, $2, $3, $4, $5)`,
         [
-          subtask.task_id,
+          updated.task_id,
           subtaskId,
           "updated",
           user_name || "System",
@@ -463,59 +588,11 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         ],
       );
 
-      // Upsert finops_tracker for datewise tracking
-      await client.query(`
-        CREATE TABLE IF NOT EXISTS finops_tracker (
-          id SERIAL PRIMARY KEY,
-          run_date DATE NOT NULL,
-          period VARCHAR(20) NOT NULL CHECK (period IN ('daily','weekly','monthly')),
-          task_id INTEGER NOT NULL,
-          task_name TEXT,
-          subtask_id INTEGER NOT NULL DEFAULT 0,
-          subtask_name TEXT,
-          status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
-          started_at TIMESTAMP NULL,
-          completed_at TIMESTAMP NULL,
-          scheduled_time TIME NULL,
-          subtask_scheduled_date DATE NULL,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(run_date, period, task_id, subtask_id)
-        );
-      `);
-      const taskMeta = await client.query(
-        `SELECT task_name, duration, start_time FROM finops_tasks WHERE id = $1`,
-        [subtask.task_id],
-      );
-      const trow = taskMeta.rows[0] || {};
-      await client.query(
-        `
-        INSERT INTO finops_tracker (
-          run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
-        ) VALUES (
-          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-        )
-        ON CONFLICT (run_date, period, task_id, subtask_id)
-        DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
-        `,
-        [
-          String(trow.duration || "daily"),
-          subtask.task_id,
-          trow.task_name || "",
-          subtask.id,
-          subtask.name || "",
-          status,
-          status === "in_progress" ? new Date() : null,
-          status === "completed" ? new Date() : null,
-          trow.start_time || null,
-        ],
-      );
-
       // Trigger alerts if needed
       if (status === "overdue") {
-        // Existing DB alert
+        // Existing DB alert using tracker data
         await finopsAlertService.createSLABreachAlert(
-          subtask.task_id,
+          updated.task_id,
           subtaskId,
           delay_reason,
         );
@@ -523,22 +600,22 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         // External Pulse alert with managers and assignees
         const meta = await client.query(
           `SELECT task_name, client_name, assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
-          [subtask.task_id],
+          [updated.task_id],
         );
         const row = meta.rows[0] || {};
         const taskName = row.task_name || "Unknown Task";
         const clientName = row.client_name || "Unknown Client";
-        const title = `Please take immediate action on the overdue subtask ${subtask.name} under the task ${taskName} for the client ${clientName}.`;
+        const title = `Please take immediate action on the overdue subtask ${updated.subtask_name || "Unknown Subtask"} under the task ${taskName} for the client ${clientName}.`;
         const managerNames = Array.from(
           new Set([
             ...parseManagers(row.reporting_managers),
             ...parseManagers(row.escalation_managers),
-            ...parseManagers(row.assigned_to),
+            ...(row.assigned_to ? [String(row.assigned_to)] : []),
           ]),
         );
         const userIds = await getUserIdsFromNames(managerNames);
         await sendReplicaDownAlertOnce(
-          subtask.task_id,
+          updated.task_id,
           subtaskId,
           title,
           userIds,
@@ -546,7 +623,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       }
 
       await client.query("COMMIT");
-      res.json(subtask);
+      res.json(updated);
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;
@@ -1048,7 +1125,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
   )
     `);
 
-    // Find overdue subtasks that haven't been sent to Pulse yet
+    // Find overdue subtasks from finops_tracker (today's run_date) that haven't been sent to Pulse yet
     const overdue = await pool.query(
       `
       SELECT
@@ -1058,18 +1135,19 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
         t.assigned_to,
         t.reporting_managers,
         t.escalation_managers,
-        st.id as subtask_id,
-        st.name as subtask_name
-      FROM finops_subtasks st
-      JOIN finops_tasks t ON t.id = st.task_id
-      WHERE st.status = 'overdue'
+        ft.subtask_id,
+        ft.subtask_name
+      FROM finops_tracker ft
+      JOIN finops_tasks t ON t.id = ft.task_id
+      WHERE ft.status = 'overdue'
+        AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         AND t.is_active = true
         AND t.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM finops_external_alerts fea
-          WHERE fea.task_id = t.id AND fea.subtask_id = st.id AND fea.alert_key = 'replica_down_overdue'
+          WHERE fea.task_id = ft.task_id AND fea.subtask_id = ft.subtask_id AND fea.alert_key = 'replica_down_overdue'
         )
-      ORDER BY st.id DESC
+      ORDER BY ft.subtask_id DESC
       LIMIT 100
     `,
     );
@@ -1188,13 +1266,16 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
     `);
 
     // Fetch active tasks with subtasks
-    const tasksRes = await pool.query(`
+    const tasksRes = await pool.query(
+      `
       SELECT t.*, st.id as subtask_id, st.name as subtask_name, st.start_time
       FROM finops_tasks t
       LEFT JOIN finops_subtasks st ON t.id = st.task_id
-      WHERE t.is_active = true AND t.deleted_at IS NULL
+      WHERE t.is_active = true AND t.deleted_at IS NULL AND t.effective_from <= $1
       ORDER BY t.id, st.order_position
-    `);
+    `,
+      [runDate],
+    );
 
     let inserted = 0;
     for (const row of tasksRes.rows) {
