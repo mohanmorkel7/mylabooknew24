@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -68,12 +68,126 @@ export default function BusinessOfferingsDashboard() {
       )
     : (data as any[]) || [];
 
+  function parseNotesMeta(notes?: string | null): any {
+    if (!notes) return {};
+    try {
+      const obj = JSON.parse(notes);
+      return obj && typeof obj === "object" ? obj : {};
+    } catch {
+      return {};
+    }
+  }
+  function isDomesticByGeography(client?: any): boolean {
+    if (!client) return true;
+    const meta = parseNotesMeta(client.notes);
+    const geography: string | undefined = meta.geography || meta.client_geography;
+    if (!geography) return true;
+    return String(geography).toLowerCase() === "domestic";
+  }
+
   // Helper to get client for an offering
   const getClientForOffering = (offering: any) => {
     return (clients as any[]).find((c) => c.id === offering.client_id) || null;
   };
 
   const stats = { total: (data as any[]).length };
+
+  const salesSummary = useMemo(() => {
+    const domClientIds = new Set<number>();
+    const intlClientIds = new Set<number>();
+
+    const clientAgg: Record<
+      number,
+      {
+        client: any;
+        offerings: any[];
+        mrrLacs: number;
+        currArrUsdMn: number;
+        projArrUsdMn: number;
+        domestic: boolean;
+      }
+    > = {};
+
+    ((clients as any[]) || []).forEach((c: any) => {
+      const domestic = isDomesticByGeography(c);
+      if (domestic) domClientIds.add(c.id);
+      else intlClientIds.add(c.id);
+      clientAgg[c.id] = {
+        client: c,
+        offerings: [],
+        mrrLacs: 0,
+        currArrUsdMn: 0,
+        projArrUsdMn: 0,
+        domestic,
+      };
+    });
+
+    ((data as any[]) || []).forEach((o: any) => {
+      const client = getClientForOffering(o);
+      const clientId: number | undefined = client?.id;
+      const domestic = isDomesticByGeography(client);
+      if (clientId != null) {
+        if (!clientAgg[clientId]) {
+          clientAgg[clientId] = {
+            client,
+            offerings: [],
+            mrrLacs: 0,
+            currArrUsdMn: 0,
+            projArrUsdMn: 0,
+            domestic,
+          };
+          if (domestic) domClientIds.add(clientId);
+          else intlClientIds.add(clientId);
+        }
+        clientAgg[clientId].offerings.push(o);
+        clientAgg[clientId].mrrLacs += Number(o.potential_mrr_lacs || 0);
+        clientAgg[clientId].currArrUsdMn += Number(
+          o.current_potential_arr_usd_mn || 0,
+        );
+        clientAgg[clientId].projArrUsdMn += Number(
+          o.projected_potential_arr_usd_mn || 0,
+        );
+      }
+    });
+
+    const totals = {
+      domestic: {
+        clients: Array.from(domClientIds).length,
+        mrrLacs: 0,
+        currArrUsdMn: 0,
+        projArrUsdMn: 0,
+      },
+      international: {
+        clients: Array.from(intlClientIds).length,
+        mrrLacs: 0,
+        currArrUsdMn: 0,
+        projArrUsdMn: 0,
+      },
+      clientAgg,
+    };
+
+    Object.values(clientAgg).forEach((row) => {
+      if (row.domestic) {
+        totals.domestic.mrrLacs += row.mrrLacs;
+        totals.domestic.currArrUsdMn += row.currArrUsdMn;
+        totals.domestic.projArrUsdMn += row.projArrUsdMn;
+      } else {
+        totals.international.mrrLacs += row.mrrLacs;
+        totals.international.currArrUsdMn += row.currArrUsdMn;
+        totals.international.projArrUsdMn += row.projArrUsdMn;
+      }
+    });
+
+    const topClients = Object.values(clientAgg)
+      .sort((a, b) => {
+        const aScore = a.currArrUsdMn * 100 + a.mrrLacs;
+        const bScore = b.currArrUsdMn * 100 + b.mrrLacs;
+        return bScore - aScore;
+      })
+      .slice(0, 5);
+
+    return { totals, topClients };
+  }, [clients, data]);
 
   // Fetch steps for offerings to compute progress (lightweight, capped by React Query cache)
   const stepQueries = useQueries({
@@ -151,6 +265,62 @@ export default function BusinessOfferingsDashboard() {
     (f) => f.business_offering_id != null,
   );
 
+  function SeeList({ clients }: { clients: any[] }) {
+    const navigate = useNavigate();
+    const [open, setOpen] = useState(false);
+    return (
+      <div className="mt-3">
+        <button
+          className="text-sm text-blue-600 hover:underline"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? "Hide list" : "See list"}
+        </button>
+        {open && (
+          <div className="mt-3 space-y-2">
+            {clients.length === 0 && (
+              <div className="text-sm text-gray-500">No clients</div>
+            )}
+            {clients.map((row: any) => (
+              <div
+                key={row.client.id}
+                className="flex items-center justify-between p-3 border rounded-md bg-white"
+              >
+                <div className="min-w-0">
+                  <div className="font-medium truncate max-w-[220px]">
+                    {row.client.client_name}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    ₹ {row.mrrLacs.toFixed(2)} Lacs • {row.currArrUsdMn.toFixed(3)}
+                    Mn USD
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate(`/clients/${row.client.id}`)}
+                >
+                  View
+                </Button>
+              </div>
+            ))}
+            {Object.keys(salesSummary.totals.clientAgg).length > 5 && (
+              <div className="pt-1">
+                <Button
+                  variant="link"
+                  className="p-0 h-auto"
+                  onClick={() => navigate("/sales/clients")}
+                >
+                  Show more
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -183,7 +353,9 @@ export default function BusinessOfferingsDashboard() {
             <CardDescription>India-based clients</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold">0</div>
+            <div className="text-3xl font-semibold">
+              {salesSummary.totals.domestic.clients}
+            </div>
           </CardContent>
         </Card>
         <Card>
@@ -192,10 +364,68 @@ export default function BusinessOfferingsDashboard() {
             <CardDescription>Non-India clients</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold">0</div>
+            <div className="text-3xl font-semibold">
+              {salesSummary.totals.international.clients}
+            </div>
           </CardContent>
         </Card>
       </div>
+
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>Sales Summary</CardTitle>
+          <CardDescription>Domestic vs International</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-hidden rounded-md border">
+            <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
+              <div className="px-3 py-2">Label</div>
+              <div className="px-3 py-2 text-center">Domestic</div>
+              <div className="px-3 py-2 text-center">International</div>
+            </div>
+            <div className="divide-y text-sm">
+              <div className="grid grid-cols-3">
+                <div className="px-3 py-2">No. of Clients</div>
+                <div className="px-3 py-2 text-center font-semibold">
+                  {salesSummary.totals.domestic.clients}
+                </div>
+                <div className="px-3 py-2 text-center font-semibold">
+                  {salesSummary.totals.international.clients}
+                </div>
+              </div>
+              <div className="grid grid-cols-3">
+                <div className="px-3 py-2">Current MRR</div>
+                <div className="px-3 py-2 text-center">
+                  ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
+                </div>
+                <div className="px-3 py-2 text-center">
+                  ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
+                </div>
+              </div>
+              <div className="grid grid-cols-3">
+                <div className="px-3 py-2">Current ARR</div>
+                <div className="px-3 py-2 text-center">
+                  {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
+                </div>
+                <div className="px-3 py-2 text-center">
+                  {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+                </div>
+              </div>
+              <div className="grid grid-cols-3">
+                <div className="px-3 py-2">Potential ARR</div>
+                <div className="px-3 py-2 text-center">
+                  {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+                </div>
+                <div className="px-3 py-2 text-center">
+                  {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <SeeList clients={salesSummary.topClients} />
+        </CardContent>
+      </Card>
 
       {/* Products wise accordion */}
       <Card className="mt-6">
