@@ -1155,26 +1155,6 @@ router.patch(
           delay_notes,
         );
 
-        // Enhanced activity logging
-        let logDetails = `Subtask "${subtaskName}" status changed from "${oldStatus}" to "${status}"`;
-        if (status === "delayed" && delay_reason) {
-          logDetails += ` (Reason: ${delay_reason})`;
-        }
-        await logActivity(
-          taskId,
-          subtaskId,
-          "status_changed",
-          userName,
-          logDetails,
-        );
-
-        // Send notifications based on status
-        await handleStatusChangeNotifications(
-          subtaskData,
-          status,
-          delay_reason,
-          delay_notes,
-        );
 
         // External alert: trigger only when marked overdue
         if (status === "overdue") {
@@ -1194,9 +1174,9 @@ router.patch(
 
             const managerNames = Array.from(
               new Set([
-                ...parseManagerNames(subtaskData.reporting_managers),
-                ...parseManagerNames(subtaskData.escalation_managers),
-                ...parseManagerNames(subtaskData.assigned_to),
+                ...parseManagerNames(notifyData.reporting_managers),
+                ...parseManagerNames(notifyData.escalation_managers),
+                ...parseManagerNames(notifyData.assigned_to),
               ]),
             );
             const userIds = await getUserIdsFromNames(managerNames);
