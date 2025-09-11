@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "@/lib/auth-context";
 if (typeof window !== "undefined" && !(window as any).__originalFetch) {
   (window as any).__originalFetch = window.fetch.bind(window);
   console.log(
-    "🔒 Original fetch preserved at application startup for FullStory protection",
+    "���� Original fetch preserved at application startup for FullStory protection",
   );
 }
 
@@ -134,6 +134,7 @@ import BusinessOfferings from "@/pages/BusinessOfferings";
 import BusinessOfferingsDashboard from "@/pages/BusinessOfferingsDashboard";
 import BusinessOfferingsEdit from "@/pages/BusinessOfferingsEdit";
 import BusinessOfferingsDetails from "@/pages/BusinessOfferingsDetails";
+import SalesClientList from "@/pages/SalesClientList";
 import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import Connections from "@/pages/Connections";
 import ConnectionNew from "@/pages/ConnectionNew";
