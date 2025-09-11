@@ -134,6 +134,7 @@ import BusinessOfferings from "@/pages/BusinessOfferings";
 import BusinessOfferingsDashboard from "@/pages/BusinessOfferingsDashboard";
 import BusinessOfferingsEdit from "@/pages/BusinessOfferingsEdit";
 import BusinessOfferingsDetails from "@/pages/BusinessOfferingsDetails";
+import SalesClientList from "@/pages/SalesClientList";
 import FundRaiseEdit from "@/pages/FundRaiseEdit";
 import Connections from "@/pages/Connections";
 import ConnectionNew from "@/pages/ConnectionNew";
@@ -744,6 +745,17 @@ function AppRoutes() {
           <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
             <DashboardLayout>
               <BusinessOfferingsDetails />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/sales/clients"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "sales", "product"]}>
+            <DashboardLayout>
+              <SalesClientList />
             </DashboardLayout>
           </ProtectedRoute>
         }
