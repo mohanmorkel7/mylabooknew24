@@ -100,14 +100,7 @@ export default function BusinessOfferingsDashboard() {
 
   const stats = { total: (data as any[]).length };
 
-  const [detailKey, setDetailKey] = useState<
-    "clients" | "mrr" | "curr_arr" | "pot_arr" | null
-  >(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const openDetails = (key: "clients" | "mrr" | "curr_arr" | "pot_arr") => {
-    setDetailKey(key);
-    setSheetOpen(true);
-  };
 
   const salesSummary = useMemo(() => {
     const domClientIds = new Set<number>();
@@ -400,66 +393,48 @@ export default function BusinessOfferingsDashboard() {
               <div className="px-3 py-2 text-center">Total</div>
             </div>
             <div className="divide-y text-sm">
-              <div className="flex items-center hover:bg-gray-50">
+              <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">No. of Clients</div>
                 <div className="px-3 py-2 w-28 text-center font-semibold">
                   {salesSummary.totals.domestic.clients +
                     salesSummary.totals.international.clients}
                 </div>
-                <button
-                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
-                  aria-label="Expand clients"
-                  onClick={() => openDetails("clients")}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
 
-              <div className="flex items-center hover:bg-gray-50">
+              <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">Current MRR</div>
                 <div className="px-3 py-2 w-28 text-center">
                   ₹ {(salesSummary.totals.domestic.mrrLacs +
                     salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs
                 </div>
-                <button
-                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
-                  aria-label="Expand current MRR"
-                  onClick={() => openDetails("mrr")}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
 
-              <div className="flex items-center hover:bg-gray-50">
+              <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">Current ARR</div>
                 <div className="px-3 py-2 w-28 text-center">
                   {(salesSummary.totals.domestic.currArrUsdMn +
                     salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn USD
                 </div>
-                <button
-                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
-                  aria-label="Expand current ARR"
-                  onClick={() => openDetails("curr_arr")}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
 
-              <div className="flex items-center hover:bg-gray-50">
+              <div className="flex items-center">
                 <div className="px-3 py-2 flex-1">Potential ARR</div>
                 <div className="px-3 py-2 w-28 text-center">
                   {(salesSummary.totals.domestic.projArrUsdMn +
                     salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn USD
                 </div>
-                <button
-                  className="px-3 py-2 text-blue-600 hover:text-blue-800"
-                  aria-label="Expand potential ARR"
-                  onClick={() => openDetails("pot_arr")}
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
               </div>
             </div>
+          </div>
+
+          <div className="flex justify-center mt-3">
+            <button
+              className="inline-flex items-center justify-center w-8 h-8 rounded-full border hover:bg-accent"
+              aria-label="Expand details"
+              onClick={() => setSheetOpen(true)}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
 
           <SeeList clients={salesSummary.topClients} />
@@ -467,55 +442,52 @@ export default function BusinessOfferingsDashboard() {
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetContent side="right" className="sm:max-w-lg w-full">
               <SheetHeader>
-                <SheetTitle>
-                  {detailKey === "clients"
-                    ? "No. of Clients"
-                    : detailKey === "mrr"
-                      ? "Current MRR"
-                      : detailKey === "curr_arr"
-                        ? "Current ARR"
-                        : detailKey === "pot_arr"
-                          ? "Potential ARR"
-                          : "Details"}
-                </SheetTitle>
-                <SheetDescription>
-                  Domestic vs International
-                </SheetDescription>
+                <SheetTitle>Sales Summary Details</SheetTitle>
+                <SheetDescription>Domestic vs International</SheetDescription>
               </SheetHeader>
 
               <div className="mt-4 overflow-hidden rounded-md border">
-                <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
-                  <div className="px-3 py-2">Domestic</div>
-                  <div className="px-3 py-2">International</div>
+                <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
+                  <div className="px-3 py-2">Label</div>
+                  <div className="px-3 py-2 text-center">Domestic</div>
+                  <div className="px-3 py-2 text-center">International</div>
                 </div>
-                <div className="grid grid-cols-2 text-sm">
-                  <div className="px-3 py-3 border-r">
-                    {detailKey === "clients" && (
-                      <div className="font-semibold">{salesSummary.totals.domestic.clients}</div>
-                    )}
-                    {detailKey === "mrr" && (
-                      <div>₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs</div>
-                    )}
-                    {detailKey === "curr_arr" && (
-                      <div>{salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD</div>
-                    )}
-                    {detailKey === "pot_arr" && (
-                      <div>{salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD</div>
-                    )}
+                <div className="text-sm divide-y">
+                  <div className="grid grid-cols-3">
+                    <div className="px-3 py-2">No. of Clients</div>
+                    <div className="px-3 py-2 text-center font-semibold">
+                      {salesSummary.totals.domestic.clients}
+                    </div>
+                    <div className="px-3 py-2 text-center font-semibold">
+                      {salesSummary.totals.international.clients}
+                    </div>
                   </div>
-                  <div className="px-3 py-3">
-                    {detailKey === "clients" && (
-                      <div className="font-semibold">{salesSummary.totals.international.clients}</div>
-                    )}
-                    {detailKey === "mrr" && (
-                      <div>₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs</div>
-                    )}
-                    {detailKey === "curr_arr" && (
-                      <div>{salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD</div>
-                    )}
-                    {detailKey === "pot_arr" && (
-                      <div>{salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD</div>
-                    )}
+                  <div className="grid grid-cols-3">
+                    <div className="px-3 py-2">Current MRR</div>
+                    <div className="px-3 py-2 text-center">
+                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                    <div className="px-3 py-2 text-center">
+                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <div className="px-3 py-2">Current ARR</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <div className="px-3 py-2">Potential ARR</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
+                    </div>
                   </div>
                 </div>
               </div>
