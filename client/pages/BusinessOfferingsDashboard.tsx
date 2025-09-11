@@ -530,25 +530,30 @@ export default function BusinessOfferingsDashboard() {
                     ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
                   </div>
                   <div className="px-3 py-2 text-center">
-                    ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
+                    ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
+                    Lacs
                   </div>
                 </div>
                 <div className="grid grid-cols-3">
                   <div className="px-3 py-2">Current ARR</div>
                   <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
+                    {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn
+                    USD
                   </div>
                   <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+                    {salesSummary.totals.international.currArrUsdMn.toFixed(3)}{" "}
+                    Mn USD
                   </div>
                 </div>
                 <div className="grid grid-cols-3">
                   <div className="px-3 py-2">Potential ARR</div>
                   <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+                    {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn
+                    USD
                   </div>
                   <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
+                    {salesSummary.totals.international.projArrUsdMn.toFixed(3)}{" "}
+                    Mn USD
                   </div>
                 </div>
               </div>
@@ -602,9 +607,7 @@ export default function BusinessOfferingsDashboard() {
                     );
                   }
                   if ((groupsMap[name].weight ?? 0) === 0) {
-                    groupsMap[name].weight = Number(
-                      s.probability_percent ?? 0,
-                    );
+                    groupsMap[name].weight = Number(s.probability_percent ?? 0);
                   }
                 }
               });
@@ -713,7 +716,9 @@ export default function BusinessOfferingsDashboard() {
                           </div>
                           <Badge variant="secondary">{g.items.length}</Badge>
                         </div>
-                        <div className="mt-2 text-xs text-gray-600">Weight: {percent}%</div>
+                        <div className="mt-2 text-xs text-gray-600">
+                          Weight: {percent}%
+                        </div>
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                           <div className="p-2 bg-gray-50 rounded">
                             <div className="text-[10px] text-gray-500">MRR</div>
