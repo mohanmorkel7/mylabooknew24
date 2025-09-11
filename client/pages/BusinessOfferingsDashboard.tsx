@@ -92,6 +92,10 @@ export default function BusinessOfferingsDashboard() {
 
   const stats = { total: (data as any[]).length };
 
+  const [openRows, setOpenRows] = useState<Record<string, boolean>>({});
+  const toggleRow = (key: string) =>
+    setOpenRows((p) => ({ ...p, [key]: !p[key] }));
+
   const salesSummary = useMemo(() => {
     const domClientIds = new Set<number>();
     const intlClientIds = new Set<number>();
@@ -371,55 +375,137 @@ export default function BusinessOfferingsDashboard() {
         </Card>
       </div>
 
-      <Card className="mb-6">
+      <Card className="mb-6 w-full max-w-md">
         <CardHeader>
           <CardTitle>Sales Summary</CardTitle>
-          <CardDescription>Domestic vs International</CardDescription>
+          <CardDescription>Totals with details on tap</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-md border">
-            <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
+            <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
               <div className="px-3 py-2">Label</div>
-              <div className="px-3 py-2 text-center">Domestic</div>
-              <div className="px-3 py-2 text-center">International</div>
+              <div className="px-3 py-2 text-center">Total</div>
             </div>
             <div className="divide-y text-sm">
-              <div className="grid grid-cols-3">
-                <div className="px-3 py-2">No. of Clients</div>
-                <div className="px-3 py-2 text-center font-semibold">
-                  {salesSummary.totals.domestic.clients}
+              {/* Clients Row */}
+              <button
+                className="w-full text-left"
+                onClick={() => toggleRow("clients")}
+              >
+                <div className="grid grid-cols-2 hover:bg-gray-50">
+                  <div className="px-3 py-2">No. of Clients</div>
+                  <div className="px-3 py-2 text-center font-semibold">
+                    {salesSummary.totals.domestic.clients +
+                      salesSummary.totals.international.clients}
+                  </div>
                 </div>
-                <div className="px-3 py-2 text-center font-semibold">
-                  {salesSummary.totals.international.clients}
+              </button>
+              {openRows["clients"] && (
+                <div className="bg-gray-50 border-t text-xs">
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">Domestic</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.domestic.clients}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">International</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.international.clients}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-3">
-                <div className="px-3 py-2">Current MRR</div>
-                <div className="px-3 py-2 text-center">
-                  ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
+              )}
+
+              {/* Current MRR Row */}
+              <button
+                className="w-full text-left"
+                onClick={() => toggleRow("mrr")}
+              >
+                <div className="grid grid-cols-2 hover:bg-gray-50">
+                  <div className="px-3 py-2">Current MRR</div>
+                  <div className="px-3 py-2 text-center">
+                    ₹ {(salesSummary.totals.domestic.mrrLacs +
+                      salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs
+                  </div>
                 </div>
-                <div className="px-3 py-2 text-center">
-                  ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
+              </button>
+              {openRows["mrr"] && (
+                <div className="bg-gray-50 border-t text-xs">
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">Domestic</div>
+                    <div className="px-3 py-2 text-center">
+                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">International</div>
+                    <div className="px-3 py-2 text-center">
+                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-3">
-                <div className="px-3 py-2">Current ARR</div>
-                <div className="px-3 py-2 text-center">
-                  {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
+              )}
+
+              {/* Current ARR Row */}
+              <button
+                className="w-full text-left"
+                onClick={() => toggleRow("curr_arr")}
+              >
+                <div className="grid grid-cols-2 hover:bg-gray-50">
+                  <div className="px-3 py-2">Current ARR</div>
+                  <div className="px-3 py-2 text-center">
+                    {(salesSummary.totals.domestic.currArrUsdMn +
+                      salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn USD
+                  </div>
                 </div>
-                <div className="px-3 py-2 text-center">
-                  {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+              </button>
+              {openRows["curr_arr"] && (
+                <div className="bg-gray-50 border-t text-xs">
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">Domestic</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">International</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-3">
-                <div className="px-3 py-2">Potential ARR</div>
-                <div className="px-3 py-2 text-center">
-                  {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+              )}
+
+              {/* Potential ARR Row */}
+              <button
+                className="w-full text-left"
+                onClick={() => toggleRow("pot_arr")}
+              >
+                <div className="grid grid-cols-2 hover:bg-gray-50">
+                  <div className="px-3 py-2">Potential ARR</div>
+                  <div className="px-3 py-2 text-center">
+                    {(salesSummary.totals.domestic.projArrUsdMn +
+                      salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn USD
+                  </div>
                 </div>
-                <div className="px-3 py-2 text-center">
-                  {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
+              </button>
+              {openRows["pot_arr"] && (
+                <div className="bg-gray-50 border-t text-xs">
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">Domestic</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2">
+                    <div className="px-3 py-2">International</div>
+                    <div className="px-3 py-2 text-center">
+                      {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn USD
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
