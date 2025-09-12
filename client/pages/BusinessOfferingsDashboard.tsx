@@ -760,60 +760,77 @@ export default function BusinessOfferingsDashboard() {
                       cumulativeWeights[g.label] ??
                       Math.round(Number(g.weight ?? 0));
                     {
-                    // determine color classes based on cumulative percent
-                    const pct = cumulativePercent;
-                    let borderClass = "border-gray-200";
-                    let percentClass = "text-gray-800";
-                    if (pct <= 20) {
-                      borderClass = "border-red-200";
-                      percentClass = "text-red-600";
-                    } else if (pct <= 40) {
-                      borderClass = "border-orange-200";
-                      percentClass = "text-orange-600";
-                    } else if (pct <= 60) {
-                      borderClass = "border-yellow-200";
-                      percentClass = "text-yellow-600";
-                    } else if (pct <= 80) {
-                      borderClass = "border-blue-200";
-                      percentClass = "text-blue-600";
-                    } else {
-                      borderClass = "border-green-200";
-                      percentClass = "text-green-700";
+                      // determine color classes based on cumulative percent
+                      const pct = cumulativePercent;
+                      let borderClass = "border-gray-200";
+                      let percentClass = "text-gray-800";
+                      if (pct <= 20) {
+                        borderClass = "border-red-200";
+                        percentClass = "text-red-600";
+                      } else if (pct <= 40) {
+                        borderClass = "border-orange-200";
+                        percentClass = "text-orange-600";
+                      } else if (pct <= 60) {
+                        borderClass = "border-yellow-200";
+                        percentClass = "text-yellow-600";
+                      } else if (pct <= 80) {
+                        borderClass = "border-blue-200";
+                        percentClass = "text-blue-600";
+                      } else {
+                        borderClass = "border-green-200";
+                        percentClass = "text-green-700";
+                      }
+
+                      return (
+                        <button
+                          key={g.label}
+                          className={`p-4 rounded-lg bg-white text-left hover:shadow border ${borderClass}`}
+                          onClick={() => openStageDialog(g)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div
+                              className="font-medium pr-2 break-words"
+                              title={`${g.label} - ${cumulativePercent}%`}
+                            >
+                              <span className="truncate">{g.label}</span>
+                              <span
+                                className={`ml-2 text-xs font-medium ${percentClass}`}
+                              >
+                                {cumulativePercent}%
+                              </span>
+                            </div>
+                            <Badge variant="secondary">{g.items.length}</Badge>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                            <div className="p-2 bg-gray-50 rounded text-left">
+                              <div className="text-[10px] text-gray-500">
+                                MRR
+                              </div>
+                              <div className="text-sm font-medium">
+                                ₹ {g.mrrLacs.toFixed(2)} L
+                              </div>
+                            </div>
+                            <div className="p-2 bg-gray-50 rounded text-left">
+                              <div className="text-[10px] text-gray-500">
+                                ARR
+                              </div>
+                              <div className="text-sm font-medium">
+                                $ {g.currArrUsdMn.toFixed(3)} Mn
+                              </div>
+                            </div>
+                            <div className="p-2 bg-gray-50 rounded text-left">
+                              <div className="text-[10px] text-gray-500">
+                                Potential
+                              </div>
+                              <div className="text-sm font-medium">
+                                $ {g.projArrUsdMn.toFixed(3)} Mn
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
                     }
-
-                    return (
-                      <button
-                        key={g.label}
-                        className={`p-4 rounded-lg bg-white text-left hover:shadow border ${borderClass}`}
-                        onClick={() => openStageDialog(g)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="font-medium pr-2 break-words" title={`${g.label} - ${cumulativePercent}%`}>
-                            <span className="truncate">{g.label}</span>
-                            <span className={`ml-2 text-xs font-medium ${percentClass}`}>
-                              {cumulativePercent}%
-                            </span>
-                          </div>
-                          <Badge variant="secondary">{g.items.length}</Badge>
-                        </div>
-
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                          <div className="p-2 bg-gray-50 rounded text-left">
-                            <div className="text-[10px] text-gray-500">MRR</div>
-                            <div className="text-sm font-medium">₹ {g.mrrLacs.toFixed(2)} L</div>
-                          </div>
-                          <div className="p-2 bg-gray-50 rounded text-left">
-                            <div className="text-[10px] text-gray-500">ARR</div>
-                            <div className="text-sm font-medium">$ {g.currArrUsdMn.toFixed(3)} Mn</div>
-                          </div>
-                          <div className="p-2 bg-gray-50 rounded text-left">
-                            <div className="text-[10px] text-gray-500">Potential</div>
-                            <div className="text-sm font-medium">$ {g.projArrUsdMn.toFixed(3)} Mn</div>
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  }
                   })}
                 </div>
 
