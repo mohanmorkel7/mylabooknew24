@@ -710,7 +710,9 @@ export default function BusinessOfferingsDashboard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {groups.map((g) => {
-                    const cumulativePercent = cumulativeWeights[g.label] ?? Math.round(Number(g.weight ?? 0));
+                    const cumulativePercent =
+                      cumulativeWeights[g.label] ??
+                      Math.round(Number(g.weight ?? 0));
                     return (
                       <button
                         key={g.label}
@@ -724,7 +726,9 @@ export default function BusinessOfferingsDashboard() {
                           >
                             {g.label} - {cumulativePercent}%
                           </div>
-                          <div className="text-3xl font-bold text-gray-900">{g.items.length}</div>
+                          <div className="text-3xl font-bold text-gray-900">
+                            {g.items.length}
+                          </div>
                         </div>
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                           <div className="p-2 bg-gray-50 rounded">
