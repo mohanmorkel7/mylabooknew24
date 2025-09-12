@@ -1291,7 +1291,7 @@ export default function FundRaiseDashboard() {
                   <div className="p-4 border rounded-lg bg-white">
                     <div className="flex items-center justify-between">
                       <div className="text-sm font-medium">Committed - 90%</div>
-                      <div className="text-sm font-medium text-orange-700">
+                      <div className="text-sm font-medium text-purple-700">
                         Total: ${totalCommitted90.toFixed(3)} Mn
                       </div>
                     </div>
