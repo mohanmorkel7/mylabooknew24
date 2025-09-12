@@ -442,7 +442,7 @@ export default function BusinessOfferingsDashboard() {
       <Card className="mb-6 w-full max-w-md">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Sales Summary - Step Pipeline</CardTitle>
+            <CardTitle>sales summary - overall pipeline</CardTitle>
             <CardDescription>Totals with details on tap</CardDescription>
           </div>
           <Button
@@ -455,55 +455,57 @@ export default function BusinessOfferingsDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="relative overflow-hidden rounded-md border">
-            <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
-              <div className="px-3 py-2">Label</div>
-              <div className="px-3 py-2 text-center">Total</div>
+          {!summaryExpanded && (
+            <div className="relative overflow-hidden rounded-md border">
+              <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
+                <div className="px-3 py-2">Label</div>
+                <div className="px-3 py-2 text-center">Total</div>
+              </div>
+              <div className="divide-y text-sm">
+                <div className="flex items-center">
+                  <div className="px-3 py-2 flex-1">No. of Clients</div>
+                  <div className="px-3 py-2 w-28 text-center font-semibold">
+                    {salesSummary.totals.domestic.clients +
+                      salesSummary.totals.international.clients}
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="px-3 py-2 flex-1">Current MRR</div>
+                  <div className="px-3 py-2 w-28 text-center">
+                    ₹{" "}
+                    {(
+                      salesSummary.totals.domestic.mrrLacs +
+                      salesSummary.totals.international.mrrLacs
+                    ).toFixed(2)}{" "}
+                    Lacs
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="px-3 py-2 flex-1">Current ARR</div>
+                  <div className="px-3 py-2 w-28 text-center">
+                    {(
+                      salesSummary.totals.domestic.currArrUsdMn +
+                      salesSummary.totals.international.currArrUsdMn
+                    ).toFixed(3)}{" "}
+                    Mn USD
+                  </div>
+                </div>
+
+                <div className="flex items-center">
+                  <div className="px-3 py-2 flex-1">Potential ARR</div>
+                  <div className="px-3 py-2 w-28 text-center">
+                    {(
+                      salesSummary.totals.domestic.projArrUsdMn +
+                      salesSummary.totals.international.projArrUsdMn
+                    ).toFixed(3)}{" "}
+                    Mn USD
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="divide-y text-sm">
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">No. of Clients</div>
-                <div className="px-3 py-2 w-28 text-center font-semibold">
-                  {salesSummary.totals.domestic.clients +
-                    salesSummary.totals.international.clients}
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">Current MRR</div>
-                <div className="px-3 py-2 w-28 text-center">
-                  ₹{" "}
-                  {(
-                    salesSummary.totals.domestic.mrrLacs +
-                    salesSummary.totals.international.mrrLacs
-                  ).toFixed(2)}{" "}
-                  Lacs
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">Current ARR</div>
-                <div className="px-3 py-2 w-28 text-center">
-                  {(
-                    salesSummary.totals.domestic.currArrUsdMn +
-                    salesSummary.totals.international.currArrUsdMn
-                  ).toFixed(3)}{" "}
-                  Mn USD
-                </div>
-              </div>
-
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">Potential ARR</div>
-                <div className="px-3 py-2 w-28 text-center">
-                  {(
-                    salesSummary.totals.domestic.projArrUsdMn +
-                    salesSummary.totals.international.projArrUsdMn
-                  ).toFixed(3)}{" "}
-                  Mn USD
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
 
           <SeeList />
 
@@ -651,8 +653,16 @@ export default function BusinessOfferingsDashboard() {
 
             const totalWithSteps = (data as any[]).length || 1;
             const groups = Object.values(groupsMap).sort(
-              (a, b) => (a.order ?? 999) - (b.order ?? 999),
+              (a, b) => (b.order ?? 0) - (a.order ?? 0),
             );
+
+            // compute cumulative weights (running sum) so each card shows cumulative percent
+            const cumulativeWeights: Record<string, number> = {};
+            let running = 0;
+            groups.forEach((gg) => {
+              running += Number(gg.weight ?? 0) || 0;
+              cumulativeWeights[gg.label] = Math.round(running);
+            });
             if (groups.length === 0)
               return <div className="text-gray-600">No pipeline data</div>;
 
@@ -700,7 +710,7 @@ export default function BusinessOfferingsDashboard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {groups.map((g) => {
-                    const percent = Math.round(Number(g.weight ?? 0));
+                    const cumulativePercent = cumulativeWeights[g.label] ?? Math.round(Number(g.weight ?? 0));
                     return (
                       <button
                         key={g.label}
@@ -712,12 +722,9 @@ export default function BusinessOfferingsDashboard() {
                             className="font-medium truncate pr-2"
                             title={g.label}
                           >
-                            {g.label}
+                            {g.label} - {cumulativePercent}%
                           </div>
-                          <Badge variant="secondary">{g.items.length}</Badge>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-600">
-                          Weight: {percent}%
+                          <div className="text-3xl font-bold text-gray-900">{g.items.length}</div>
                         </div>
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                           <div className="p-2 bg-gray-50 rounded">
