@@ -775,13 +775,13 @@ export default function BusinessOfferingsDashboard() {
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                           <div className="p-2 bg-gray-50 rounded text-left">
                             <div className="text-[10px] text-gray-500">MRR</div>
-                            <div className="text-xl font-semibold">
+                            <div className="text-sm font-medium">
                               ₹ {g.mrrLacs.toFixed(2)} L
                             </div>
                           </div>
                           <div className="p-2 bg-gray-50 rounded text-left">
                             <div className="text-[10px] text-gray-500">ARR</div>
-                            <div className="text-xl font-semibold">
+                            <div className="text-sm font-medium">
                               $ {g.currArrUsdMn.toFixed(3)} Mn
                             </div>
                           </div>
@@ -789,7 +789,7 @@ export default function BusinessOfferingsDashboard() {
                             <div className="text-[10px] text-gray-500">
                               Potential
                             </div>
-                            <div className="text-xl font-semibold">
+                            <div className="text-sm font-medium">
                               $ {g.projArrUsdMn.toFixed(3)} Mn
                             </div>
                           </div>
