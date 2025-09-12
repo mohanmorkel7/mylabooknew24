@@ -1297,10 +1297,8 @@ export default function FundRaiseDashboard() {
                             c.id ? navigate(`/fundraise/${c.id}`) : null
                           }
                         >
-                          <div className="text-sm">{c.name}</div>
-                          <div className="text-sm font-medium">
-                            ${c.fund.toFixed(3)} Mn
-                          </div>
+                          <div className="text-sm text-blue-700 underline decoration-dotted">{c.name}</div>
+                          <div className="text-sm font-medium">${c.fund.toFixed(3)} Mn</div>
                         </div>
                       ))}
                       {committed90.length === 0 && (
