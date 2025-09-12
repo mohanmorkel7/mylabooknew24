@@ -1324,7 +1324,7 @@ export default function FundRaiseDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 border rounded-lg bg-white md:col-span-2">
                     <div className="text-sm font-medium mb-3">
-                      Progress Buckets
+                      Progress Buckets WIP
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                       {["0-20", "21-40", "41-70"].map((k) => (
@@ -1333,16 +1333,7 @@ export default function FundRaiseDashboard() {
                             <div className="text-sm font-medium">
                               {buckets[k]?.title}
                             </div>
-                            <div className="text-sm font-medium text-gray-700">
-                              Total: $
-                              {(buckets[k]?.items || [])
-                                .reduce(
-                                  (s: number, it: any) => s + (it.fund || 0),
-                                  0,
-                                )
-                                .toFixed(3)}{" "}
-                              Mn
-                            </div>
+                            <div className="text-sm font-medium text-gray-700 whitespace-nowrap">Total: ${(buckets[k]?.items || []).reduce((s: number, it: any) => s + (it.fund || 0), 0).toFixed(3)} Mn</div>
                           </div>
                           <div className="space-y-2 max-h-40 overflow-y-auto">
                             {(buckets[k]?.items || []).map((it) => (
