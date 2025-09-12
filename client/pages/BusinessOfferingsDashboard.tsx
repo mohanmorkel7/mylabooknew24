@@ -455,8 +455,14 @@ export default function BusinessOfferingsDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
-<div className="relative overflow-hidden rounded-md border">
-            <div className={"grid " + (summaryExpanded ? "grid-cols-4" : "grid-cols-2") + " text-xs font-medium bg-gray-50 border-b"}>
+          <div className="relative overflow-hidden rounded-md border">
+            <div
+              className={
+                "grid " +
+                (summaryExpanded ? "grid-cols-4" : "grid-cols-2") +
+                " text-xs font-medium bg-gray-50 border-b"
+              }
+            >
               <div className="px-3 py-2">Label</div>
               <div className="px-3 py-2 text-center">Total</div>
               {summaryExpanded && (
@@ -468,46 +474,129 @@ export default function BusinessOfferingsDashboard() {
             </div>
 
             <div className="divide-y text-sm">
-              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
                 <div className="px-3 py-2">No. of Clients</div>
-                <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.domestic.clients + salesSummary.totals.international.clients}</div>
+                <div className="px-3 py-2 text-center font-semibold">
+                  {salesSummary.totals.domestic.clients +
+                    salesSummary.totals.international.clients}
+                </div>
                 {summaryExpanded && (
                   <>
-                    <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.domestic.clients}</div>
-                    <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.international.clients}</div>
+                    <div className="px-3 py-2 text-center font-semibold">
+                      {salesSummary.totals.domestic.clients}
+                    </div>
+                    <div className="px-3 py-2 text-center font-semibold">
+                      {salesSummary.totals.international.clients}
+                    </div>
                   </>
                 )}
               </div>
 
-              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
                 <div className="px-3 py-2">Current MRR</div>
-                <div className="px-3 py-2 text-center font-medium">₹ {(salesSummary.totals.domestic.mrrLacs + salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs</div>
+                <div className="px-3 py-2 text-center font-medium">
+                  ₹{" "}
+                  {(
+                    salesSummary.totals.domestic.mrrLacs +
+                    salesSummary.totals.international.mrrLacs
+                  ).toFixed(2)}{" "}
+                  Lacs
+                </div>
                 {summaryExpanded && (
                   <>
-                    <div className="px-3 py-2 text-center font-medium">₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs</div>
-                    <div className="px-3 py-2 text-center font-medium">₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs</div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
+                      Lacs
+                    </div>
                   </>
                 )}
               </div>
 
-              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
                 <div className="px-3 py-2">Current ARR</div>
-                <div className="px-3 py-2 text-center font-medium">$ {(salesSummary.totals.domestic.currArrUsdMn + salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn</div>
+                <div className="px-3 py-2 text-center font-medium">
+                  ${" "}
+                  {(
+                    salesSummary.totals.domestic.currArrUsdMn +
+                    salesSummary.totals.international.currArrUsdMn
+                  ).toFixed(3)}{" "}
+                  Mn
+                </div>
                 {summaryExpanded && (
                   <>
-                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn</div>
-                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn</div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      $ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)}{" "}
+                      Mn
+                    </div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ${" "}
+                      {salesSummary.totals.international.currArrUsdMn.toFixed(
+                        3,
+                      )}{" "}
+                      Mn
+                    </div>
                   </>
                 )}
               </div>
 
-              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
                 <div className="px-3 py-2">Potential ARR</div>
-                <div className="px-3 py-2 text-center font-medium">$ {(salesSummary.totals.domestic.projArrUsdMn + salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn</div>
+                <div className="px-3 py-2 text-center font-medium">
+                  ${" "}
+                  {(
+                    salesSummary.totals.domestic.projArrUsdMn +
+                    salesSummary.totals.international.projArrUsdMn
+                  ).toFixed(3)}{" "}
+                  Mn
+                </div>
                 {summaryExpanded && (
                   <>
-                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn</div>
-                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn</div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      $ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)}{" "}
+                      Mn
+                    </div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ${" "}
+                      {salesSummary.totals.international.projArrUsdMn.toFixed(
+                        3,
+                      )}{" "}
+                      Mn
+                    </div>
                   </>
                 )}
               </div>
