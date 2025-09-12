@@ -160,7 +160,9 @@ export default function FundRaiseDashboard() {
   });
 
   useEffect(() => {
-    const stages = Array.from(new Set((fundRaises || []).map((f: any) => f.round_stage || "unknown")));
+    const stages = Array.from(
+      new Set((fundRaises || []).map((f: any) => f.round_stage || "unknown")),
+    );
     if (!stages.length) return;
     if (!stages.includes(selectedStage)) {
       if (stages.includes("bridge")) setSelectedStage("bridge");
@@ -1013,7 +1015,7 @@ export default function FundRaiseDashboard() {
                     .split(" ")
                     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                     .join(" ")
-                    .replace(/\s+(\d+)$/," $1");
+                    .replace(/\s+(\d+)$/, " $1");
                 };
 
                 const stages = rawStages;
@@ -1146,7 +1148,10 @@ export default function FundRaiseDashboard() {
             );
 
             // Buckets: <=20, >20-<=40, >40-<=70 based on total_completed_probability
-            const buckets: Record<string, { title: string; items: { name: string; fund: number }[] }> = {
+            const buckets: Record<
+              string,
+              { title: string; items: { name: string; fund: number }[] }
+            > = {
               "0-20": { title: "<=20%", items: [] },
               "21-40": { title: ">20% to <=40%", items: [] },
               "41-70": { title: ">40% to <=70%", items: [] },
