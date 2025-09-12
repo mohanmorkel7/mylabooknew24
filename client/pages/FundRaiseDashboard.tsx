@@ -80,6 +80,15 @@ export default function FundRaiseDashboard() {
   const [chartHeight, setChartHeight] = useState(500);
   const [colWidth, setColWidth] = useState(120);
   const [selectedStage, setSelectedStage] = useState<string>("bridge");
+
+  useEffect(() => {
+    const stages = Array.from(new Set((fundRaises || []).map((f: any) => f.round_stage || "unknown")));
+    if (!stages.length) return;
+    if (!stages.includes(selectedStage)) {
+      if (stages.includes("bridge")) setSelectedStage("bridge");
+      else setSelectedStage(stages[0]);
+    }
+  }, [fundRaises]);
   const SHOW_PROGRESS_DASHBOARD = false;
 
   const userId = user?.id ? parseInt(user.id) : undefined;
