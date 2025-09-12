@@ -455,140 +455,66 @@ export default function BusinessOfferingsDashboard() {
           </Button>
         </CardHeader>
         <CardContent>
-          {!summaryExpanded && (
-            <div className="relative overflow-hidden rounded-md border">
-              <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
-                <div className="px-3 py-2">Label</div>
-                <div className="px-3 py-2 text-center">Total</div>
+<div className="relative overflow-hidden rounded-md border">
+            <div className={"grid " + (summaryExpanded ? "grid-cols-4" : "grid-cols-2") + " text-xs font-medium bg-gray-50 border-b"}>
+              <div className="px-3 py-2">Label</div>
+              <div className="px-3 py-2 text-center">Total</div>
+              {summaryExpanded && (
+                <>
+                  <div className="px-3 py-2 text-center">Domestic</div>
+                  <div className="px-3 py-2 text-center">International</div>
+                </>
+              )}
+            </div>
+
+            <div className="divide-y text-sm">
+              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+                <div className="px-3 py-2">No. of Clients</div>
+                <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.domestic.clients + salesSummary.totals.international.clients}</div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.domestic.clients}</div>
+                    <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.international.clients}</div>
+                  </>
+                )}
               </div>
-              <div className="divide-y text-sm">
-                <div className="flex items-center">
-                  <div className="px-3 py-2 flex-1">No. of Clients</div>
-                  <div className="px-3 py-2 w-28 text-center font-semibold">
-                    {salesSummary.totals.domestic.clients +
-                      salesSummary.totals.international.clients}
-                  </div>
-                </div>
 
-                <div className="flex items-center">
-                  <div className="px-3 py-2 flex-1">Current MRR</div>
-                  <div className="px-3 py-2 w-28 text-center">
-                    ₹{" "}
-                    {(
-                      salesSummary.totals.domestic.mrrLacs +
-                      salesSummary.totals.international.mrrLacs
-                    ).toFixed(2)}{" "}
-                    Lacs
-                  </div>
-                </div>
+              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+                <div className="px-3 py-2">Current MRR</div>
+                <div className="px-3 py-2 text-center font-medium">₹ {(salesSummary.totals.domestic.mrrLacs + salesSummary.totals.international.mrrLacs).toFixed(2)} Lacs</div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-medium">₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs</div>
+                    <div className="px-3 py-2 text-center font-medium">₹ {salesSummary.totals.international.mrrLacs.toFixed(2)} Lacs</div>
+                  </>
+                )}
+              </div>
 
-                <div className="flex items-center">
-                  <div className="px-3 py-2 flex-1">Current ARR</div>
-                  <div className="px-3 py-2 w-28 text-center">
-                    {(
-                      salesSummary.totals.domestic.currArrUsdMn +
-                      salesSummary.totals.international.currArrUsdMn
-                    ).toFixed(3)}{" "}
-                    Mn USD
-                  </div>
-                </div>
+              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+                <div className="px-3 py-2">Current ARR</div>
+                <div className="px-3 py-2 text-center font-medium">$ {(salesSummary.totals.domestic.currArrUsdMn + salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn</div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn</div>
+                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.international.currArrUsdMn.toFixed(3)} Mn</div>
+                  </>
+                )}
+              </div>
 
-                <div className="flex items-center">
-                  <div className="px-3 py-2 flex-1">Potential ARR</div>
-                  <div className="px-3 py-2 w-28 text-center">
-                    {(
-                      salesSummary.totals.domestic.projArrUsdMn +
-                      salesSummary.totals.international.projArrUsdMn
-                    ).toFixed(3)}{" "}
-                    Mn USD
-                  </div>
-                </div>
+              <div className={"grid " + (summaryExpanded ? "grid-cols-4 items-center" : "grid-cols-2") + " items-center"}>
+                <div className="px-3 py-2">Potential ARR</div>
+                <div className="px-3 py-2 text-center font-medium">$ {(salesSummary.totals.domestic.projArrUsdMn + salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn</div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn</div>
+                    <div className="px-3 py-2 text-center font-medium">$ {salesSummary.totals.international.projArrUsdMn.toFixed(3)} Mn</div>
+                  </>
+                )}
               </div>
             </div>
-          )}
+          </div>
 
           <SeeList />
-
-          {summaryExpanded && (
-            <div className="mt-4 overflow-hidden rounded-md border">
-              <div className="grid grid-cols-4 text-xs font-medium bg-gray-50 border-b">
-                <div className="px-3 py-2">Label</div>
-                <div className="px-3 py-2 text-center">Total</div>
-                <div className="px-3 py-2 text-center">Domestic</div>
-                <div className="px-3 py-2 text-center">International</div>
-              </div>
-              <div className="text-sm divide-y">
-                <div className="grid grid-cols-4 items-center">
-                  <div className="px-3 py-2">No. of Clients</div>
-                  <div className="px-3 py-2 text-center font-semibold">
-                    {salesSummary.totals.domestic.clients +
-                      salesSummary.totals.international.clients}
-                  </div>
-                  <div className="px-3 py-2 text-center font-semibold">
-                    {salesSummary.totals.domestic.clients}
-                  </div>
-                  <div className="px-3 py-2 text-center font-semibold">
-                    {salesSummary.totals.international.clients}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 items-center">
-                  <div className="px-3 py-2">Current MRR</div>
-                  <div className="px-3 py-2 text-center text-xl font-semibold">
-                    ₹{" "}
-                    {(
-                      salesSummary.totals.domestic.mrrLacs +
-                      salesSummary.totals.international.mrrLacs
-                    ).toFixed(2)}
-                  </div>
-                  <div className="px-3 py-2 text-center text-base font-semibold">
-                    ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)}
-                  </div>
-                  <div className="px-3 py-2 text-center text-base font-semibold">
-                    ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 items-center">
-                  <div className="px-3 py-2">Current ARR</div>
-                  <div className="px-3 py-2 text-center text-xl font-semibold">
-                    ${" "}
-                    {(
-                      salesSummary.totals.domestic.currArrUsdMn +
-                      salesSummary.totals.international.currArrUsdMn
-                    ).toFixed(3)}{" "}
-                    Mn
-                  </div>
-                  <div className="px-3 py-2 text-center text-base font-semibold">
-                    $ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)}
-                  </div>
-                  <div className="px-3 py-2 text-center text-base font-semibold">
-                    ${" "}
-                    {salesSummary.totals.international.currArrUsdMn.toFixed(3)}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-4 items-center">
-                  <div className="px-3 py-2">Potential ARR</div>
-                  <div className="px-3 py-2 text-center text-xl font-semibold">
-                    ${" "}
-                    {(
-                      salesSummary.totals.domestic.projArrUsdMn +
-                      salesSummary.totals.international.projArrUsdMn
-                    ).toFixed(3)}{" "}
-                    Mn
-                  </div>
-                  <div className="px-3 py-2 text-center text-base font-semibold">
-                    $ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)}
-                  </div>
-                  <div className="px-3 py-2 text-center text-base font-semibold">
-                    ${" "}
-                    {salesSummary.totals.international.projArrUsdMn.toFixed(3)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
@@ -684,13 +610,14 @@ export default function BusinessOfferingsDashboard() {
               (a, b) => (b.order ?? 0) - (a.order ?? 0),
             );
 
-            // compute cumulative weights (running sum) so each card shows cumulative percent
+            // compute cumulative weights bottom-up (from last to first)
             const cumulativeWeights: Record<string, number> = {};
             let running = 0;
-            groups.forEach((gg) => {
+            for (let i = groups.length - 1; i >= 0; i--) {
+              const gg = groups[i];
               running += Number(gg.weight ?? 0) || 0;
               cumulativeWeights[gg.label] = Math.round(running);
-            });
+            }
             if (groups.length === 0)
               return <div className="text-gray-600">No pipeline data</div>;
 
