@@ -1150,7 +1150,10 @@ export default function FundRaiseDashboard() {
             // Buckets: <=20, >20-<=40, >40-<=70 based on total_completed_probability
             const buckets: Record<
               string,
-              { title: string; items: { name: string; fund: number; id?: number }[] }
+              {
+                title: string;
+                items: { name: string; fund: number; id?: number }[];
+              }
             > = {
               "0-20": { title: "<=20%", items: [] },
               "21-40": { title: ">20% to <=40%", items: [] },
@@ -1269,8 +1272,12 @@ export default function FundRaiseDashboard() {
                             c.id ? navigate(`/fundraise/${c.id}`) : null
                           }
                         >
-                          <div className="text-sm text-blue-700 underline decoration-dotted">{c.name}</div>
-                          <div className="text-sm font-medium">${c.fund.toFixed(3)} Mn</div>
+                          <div className="text-sm text-blue-700 underline decoration-dotted">
+                            {c.name}
+                          </div>
+                          <div className="text-sm font-medium">
+                            ${c.fund.toFixed(3)} Mn
+                          </div>
                         </div>
                       ))}
                       {completed100.length === 0 && (
@@ -1297,8 +1304,12 @@ export default function FundRaiseDashboard() {
                             c.id ? navigate(`/fundraise/${c.id}`) : null
                           }
                         >
-                          <div className="text-sm text-blue-700 underline decoration-dotted">{c.name}</div>
-                          <div className="text-sm font-medium">${c.fund.toFixed(3)} Mn</div>
+                          <div className="text-sm text-blue-700 underline decoration-dotted">
+                            {c.name}
+                          </div>
+                          <div className="text-sm font-medium">
+                            ${c.fund.toFixed(3)} Mn
+                          </div>
                         </div>
                       ))}
                       {committed90.length === 0 && (
@@ -1338,10 +1349,16 @@ export default function FundRaiseDashboard() {
                               <div
                                 key={it.name}
                                 className="flex justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
-                                onClick={() => it.id ? navigate(`/fundraise/${it.id}`) : null}
+                                onClick={() =>
+                                  it.id ? navigate(`/fundraise/${it.id}`) : null
+                                }
                               >
-                                <div className="text-sm text-blue-700 underline decoration-dotted">{it.name}</div>
-                                <div className="text-sm font-medium">${it.fund.toFixed(3)} Mn</div>
+                                <div className="text-sm text-blue-700 underline decoration-dotted">
+                                  {it.name}
+                                </div>
+                                <div className="text-sm font-medium">
+                                  ${it.fund.toFixed(3)} Mn
+                                </div>
                               </div>
                             ))}
                             {(buckets[k]?.items || []).length === 0 && (
