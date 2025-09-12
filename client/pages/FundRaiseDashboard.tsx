@@ -1333,7 +1333,16 @@ export default function FundRaiseDashboard() {
                             <div className="text-sm font-medium">
                               {buckets[k]?.title}
                             </div>
-                            <div className="text-sm font-medium text-gray-700 whitespace-nowrap">Total: ${(buckets[k]?.items || []).reduce((s: number, it: any) => s + (it.fund || 0), 0).toFixed(3)} Mn</div>
+                            <div className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                              Total: $
+                              {(buckets[k]?.items || [])
+                                .reduce(
+                                  (s: number, it: any) => s + (it.fund || 0),
+                                  0,
+                                )
+                                .toFixed(3)}{" "}
+                              Mn
+                            </div>
                           </div>
                           <div className="space-y-2 max-h-40 overflow-y-auto">
                             {(buckets[k]?.items || []).map((it) => (
