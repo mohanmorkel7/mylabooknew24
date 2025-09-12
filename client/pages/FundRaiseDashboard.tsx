@@ -1174,9 +1174,9 @@ export default function FundRaiseDashboard() {
                 });
             });
 
-            // Pass status investors
+            // Pass status investors (only in selected stage)
             const passList: { name: string; fund: number }[] = [];
-            (fundRaises || []).forEach((fr: any) => {
+            (filtered || []).forEach((fr: any) => {
               const investors = Array.isArray(fr.investors) ? fr.investors : [];
               investors.forEach((iv: any) => {
                 if ((iv.investor_status || "").toLowerCase() === "pass") {
