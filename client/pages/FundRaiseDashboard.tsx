@@ -1316,30 +1316,24 @@ export default function FundRaiseDashboard() {
                     <div className="text-sm font-medium mb-3">
                       Progress Buckets
                     </div>
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                      {Object.keys(buckets).map((k) => (
-                        <div
-                          key={k}
-                          className="p-2 rounded bg-gray-50 text-center text-sm"
-                        >
-                          {buckets[k].title}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="space-y-2 max-h-48 overflow-y-auto">
-                      {Object.keys(buckets).map((k) => (
-                        <div key={k}>
-                          {buckets[k].items.map((it) => (
-                            <div
-                              key={it.name}
-                              className="flex justify-between p-2 hover:bg-gray-50 rounded"
-                            >
-                              <div className="text-sm">{it.name}</div>
-                              <div className="text-sm font-medium">
-                                ${it.fund.toFixed(3)} Mn
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                      {['0-20','21-40','41-70'].map((k) => (
+                        <div key={k} className="p-3 border rounded bg-gray-50">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="text-sm font-medium">{buckets[k]?.title}</div>
+                            <div className="text-sm font-medium text-gray-700">Total: ${((buckets[k]?.items || []).reduce((s: number, it: any) => s + (it.fund || 0), 0)).toFixed(3)} Mn</div>
+                          </div>
+                          <div className="space-y-2 max-h-40 overflow-y-auto">
+                            {(buckets[k]?.items || []).map((it) => (
+                              <div key={it.name} className="flex justify-between p-2 hover:bg-gray-50 rounded">
+                                <div className="text-sm">{it.name}</div>
+                                <div className="text-sm font-medium">${it.fund.toFixed(3)} Mn</div>
                               </div>
-                            </div>
-                          ))}
+                            ))}
+                            {(buckets[k]?.items || []).length === 0 && (
+                              <div className="text-sm text-gray-500">No items</div>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
