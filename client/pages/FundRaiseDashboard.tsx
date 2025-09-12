@@ -159,6 +159,15 @@ export default function FundRaiseDashboard() {
     staleTime: 30000,
   });
 
+  useEffect(() => {
+    const stages = Array.from(new Set((fundRaises || []).map((f: any) => f.round_stage || "unknown")));
+    if (!stages.length) return;
+    if (!stages.includes(selectedStage)) {
+      if (stages.includes("bridge")) setSelectedStage("bridge");
+      else setSelectedStage(stages[0]);
+    }
+  }, [fundRaises]);
+
   const filteredFundRaises = (fundRaises || [])
     .filter((fr: any) => {
       // Status filter using UI values mapped to internal
