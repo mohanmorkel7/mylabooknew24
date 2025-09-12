@@ -976,6 +976,253 @@ export default function FundRaiseDashboard() {
           );
         })()}
 
+      {/* Fund Projects Details section */}
+      <Card className="mb-6">
+        <CardHeader>
+          <div className="flex items-start justify-between w-full gap-4">
+            <div>
+              <CardTitle>Fund Projects Details</CardTitle>
+              <CardDescription>Summary by Investment Stage</CardDescription>
+            </div>
+
+            <div className="w-56">
+              {/* Investment Stage selector */}
+              {(() => {
+                const stages = Array.from(
+                  new Set((fundRaises || []).map((f: any) => f.round_stage || "unknown")),
+                );
+                // ensure default exists
+                if (stages.length && !stages.includes(selectedStage)) {
+                  // do not call setState during render — fallback picks first
+                }
+                return (
+                  <Select value={selectedStage} onValueChange={setSelectedStage}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Investment Stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stages.map((s: string) => (
+                        <SelectItem key={s} value={s}>
+                          {s}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                );
+              })()}
+            </div>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          {(() => {
+            const stageKey = selectedStage || "bridge";
+            const filtered = (fundRaises || []).filter(
+              (fr: any) => (fr.round_stage || "unknown") === stageKey,
+            );
+
+            const computeTotalForRound = (fr: any) => {
+              let totalFundMn = 0;
+              const investorList =
+                Array.isArray(fr.investors) && fr.investors.length
+                  ? fr.investors
+                  : fr.investor_name
+                  ? [
+                      {
+                        investor_name: fr.investor_name,
+                        fund_mn: fr.fund_mn,
+                        investor_status: fr.investor_status,
+                        vc_id: fr.vc_id,
+                      },
+                    ]
+                  : [];
+              investorList.forEach((iv: any) => {
+                const v = parseFloat(iv?.fund_mn ?? "");
+                if (!isNaN(v)) totalFundMn += v;
+              });
+              if (totalFundMn === 0) {
+                const fallback = parseFloat(fr.total_raise_mn || fr.fund_mn || 0);
+                totalFundMn = isNaN(fallback) ? 0 : fallback;
+              }
+              return totalFundMn;
+            };
+
+            const targeted = filtered.reduce((sum: number, fr: any) => {
+              return sum + computeTotalForRound(fr);
+            }, 0);
+
+            const valuation = filtered.reduce((sum: number, fr: any) => {
+              const v = parseFloat(fr.valuation_mn || "0");
+              return sum + (isNaN(v) ? 0 : v);
+            }, 0);
+
+            // VCs list (flatten investors)
+            const vcEntries: { name: string; fund: number; vc_id?: string }[] = [];
+            filtered.forEach((fr: any) => {
+              const investors = Array.isArray(fr.investors) && fr.investors.length ? fr.investors : [];
+              investors.forEach((iv: any) => {
+                const fund = parseFloat(iv?.fund_mn ?? "0");
+                if (!isNaN(fund)) vcEntries.push({ name: iv.investor_name || iv.vc_name || "Unknown", fund, vc_id: iv.vc_id });
+              });
+            });
+
+            const totalVcFunds = vcEntries.reduce((s, e) => s + e.fund, 0);
+
+            // Completed 100% and Committed 90% using vcProgressData mapping to fundRaises by fr_id
+            const completed100: { name: string; fund: number; id?: number }[] = [];
+            const committed90: { name: string; fund: number; id?: number }[] = [];
+
+            (vcProgressData || []).forEach((p: any) => {
+              const prog = Number(p.total_completed_probability || 0);
+              const fr = (fundRaises || []).find((f: any) => f.id === p.fr_id);
+              if (!fr) return;
+              const fundVal = computeTotalForRound(fr);
+              if (prog >= 100) completed100.push({ name: fr.round_title || fr.investor_name || `Round ${fr.id}`, fund: fundVal, id: fr.id });
+              else if (prog >= 90) committed90.push({ name: fr.round_title || fr.investor_name || `Round ${fr.id}`, fund: fundVal, id: fr.id });
+            });
+
+            const totalCompleted100 = completed100.reduce((s, e) => s + e.fund, 0);
+            const totalCommitted90 = committed90.reduce((s, e) => s + e.fund, 0);
+
+            // Buckets: <=20, 21-40, 41-70, >70 based on total_completed_probability
+            const buckets: Record<string, { title: string; items: { name: string; fund: number }[] }> = {
+              "0-20": { title: "<=20%", items: [] },
+              "21-40": { title: "21-40%", items: [] },
+              "41-70": { title: "41-70%", items: [] },
+              ">70": { title: ">70%", items: [] },
+            };
+            (vcProgressData || []).forEach((p: any) => {
+              const prog = Number(p.total_completed_probability || 0);
+              const fr = (fundRaises || []).find((f: any) => f.id === p.fr_id);
+              if (!fr) return;
+              const val = computeTotalForRound(fr);
+              if (prog <= 20) buckets["0-20"].items.push({ name: fr.round_title || fr.investor_name || `Round ${fr.id}`, fund: val });
+              else if (prog <= 40) buckets["21-40"].items.push({ name: fr.round_title || fr.investor_name || `Round ${fr.id}`, fund: val });
+              else if (prog <= 70) buckets["41-70"].items.push({ name: fr.round_title || fr.investor_name || `Round ${fr.id}`, fund: val });
+              else buckets[">70"].items.push({ name: fr.round_title || fr.investor_name || `Round ${fr.id}`, fund: val });
+            });
+
+            // Pass status investors
+            const passList: { name: string; fund: number }[] = [];
+            (fundRaises || []).forEach((fr: any) => {
+              const investors = Array.isArray(fr.investors) ? fr.investors : [];
+              investors.forEach((iv: any) => {
+                if ((iv.investor_status || "").toLowerCase() === "pass") {
+                  const fund = parseFloat(iv?.fund_mn ?? "0");
+                  if (!isNaN(fund)) passList.push({ name: iv.investor_name || iv.vc_name || "Unknown", fund });
+                }
+              });
+            });
+
+            const totalPass = passList.reduce((s, e) => s + e.fund, 0);
+
+            return (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+                    <div className="text-sm text-blue-700 font-medium">Targeted</div>
+                    <div className="text-2xl font-bold text-blue-900">${targeted.toFixed(3)} Mn</div>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+                    <div className="text-sm text-green-700 font-medium">Valuation</div>
+                    <div className="text-2xl font-bold text-green-900">${valuation.toFixed(3)} Mn</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 border rounded-lg bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">VCs</div>
+                      <div className="text-sm font-medium text-blue-700">Total: ${totalVcFunds.toFixed(3)} Mn</div>
+                    </div>
+                    <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                      {vcEntries.map((v, idx) => (
+                        <div key={idx} className="flex justify-between items-center cursor-pointer hover:bg-gray-50 p-2 rounded" onClick={() => v.vc_id ? navigate(`/vc/${v.vc_id}`) : null}>
+                          <div className="text-sm">{v.name}</div>
+                          <div className="text-sm font-medium">${v.fund.toFixed(3)} Mn</div>
+                        </div>
+                      ))}
+                      {vcEntries.length === 0 && <div className="text-sm text-gray-500">No VCs found</div>}
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Completed 100%</div>
+                      <div className="text-sm font-medium text-green-700">Total: ${totalCompleted100.toFixed(3)} Mn</div>
+                    </div>
+                    <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                      {completed100.map((c) => (
+                        <div key={c.name} className="flex justify-between items-center p-2 rounded hover:bg-gray-50 cursor-pointer" onClick={() => c.id ? navigate(`/fundraise/${c.id}`) : null}>
+                          <div className="text-sm">{c.name}</div>
+                          <div className="text-sm font-medium">${c.fund.toFixed(3)} Mn</div>
+                        </div>
+                      ))}
+                      {completed100.length === 0 && <div className="text-sm text-gray-500">No completed items</div>}
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Committed - 90%</div>
+                      <div className="text-sm font-medium text-orange-700">Total: ${totalCommitted90.toFixed(3)} Mn</div>
+                    </div>
+                    <div className="mt-3 space-y-2 max-h-40 overflow-y-auto">
+                      {committed90.map((c) => (
+                        <div key={c.name} className="flex justify-between items-center p-2 rounded hover:bg-gray-50 cursor-pointer" onClick={() => c.id ? navigate(`/fundraise/${c.id}`) : null}>
+                          <div className="text-sm">{c.name}</div>
+                          <div className="text-sm font-medium">${c.fund.toFixed(3)} Mn</div>
+                        </div>
+                      ))}
+                      {committed90.length === 0 && <div className="text-sm text-gray-500">No committed items</div>}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg bg-white">
+                    <div className="text-sm font-medium mb-3">Progress Buckets</div>
+                    <div className="grid grid-cols-4 gap-2 mb-3">
+                      {Object.keys(buckets).map((k) => (
+                        <div key={k} className="p-2 rounded bg-gray-50 text-center text-sm">{buckets[k].title}</div>
+                      ))}
+                    </div>
+                    <div className="space-y-2 max-h-48 overflow-y-auto">
+                      {Object.keys(buckets).map((k) => (
+                        <div key={k}>
+                          {buckets[k].items.map((it) => (
+                            <div key={it.name} className="flex justify-between p-2 hover:bg-gray-50 rounded">
+                              <div className="text-sm">{it.name}</div>
+                              <div className="text-sm font-medium">${it.fund.toFixed(3)} Mn</div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="p-4 border rounded-lg bg-white">
+                    <div className="flex items-center justify-between">
+                      <div className="text-sm font-medium">Pass</div>
+                      <div className="text-sm font-medium text-green-700">Total: ${totalPass.toFixed(3)} Mn</div>
+                    </div>
+                    <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
+                      {passList.map((p) => (
+                        <div key={p.name} className="flex justify-between items-center p-2 hover:bg-gray-50 rounded">
+                          <div className="text-sm">{p.name}</div>
+                          <div className="text-sm font-medium">${p.fund.toFixed(3)} Mn</div>
+                        </div>
+                      ))}
+                      {passList.length === 0 && <div className="text-sm text-gray-500">No pass items</div>}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 gap-4">
         <Card>
           <CardHeader>
