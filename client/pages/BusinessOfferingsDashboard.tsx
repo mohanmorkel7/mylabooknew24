@@ -760,31 +760,35 @@ export default function BusinessOfferingsDashboard() {
                       cumulativeWeights[g.label] ??
                       Math.round(Number(g.weight ?? 0));
                     {
-                      // determine color classes based on cumulative percent
+                      // determine color classes based on cumulative percent (six-step palette)
                       const pct = cumulativePercent;
-                      let borderClass = "border-gray-200";
+                      let borderClass = "border-gray-300";
                       let percentClass = "text-gray-800";
-                      if (pct <= 20) {
-                        borderClass = "border-red-200";
-                        percentClass = "text-red-600";
-                      } else if (pct <= 40) {
-                        borderClass = "border-orange-200";
-                        percentClass = "text-orange-600";
-                      } else if (pct <= 60) {
-                        borderClass = "border-yellow-200";
-                        percentClass = "text-yellow-600";
-                      } else if (pct <= 80) {
-                        borderClass = "border-blue-200";
-                        percentClass = "text-blue-600";
+                      // thresholds split roughly into six buckets: 0-16,17-33,34-50,51-67,68-84,85-100
+                      if (pct <= 16) {
+                        borderClass = "border-yellow-300";
+                        percentClass = "text-yellow-700";
+                      } else if (pct <= 33) {
+                        borderClass = "border-purple-300";
+                        percentClass = "text-purple-700";
+                      } else if (pct <= 50) {
+                        borderClass = "border-gray-300";
+                        percentClass = "text-gray-700";
+                      } else if (pct <= 67) {
+                        borderClass = "border-violet-300";
+                        percentClass = "text-violet-700";
+                      } else if (pct <= 84) {
+                        borderClass = "border-blue-300";
+                        percentClass = "text-blue-700";
                       } else {
-                        borderClass = "border-green-200";
+                        borderClass = "border-green-300";
                         percentClass = "text-green-700";
                       }
 
                       return (
                         <button
                           key={g.label}
-                          className={`p-4 rounded-lg bg-white text-left hover:shadow border ${borderClass}`}
+                          className={`p-4 rounded-lg bg-white text-left hover:shadow border-2 ${borderClass}`}
                           onClick={() => openStageDialog(g)}
                         >
                           <div className="flex items-center justify-between">
