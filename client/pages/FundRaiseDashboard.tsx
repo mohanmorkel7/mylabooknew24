@@ -79,6 +79,7 @@ export default function FundRaiseDashboard() {
   const [activeTab] = useState<"vcs" | "drafts">("vcs");
   const [chartHeight, setChartHeight] = useState(500);
   const [colWidth, setColWidth] = useState(120);
+  const [selectedStage, setSelectedStage] = useState<string>("bridge");
   const SHOW_PROGRESS_DASHBOARD = false;
 
   const userId = user?.id ? parseInt(user.id) : undefined;
