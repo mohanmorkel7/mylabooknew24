@@ -1078,10 +1078,13 @@ export default function FundRaiseDashboard() {
               return sum + computeTotalForRound(fr);
             }, 0);
 
-            const valuation = filtered.reduce((sum: number, fr: any) => {
-              const v = parseFloat(fr.valuation_mn || "0");
-              return sum + (isNaN(v) ? 0 : v);
-            }, 0);
+            const valuationValues = filtered
+              .map((fr: any) => parseFloat(fr.valuation_mn || ""))
+              .filter((v: number) => !isNaN(v));
+            const valuation = valuationValues.length
+              ? valuationValues.reduce((a: number, b: number) => a + b, 0) /
+                valuationValues.length
+              : 0;
 
             // VCs list (flatten investors)
             const vcEntries: { name: string; fund: number; vc_id?: string }[] =
