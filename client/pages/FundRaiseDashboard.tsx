@@ -1341,12 +1341,11 @@ export default function FundRaiseDashboard() {
                             {(buckets[k]?.items || []).map((it) => (
                               <div
                                 key={it.name}
-                                className="flex justify-between p-2 hover:bg-gray-50 rounded"
+                                className="flex justify-between p-2 hover:bg-gray-50 rounded cursor-pointer"
+                                onClick={() => it.id ? navigate(`/fundraise/${it.id}`) : null}
                               >
-                                <div className="text-sm">{it.name}</div>
-                                <div className="text-sm font-medium">
-                                  ${it.fund.toFixed(3)} Mn
-                                </div>
+                                <div className="text-sm text-blue-700 underline decoration-dotted">{it.name}</div>
+                                <div className="text-sm font-medium">${it.fund.toFixed(3)} Mn</div>
                               </div>
                             ))}
                             {(buckets[k]?.items || []).length === 0 && (
