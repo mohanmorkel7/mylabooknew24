@@ -1150,7 +1150,7 @@ export default function FundRaiseDashboard() {
             // Buckets: <=20, >20-<=40, >40-<=70 based on total_completed_probability
             const buckets: Record<
               string,
-              { title: string; items: { name: string; fund: number }[] }
+              { title: string; items: { name: string; fund: number; id?: number }[] }
             > = {
               "0-20": { title: "<=20%", items: [] },
               "21-40": { title: ">20% to <=40%", items: [] },
