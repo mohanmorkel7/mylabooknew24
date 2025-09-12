@@ -1167,16 +1167,19 @@ export default function FundRaiseDashboard() {
                 buckets["0-20"].items.push({
                   name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
                   fund: val,
+                  id: fr.id,
                 });
               else if (prog <= 40)
                 buckets["21-40"].items.push({
                   name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
                   fund: val,
+                  id: fr.id,
                 });
               else if (prog <= 70)
                 buckets["41-70"].items.push({
                   name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
                   fund: val,
+                  id: fr.id,
                 });
             });
 
