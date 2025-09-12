@@ -527,23 +527,23 @@ export default function BusinessOfferingsDashboard() {
 
                 <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">Current MRR</div>
-                  <div className="px-3 py-2 text-center text-2xl font-semibold">₹ {(salesSummary.totals.domestic.mrrLacs + salesSummary.totals.international.mrrLacs).toFixed(2)}</div>
-                  <div className="px-3 py-2 text-center text-lg font-semibold">₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)}</div>
-                  <div className="px-3 py-2 text-center text-lg font-semibold">₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}</div>
+                  <div className="px-3 py-2 text-center text-xl font-semibold">₹ {(salesSummary.totals.domestic.mrrLacs + salesSummary.totals.international.mrrLacs).toFixed(2)}</div>
+                  <div className="px-3 py-2 text-center text-base font-semibold">₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)}</div>
+                  <div className="px-3 py-2 text-center text-base font-semibold">₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}</div>
                 </div>
 
                 <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">Current ARR</div>
-                  <div className="px-3 py-2 text-center text-2xl font-semibold">$ {(salesSummary.totals.domestic.currArrUsdMn + salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn</div>
-                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)}</div>
-                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.international.currArrUsdMn.toFixed(3)}</div>
+                  <div className="px-3 py-2 text-center text-xl font-semibold">$ {(salesSummary.totals.domestic.currArrUsdMn + salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn</div>
+                  <div className="px-3 py-2 text-center text-base font-semibold">$ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)}</div>
+                  <div className="px-3 py-2 text-center text-base font-semibold">$ {salesSummary.totals.international.currArrUsdMn.toFixed(3)}</div>
                 </div>
 
                 <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">Potential ARR</div>
-                  <div className="px-3 py-2 text-center text-2xl font-semibold">$ {(salesSummary.totals.domestic.projArrUsdMn + salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn</div>
-                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)}</div>
-                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.international.projArrUsdMn.toFixed(3)}</div>
+                  <div className="px-3 py-2 text-center text-xl font-semibold">$ {(salesSummary.totals.domestic.projArrUsdMn + salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn</div>
+                  <div className="px-3 py-2 text-center text-base font-semibold">$ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)}</div>
+                  <div className="px-3 py-2 text-center text-base font-semibold">$ {salesSummary.totals.international.projArrUsdMn.toFixed(3)}</div>
                 </div>
               </div>
             </div>
@@ -985,7 +985,7 @@ export default function BusinessOfferingsDashboard() {
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg font-semibold text-blue-900 flex items-center">
+                      <CardTitle className="text-base font-semibold text-blue-900 flex items-center">
                         <Clock className="w-5 h-5 mr-2" /> Follow-ups Due
                       </CardTitle>
                       <CardDescription className="text-blue-700">
@@ -1115,7 +1115,7 @@ export default function BusinessOfferingsDashboard() {
                 <CardHeader className="bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg font-semibold text-red-900 flex items-center">
+                      <CardTitle className="text-base font-semibold text-red-900 flex items-center">
                         <XCircle className="w-5 h-5 mr-2" /> Overdue Follow-ups
                       </CardTitle>
                       <CardDescription className="text-red-700">
