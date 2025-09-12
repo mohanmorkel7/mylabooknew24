@@ -442,7 +442,7 @@ export default function BusinessOfferingsDashboard() {
       <Card className={`mb-6 w-full ${summaryExpanded ? 'max-w-4xl' : 'max-w-md'}`}>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>sales summary - overall pipeline</CardTitle>
+            <CardTitle>Sales Summary - Overall Pipeline</CardTitle>
             <CardDescription>Totals with details on tap</CardDescription>
           </div>
           <Button
