@@ -511,52 +511,39 @@ export default function BusinessOfferingsDashboard() {
 
           {summaryExpanded && (
             <div className="mt-4 overflow-hidden rounded-md border">
-              <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
+              <div className="grid grid-cols-4 text-xs font-medium bg-gray-50 border-b">
                 <div className="px-3 py-2">Label</div>
+                <div className="px-3 py-2 text-center">Total</div>
                 <div className="px-3 py-2 text-center">Domestic</div>
                 <div className="px-3 py-2 text-center">International</div>
               </div>
               <div className="text-sm divide-y">
-                <div className="grid grid-cols-3">
+                <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">No. of Clients</div>
-                  <div className="px-3 py-2 text-center font-semibold">
-                    {salesSummary.totals.domestic.clients}
-                  </div>
-                  <div className="px-3 py-2 text-center font-semibold">
-                    {salesSummary.totals.international.clients}
-                  </div>
+                  <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.domestic.clients + salesSummary.totals.international.clients}</div>
+                  <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.domestic.clients}</div>
+                  <div className="px-3 py-2 text-center font-semibold">{salesSummary.totals.international.clients}</div>
                 </div>
-                <div className="grid grid-cols-3">
+
+                <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">Current MRR</div>
-                  <div className="px-3 py-2 text-center">
-                    ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
-                  </div>
-                  <div className="px-3 py-2 text-center">
-                    ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
-                    Lacs
-                  </div>
+                  <div className="px-3 py-2 text-center text-2xl font-semibold">₹ {(salesSummary.totals.domestic.mrrLacs + salesSummary.totals.international.mrrLacs).toFixed(2)}</div>
+                  <div className="px-3 py-2 text-center text-lg font-semibold">₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)}</div>
+                  <div className="px-3 py-2 text-center text-lg font-semibold">₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}</div>
                 </div>
-                <div className="grid grid-cols-3">
+
+                <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">Current ARR</div>
-                  <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn
-                    USD
-                  </div>
-                  <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.international.currArrUsdMn.toFixed(3)}{" "}
-                    Mn USD
-                  </div>
+                  <div className="px-3 py-2 text-center text-2xl font-semibold">$ {(salesSummary.totals.domestic.currArrUsdMn + salesSummary.totals.international.currArrUsdMn).toFixed(3)} Mn</div>
+                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)}</div>
+                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.international.currArrUsdMn.toFixed(3)}</div>
                 </div>
-                <div className="grid grid-cols-3">
+
+                <div className="grid grid-cols-4 items-center">
                   <div className="px-3 py-2">Potential ARR</div>
-                  <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn
-                    USD
-                  </div>
-                  <div className="px-3 py-2 text-center">
-                    {salesSummary.totals.international.projArrUsdMn.toFixed(3)}{" "}
-                    Mn USD
-                  </div>
+                  <div className="px-3 py-2 text-center text-2xl font-semibold">$ {(salesSummary.totals.domestic.projArrUsdMn + salesSummary.totals.international.projArrUsdMn).toFixed(3)} Mn</div>
+                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)}</div>
+                  <div className="px-3 py-2 text-center text-lg font-semibold">$ {salesSummary.totals.international.projArrUsdMn.toFixed(3)}</div>
                 </div>
               </div>
             </div>
@@ -721,35 +708,25 @@ export default function BusinessOfferingsDashboard() {
                       >
                         <div className="flex items-center justify-between">
                           <div
-                            className="font-medium truncate pr-2"
-                            title={g.label}
+                            className="font-medium pr-2 break-words"
+                            title={`${g.label} - ${cumulativePercent}%`}
                           >
                             {g.label} - {cumulativePercent}%
                           </div>
-                          <div className="text-3xl font-bold text-gray-900">
-                            {g.items.length}
-                          </div>
+                          <Badge variant="secondary">{g.items.length}</Badge>
                         </div>
                         <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                          <div className="p-2 bg-gray-50 rounded">
+                          <div className="p-2 bg-gray-50 rounded text-left">
                             <div className="text-[10px] text-gray-500">MRR</div>
-                            <div className="font-semibold whitespace-nowrap">
-                              ₹ {g.mrrLacs.toFixed(2)} L
-                            </div>
+                            <div className="text-xl font-semibold">₹ {g.mrrLacs.toFixed(2)} L</div>
                           </div>
-                          <div className="p-2 bg-gray-50 rounded">
+                          <div className="p-2 bg-gray-50 rounded text-left">
                             <div className="text-[10px] text-gray-500">ARR</div>
-                            <div className="font-semibold whitespace-nowrap">
-                              {g.currArrUsdMn.toFixed(3)} Mn
-                            </div>
+                            <div className="text-xl font-semibold">$ {g.currArrUsdMn.toFixed(3)} Mn</div>
                           </div>
-                          <div className="p-2 bg-gray-50 rounded">
-                            <div className="text-[10px] text-gray-500">
-                              Potential
-                            </div>
-                            <div className="font-semibold whitespace-nowrap">
-                              {g.projArrUsdMn.toFixed(3)} Mn
-                            </div>
+                          <div className="p-2 bg-gray-50 rounded text-left">
+                            <div className="text-[10px] text-gray-500">Potential</div>
+                            <div className="text-xl font-semibold">$ {g.projArrUsdMn.toFixed(3)} Mn</div>
                           </div>
                         </div>
                       </button>
