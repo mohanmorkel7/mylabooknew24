@@ -1144,19 +1144,17 @@ export default function FundRaiseDashboard() {
               0,
             );
 
-            // Buckets: <=20, 21-40, 41-70, >70 based on total_completed_probability
-            const buckets: Record<
-              string,
-              { title: string; items: { name: string; fund: number }[] }
-            > = {
+            // Buckets: <=20, >20-<=40, >40-<=70 based on total_completed_probability
+            const buckets: Record<string, { title: string; items: { name: string; fund: number }[] }> = {
               "0-20": { title: "<=20%", items: [] },
-              "21-40": { title: "21-40%", items: [] },
-              "41-70": { title: "41-70%", items: [] },
-              ">70": { title: ">70%", items: [] },
+              "21-40": { title: ">20% to <=40%", items: [] },
+              "41-70": { title: ">40% to <=70%", items: [] },
             };
+
             (vcProgressData || []).forEach((p: any) => {
+              if (!filteredIds.has(p.fr_id)) return;
               const prog = Number(p.total_completed_probability || 0);
-              const fr = (fundRaises || []).find((f: any) => f.id === p.fr_id);
+              const fr = (filtered || []).find((f: any) => f.id === p.fr_id);
               if (!fr) return;
               const val = computeTotalForRound(fr);
               if (prog <= 20)
@@ -1171,11 +1169,6 @@ export default function FundRaiseDashboard() {
                 });
               else if (prog <= 70)
                 buckets["41-70"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                });
-              else
-                buckets[">70"].items.push({
                   name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
                   fund: val,
                 });
