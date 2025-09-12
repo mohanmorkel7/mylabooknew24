@@ -1155,9 +1155,9 @@ export default function FundRaiseDashboard() {
                 items: { name: string; fund: number; id?: number }[];
               }
             > = {
-              "0-20": { title: "<=20%", items: [] },
-              "21-40": { title: ">20% to <=40%", items: [] },
-              "41-70": { title: ">40% to <=70%", items: [] },
+              "0-20": { title: "20%", items: [] },
+              "21-40": { title: "40%", items: [] },
+              "41-70": { title: "70%", items: [] },
             };
 
             (vcProgressData || []).forEach((p: any) => {
