@@ -1113,9 +1113,12 @@ export default function FundRaiseDashboard() {
             const committed90: { name: string; fund: number; id?: number }[] =
               [];
 
+            const filteredIds = new Set((filtered || []).map((f: any) => f.id));
+
             (vcProgressData || []).forEach((p: any) => {
+              if (!filteredIds.has(p.fr_id)) return;
               const prog = Number(p.total_completed_probability || 0);
-              const fr = (fundRaises || []).find((f: any) => f.id === p.fr_id);
+              const fr = (filtered || []).find((f: any) => f.id === p.fr_id);
               if (!fr) return;
               const fundVal = computeTotalForRound(fr);
               if (prog >= 100)
