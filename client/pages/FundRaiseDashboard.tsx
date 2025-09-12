@@ -997,17 +997,26 @@ export default function FundRaiseDashboard() {
             <div className="w-56">
               {/* Investment Stage selector */}
               {(() => {
-                const stages = Array.from(
+                const rawStages = Array.from(
                   new Set(
                     (fundRaises || []).map(
                       (f: any) => f.round_stage || "unknown",
                     ),
                   ),
                 );
-                // ensure default exists
-                if (stages.length && !stages.includes(selectedStage)) {
-                  // do not call setState during render — fallback picks first
-                }
+
+                const formatStageLabel = (s: string) => {
+                  if (!s) return "Unknown";
+                  return s
+                    .replaceAll("_", " ")
+                    .split(" ")
+                    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                    .join(" ")
+                    .replace(/\s+(\d+)$/," $1");
+                };
+
+                const stages = rawStages;
+
                 return (
                   <Select
                     value={selectedStage}
@@ -1019,7 +1028,7 @@ export default function FundRaiseDashboard() {
                     <SelectContent>
                       {stages.map((s: string) => (
                         <SelectItem key={s} value={s}>
-                          {s}
+                          {formatStageLabel(s)}
                         </SelectItem>
                       ))}
                     </SelectContent>
