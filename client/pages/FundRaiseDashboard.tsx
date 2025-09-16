@@ -96,7 +96,6 @@ export default function FundRaiseDashboard() {
   const [configOpen, setConfigOpen] = useState(false);
   const [configStage, setConfigStage] = useState<string>("bridge");
   const [configTargetMn, setConfigTargetMn] = useState<string>("");
-  const [targetStage, setTargetStage] = useState<string>("bridge");
 
   const { data: stageTargets = [], refetch: refetchStageTargets } = useQuery({
     queryKey: ["fr-stage-targets"],
@@ -116,8 +115,7 @@ export default function FundRaiseDashboard() {
     setConfigStage(selectedStage || "bridge");
     const found = (stageTargets || []).find((t: any) => t.stage === (selectedStage || "bridge"));
     setConfigTargetMn(found?.target_mn || "");
-    setTargetStage(selectedStage || "bridge");
-  }, [selectedStage]);
+  }, [selectedStage, stageTargets]);
 
   const saveStageTarget = useMutation({
     mutationFn: (payload: { stage: string; target_mn: string }) =>
@@ -1344,28 +1342,23 @@ export default function FundRaiseDashboard() {
                         <div className="text-sm text-indigo-700 font-medium">Targeted</div>
                         <div className="text-2xl font-bold text-indigo-900">
                           ${(() => {
-                            const t = (stageTargets || []).find((it: any) => it.stage === targetStage)?.target_mn;
+                            const t = (stageTargets || []).find((it: any) => it.stage === (selectedStage || "bridge"))?.target_mn;
                             const num = parseFloat(t || "0");
                             return isNaN(num) ? "0.000" : num.toFixed(3);
                           })()} Mn
                         </div>
                       </div>
                       <div className="w-40">
-                        <Select
-                          value={targetStage}
-                          onValueChange={(v) => setTargetStage(v)}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Stage" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {ROUND_STAGES.map((s) => (
-                              <SelectItem key={s.value} value={s.value}>
-                                {s.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="text-sm text-gray-500">{(() => {
+                          const s = selectedStage || "";
+                          return s
+                            ? s
+                                .replaceAll("_", " ")
+                                .split(" ")
+                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                .join(" ")
+                            : "Unknown";
+                        })()}</div>
                       </div>
                     </div>
                   </div>
