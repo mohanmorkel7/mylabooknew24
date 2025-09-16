@@ -1354,22 +1354,6 @@ export default function FundRaiseDashboard() {
             return (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
-                    <div className="text-sm text-blue-700 font-medium">
-                      Total
-                    </div>
-                    <div className="text-2xl font-bold text-blue-900">
-                      ${targeted.toFixed(3)} Mn
-                    </div>
-                  </div>
-                  <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
-                    <div className="text-sm text-green-700 font-medium">
-                      Valuation
-                    </div>
-                    <div className="text-2xl font-bold text-green-900">
-                      ${valuation.toFixed(3)} Mn
-                    </div>
-                  </div>
                   <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -1377,16 +1361,11 @@ export default function FundRaiseDashboard() {
                           Targeted
                         </div>
                         <div className="text-2xl font-bold text-indigo-900">
-                          $
-                          {(() => {
-                            const t = (stageTargets || []).find(
-                              (it: any) =>
-                                it.stage === (selectedStage || "bridge"),
-                            )?.target_mn;
+                          ${(() => {
+                            const t = (stageTargets || []).find((it: any) => it.stage === (selectedStage || "bridge"))?.target_mn;
                             const num = parseFloat(t || "0");
                             return isNaN(num) ? "0.000" : num.toFixed(3);
-                          })()}{" "}
-                          Mn
+                          })()} Mn
                         </div>
                       </div>
                       <div className="w-40">
@@ -1397,15 +1376,28 @@ export default function FundRaiseDashboard() {
                               ? s
                                   .replaceAll("_", " ")
                                   .split(" ")
-                                  .map(
-                                    (w) =>
-                                      w.charAt(0).toUpperCase() + w.slice(1),
-                                  )
+                                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
                                   .join(" ")
                               : "Unknown";
                           })()}
                         </div>
                       </div>
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
+                    <div className="text-sm text-green-700 font-medium">
+                      Valuation
+                    </div>
+                    <div className="text-2xl font-bold text-green-900">
+                      ${valuation.toFixed(3)} Mn
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+                    <div className="text-sm text-blue-700 font-medium">
+                      Total
+                    </div>
+                    <div className="text-2xl font-bold text-blue-900">
+                      ${targeted.toFixed(3)} Mn
                     </div>
                   </div>
                 </div>
