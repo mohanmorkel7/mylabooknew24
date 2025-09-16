@@ -1567,9 +1567,11 @@ export default function FundRaiseDashboard() {
                     <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
                       {passList.map((p) => (
                         <div
-                          key={p.name + (p.id||0)}
+                          key={p.name + (p.id || 0)}
                           className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                          onClick={() => (p.id ? navigate(`/fundraise/${p.id}`) : null)}
+                          onClick={() =>
+                            p.id ? navigate(`/fundraise/${p.id}`) : null
+                          }
                         >
                           <div className="text-sm text-blue-700 underline decoration-dotted">
                             {p.name}
