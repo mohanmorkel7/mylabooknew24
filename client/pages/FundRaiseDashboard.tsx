@@ -1304,24 +1304,27 @@ export default function FundRaiseDashboard() {
               if (!fr) return;
               // Exclude 'pass' amounts from bucket totals
               const val = computeTotalForRound(fr, true);
-              if (prog <= 20)
-                buckets["0-20"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                  id: fr.id,
-                });
-              else if (prog <= 40)
-                buckets["21-40"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                  id: fr.id,
-                });
-              else if (prog <= 70)
-                buckets["41-70"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                  id: fr.id,
-                });
+              // Skip adding entries that have no non-pass contribution
+              if (val > 0) {
+                if (prog <= 20)
+                  buckets["0-20"].items.push({
+                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: val,
+                    id: fr.id,
+                  });
+                else if (prog <= 40)
+                  buckets["21-40"].items.push({
+                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: val,
+                    id: fr.id,
+                  });
+                else if (prog <= 70)
+                  buckets["41-70"].items.push({
+                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: val,
+                    id: fr.id,
+                  });
+              }
             });
 
             // Pass status investors (only in selected stage)
