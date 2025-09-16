@@ -1361,11 +1361,16 @@ export default function FundRaiseDashboard() {
                           Targeted
                         </div>
                         <div className="text-2xl font-bold text-indigo-900">
-                          ${(() => {
-                            const t = (stageTargets || []).find((it: any) => it.stage === (selectedStage || "bridge"))?.target_mn;
+                          $
+                          {(() => {
+                            const t = (stageTargets || []).find(
+                              (it: any) =>
+                                it.stage === (selectedStage || "bridge"),
+                            )?.target_mn;
                             const num = parseFloat(t || "0");
                             return isNaN(num) ? "0.000" : num.toFixed(3);
-                          })()} Mn
+                          })()}{" "}
+                          Mn
                         </div>
                       </div>
                       <div className="w-40">
@@ -1376,7 +1381,10 @@ export default function FundRaiseDashboard() {
                               ? s
                                   .replaceAll("_", " ")
                                   .split(" ")
-                                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                                  .map(
+                                    (w) =>
+                                      w.charAt(0).toUpperCase() + w.slice(1),
+                                  )
                                   .join(" ")
                               : "Unknown";
                           })()}
