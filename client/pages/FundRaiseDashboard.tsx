@@ -45,6 +45,7 @@ import {
   BarChart3,
   DollarSign,
   Calendar,
+  Settings,
 } from "lucide-react";
 import {
   Accordion,
@@ -80,6 +81,55 @@ export default function FundRaiseDashboard() {
   const [chartHeight, setChartHeight] = useState(500);
   const [colWidth, setColWidth] = useState(120);
   const [selectedStage, setSelectedStage] = useState<string>("bridge");
+  const ROUND_STAGES = [
+    { value: "pre_seed", label: "Pre seed" },
+    { value: "seed", label: "Seed" },
+    { value: "bridge_1", label: "Bridge 1" },
+    { value: "bridge_2", label: "Bridge 2" },
+    { value: "bridge", label: "Bridge" },
+    { value: "pre_series_a", label: "Pre Series A" },
+    { value: "series_a", label: "Series A" },
+    { value: "series_b", label: "Series B" },
+    { value: "series_c", label: "Series C" },
+  ];
+
+  const [configOpen, setConfigOpen] = useState(false);
+  const [configStage, setConfigStage] = useState<string>("bridge");
+  const [configTargetMn, setConfigTargetMn] = useState<string>("");
+  const [targetStage, setTargetStage] = useState<string>("bridge");
+
+  const { data: stageTargets = [], refetch: refetchStageTargets } = useQuery({
+    queryKey: ["fr-stage-targets"],
+    queryFn: async () => {
+      try {
+        const r = await apiClient.request("/fund-raises/stage-targets");
+        return Array.isArray(r) ? r : [];
+      } catch {
+        return [];
+      }
+    },
+    retry: 0,
+    staleTime: 60000,
+  });
+
+  useEffect(() => {
+    setConfigStage(selectedStage || "bridge");
+    const found = (stageTargets || []).find((t: any) => t.stage === (selectedStage || "bridge"));
+    setConfigTargetMn(found?.target_mn || "");
+    setTargetStage(selectedStage || "bridge");
+  }, [selectedStage]);
+
+  const saveStageTarget = useMutation({
+    mutationFn: (payload: { stage: string; target_mn: string }) =>
+      apiClient.request("/fund-raises/stage-targets", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fr-stage-targets"] });
+      refetchStageTargets();
+    },
+  });
 
   const SHOW_PROGRESS_DASHBOARD = false;
 
@@ -331,10 +381,75 @@ export default function FundRaiseDashboard() {
           </h1>
           <p className="text-gray-600 mt-1">Manage fund raises</p>
         </div>
-        <Button onClick={() => navigate("/fundraise/create")}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Fund Raise
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setConfigOpen(true)}>
+            <Settings className="w-4 h-4 mr-2" />
+            Config
+          </Button>
+          <Button onClick={() => navigate("/fundraise/create")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Fund Raise
+          </Button>
+        </div>
+
+        <AlertDialog open={configOpen} onOpenChange={setConfigOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Configure Target by Investment Stage</AlertDialogTitle>
+              <AlertDialogDescription>
+                Select an investment stage and set the Target value in Mn.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm mb-1">Investment Stage</div>
+                <Select
+                  value={configStage}
+                  onValueChange={(v) => {
+                    setConfigStage(v);
+                    const found = (stageTargets || []).find((t: any) => t.stage === v);
+                    setConfigTargetMn(found?.target_mn || "");
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select investment stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROUND_STAGES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <div className="text-sm mb-1">Target value in Mn</div>
+                <Input
+                  placeholder="e.g. 5.00"
+                  value={configTargetMn}
+                  onChange={(e) => setConfigTargetMn(e.target.value)}
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfigOpen(false)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await saveStageTarget.mutateAsync({
+                    stage: configStage,
+                    target_mn: configTargetMn || "0",
+                  });
+                  setConfigOpen(false);
+                }}
+              >
+                Save
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {statsLoading ? (
@@ -1206,10 +1321,10 @@ export default function FundRaiseDashboard() {
 
             return (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
                     <div className="text-sm text-blue-700 font-medium">
-                      Targeted
+                      Total
                     </div>
                     <div className="text-2xl font-bold text-blue-900">
                       ${targeted.toFixed(3)} Mn
@@ -1221,6 +1336,37 @@ export default function FundRaiseDashboard() {
                     </div>
                     <div className="text-2xl font-bold text-green-900">
                       ${valuation.toFixed(3)} Mn
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm text-indigo-700 font-medium">Targeted</div>
+                        <div className="text-2xl font-bold text-indigo-900">
+                          ${(() => {
+                            const t = (stageTargets || []).find((it: any) => it.stage === targetStage)?.target_mn;
+                            const num = parseFloat(t || "0");
+                            return isNaN(num) ? "0.000" : num.toFixed(3);
+                          })()} Mn
+                        </div>
+                      </div>
+                      <div className="w-40">
+                        <Select
+                          value={targetStage}
+                          onValueChange={(v) => setTargetStage(v)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Stage" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {ROUND_STAGES.map((s) => (
+                              <SelectItem key={s.value} value={s.value}>
+                                {s.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </div>
                 </div>
