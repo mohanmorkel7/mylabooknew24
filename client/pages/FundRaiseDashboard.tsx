@@ -1262,13 +1262,15 @@ export default function FundRaiseDashboard() {
               if (fundVal > 0) {
                 if (prog >= 100)
                   completed100.push({
-                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
                     fund: fundVal,
                     id: fr.id,
                   });
                 else if (prog >= 90)
                   committed90.push({
-                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
                     fund: fundVal,
                     id: fr.id,
                   });
@@ -1308,19 +1310,22 @@ export default function FundRaiseDashboard() {
               if (val > 0) {
                 if (prog <= 20)
                   buckets["0-20"].items.push({
-                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
                     fund: val,
                     id: fr.id,
                   });
                 else if (prog <= 40)
                   buckets["21-40"].items.push({
-                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
                     fund: val,
                     id: fr.id,
                   });
                 else if (prog <= 70)
                   buckets["41-70"].items.push({
-                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
                     fund: val,
                     id: fr.id,
                   });
