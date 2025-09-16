@@ -1258,18 +1258,21 @@ export default function FundRaiseDashboard() {
               if (!fr) return;
               // Exclude 'pass' amounts from completed/committed totals
               const fundVal = computeTotalForRound(fr, true);
-              if (prog >= 100)
-                completed100.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: fundVal,
-                  id: fr.id,
-                });
-              else if (prog >= 90)
-                committed90.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: fundVal,
-                  id: fr.id,
-                });
+              // Skip fund raises that have no non-pass contribution
+              if (fundVal > 0) {
+                if (prog >= 100)
+                  completed100.push({
+                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: fundVal,
+                    id: fr.id,
+                  });
+                else if (prog >= 90)
+                  committed90.push({
+                    name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: fundVal,
+                    id: fr.id,
+                  });
+              }
             });
 
             const totalCompleted100 = completed100.reduce(
