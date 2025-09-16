@@ -113,7 +113,9 @@ export default function FundRaiseDashboard() {
 
   useEffect(() => {
     setConfigStage(selectedStage || "bridge");
-    const found = (stageTargets || []).find((t: any) => t.stage === (selectedStage || "bridge"));
+    const found = (stageTargets || []).find(
+      (t: any) => t.stage === (selectedStage || "bridge"),
+    );
     setConfigTargetMn(found?.target_mn || "");
   }, [selectedStage, stageTargets]);
 
@@ -393,7 +395,9 @@ export default function FundRaiseDashboard() {
         <AlertDialog open={configOpen} onOpenChange={setConfigOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Configure Target by Investment Stage</AlertDialogTitle>
+              <AlertDialogTitle>
+                Configure Target by Investment Stage
+              </AlertDialogTitle>
               <AlertDialogDescription>
                 Select an investment stage and set the Target value in Mn.
               </AlertDialogDescription>
@@ -405,7 +409,9 @@ export default function FundRaiseDashboard() {
                   value={configStage}
                   onValueChange={(v) => {
                     setConfigStage(v);
-                    const found = (stageTargets || []).find((t: any) => t.stage === v);
+                    const found = (stageTargets || []).find(
+                      (t: any) => t.stage === v,
+                    );
                     setConfigTargetMn(found?.target_mn || "");
                   }}
                 >
@@ -1339,26 +1345,38 @@ export default function FundRaiseDashboard() {
                   <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <div className="text-sm text-indigo-700 font-medium">Targeted</div>
+                        <div className="text-sm text-indigo-700 font-medium">
+                          Targeted
+                        </div>
                         <div className="text-2xl font-bold text-indigo-900">
-                          ${(() => {
-                            const t = (stageTargets || []).find((it: any) => it.stage === (selectedStage || "bridge"))?.target_mn;
+                          $
+                          {(() => {
+                            const t = (stageTargets || []).find(
+                              (it: any) =>
+                                it.stage === (selectedStage || "bridge"),
+                            )?.target_mn;
                             const num = parseFloat(t || "0");
                             return isNaN(num) ? "0.000" : num.toFixed(3);
-                          })()} Mn
+                          })()}{" "}
+                          Mn
                         </div>
                       </div>
                       <div className="w-40">
-                        <div className="text-sm text-gray-500">{(() => {
-                          const s = selectedStage || "";
-                          return s
-                            ? s
-                                .replaceAll("_", " ")
-                                .split(" ")
-                                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                                .join(" ")
-                            : "Unknown";
-                        })()}</div>
+                        <div className="text-sm text-gray-500">
+                          {(() => {
+                            const s = selectedStage || "";
+                            return s
+                              ? s
+                                  .replaceAll("_", " ")
+                                  .split(" ")
+                                  .map(
+                                    (w) =>
+                                      w.charAt(0).toUpperCase() + w.slice(1),
+                                  )
+                                  .join(" ")
+                              : "Unknown";
+                          })()}
+                        </div>
                       </div>
                     </div>
                   </div>

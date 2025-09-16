@@ -244,7 +244,7 @@ router.get("/stage-targets", async (_req, res) => {
     const r = await pool.query(
       `SELECT id, stage, COALESCE(target_mn,0)::text AS target_mn, created_at, updated_at
        FROM fund_raise_stage_targets
-       ORDER BY stage ASC`
+       ORDER BY stage ASC`,
     );
     return res.json(r.rows || []);
   } catch (e: any) {
@@ -255,13 +255,14 @@ router.get("/stage-targets", async (_req, res) => {
 
 router.get("/stage-targets/:stage", async (req, res) => {
   try {
-    if (!(await isDatabaseAvailable())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
     await ensureStageTargetsTable();
     const stage = String(req.params.stage || "").toLowerCase();
     const r = await pool.query(
       `SELECT id, stage, COALESCE(target_mn,0)::text AS target_mn, created_at, updated_at
        FROM fund_raise_stage_targets WHERE stage = $1`,
-      [stage]
+      [stage],
     );
     if (r.rowCount === 0) return res.status(404).json({ error: "Not found" });
     return res.json(r.rows[0]);
@@ -273,7 +274,8 @@ router.get("/stage-targets/:stage", async (req, res) => {
 
 router.post("/stage-targets", async (req, res) => {
   try {
-    if (!(await isDatabaseAvailable())) return res.status(503).json({ error: "Database unavailable" });
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
     await ensureStageTargetsTable();
     const body = req.body || {};
     const stageRaw = body.stage;
@@ -287,7 +289,7 @@ router.post("/stage-targets", async (req, res) => {
        VALUES ($1, COALESCE($2::numeric, 0))
        ON CONFLICT(stage) DO UPDATE SET target_mn = EXCLUDED.target_mn, updated_at = NOW()
        RETURNING id, stage, COALESCE(target_mn,0)::text AS target_mn, created_at, updated_at`,
-      [stage, targetMn]
+      [stage, targetMn],
     );
     return res.status(201).json(r.rows[0]);
   } catch (e: any) {
