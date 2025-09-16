@@ -1168,7 +1168,7 @@ export default function FundRaiseDashboard() {
               (fr: any) => (fr.round_stage || "unknown") === stageKey,
             );
 
-            const computeTotalForRound = (fr: any) => {
+            const computeTotalForRound = (fr: any, excludePass = false) => {
               let totalFundMn = 0;
               const investorList =
                 Array.isArray(fr.investors) && fr.investors.length
@@ -1183,21 +1183,29 @@ export default function FundRaiseDashboard() {
                         },
                       ]
                     : [];
-              investorList.forEach((iv: any) => {
-                const v = parseFloat(iv?.fund_mn ?? "");
-                if (!isNaN(v)) totalFundMn += v;
-              });
-              if (totalFundMn === 0) {
-                const fallback = parseFloat(
-                  fr.total_raise_mn || fr.fund_mn || 0,
-                );
-                totalFundMn = isNaN(fallback) ? 0 : fallback;
+
+              if (investorList.length) {
+                investorList.forEach((iv: any) => {
+                  if (excludePass && (iv.investor_status || "").toLowerCase() === "pass") return;
+                  const v = parseFloat(iv?.fund_mn ?? "");
+                  if (!isNaN(v)) totalFundMn += v;
+                });
+              } else {
+                // No investor breakdown - only include fallback when not excluding pass
+                if (!excludePass) {
+                  const fallback = parseFloat(fr.total_raise_mn || fr.fund_mn || 0);
+                  totalFundMn = isNaN(fallback) ? 0 : fallback;
+                } else {
+                  totalFundMn = 0;
+                }
               }
+
               return totalFundMn;
             };
 
+            // Total should exclude 'pass' investor amounts
             const targeted = filtered.reduce((sum: number, fr: any) => {
-              return sum + computeTotalForRound(fr);
+              return sum + computeTotalForRound(fr, true);
             }, 0);
 
             const valuationValues = filtered
@@ -1242,7 +1250,8 @@ export default function FundRaiseDashboard() {
               const prog = Number(p.total_completed_probability || 0);
               const fr = (filtered || []).find((f: any) => f.id === p.fr_id);
               if (!fr) return;
-              const fundVal = computeTotalForRound(fr);
+              // Exclude 'pass' amounts from completed/committed totals
+              const fundVal = computeTotalForRound(fr, true);
               if (prog >= 100)
                 completed100.push({
                   name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
@@ -1284,7 +1293,8 @@ export default function FundRaiseDashboard() {
               const prog = Number(p.total_completed_probability || 0);
               const fr = (filtered || []).find((f: any) => f.id === p.fr_id);
               if (!fr) return;
-              const val = computeTotalForRound(fr);
+              // Exclude 'pass' amounts from bucket totals
+              const val = computeTotalForRound(fr, true);
               if (prog <= 20)
                 buckets["0-20"].items.push({
                   name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
