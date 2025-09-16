@@ -518,26 +518,26 @@ export async function initializeDatabase() {
     }
 
     // Extend fund_raises with all fields
-  try {
-    const fundRaisesAlterPath = path.join(
-      __dirname,
-      "alter-fund-raises-extend.sql",
-    );
-    if (fs.existsSync(fundRaisesAlterPath)) {
-      const alterSql = fs.readFileSync(fundRaisesAlterPath, "utf8");
-      await client.query(alterSql);
-      console.log("Fund Raises table extended successfully");
+    try {
+      const fundRaisesAlterPath = path.join(
+        __dirname,
+        "alter-fund-raises-extend.sql",
+      );
+      if (fs.existsSync(fundRaisesAlterPath)) {
+        const alterSql = fs.readFileSync(fundRaisesAlterPath, "utf8");
+        await client.query(alterSql);
+        console.log("Fund Raises table extended successfully");
+      }
+    } catch (fundRaisesAlterError) {
+      console.log(
+        "Fund Raises table extend already applied or error:",
+        (fundRaisesAlterError as any).message,
+      );
     }
-  } catch (fundRaisesAlterError) {
-    console.log(
-      "Fund Raises table extend already applied or error:",
-      (fundRaisesAlterError as any).message,
-    );
-  }
 
-  // Ensure fund_raise_stage_targets table exists
-  try {
-    await client.query(`
+    // Ensure fund_raise_stage_targets table exists
+    try {
+      await client.query(`
       CREATE TABLE IF NOT EXISTS fund_raise_stage_targets (
         id SERIAL PRIMARY KEY,
         stage TEXT UNIQUE NOT NULL,
@@ -546,13 +546,13 @@ export async function initializeDatabase() {
         updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
-    console.log("fund_raise_stage_targets table ensured");
-  } catch (stageTargetsErr) {
-    console.log(
-      "fund_raise_stage_targets ensure skipped or failed:",
-      (stageTargetsErr as any).message,
-    );
-  }
+      console.log("fund_raise_stage_targets table ensured");
+    } catch (stageTargetsErr) {
+      console.log(
+        "fund_raise_stage_targets ensure skipped or failed:",
+        (stageTargetsErr as any).message,
+      );
+    }
 
     // Ensure finops_tracker table exists for daily tracking
     try {
