@@ -1186,14 +1186,20 @@ export default function FundRaiseDashboard() {
 
               if (investorList.length) {
                 investorList.forEach((iv: any) => {
-                  if (excludePass && (iv.investor_status || "").toLowerCase() === "pass") return;
+                  if (
+                    excludePass &&
+                    (iv.investor_status || "").toLowerCase() === "pass"
+                  )
+                    return;
                   const v = parseFloat(iv?.fund_mn ?? "");
                   if (!isNaN(v)) totalFundMn += v;
                 });
               } else {
                 // No investor breakdown - only include fallback when not excluding pass
                 if (!excludePass) {
-                  const fallback = parseFloat(fr.total_raise_mn || fr.fund_mn || 0);
+                  const fallback = parseFloat(
+                    fr.total_raise_mn || fr.fund_mn || 0,
+                  );
                   totalFundMn = isNaN(fallback) ? 0 : fallback;
                 } else {
                   totalFundMn = 0;
