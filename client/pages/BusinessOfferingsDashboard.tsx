@@ -41,13 +41,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/components/ui/sheet";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -121,7 +114,7 @@ export default function BusinessOfferingsDashboard() {
 
   const stats = { total: (data as any[]).length };
 
-  const [sheetOpen, setSheetOpen] = useState(false);
+  const [summaryExpanded, setSummaryExpanded] = useState(false);
 
   const salesSummary = useMemo(() => {
     const domClientIds = new Set<number>();
@@ -381,8 +374,8 @@ export default function BusinessOfferingsDashboard() {
                       <TableCell>{r.product}</TableCell>
                       <TableCell>{r.stage}</TableCell>
                       <TableCell>₹ {r.mrr.toFixed(2)} L</TableCell>
-                      <TableCell>{r.arr.toFixed(3)} Mn</TableCell>
-                      <TableCell>{r.parr.toFixed(3)} Mn</TableCell>
+                      <TableCell>$ {r.arr.toFixed(3)} Mn</TableCell>
+                      <TableCell>$ {r.parr.toFixed(3)} Mn</TableCell>
                       <TableCell>{r.lastFollowUp}</TableCell>
                       <TableCell>{r.nextFollowUp}</TableCell>
                     </TableRow>
@@ -446,39 +439,80 @@ export default function BusinessOfferingsDashboard() {
         </Card>
       </div>
 
-      <Card className="mb-6 w-full max-w-md">
+      <Card
+        className={`mb-6 w-full ${summaryExpanded ? "max-w-4xl" : "max-w-md"}`}
+      >
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Sales Summary - Step Pipeline</CardTitle>
+            <CardTitle>Sales Summary - Overall Pipeline</CardTitle>
             <CardDescription>Totals with details on tap</CardDescription>
           </div>
           <Button
             variant="ghost"
             size="icon"
             aria-label="Expand details"
-            onClick={() => setSheetOpen(true)}
+            onClick={() => setSummaryExpanded((v) => !v)}
           >
             <ChevronRight className="w-4 h-4" />
           </Button>
         </CardHeader>
         <CardContent>
           <div className="relative overflow-hidden rounded-md border">
-            <div className="grid grid-cols-2 text-xs font-medium bg-gray-50 border-b">
+            <div
+              className={
+                "grid " +
+                (summaryExpanded ? "grid-cols-4" : "grid-cols-2") +
+                " text-xs font-medium bg-gray-50 border-b"
+              }
+            >
               <div className="px-3 py-2">Label</div>
               <div className="px-3 py-2 text-center">Total</div>
+              {summaryExpanded && (
+                <>
+                  <div className="px-3 py-2 text-center">Domestic</div>
+                  <div className="px-3 py-2 text-center">International</div>
+                </>
+              )}
             </div>
+
             <div className="divide-y text-sm">
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">No. of Clients</div>
-                <div className="px-3 py-2 w-28 text-center font-semibold">
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
+                <div className="px-3 py-2">No. of Clients</div>
+                <div className="px-3 py-2 text-center font-semibold">
                   {salesSummary.totals.domestic.clients +
                     salesSummary.totals.international.clients}
                 </div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-semibold">
+                      {salesSummary.totals.domestic.clients}
+                    </div>
+                    <div className="px-3 py-2 text-center font-semibold">
+                      {salesSummary.totals.international.clients}
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">Current MRR</div>
-                <div className="px-3 py-2 w-28 text-center">
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
+                <div className="px-3 py-2">Current MRR</div>
+                <div className="px-3 py-2 text-center font-medium">
                   ₹{" "}
                   {(
                     salesSummary.totals.domestic.mrrLacs +
@@ -486,97 +520,92 @@ export default function BusinessOfferingsDashboard() {
                   ).toFixed(2)}{" "}
                   Lacs
                 </div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
+                    </div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
+                      Lacs
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">Current ARR</div>
-                <div className="px-3 py-2 w-28 text-center">
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
+                <div className="px-3 py-2">Current ARR</div>
+                <div className="px-3 py-2 text-center font-medium">
+                  ${" "}
                   {(
                     salesSummary.totals.domestic.currArrUsdMn +
                     salesSummary.totals.international.currArrUsdMn
                   ).toFixed(3)}{" "}
-                  Mn USD
+                  Mn
                 </div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-medium">
+                      $ {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)}{" "}
+                      Mn
+                    </div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ${" "}
+                      {salesSummary.totals.international.currArrUsdMn.toFixed(
+                        3,
+                      )}{" "}
+                      Mn
+                    </div>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center">
-                <div className="px-3 py-2 flex-1">Potential ARR</div>
-                <div className="px-3 py-2 w-28 text-center">
+              <div
+                className={
+                  "grid " +
+                  (summaryExpanded
+                    ? "grid-cols-4 items-center"
+                    : "grid-cols-2") +
+                  " items-center"
+                }
+              >
+                <div className="px-3 py-2">Potential ARR</div>
+                <div className="px-3 py-2 text-center font-medium">
+                  ${" "}
                   {(
                     salesSummary.totals.domestic.projArrUsdMn +
                     salesSummary.totals.international.projArrUsdMn
                   ).toFixed(3)}{" "}
-                  Mn USD
+                  Mn
                 </div>
+                {summaryExpanded && (
+                  <>
+                    <div className="px-3 py-2 text-center font-medium">
+                      $ {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)}{" "}
+                      Mn
+                    </div>
+                    <div className="px-3 py-2 text-center font-medium">
+                      ${" "}
+                      {salesSummary.totals.international.projArrUsdMn.toFixed(
+                        3,
+                      )}{" "}
+                      Mn
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
           <SeeList />
-
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetContent side="right" className="sm:max-w-lg w-full">
-              <SheetHeader>
-                <SheetTitle>Sales Summary Details</SheetTitle>
-                <SheetDescription>Domestic vs International</SheetDescription>
-              </SheetHeader>
-
-              <div className="mt-4 overflow-hidden rounded-md border">
-                <div className="grid grid-cols-3 text-xs font-medium bg-gray-50 border-b">
-                  <div className="px-3 py-2">Label</div>
-                  <div className="px-3 py-2 text-center">Domestic</div>
-                  <div className="px-3 py-2 text-center">International</div>
-                </div>
-                <div className="text-sm divide-y">
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">No. of Clients</div>
-                    <div className="px-3 py-2 text-center font-semibold">
-                      {salesSummary.totals.domestic.clients}
-                    </div>
-                    <div className="px-3 py-2 text-center font-semibold">
-                      {salesSummary.totals.international.clients}
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">Current MRR</div>
-                    <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.domestic.mrrLacs.toFixed(2)} Lacs
-                    </div>
-                    <div className="px-3 py-2 text-center">
-                      ₹ {salesSummary.totals.international.mrrLacs.toFixed(2)}{" "}
-                      Lacs
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">Current ARR</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.currArrUsdMn.toFixed(3)} Mn
-                      USD
-                    </div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.currArrUsdMn.toFixed(
-                        3,
-                      )}{" "}
-                      Mn USD
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3">
-                    <div className="px-3 py-2">Potential ARR</div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.domestic.projArrUsdMn.toFixed(3)} Mn
-                      USD
-                    </div>
-                    <div className="px-3 py-2 text-center">
-                      {salesSummary.totals.international.projArrUsdMn.toFixed(
-                        3,
-                      )}{" "}
-                      Mn USD
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
         </CardContent>
       </Card>
 
@@ -589,12 +618,47 @@ export default function BusinessOfferingsDashboard() {
           {(() => {
             type StageGroup = {
               label: string;
+              order?: number;
+              weight?: number;
               items: { client: any; offering: any; stepName: string }[];
               mrrLacs: number;
               currArrUsdMn: number;
               projArrUsdMn: number;
             };
             const groupsMap: Record<string, StageGroup> = {};
+
+            // Pre-fill groups with all step names from templates to show all steps
+            (data as any[]).forEach((o: any, idx: number) => {
+              const steps = (stepQueries[idx]?.data as any[]) || [];
+              steps.forEach((s: any, sidx: number) => {
+                const name = s.name || `Step ${s.order_index || sidx + 1}`;
+                if (!groupsMap[name]) {
+                  groupsMap[name] = {
+                    label: name,
+                    order: Number(s.order_index ?? s.step_order ?? sidx + 1),
+                    weight: Number(s.probability_percent ?? 0),
+                    items: [],
+                    mrrLacs: 0,
+                    currArrUsdMn: 0,
+                    projArrUsdMn: 0,
+                  };
+                } else {
+                  if (groupsMap[name].order == null) {
+                    groupsMap[name].order = Number(
+                      s.order_index ?? s.step_order ?? sidx + 1,
+                    );
+                  } else {
+                    groupsMap[name].order = Math.min(
+                      groupsMap[name].order as number,
+                      Number(s.order_index ?? s.step_order ?? sidx + 1),
+                    );
+                  }
+                  if ((groupsMap[name].weight ?? 0) === 0) {
+                    groupsMap[name].weight = Number(s.probability_percent ?? 0);
+                  }
+                }
+              });
+            });
 
             (data as any[]).forEach((o: any, idx: number) => {
               const q = stepQueries[idx];
@@ -609,6 +673,8 @@ export default function BusinessOfferingsDashboard() {
               if (!groupsMap[label]) {
                 groupsMap[label] = {
                   label,
+                  order: undefined,
+                  weight: undefined,
                   items: [],
                   mrrLacs: 0,
                   currArrUsdMn: 0,
@@ -632,8 +698,17 @@ export default function BusinessOfferingsDashboard() {
 
             const totalWithSteps = (data as any[]).length || 1;
             const groups = Object.values(groupsMap).sort(
-              (a, b) => b.items.length - a.items.length,
+              (a, b) => (b.order ?? 0) - (a.order ?? 0),
             );
+
+            // compute cumulative weights bottom-up (from last to first)
+            const cumulativeWeights: Record<string, number> = {};
+            let running = 0;
+            for (let i = groups.length - 1; i >= 0; i--) {
+              const gg = groups[i];
+              running += Number(gg.weight ?? 0) || 0;
+              cumulativeWeights[gg.label] = Math.round(running);
+            }
             if (groups.length === 0)
               return <div className="text-gray-600">No pipeline data</div>;
 
@@ -681,51 +756,85 @@ export default function BusinessOfferingsDashboard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                   {groups.map((g) => {
-                    const percent = Math.round(
-                      (g.items.length / totalWithSteps) * 100,
-                    );
-                    return (
-                      <button
-                        key={g.label}
-                        className="p-4 border rounded-lg bg-white text-left hover:shadow"
-                        onClick={() => openStageDialog(g)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div
-                            className="font-medium truncate pr-2"
-                            title={g.label}
-                          >
-                            {g.label}
+                    const cumulativePercent =
+                      cumulativeWeights[g.label] ??
+                      Math.round(Number(g.weight ?? 0));
+                    {
+                      // determine color classes based on cumulative percent (six-step palette)
+                      const pct = cumulativePercent;
+                      let borderClass = "border-gray-300";
+                      let percentClass = "text-gray-800";
+                      // thresholds split roughly into six buckets: 0-16,17-33,34-50,51-67,68-84,85-100
+                      if (pct <= 16) {
+                        borderClass = "border-yellow-300";
+                        percentClass = "text-yellow-700";
+                      } else if (pct <= 33) {
+                        borderClass = "border-purple-300";
+                        percentClass = "text-purple-700";
+                      } else if (pct <= 50) {
+                        borderClass = "border-gray-300";
+                        percentClass = "text-gray-700";
+                      } else if (pct <= 67) {
+                        borderClass = "border-violet-300";
+                        percentClass = "text-violet-700";
+                      } else if (pct <= 84) {
+                        borderClass = "border-blue-300";
+                        percentClass = "text-blue-700";
+                      } else {
+                        borderClass = "border-green-300";
+                        percentClass = "text-green-700";
+                      }
+
+                      return (
+                        <button
+                          key={g.label}
+                          className={`p-4 rounded-lg bg-white text-left hover:shadow border-2 ${borderClass}`}
+                          onClick={() => openStageDialog(g)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div
+                              className="font-medium pr-2 break-words"
+                              title={`${g.label} - ${cumulativePercent}%`}
+                            >
+                              <span className="truncate">{g.label}</span>
+                              <span
+                                className={`ml-2 text-xs font-medium ${percentClass}`}
+                              >
+                                {cumulativePercent}%
+                              </span>
+                            </div>
+                            <Badge variant="secondary">{g.items.length}</Badge>
                           </div>
-                          <Badge variant="secondary">{g.items.length}</Badge>
-                        </div>
-                        <div className="mt-2 text-xs text-gray-600">
-                          {percent}% of pipeline
-                        </div>
-                        <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
-                          <div className="p-2 bg-gray-50 rounded">
-                            <div className="text-[10px] text-gray-500">MRR</div>
-                            <div className="font-semibold">
-                              ₹ {g.mrrLacs.toFixed(2)} L
+
+                          <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+                            <div className="p-2 bg-gray-50 rounded text-left">
+                              <div className="text-[10px] text-gray-500">
+                                MRR
+                              </div>
+                              <div className="text-sm font-medium">
+                                ₹ {g.mrrLacs.toFixed(2)} L
+                              </div>
+                            </div>
+                            <div className="p-2 bg-gray-50 rounded text-left">
+                              <div className="text-[10px] text-gray-500">
+                                ARR
+                              </div>
+                              <div className="text-sm font-medium">
+                                $ {g.currArrUsdMn.toFixed(3)} Mn
+                              </div>
+                            </div>
+                            <div className="p-2 bg-gray-50 rounded text-left">
+                              <div className="text-[10px] text-gray-500">
+                                Potential
+                              </div>
+                              <div className="text-sm font-medium">
+                                $ {g.projArrUsdMn.toFixed(3)} Mn
+                              </div>
                             </div>
                           </div>
-                          <div className="p-2 bg-gray-50 rounded">
-                            <div className="text-[10px] text-gray-500">ARR</div>
-                            <div className="font-semibold">
-                              {g.currArrUsdMn.toFixed(3)} Mn
-                            </div>
-                          </div>
-                          <div className="p-2 bg-gray-50 rounded">
-                            <div className="text-[10px] text-gray-500">
-                              Potential
-                            </div>
-                            <div className="font-semibold">
-                              {g.projArrUsdMn.toFixed(3)} Mn
-                            </div>
-                          </div>
-                        </div>
-                      </button>
-                    );
+                        </button>
+                      );
+                    }
                   })}
                 </div>
 
@@ -767,8 +876,8 @@ export default function BusinessOfferingsDashboard() {
                               <TableCell>{r.product}</TableCell>
                               <TableCell>{r.stage}</TableCell>
                               <TableCell>₹ {r.mrr.toFixed(2)} L</TableCell>
-                              <TableCell>{r.arr.toFixed(3)} Mn</TableCell>
-                              <TableCell>{r.parr.toFixed(3)} Mn</TableCell>
+                              <TableCell>$ {r.arr.toFixed(3)} Mn</TableCell>
+                              <TableCell>$ {r.parr.toFixed(3)} Mn</TableCell>
                               <TableCell>{r.lastFollowUp}</TableCell>
                               <TableCell>{r.nextFollowUp}</TableCell>
                             </TableRow>
@@ -980,7 +1089,7 @@ export default function BusinessOfferingsDashboard() {
                 <CardHeader className="bg-gradient-to-r from-blue-50 to-blue-100 border-b border-blue-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg font-semibold text-blue-900 flex items-center">
+                      <CardTitle className="text-base font-semibold text-blue-900 flex items-center">
                         <Clock className="w-5 h-5 mr-2" /> Follow-ups Due
                       </CardTitle>
                       <CardDescription className="text-blue-700">
@@ -1110,7 +1219,7 @@ export default function BusinessOfferingsDashboard() {
                 <CardHeader className="bg-gradient-to-r from-red-50 to-red-100 border-b border-red-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <CardTitle className="text-lg font-semibold text-red-900 flex items-center">
+                      <CardTitle className="text-base font-semibold text-red-900 flex items-center">
                         <XCircle className="w-5 h-5 mr-2" /> Overdue Follow-ups
                       </CardTitle>
                       <CardDescription className="text-red-700">
