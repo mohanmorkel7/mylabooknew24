@@ -1333,7 +1333,7 @@ export default function FundRaiseDashboard() {
             });
 
             // Pass status investors (only in selected stage)
-            const passList: { name: string; fund: number }[] = [];
+            const passList: { name: string; fund: number; id?: number }[] = [];
             (filtered || []).forEach((fr: any) => {
               const investors = Array.isArray(fr.investors) ? fr.investors : [];
               investors.forEach((iv: any) => {
@@ -1343,6 +1343,7 @@ export default function FundRaiseDashboard() {
                     passList.push({
                       name: iv.investor_name || iv.vc_name || "Unknown",
                       fund,
+                      id: fr.id,
                     });
                 }
               });
