@@ -669,7 +669,7 @@ export default function ClientBasedFinOpsTaskManager() {
 
   // Keep the "X min ago" labels updating in real time, independent of data fetching
   useEffect(() => {
-    const tick = setInterval(() => setCurrentTime(new Date()), 30000); // 30s cadence
+    const tick = setInterval(() => setCurrentTime(new Date()), 10000); // 10s cadence
     return () => clearInterval(tick);
   }, []);
 
