@@ -1027,7 +1027,11 @@ router.patch(
         // Persist status change to finops_subtasks table to keep the authoritative subtask status in sync
         try {
           const statusToSet = status;
-          const subtaskUpdateParams: any[] = [statusToSet, taskId, Number(subtaskId)];
+          const subtaskUpdateParams: any[] = [
+            statusToSet,
+            taskId,
+            Number(subtaskId),
+          ];
           const subtaskUpdateQuery = `
             UPDATE finops_subtasks
             SET status = $1,
@@ -1038,7 +1042,10 @@ router.patch(
           `;
           await pool.query(subtaskUpdateQuery, subtaskUpdateParams);
         } catch (err) {
-          console.warn('Failed to persist status to finops_subtasks:', err?.message || err);
+          console.warn(
+            "Failed to persist status to finops_subtasks:",
+            err?.message || err,
+          );
         }
 
         // Fetch updated tracker row for notifications/logging
