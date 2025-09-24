@@ -667,6 +667,12 @@ export default function ClientBasedFinOpsTaskManager() {
   // Real-time timer state
   const [currentTime, setCurrentTime] = useState(new Date());
 
+  // Keep the "X min ago" labels updating in real time, independent of data fetching
+  useEffect(() => {
+    const tick = setInterval(() => setCurrentTime(new Date()), 30000); // 30s cadence
+    return () => clearInterval(tick);
+  }, []);
+
   // Overdue reason dialog states
   const [showOverdueReasonDialog, setShowOverdueReasonDialog] = useState(false);
   const [overdueReasonData, setOverdueReasonData] = useState<{
