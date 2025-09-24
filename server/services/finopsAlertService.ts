@@ -380,24 +380,7 @@ class FinOpsAlertService {
             user_ids: userIds,
           });
 
-          const response = await fetch(
-            "https://pulsealerts.mylapay.com/direct-call",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                receiver: "CRM_Switch",
-                title,
-                user_ids: userIds,
-              }),
-            },
-          );
-
-          if (!response.ok) {
-            console.warn("Replica-down repeat alert failed:", response.status);
-            continue;
-          }
-
+          // Reserve an external alert record; actual external call is performed by pulse-sync or external worker
           await pool.query(
             `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
                  VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
@@ -620,21 +603,8 @@ class FinOpsAlertService {
         user_ids: userIds,
       });
 
-      const response = await fetch(
-        "https://pulsealerts.mylapay.com/direct-call",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            receiver: "CRM_Switch",
-            title,
-            user_ids: userIds,
-          }),
-        },
-      );
-      if (!response.ok) {
-        console.warn("Replica-down alert failed:", response.status);
-      }
+      // External call delegated to pulse-sync worker; finops_external_alerts already contains reservation row
+      // No direct network call here to avoid duplicate/parallel requests and to centralize retries
     } catch (err) {
       console.warn("Replica-down alert error:", (err as Error).message);
     }
