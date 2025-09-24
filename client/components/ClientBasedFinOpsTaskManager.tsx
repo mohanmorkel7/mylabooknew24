@@ -1681,15 +1681,6 @@ export default function ClientBasedFinOpsTaskManager() {
                   title,
                 );
               } catch {}
-              await fetch("https://pulsealerts.mylapay.com/direct-call", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  receiver: "CRM_Switch",
-                  title,
-                  user_ids: [],
-                }),
-              });
             } catch (err) {
               if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
                 console.warn(
