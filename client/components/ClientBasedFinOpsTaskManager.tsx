@@ -770,7 +770,7 @@ export default function ClientBasedFinOpsTaskManager() {
   const UPDATE_BLOCK_WINDOW = 60 * 1000; // 1 minute
 
   // Wrapper to mark manual updates and call mutation
-  const updateSubTask = (args: {
+  const performSubtaskUpdate = (args: {
     taskId: number;
     subTaskId: string;
     status: string;
@@ -832,7 +832,7 @@ export default function ClientBasedFinOpsTaskManager() {
                       `Skipping auto-overdue for ${subtask.id} due to recent manual update`,
                     );
                 } else {
-                  updateSubTask({
+                  performSubtaskUpdate({
                     taskId: task.id,
                     subTaskId: subtask.id,
                     status: "overdue",
@@ -1112,7 +1112,7 @@ export default function ClientBasedFinOpsTaskManager() {
     }
 
     // Proceed with normal status change
-    updateSubTask({
+    performSubtaskUpdate({
       taskId,
       subTaskId: subtaskId,
       status: newStatus,
@@ -1141,7 +1141,7 @@ export default function ClientBasedFinOpsTaskManager() {
 
       // Now proceed with the status change
       if (overdueReasonData) {
-        updateSubTask({
+        performSubtaskUpdate({
           taskId: overdueReasonData.taskId,
           subTaskId: overdueReasonData.subtaskId,
           status: overdueReasonData.newStatus,
@@ -1186,7 +1186,7 @@ export default function ClientBasedFinOpsTaskManager() {
                   `Skipping force-update auto-overdue for ${subtask.id} due to recent manual update`,
                 );
             } else {
-              updateSubTask({
+              performSubtaskUpdate({
                 taskId: task.id,
                 subTaskId: subtask.id,
                 status: "overdue",
