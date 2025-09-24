@@ -196,6 +196,108 @@ router.get("/progress", async (_req: Request, res: Response) => {
 });
 
 // Get all fund raises
+// Stage targets configuration
+async function ensureStageTargetsTable() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS fund_raise_stage_targets (
+        id SERIAL PRIMARY KEY,
+        stage TEXT UNIQUE NOT NULL,
+        target_mn NUMERIC(12,2) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_fr_stage_targets_stage ON fund_raise_stage_targets(stage);
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.triggers
+          WHERE event_object_table = 'fund_raise_stage_targets'
+            AND trigger_name = 'update_fund_raise_stage_targets_updated_at'
+        ) THEN
+          IF NOT EXISTS (
+            SELECT 1 FROM pg_proc WHERE proname = 'update_updated_at_column'
+          ) THEN
+            CREATE OR REPLACE FUNCTION update_updated_at_column()
+            RETURNS TRIGGER AS $$
+            BEGIN
+              NEW.updated_at = NOW();
+              RETURN NEW;
+            END;
+            $$ language 'plpgsql';
+          END IF;
+          CREATE TRIGGER update_fund_raise_stage_targets_updated_at
+          BEFORE UPDATE ON fund_raise_stage_targets
+          FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+        END IF;
+      END $$;
+    `);
+  } catch (e) {
+    // ignore
+  }
+}
+
+router.get("/stage-targets", async (_req, res) => {
+  try {
+    if (!(await isDatabaseAvailable())) return res.json([]);
+    await ensureStageTargetsTable();
+    const r = await pool.query(
+      `SELECT id, stage, COALESCE(target_mn,0)::text AS target_mn, created_at, updated_at
+       FROM fund_raise_stage_targets
+       ORDER BY stage ASC`,
+    );
+    return res.json(r.rows || []);
+  } catch (e: any) {
+    console.error("Error fetching stage targets:", e.message);
+    return res.json([]);
+  }
+});
+
+router.get("/stage-targets/:stage", async (req, res) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    await ensureStageTargetsTable();
+    const stage = String(req.params.stage || "").toLowerCase();
+    const r = await pool.query(
+      `SELECT id, stage, COALESCE(target_mn,0)::text AS target_mn, created_at, updated_at
+       FROM fund_raise_stage_targets WHERE stage = $1`,
+      [stage],
+    );
+    if (r.rowCount === 0) return res.status(404).json({ error: "Not found" });
+    return res.json(r.rows[0]);
+  } catch (e: any) {
+    console.error("Error fetching stage target:", e.message);
+    return res.status(500).json({ error: "Failed" });
+  }
+});
+
+router.post("/stage-targets", async (req, res) => {
+  try {
+    if (!(await isDatabaseAvailable()))
+      return res.status(503).json({ error: "Database unavailable" });
+    await ensureStageTargetsTable();
+    const body = req.body || {};
+    const stageRaw = body.stage;
+    const targetMnRaw = body.target_mn;
+    if (!stageRaw || typeof stageRaw !== "string")
+      return res.status(400).json({ error: "stage is required" });
+    const stage = stageRaw.toLowerCase();
+    const targetMn = targetMnRaw == null ? null : String(targetMnRaw);
+    const r = await pool.query(
+      `INSERT INTO fund_raise_stage_targets(stage, target_mn)
+       VALUES ($1, COALESCE($2::numeric, 0))
+       ON CONFLICT(stage) DO UPDATE SET target_mn = EXCLUDED.target_mn, updated_at = NOW()
+       RETURNING id, stage, COALESCE(target_mn,0)::text AS target_mn, created_at, updated_at`,
+      [stage, targetMn],
+    );
+    return res.status(201).json(r.rows[0]);
+  } catch (e: any) {
+    console.error("Error upserting stage target:", e.message);
+    return res.status(500).json({ error: "Failed" });
+  }
+});
+
 router.get("/", async (_req: Request, res: Response) => {
   try {
     if (await isDatabaseAvailable()) {

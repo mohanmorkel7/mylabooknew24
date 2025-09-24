@@ -45,6 +45,7 @@ import {
   BarChart3,
   DollarSign,
   Calendar,
+  Settings,
 } from "lucide-react";
 import {
   Accordion,
@@ -80,6 +81,55 @@ export default function FundRaiseDashboard() {
   const [chartHeight, setChartHeight] = useState(500);
   const [colWidth, setColWidth] = useState(120);
   const [selectedStage, setSelectedStage] = useState<string>("bridge");
+  const ROUND_STAGES = [
+    { value: "pre_seed", label: "Pre seed" },
+    { value: "seed", label: "Seed" },
+    { value: "bridge_1", label: "Bridge 1" },
+    { value: "bridge_2", label: "Bridge 2" },
+    { value: "bridge", label: "Bridge" },
+    { value: "pre_series_a", label: "Pre Series A" },
+    { value: "series_a", label: "Series A" },
+    { value: "series_b", label: "Series B" },
+    { value: "series_c", label: "Series C" },
+  ];
+
+  const [configOpen, setConfigOpen] = useState(false);
+  const [configStage, setConfigStage] = useState<string>("bridge");
+  const [configTargetMn, setConfigTargetMn] = useState<string>("");
+
+  const { data: stageTargets = [], refetch: refetchStageTargets } = useQuery({
+    queryKey: ["fr-stage-targets"],
+    queryFn: async () => {
+      try {
+        const r = await apiClient.request("/fund-raises/stage-targets");
+        return Array.isArray(r) ? r : [];
+      } catch {
+        return [];
+      }
+    },
+    retry: 0,
+    staleTime: 60000,
+  });
+
+  useEffect(() => {
+    setConfigStage(selectedStage || "bridge");
+    const found = (stageTargets || []).find(
+      (t: any) => t.stage === (selectedStage || "bridge"),
+    );
+    setConfigTargetMn(found?.target_mn || "");
+  }, [selectedStage, stageTargets]);
+
+  const saveStageTarget = useMutation({
+    mutationFn: (payload: { stage: string; target_mn: string }) =>
+      apiClient.request("/fund-raises/stage-targets", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["fr-stage-targets"] });
+      refetchStageTargets();
+    },
+  });
 
   const SHOW_PROGRESS_DASHBOARD = false;
 
@@ -331,10 +381,79 @@ export default function FundRaiseDashboard() {
           </h1>
           <p className="text-gray-600 mt-1">Manage fund raises</p>
         </div>
-        <Button onClick={() => navigate("/fundraise/create")}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Fund Raise
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setConfigOpen(true)}>
+            <Settings className="w-4 h-4 mr-2" />
+            Config
+          </Button>
+          <Button onClick={() => navigate("/fundraise/create")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Fund Raise
+          </Button>
+        </div>
+
+        <AlertDialog open={configOpen} onOpenChange={setConfigOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Configure Target by Investment Stage
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                Select an investment stage and set the Target value in Mn.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm mb-1">Investment Stage</div>
+                <Select
+                  value={configStage}
+                  onValueChange={(v) => {
+                    setConfigStage(v);
+                    const found = (stageTargets || []).find(
+                      (t: any) => t.stage === v,
+                    );
+                    setConfigTargetMn(found?.target_mn || "");
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select investment stage" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ROUND_STAGES.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <div className="text-sm mb-1">Target value in Mn</div>
+                <Input
+                  placeholder="e.g. 5.00"
+                  value={configTargetMn}
+                  onChange={(e) => setConfigTargetMn(e.target.value)}
+                />
+              </div>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setConfigOpen(false)}>
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={async () => {
+                  await saveStageTarget.mutateAsync({
+                    stage: configStage,
+                    target_mn: configTargetMn || "0",
+                  });
+                  setConfigOpen(false);
+                }}
+              >
+                Save
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
 
       {statsLoading ? (
@@ -1049,7 +1168,7 @@ export default function FundRaiseDashboard() {
               (fr: any) => (fr.round_stage || "unknown") === stageKey,
             );
 
-            const computeTotalForRound = (fr: any) => {
+            const computeTotalForRound = (fr: any, excludePass = false) => {
               let totalFundMn = 0;
               const investorList =
                 Array.isArray(fr.investors) && fr.investors.length
@@ -1064,21 +1183,35 @@ export default function FundRaiseDashboard() {
                         },
                       ]
                     : [];
-              investorList.forEach((iv: any) => {
-                const v = parseFloat(iv?.fund_mn ?? "");
-                if (!isNaN(v)) totalFundMn += v;
-              });
-              if (totalFundMn === 0) {
-                const fallback = parseFloat(
-                  fr.total_raise_mn || fr.fund_mn || 0,
-                );
-                totalFundMn = isNaN(fallback) ? 0 : fallback;
+
+              if (investorList.length) {
+                investorList.forEach((iv: any) => {
+                  if (
+                    excludePass &&
+                    (iv.investor_status || "").toLowerCase() === "pass"
+                  )
+                    return;
+                  const v = parseFloat(iv?.fund_mn ?? "");
+                  if (!isNaN(v)) totalFundMn += v;
+                });
+              } else {
+                // No investor breakdown - only include fallback when not excluding pass
+                if (!excludePass) {
+                  const fallback = parseFloat(
+                    fr.total_raise_mn || fr.fund_mn || 0,
+                  );
+                  totalFundMn = isNaN(fallback) ? 0 : fallback;
+                } else {
+                  totalFundMn = 0;
+                }
               }
+
               return totalFundMn;
             };
 
+            // Total should exclude 'pass' investor amounts
             const targeted = filtered.reduce((sum: number, fr: any) => {
-              return sum + computeTotalForRound(fr);
+              return sum + computeTotalForRound(fr, true);
             }, 0);
 
             const valuationValues = filtered
@@ -1123,19 +1256,25 @@ export default function FundRaiseDashboard() {
               const prog = Number(p.total_completed_probability || 0);
               const fr = (filtered || []).find((f: any) => f.id === p.fr_id);
               if (!fr) return;
-              const fundVal = computeTotalForRound(fr);
-              if (prog >= 100)
-                completed100.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: fundVal,
-                  id: fr.id,
-                });
-              else if (prog >= 90)
-                committed90.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: fundVal,
-                  id: fr.id,
-                });
+              // Exclude 'pass' amounts from completed/committed totals
+              const fundVal = computeTotalForRound(fr, true);
+              // Skip fund raises that have no non-pass contribution
+              if (fundVal > 0) {
+                if (prog >= 100)
+                  completed100.push({
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: fundVal,
+                    id: fr.id,
+                  });
+                else if (prog >= 90)
+                  committed90.push({
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: fundVal,
+                    id: fr.id,
+                  });
+              }
             });
 
             const totalCompleted100 = completed100.reduce(
@@ -1165,29 +1304,36 @@ export default function FundRaiseDashboard() {
               const prog = Number(p.total_completed_probability || 0);
               const fr = (filtered || []).find((f: any) => f.id === p.fr_id);
               if (!fr) return;
-              const val = computeTotalForRound(fr);
-              if (prog <= 20)
-                buckets["0-20"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                  id: fr.id,
-                });
-              else if (prog <= 40)
-                buckets["21-40"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                  id: fr.id,
-                });
-              else if (prog <= 70)
-                buckets["41-70"].items.push({
-                  name: fr.round_title || fr.investor_name || `Round ${fr.id}`,
-                  fund: val,
-                  id: fr.id,
-                });
+              // Exclude 'pass' amounts from bucket totals
+              const val = computeTotalForRound(fr, true);
+              // Skip adding entries that have no non-pass contribution
+              if (val > 0) {
+                if (prog <= 20)
+                  buckets["0-20"].items.push({
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: val,
+                    id: fr.id,
+                  });
+                else if (prog <= 40)
+                  buckets["21-40"].items.push({
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: val,
+                    id: fr.id,
+                  });
+                else if (prog <= 70)
+                  buckets["41-70"].items.push({
+                    name:
+                      fr.round_title || fr.investor_name || `Round ${fr.id}`,
+                    fund: val,
+                    id: fr.id,
+                  });
+              }
             });
 
             // Pass status investors (only in selected stage)
-            const passList: { name: string; fund: number }[] = [];
+            const passList: { name: string; fund: number; id?: number }[] = [];
             (filtered || []).forEach((fr: any) => {
               const investors = Array.isArray(fr.investors) ? fr.investors : [];
               investors.forEach((iv: any) => {
@@ -1197,6 +1343,7 @@ export default function FundRaiseDashboard() {
                     passList.push({
                       name: iv.investor_name || iv.vc_name || "Unknown",
                       fund,
+                      id: fr.id,
                     });
                 }
               });
@@ -1206,13 +1353,43 @@ export default function FundRaiseDashboard() {
 
             return (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
-                    <div className="text-sm text-blue-700 font-medium">
-                      Targeted
-                    </div>
-                    <div className="text-2xl font-bold text-blue-900">
-                      ${targeted.toFixed(3)} Mn
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200 rounded-lg">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm text-indigo-700 font-medium">
+                          Targeted
+                        </div>
+                        <div className="text-2xl font-bold text-indigo-900">
+                          $
+                          {(() => {
+                            const t = (stageTargets || []).find(
+                              (it: any) =>
+                                it.stage === (selectedStage || "bridge"),
+                            )?.target_mn;
+                            const num = parseFloat(t || "0");
+                            return isNaN(num) ? "0.000" : num.toFixed(3);
+                          })()}{" "}
+                          Mn
+                        </div>
+                      </div>
+                      <div className="w-40">
+                        <div className="text-sm text-gray-500">
+                          {(() => {
+                            const s = selectedStage || "";
+                            return s
+                              ? s
+                                  .replaceAll("_", " ")
+                                  .split(" ")
+                                  .map(
+                                    (w) =>
+                                      w.charAt(0).toUpperCase() + w.slice(1),
+                                  )
+                                  .join(" ")
+                              : "Unknown";
+                          })()}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg">
@@ -1221,6 +1398,14 @@ export default function FundRaiseDashboard() {
                     </div>
                     <div className="text-2xl font-bold text-green-900">
                       ${valuation.toFixed(3)} Mn
+                    </div>
+                  </div>
+                  <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+                    <div className="text-sm text-blue-700 font-medium">
+                      Total
+                    </div>
+                    <div className="text-2xl font-bold text-blue-900">
+                      ${targeted.toFixed(3)} Mn
                     </div>
                   </div>
                 </div>
@@ -1382,10 +1567,15 @@ export default function FundRaiseDashboard() {
                     <div className="mt-3 space-y-2 max-h-48 overflow-y-auto">
                       {passList.map((p) => (
                         <div
-                          key={p.name}
-                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded"
+                          key={p.name + (p.id || 0)}
+                          className="flex justify-between items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          onClick={() =>
+                            p.id ? navigate(`/fundraise/${p.id}`) : null
+                          }
                         >
-                          <div className="text-sm">{p.name}</div>
+                          <div className="text-sm text-blue-700 underline decoration-dotted">
+                            {p.name}
+                          </div>
                           <div className="text-sm font-medium">
                             ${p.fund.toFixed(3)} Mn
                           </div>
