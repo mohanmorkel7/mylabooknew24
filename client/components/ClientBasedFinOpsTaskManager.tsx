@@ -770,7 +770,14 @@ export default function ClientBasedFinOpsTaskManager() {
   const UPDATE_BLOCK_WINDOW = 60 * 1000; // 1 minute
 
   // Wrapper to mark manual updates and call mutation
-  const updateSubTask = (args: { taskId: number; subTaskId: string; status: string; userName?: string; delayReason?: string; delayNotes?: string; }) => {
+  const updateSubTask = (args: {
+    taskId: number;
+    subTaskId: string;
+    status: string;
+    userName?: string;
+    delayReason?: string;
+    delayNotes?: string;
+  }) => {
     const key = `${args.taskId}-${args.subTaskId}`;
     try {
       recentManualUpdates.current[key] = Date.now();
@@ -817,8 +824,13 @@ export default function ClientBasedFinOpsTaskManager() {
                 const key = `${task.id}-${subtask.id}`;
                 const last = recentManualUpdates.current[key];
                 if (last && Date.now() - last < UPDATE_BLOCK_WINDOW) {
-                  if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-                    console.log(`Skipping auto-overdue for ${subtask.id} due to recent manual update`);
+                  if (
+                    typeof window !== "undefined" &&
+                    (window as any).__APP_DEBUG
+                  )
+                    console.log(
+                      `Skipping auto-overdue for ${subtask.id} due to recent manual update`,
+                    );
                 } else {
                   updateSubTask({
                     taskId: task.id,
@@ -1170,7 +1182,9 @@ export default function ClientBasedFinOpsTaskManager() {
             const lastManual = recentManualUpdates.current[keyManual];
             if (lastManual && Date.now() - lastManual < UPDATE_BLOCK_WINDOW) {
               if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
-                console.log(`Skipping force-update auto-overdue for ${subtask.id} due to recent manual update`);
+                console.log(
+                  `Skipping force-update auto-overdue for ${subtask.id} due to recent manual update`,
+                );
             } else {
               updateSubTask({
                 taskId: task.id,
