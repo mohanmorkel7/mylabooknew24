@@ -187,41 +187,80 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     let result;
     if (dateParam) {
-      // Historical view: read from finops_tracker for requested date
+      // Historical view: Prefer finops_tracker for requested date, but fall back to finops_subtasks by scheduled_date when tracker rows are missing
       const trackerQuery = `
         SELECT
           t.*,
-          COALESCE(
-            json_agg(
-              json_build_object(
-                'id', ft.subtask_id,
-                'name', ft.subtask_name,
-                'description', ft.description,
-                'sla_hours', ft.sla_hours,
-                'sla_minutes', ft.sla_minutes,
-                'order_position', ft.order_position,
-                'status', ft.status,
-                'started_at', ft.started_at,
-                'completed_at', ft.completed_at,
-                'due_at', NULL,
-                'start_time', ft.scheduled_time,
-                'scheduled_date', ft.subtask_scheduled_date,
-                'delay_reason', ft.delay_reason,
-                'delay_notes', ft.delay_notes,
-                'notification_sent_15min', ft.notification_sent_15min,
-                'notification_sent_start', ft.notification_sent_start,
-                'notification_sent_escalation', ft.notification_sent_escalation,
-                'assigned_to', ft.assigned_to,
-                'reporting_managers', ft.reporting_managers,
-                'escalation_managers', ft.escalation_managers
-              ) ORDER BY ft.order_position
-            ) FILTER (WHERE ft.subtask_id IS NOT NULL),
-            '[]'::json
-          ) as subtasks
+          COALESCE(sub.subtasks, '[]'::json) AS subtasks
         FROM finops_tasks t
-        LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
+        LEFT JOIN LATERAL (
+          SELECT json_agg(s.* ORDER BY s.order_position) AS subtasks
+          FROM (
+            -- Primary source: tracker rows for this date
+            SELECT
+              ft.subtask_id AS id,
+              ft.subtask_name AS name,
+              ft.description,
+              ft.sla_hours,
+              ft.sla_minutes,
+              ft.order_position,
+              ft.status,
+              ft.started_at,
+              ft.completed_at,
+              NULL::timestamp AS due_at,
+              ft.scheduled_time AS start_time,
+              ft.subtask_scheduled_date AS scheduled_date,
+              ft.delay_reason,
+              ft.delay_notes,
+              ft.notification_sent_15min,
+              ft.notification_sent_start,
+              ft.notification_sent_escalation,
+              ft.assigned_to,
+              ft.reporting_managers,
+              ft.escalation_managers
+            FROM finops_tracker ft
+            WHERE ft.task_id = t.id AND ft.run_date = $1
+
+            UNION ALL
+
+            -- Fallback: subtasks scheduled for this date not present in tracker
+            SELECT
+              st.id AS id,
+              st.name AS name,
+              st.description,
+              st.sla_hours,
+              st.sla_minutes,
+              st.order_position,
+              CASE
+                WHEN st.status IN ('pending','in_progress')
+                  AND st.start_time IS NOT NULL
+                  AND (CAST($1 AS date) + st.start_time) < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')
+                THEN 'overdue'
+                ELSE st.status
+              END AS status,
+              st.started_at,
+              st.completed_at,
+              NULL::timestamp AS due_at,
+              st.start_time AS start_time,
+              st.scheduled_date AS scheduled_date,
+              st.delay_reason,
+              st.delay_notes,
+              COALESCE(st.notification_sent_15min, false) AS notification_sent_15min,
+              COALESCE(st.notification_sent_start, false) AS notification_sent_start,
+              COALESCE(st.notification_sent_escalation, false) AS notification_sent_escalation,
+              COALESCE(st.assigned_to, t.assigned_to) AS assigned_to,
+              t.reporting_managers::text AS reporting_managers,
+              t.escalation_managers::text AS escalation_managers
+            FROM finops_subtasks st
+            WHERE st.task_id = t.id
+              AND st.scheduled_date = $1
+              AND NOT EXISTS (
+                SELECT 1 FROM finops_tracker ft2
+                WHERE ft2.run_date = $1 AND ft2.task_id = t.id AND ft2.subtask_id = st.id
+              )
+          ) AS s
+        ) AS sub ON TRUE
         WHERE t.deleted_at IS NULL
-        GROUP BY t.id
         ORDER BY t.created_at DESC
       `;
 
