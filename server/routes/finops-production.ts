@@ -243,8 +243,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
               COALESCE(st.notification_sent_start, false) AS notification_sent_start,
               COALESCE(st.notification_sent_escalation, false) AS notification_sent_escalation,
               COALESCE(st.assigned_to, t.assigned_to) AS assigned_to,
-              t.reporting_managers AS reporting_managers,
-              t.escalation_managers AS escalation_managers
+              t.reporting_managers::text AS reporting_managers,
+              t.escalation_managers::text AS escalation_managers
             FROM finops_subtasks st
             WHERE st.task_id = t.id
               AND st.scheduled_date = $1
