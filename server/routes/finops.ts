@@ -1024,6 +1024,23 @@ router.patch(
 
         await pool.query(updateQuery, params);
 
+        // Persist status change to finops_subtasks table to keep the authoritative subtask status in sync
+        try {
+          const statusToSet = status;
+          const subtaskUpdateParams: any[] = [statusToSet, taskId, Number(subtaskId)];
+          const subtaskUpdateQuery = `
+            UPDATE finops_subtasks
+            SET status = $1,
+                started_at = CASE WHEN $1 = 'in_progress' THEN COALESCE(started_at, CURRENT_TIMESTAMP) ELSE started_at END,
+                completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP WHEN $1 != 'completed' THEN NULL ELSE completed_at END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE task_id = $2 AND id = $3
+          `;
+          await pool.query(subtaskUpdateQuery, subtaskUpdateParams);
+        } catch (err) {
+          console.warn('Failed to persist status to finops_subtasks:', err?.message || err);
+        }
+
         // Fetch updated tracker row for notifications/logging
         const updatedRes = await pool.query(
           `SELECT ft.*, t.task_name FROM finops_tracker ft JOIN finops_tasks t ON ft.task_id = t.id WHERE ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND ft.task_id = $1 AND ft.subtask_id = $2 LIMIT 1`,
