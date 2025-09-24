@@ -887,7 +887,14 @@ class FinOpsAlertService {
         ON CONFLICT (run_date, period, task_id, subtask_id)
         DO UPDATE SET status = EXCLUDED.status, started_at = COALESCE(finops_tracker.started_at, EXCLUDED.started_at), completed_at = COALESCE(finops_tracker.completed_at, EXCLUDED.completed_at), description = COALESCE(finops_tracker.description, EXCLUDED.description), scheduled_time = COALESCE(finops_tracker.scheduled_time, EXCLUDED.scheduled_time), updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
       `,
-        [status, taskId, subtaskId, subtaskName, scheduled_time_val, description_val],
+        [
+          status,
+          taskId,
+          subtaskId,
+          subtaskName,
+          scheduled_time_val,
+          description_val,
+        ],
       );
 
       // Fetch task and client details for richer message
