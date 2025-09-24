@@ -858,6 +858,18 @@ class FinOpsAlertService {
       const previousStatus = currentRow?.status || "unknown";
       const subtaskName = currentRow?.name || String(subtaskId);
 
+      // Do not overwrite active/terminal statuses to overdue automatically
+      if (
+        status === "overdue" &&
+        ["in_progress", "completed", "delayed"].includes(String(previousStatus))
+      ) {
+        if (typeof console !== "undefined")
+          console.log(
+            `Skipping automatic transition to 'overdue' for subtask ${subtaskId} because current status is '${previousStatus}'`,
+          );
+        return;
+      }
+
       // Fetch original subtask metadata (start_time, description) from finops_subtasks to preserve UI fields
       const subtaskMetaRes = await pool.query(
         `SELECT start_time, description FROM finops_subtasks WHERE task_id = $1 AND id = $2 LIMIT 1`,
