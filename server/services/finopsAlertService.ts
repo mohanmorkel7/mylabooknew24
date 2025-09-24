@@ -858,10 +858,18 @@ class FinOpsAlertService {
       const previousStatus = currentRow?.status || "unknown";
       const subtaskName = currentRow?.name || String(subtaskId);
 
-      // Upsert into finops_tracker for today's date
+      // Fetch original subtask metadata (start_time, description) from finops_subtasks to preserve UI fields
+      const subtaskMetaRes = await pool.query(
+        `SELECT start_time, description FROM finops_subtasks WHERE task_id = $1 AND id = $2 LIMIT 1`,
+        [taskId, subtaskId],
+      );
+      const scheduled_time_val = subtaskMetaRes.rows[0]?.start_time || null;
+      const description_val = subtaskMetaRes.rows[0]?.description || null;
+
+      // Upsert into finops_tracker for today's date (include scheduled_time and description)
       await pool.query(
         `
-        INSERT INTO finops_tracker (run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date)
+        INSERT INTO finops_tracker (run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, description, subtask_scheduled_date)
         VALUES (
           (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date,
           'daily',
@@ -872,13 +880,14 @@ class FinOpsAlertService {
           $1::text,
           CASE WHEN $1::text = 'in_progress'::text THEN CURRENT_TIMESTAMP ELSE NULL END,
           CASE WHEN $1::text = 'completed'::text THEN CURRENT_TIMESTAMP ELSE NULL END,
-          NULL,
+          $5,
+          $6,
           (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         )
         ON CONFLICT (run_date, period, task_id, subtask_id)
-        DO UPDATE SET status = EXCLUDED.status, started_at = COALESCE(finops_tracker.started_at, EXCLUDED.started_at), completed_at = COALESCE(finops_tracker.completed_at, EXCLUDED.completed_at), updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+        DO UPDATE SET status = EXCLUDED.status, started_at = COALESCE(finops_tracker.started_at, EXCLUDED.started_at), completed_at = COALESCE(finops_tracker.completed_at, EXCLUDED.completed_at), description = COALESCE(finops_tracker.description, EXCLUDED.description), scheduled_time = COALESCE(finops_tracker.scheduled_time, EXCLUDED.scheduled_time), updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
       `,
-        [status, taskId, subtaskId, subtaskName],
+        [status, taskId, subtaskId, subtaskName, scheduled_time_val, description_val],
       );
 
       // Fetch task and client details for richer message
