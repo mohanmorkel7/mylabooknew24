@@ -343,67 +343,7 @@ class FinOpsAlertService {
 
         // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
         if (minutes >= initialDelay) {
-          const initialKey = `replica_down_overdue_initial`;
-          const doneInitial = await pool.query(
-            `SELECT 1 FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
-            [row.task_id, row.subtask_id, initialKey],
-          );
-          if (doneInitial.rows.length === 0) {
-            const names = Array.from(
-              new Set([
-                ...this.parseManagers(row.reporting_managers),
-                ...this.parseManagers(row.escalation_managers),
-                ...this.parseManagers(row.assigned_to),
-              ]),
-            );
-            const userIds = await this.getUserIdsFromNames(names);
-            const taskName = row.task_name || "Unknown Task";
-            const clientName = row.client_name || "Unknown Client";
-            const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
-            console.log("Direct-call payload (service initial)", {
-              taskId: row.task_id,
-              subtaskId: row.subtask_id,
-              title,
-              minutes_overdue: minutes,
-              user_ids: userIds,
-            });
-
-            const response = await fetch(
-              "https://pulsealerts.mylapay.com/direct-call",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  receiver: "CRM_Switch",
-                  title,
-                  user_ids: userIds,
-                }),
-              },
-            );
-
-            if (response.ok) {
-              await pool.query(
-                `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
-                [row.task_id, row.subtask_id, initialKey, title],
-              );
-              await this.logAlert(
-                row.task_id,
-                String(row.subtask_id),
-                "sla_overdue_initial",
-                "all",
-                minutes,
-                title,
-              );
-            } else {
-              console.warn(
-                "Replica-down initial alert failed:",
-                response.status,
-              );
-            }
-          }
         }
 
         // Repeat calls with configured interval
@@ -960,9 +900,9 @@ class FinOpsAlertService {
           (SELECT task_name FROM finops_tasks WHERE id = $2 LIMIT 1),
           $3::integer,
           $4,
-          CAST($1 AS VARCHAR(20)),
-          CASE WHEN CAST($1 AS VARCHAR(20)) = 'in_progress'::varchar THEN CURRENT_TIMESTAMP ELSE NULL END,
-          CASE WHEN CAST($1 AS VARCHAR(20)) = 'completed'::varchar THEN CURRENT_TIMESTAMP ELSE NULL END,
+          $1::text,
+          CASE WHEN $1::text = 'in_progress'::text THEN CURRENT_TIMESTAMP ELSE NULL END,
+          CASE WHEN $1::text = 'completed'::text THEN CURRENT_TIMESTAMP ELSE NULL END,
           NULL,
           (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         )
