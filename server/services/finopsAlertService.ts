@@ -954,9 +954,16 @@ class FinOpsAlertService {
       await pool.query(
         `
         INSERT INTO finops_tracker (run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date)
-        VALUES ((CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, 'daily', $2, (SELECT task_name FROM finops_tasks WHERE id = $2 LIMIT 1), $3, $4, $1,
-          CASE WHEN $1 = 'in_progress' THEN CURRENT_TIMESTAMP ELSE NULL END,
-          CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP ELSE NULL END,
+        VALUES (
+          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date,
+          'daily',
+          $2,
+          (SELECT task_name FROM finops_tasks WHERE id = $2 LIMIT 1),
+          $3::integer,
+          $4,
+          CAST($1 AS VARCHAR(20)),
+          CASE WHEN CAST($1 AS VARCHAR(20)) = 'in_progress'::varchar THEN CURRENT_TIMESTAMP ELSE NULL END,
+          CASE WHEN CAST($1 AS VARCHAR(20)) = 'completed'::varchar THEN CURRENT_TIMESTAMP ELSE NULL END,
           NULL,
           (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         )
