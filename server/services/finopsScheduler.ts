@@ -28,7 +28,19 @@ class FinOpsScheduler {
       },
     );
 
-    // Run SLA monitoring every 15 minutes instead of every minute
+    // Fast SLA monitoring every 30 seconds for immediate overdue alerts
+    cron.schedule(
+      "*/30 * * * * *",
+      async () => {
+        if (!(await isDatabaseAvailable())) return;
+        await finopsAlertService.checkSLAAlerts();
+      },
+      {
+        timezone: "Asia/Kolkata",
+      },
+    );
+
+    // Regular SLA monitoring every 15 minutes for redundancy
     cron.schedule(
       "*/15 * * * *",
       async () => {
