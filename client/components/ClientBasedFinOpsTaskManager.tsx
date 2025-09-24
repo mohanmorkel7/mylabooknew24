@@ -76,7 +76,6 @@ import {
   BarChart3,
   RefreshCw,
 } from "lucide-react";
-import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   format,
   formatDistanceToNow,
