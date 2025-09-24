@@ -333,7 +333,6 @@ export default function FinOpsTaskManager({
                 } catch (e) {
                   // swallow - still attempt external call
                 }
-
               } catch (err) {
                 console.warn(
                   "Failed to trigger direct-call for overdue subtask:",

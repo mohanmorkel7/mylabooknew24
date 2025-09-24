@@ -861,7 +861,6 @@ async function getUserIdsFromNames(names: string[]): Promise<string[]> {
   return Array.from(new Set(ids));
 }
 
-
 // Enhanced subtask status update with delay tracking and notifications
 router.patch(
   "/tasks/:taskId/subtasks/:subtaskId",
@@ -1072,7 +1071,6 @@ router.patch(
           delay_reason,
           delay_notes,
         );
-
 
         // Log user activity and update task status
         await logUserActivity(userName, taskId);

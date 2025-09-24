@@ -152,7 +152,6 @@ async function sendReplicaDownAlertOnce(
       reporting_managers_parsed,
       escalation_managers_parsed,
     });
-
   } catch (e) {
     console.warn(
       "[finops-production] Replica-down alert error:",
@@ -1231,7 +1230,6 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
       const user_ids = users.rows
         .map((r) => r.azure_object_id)
         .filter((id) => !!id);
-
     }
 
     res.json({ success: true, checked: overdue.rowCount, sent });

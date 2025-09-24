@@ -343,7 +343,6 @@ class FinOpsAlertService {
 
         // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
         if (minutes >= initialDelay) {
-
         }
 
         // Repeat calls with configured interval
