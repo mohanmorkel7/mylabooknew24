@@ -231,7 +231,13 @@ router.get("/tasks", async (req: Request, res: Response) => {
               st.sla_hours,
               st.sla_minutes,
               st.order_position,
-              st.status,
+              CASE
+                WHEN st.status IN ('pending','in_progress')
+                  AND st.start_time IS NOT NULL
+                  AND (CAST($1 AS date) + st.start_time) < (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')
+                THEN 'overdue'
+                ELSE st.status
+              END AS status,
               st.started_at,
               st.completed_at,
               NULL::timestamp AS due_at,
