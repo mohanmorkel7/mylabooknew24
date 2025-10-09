@@ -1895,7 +1895,10 @@ router.post(
         const parseManagers = (val: any): string[] => {
           if (!val) return [];
           if (Array.isArray(val))
-            return val.map(String).map((s) => s.trim()).filter(Boolean);
+            return val
+              .map(String)
+              .map((s) => s.trim())
+              .filter(Boolean);
           if (typeof val === "string") {
             let s = val.trim();
             if (s.startsWith("{") && s.endsWith("}")) {
@@ -1909,14 +1912,23 @@ router.post(
             try {
               const parsed = JSON.parse(s);
               if (Array.isArray(parsed))
-                return parsed.map(String).map((x) => x.trim()).filter(Boolean);
+                return parsed
+                  .map(String)
+                  .map((x) => x.trim())
+                  .filter(Boolean);
             } catch {}
-            return s.split(",").map((x) => x.trim()).filter(Boolean);
+            return s
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean);
           }
           try {
             const parsed = JSON.parse(val);
             return Array.isArray(parsed)
-              ? parsed.map(String).map((x) => x.trim()).filter(Boolean)
+              ? parsed
+                  .map(String)
+                  .map((x) => x.trim())
+                  .filter(Boolean)
               : [];
           } catch {
             return [] as string[];
@@ -1927,11 +1939,7 @@ router.post(
         const reportingManagers = parseManagers(taskData.reporting_managers);
         const escalationManagers = parseManagers(taskData.escalation_managers);
         const recipients = Array.from(
-          new Set([
-            ...assignedTo,
-            ...reportingManagers,
-            ...escalationManagers,
-          ])
+          new Set([...assignedTo, ...reportingManagers, ...escalationManagers]),
         );
 
         // Enqueue external direct-call via finops_external_alerts; processed by netlify/functions/pulse-sync.ts
@@ -1980,14 +1988,14 @@ router.post(
                OR LOWER(SPLIT_PART(COALESCE(email,''),'@',1)) = ANY($1)
                OR REPLACE(LOWER(SPLIT_PART(COALESCE(email,''),'@',1)),'.','') = ANY($2)
              )`,
-            [normalized, collapsed]
+            [normalized, collapsed],
           );
           const user_ids = Array.from(
             new Set(
               usersRes.rows
                 .map((r: any) => r.azure_object_id || r.sso_id)
-                .filter((id: string | null) => !!id)
-            )
+                .filter((id: string | null) => !!id),
+            ),
           );
 
           if (user_ids.length) {
@@ -2000,7 +2008,10 @@ router.post(
             });
           }
         } catch (e) {
-          console.warn("Manual direct-call user resolution failed:", (e as Error).message);
+          console.warn(
+            "Manual direct-call user resolution failed:",
+            (e as Error).message,
+          );
         }
 
         res.json({
