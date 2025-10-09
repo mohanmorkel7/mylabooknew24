@@ -280,7 +280,7 @@ router.get("/", async (req: Request, res: Response) => {
           fs.name as subtask_name,
           fs.start_time,
           fs.auto_notify,
-          for_reason.overdue_reason as overdue_reason,
+          fot.reason_text as overdue_reason,
           CASE
             WHEN rn.action = 'created' THEN 'task_created'
             WHEN rn.action = 'updated' AND rn.details NOT ILIKE '%status changed%' THEN 'task_updated'
@@ -302,7 +302,7 @@ router.get("/", async (req: Request, res: Response) => {
         LEFT JOIN finops_subtasks fs ON rn.subtask_id = fs.id
         LEFT JOIN finops_notification_read_status fnrs ON rn.id = fnrs.activity_log_id
         LEFT JOIN finops_notification_archived_status fnas ON rn.id = fnas.activity_log_id
-        LEFT JOIN finops_overdue_reasons for_reason ON (for_reason.notification_id = rn.id)
+        LEFT JOIN finops_overdue_tracking fot ON (fot.task_id = rn.task_id AND fot.subtask_id = rn.subtask_id)
         WHERE rn.rn = 1
         AND fnas.activity_log_id IS NULL
         AND (
