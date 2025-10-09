@@ -1892,14 +1892,10 @@ router.post(
         );
         console.log(`Alert type: ${alert_type}, Message: ${message}`);
 
-        const recipients = (() => {
-          const val = taskData.reporting_managers;
-          if (!val) return [] as string[];
+        const parseManagers = (val: any): string[] => {
+          if (!val) return [];
           if (Array.isArray(val))
-            return val
-              .map(String)
-              .map((s) => s.trim())
-              .filter(Boolean);
+            return val.map(String).map((s) => s.trim()).filter(Boolean);
           if (typeof val === "string") {
             let s = val.trim();
             if (s.startsWith("{") && s.endsWith("}")) {
@@ -1913,23 +1909,30 @@ router.post(
             try {
               const parsed = JSON.parse(s);
               if (Array.isArray(parsed))
-                return parsed
-                  .map(String)
-                  .map((x) => x.trim())
-                  .filter(Boolean);
+                return parsed.map(String).map((x) => x.trim()).filter(Boolean);
             } catch {}
-            return s
-              .split(",")
-              .map((x) => x.trim())
-              .filter(Boolean);
+            return s.split(",").map((x) => x.trim()).filter(Boolean);
           }
           try {
             const parsed = JSON.parse(val);
-            return Array.isArray(parsed) ? parsed : [];
+            return Array.isArray(parsed)
+              ? parsed.map(String).map((x) => x.trim()).filter(Boolean)
+              : [];
           } catch {
             return [] as string[];
           }
-        })();
+        };
+
+        const assignedTo = parseManagers(taskData.assigned_to);
+        const reportingManagers = parseManagers(taskData.reporting_managers);
+        const escalationManagers = parseManagers(taskData.escalation_managers);
+        const recipients = Array.from(
+          new Set([...
+            assignedTo,
+            ...reportingManagers,
+            ...escalationManagers,
+          ])
+        );
 
         // Enqueue external direct-call via finops_external_alerts; processed by netlify/functions/pulse-sync.ts
         await pool.query(`
@@ -1959,6 +1962,46 @@ router.post(
           [taskId, Number(subtaskId), title],
         );
         const external_enqueued = reserve.rows.length > 0;
+
+        // Immediately trigger Pulse direct-call once as well (best-effort)
+        try {
+          const normalized = recipients
+            .map((n) => (n || "").toLowerCase().replace(/\s+/g, " ").trim())
+            .filter(Boolean);
+          const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
+          const usersRes = await pool.query(
+            `SELECT azure_object_id, sso_id, first_name, last_name, email
+             FROM users
+             WHERE (
+               LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
+               OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
+               OR LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))) = ANY($1)
+               OR REPLACE(LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))),' ','') = ANY($2)
+               OR LOWER(SPLIT_PART(COALESCE(email,''),'@',1)) = ANY($1)
+               OR REPLACE(LOWER(SPLIT_PART(COALESCE(email,''),'@',1)),'.','') = ANY($2)
+             )`,
+            [normalized, collapsed]
+          );
+          const user_ids = Array.from(
+            new Set(
+              usersRes.rows
+                .map((r: any) => r.azure_object_id || r.sso_id)
+                .filter((id: string | null) => !!id)
+            )
+          );
+
+          if (user_ids.length) {
+            fetch("https://pulsealerts.mylapay.com/direct-call", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+            }).catch((err) => {
+              console.warn("Manual direct-call error:", (err as Error).message);
+            });
+          }
+        } catch (e) {
+          console.warn("Manual direct-call user resolution failed:", (e as Error).message);
+        }
 
         res.json({
           message: "Manual alert sent successfully",
