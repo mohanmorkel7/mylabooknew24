@@ -1946,16 +1946,17 @@ router.post(
         `);
 
         const fallbackTitle = `Kindly take prompt action on the overdue subtask ${taskData.subtask_name} from the task ${taskData.task_name}.`;
-        const title = (typeof message === "string" && message.trim().length)
-          ? String(message)
-          : fallbackTitle;
+        const title =
+          typeof message === "string" && message.trim().length
+            ? String(message)
+            : fallbackTitle;
 
         const reserve = await pool.query(
           `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
            VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
            ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
            RETURNING id`,
-          [taskId, Number(subtaskId), title]
+          [taskId, Number(subtaskId), title],
         );
         const external_enqueued = reserve.rows.length > 0;
 
