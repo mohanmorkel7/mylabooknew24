@@ -61,17 +61,29 @@ export const handler: Handler = async () => {
       const clientName = row.client_name || "Unknown Client";
       const title = `Please take immediate action on the overdue subtask "${row.subtask_name}" under the task "${taskName}" for the client "${clientName}".`;
 
-      // Reserve to avoid duplicates
+      // Reserve to avoid duplicates (schedule immediate send)
       const reserve = await pool.query(
         `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-         VALUES ($1, $2, 'replica_down_overdue', $3, NOW() + INTERVAL '15 minutes')
+         VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
          ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],
       );
       if (reserve.rows.length === 0) continue;
+    }
 
-      // Parse managers
+    // Send pending external alerts whose time has arrived
+    const pending = await pool.query(
+      `SELECT id, task_id, subtask_id, alert_key, title FROM finops_external_alerts WHERE next_call_at IS NOT NULL AND next_call_at <= NOW() ORDER BY next_call_at ASC LIMIT 200`,
+    );
+
+    for (const alertRow of pending.rows) {
+      // Resolve managers and user ids for the associated task
+      const t = await pool.query(
+        `SELECT reporting_managers, escalation_managers, assigned_to FROM finops_tasks WHERE id = $1 LIMIT 1`,
+        [alertRow.task_id],
+      );
+      const meta = t.rows[0] || {};
       const parseManagers = (val: any): string[] => {
         if (!val) return [];
         if (Array.isArray(val))
@@ -96,12 +108,11 @@ export const handler: Handler = async () => {
 
       const names = Array.from(
         new Set([
-          ...parseManagers(row.reporting_managers),
-          ...parseManagers(row.escalation_managers),
-          ...(row.assigned_to ? [String(row.assigned_to)] : []),
+          ...parseManagers(meta.reporting_managers),
+          ...parseManagers(meta.escalation_managers),
+          ...(meta.assigned_to ? [String(meta.assigned_to)] : []),
         ]),
       );
-
       const lowered = names.map((n) => n.toLowerCase());
       const users = await pool.query(
         `SELECT azure_object_id FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,
@@ -117,14 +128,24 @@ export const handler: Handler = async () => {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+            body: JSON.stringify({
+              receiver: "CRM_Switch",
+              title: alertRow.title,
+              user_ids,
+            }),
           },
         );
         if (!resp.ok) {
           console.warn("[pulse-sync] Pulse call failed:", resp.status);
-        } else {
-          sent++;
+          continue;
         }
+
+        // Update next_call_at to avoid immediate resend
+        await pool.query(
+          `UPDATE finops_external_alerts SET next_call_at = NOW() + INTERVAL '15 minutes' WHERE id = $1`,
+          [alertRow.id],
+        );
+        sent++;
       } catch (err) {
         console.warn("[pulse-sync] Pulse call error:", (err as Error).message);
       }

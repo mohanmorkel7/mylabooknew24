@@ -152,22 +152,6 @@ async function sendReplicaDownAlertOnce(
       reporting_managers_parsed,
       escalation_managers_parsed,
     });
-
-    const resp = await fetch("https://pulsealerts.mylapay.com/direct-call", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        receiver: "CRM_Switch",
-        title,
-        user_ids: userIds,
-      }),
-    });
-    if (!resp.ok) {
-      console.warn(
-        "[finops-production] Replica-down alert failed:",
-        resp.status,
-      );
-    }
   } catch (e) {
     console.warn(
       "[finops-production] Replica-down alert error:",
@@ -1246,25 +1230,6 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
       const user_ids = users.rows
         .map((r) => r.azure_object_id)
         .filter((id) => !!id);
-
-      // Call Pulse Alerts
-      try {
-        const resp = await fetch(
-          "https://pulsealerts.mylapay.com/direct-call",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
-          },
-        );
-        if (!resp.ok) {
-          console.warn("Pulse call failed:", resp.status);
-        } else {
-          sent++;
-        }
-      } catch (err) {
-        console.warn("Pulse call error:", (err as Error).message);
-      }
     }
 
     res.json({ success: true, checked: overdue.rowCount, sent });

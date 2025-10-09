@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -765,6 +765,26 @@ export default function ClientBasedFinOpsTaskManager() {
     },
   });
 
+  // Track recent manual updates to avoid client-side race causing immediate auto-overdue
+  const recentManualUpdates = useRef<Record<string, number>>({});
+  const UPDATE_BLOCK_WINDOW = 60 * 1000; // 1 minute
+
+  // Wrapper to mark manual updates and call mutation
+  const performSubtaskUpdate = (args: {
+    taskId: number;
+    subTaskId: string;
+    status: string;
+    userName?: string;
+    delayReason?: string;
+    delayNotes?: string;
+  }) => {
+    const key = `${args.taskId}-${args.subTaskId}`;
+    try {
+      recentManualUpdates.current[key] = Date.now();
+    } catch {}
+    updateSubTaskMutation.mutate(args as any);
+  };
+
   // Real-time updates for SLA warnings and automatic status updates
   useEffect(() => {
     const timer = setInterval(() => {
@@ -800,13 +820,25 @@ export default function ClientBasedFinOpsTaskManager() {
                     `🚨 Auto-updating task ${subtask.name} from pending to overdue`,
                   );
 
-                // Trigger status update mutation
-                updateSubTaskMutation.mutate({
-                  taskId: task.id,
-                  subTaskId: subtask.id,
-                  status: "overdue",
-                  userName: "System Auto-Update",
-                });
+                // Trigger status update (skip if recently manually updated)
+                const key = `${task.id}-${subtask.id}`;
+                const last = recentManualUpdates.current[key];
+                if (last && Date.now() - last < UPDATE_BLOCK_WINDOW) {
+                  if (
+                    typeof window !== "undefined" &&
+                    (window as any).__APP_DEBUG
+                  )
+                    console.log(
+                      `Skipping auto-overdue for ${subtask.id} due to recent manual update`,
+                    );
+                } else {
+                  performSubtaskUpdate({
+                    taskId: task.id,
+                    subTaskId: subtask.id,
+                    status: "overdue",
+                    userName: "System Auto-Update",
+                  });
+                }
               }
             }
           });
@@ -1080,7 +1112,7 @@ export default function ClientBasedFinOpsTaskManager() {
     }
 
     // Proceed with normal status change
-    updateSubTaskMutation.mutate({
+    performSubtaskUpdate({
       taskId,
       subTaskId: subtaskId,
       status: newStatus,
@@ -1109,7 +1141,7 @@ export default function ClientBasedFinOpsTaskManager() {
 
       // Now proceed with the status change
       if (overdueReasonData) {
-        updateSubTaskMutation.mutate({
+        performSubtaskUpdate({
           taskId: overdueReasonData.taskId,
           subTaskId: overdueReasonData.subtaskId,
           status: overdueReasonData.newStatus,
@@ -1146,12 +1178,21 @@ export default function ClientBasedFinOpsTaskManager() {
               console.log(`🚨 Force updating ${subtask.name} to overdue`);
             updatedCount++;
 
-            updateSubTaskMutation.mutate({
-              taskId: task.id,
-              subTaskId: subtask.id,
-              status: "overdue",
-              userName: "Manual Status Update",
-            });
+            const keyManual = `${task.id}-${subtask.id}`;
+            const lastManual = recentManualUpdates.current[keyManual];
+            if (lastManual && Date.now() - lastManual < UPDATE_BLOCK_WINDOW) {
+              if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
+                console.log(
+                  `Skipping force-update auto-overdue for ${subtask.id} due to recent manual update`,
+                );
+            } else {
+              performSubtaskUpdate({
+                taskId: task.id,
+                subTaskId: subtask.id,
+                status: "overdue",
+                userName: "Manual Status Update",
+              });
+            }
           }
         }
       });
@@ -1681,15 +1722,6 @@ export default function ClientBasedFinOpsTaskManager() {
                   title,
                 );
               } catch {}
-              await fetch("https://pulsealerts.mylapay.com/direct-call", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  receiver: "CRM_Switch",
-                  title,
-                  user_ids: [],
-                }),
-              });
             } catch (err) {
               if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
                 console.warn(

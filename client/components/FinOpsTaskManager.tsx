@@ -333,17 +333,6 @@ export default function FinOpsTaskManager({
                 } catch (e) {
                   // swallow - still attempt external call
                 }
-
-                // Call external direct-call API (server also dedupes on its side)
-                await fetch("https://pulsealerts.mylapay.com/direct-call", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    receiver: "CRM_Switch",
-                    title,
-                    user_ids: [],
-                  }),
-                });
               } catch (err) {
                 console.warn(
                   "Failed to trigger direct-call for overdue subtask:",

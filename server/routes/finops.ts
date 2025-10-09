@@ -861,89 +861,6 @@ async function getUserIdsFromNames(names: string[]): Promise<string[]> {
   return Array.from(new Set(ids));
 }
 
-async function sendReplicaDownAlertOnce(
-  taskId: number,
-  subtaskId: string | number,
-  title: string,
-  userIds: string[],
-): Promise<void> {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS finops_external_alerts (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        alert_key TEXT NOT NULL,
-        title TEXT,
-        next_call_at TIMESTAMP,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id, alert_key)
-      )
-    `);
-
-    const reserve = await pool.query(
-      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-         VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
-         RETURNING id`,
-      [taskId, Number(subtaskId), "replica_down_overdue", title],
-    );
-
-    if (reserve.rows.length === 0) {
-      console.log("Direct-call skip (already sent)", {
-        taskId,
-        subtaskId,
-        alert_key: "replica_down_overdue",
-      });
-      return;
-    }
-
-    // Fetch task meta for richer visibility in logs
-    const metaRes = await pool.query(
-      `SELECT assigned_to, reporting_managers, escalation_managers FROM finops_tasks WHERE id = $1 LIMIT 1`,
-      [taskId],
-    );
-    const meta = metaRes.rows[0] || {};
-    const assigned_to_raw = meta.assigned_to ?? null;
-    const reporting_managers_raw = meta.reporting_managers ?? null;
-    const escalation_managers_raw = meta.escalation_managers ?? null;
-
-    const assigned_to_parsed = parseManagerNames(assigned_to_raw);
-    const reporting_managers_parsed = parseManagerNames(reporting_managers_raw);
-    const escalation_managers_parsed = parseManagerNames(
-      escalation_managers_raw,
-    );
-
-    console.log("Direct-call payload (finops.ts)", {
-      taskId,
-      subtaskId,
-      title,
-      user_ids: userIds,
-      assigned_to_raw,
-      reporting_managers_raw,
-      escalation_managers_raw,
-      assigned_to_parsed,
-      reporting_managers_parsed,
-      escalation_managers_parsed,
-    });
-
-    const resp = await fetch("https://pulsealerts.mylapay.com/direct-call", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        receiver: "CRM_Switch",
-        title,
-        user_ids: userIds,
-      }),
-    });
-    if (!resp.ok) {
-      console.warn("Replica-down alert failed:", resp.status);
-    }
-  } catch (e) {
-    console.warn("Replica-down alert error:", (e as Error).message);
-  }
-}
-
 // Enhanced subtask status update with delay tracking and notifications
 router.patch(
   "/tasks/:taskId/subtasks/:subtaskId",
@@ -1107,6 +1024,30 @@ router.patch(
 
         await pool.query(updateQuery, params);
 
+        // Persist status change to finops_subtasks table to keep the authoritative subtask status in sync
+        try {
+          const statusToSet = status;
+          const subtaskUpdateParams: any[] = [
+            statusToSet,
+            taskId,
+            Number(subtaskId),
+          ];
+          const subtaskUpdateQuery = `
+            UPDATE finops_subtasks
+            SET status = $1,
+                started_at = CASE WHEN $1 = 'in_progress' THEN COALESCE(started_at, CURRENT_TIMESTAMP) ELSE started_at END,
+                completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP WHEN $1 != 'completed' THEN NULL ELSE completed_at END,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE task_id = $2 AND id = $3
+          `;
+          await pool.query(subtaskUpdateQuery, subtaskUpdateParams);
+        } catch (err) {
+          console.warn(
+            "Failed to persist status to finops_subtasks:",
+            err?.message || err,
+          );
+        }
+
         // Fetch updated tracker row for notifications/logging
         const updatedRes = await pool.query(
           `SELECT ft.*, t.task_name FROM finops_tracker ft JOIN finops_tasks t ON ft.task_id = t.id WHERE ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND ft.task_id = $1 AND ft.subtask_id = $2 LIMIT 1`,
@@ -1154,38 +1095,6 @@ router.patch(
           delay_reason,
           delay_notes,
         );
-
-        // External alert: trigger only when marked overdue
-        if (status === "overdue") {
-          const settings = await getFinOpsSettings();
-          const initialDelay = Number(
-            settings?.initial_overdue_call_delay_minutes || 0,
-          );
-          if (initialDelay === 0) {
-            // Fetch task/client details for richer message
-            const trow = await pool.query(
-              `SELECT task_name, client_name FROM finops_tasks WHERE id = $1 LIMIT 1`,
-              [taskId],
-            );
-            const taskName = trow.rows[0]?.task_name || "Unknown Task";
-            const clientName = trow.rows[0]?.client_name || "Unknown Client";
-            const title = `Please take immediate action on the overdue subtask ${subtaskName} under the task ${taskName} for the client ${clientName}.`;
-
-            const managerNames = Array.from(
-              new Set([
-                ...parseManagerNames(notifyData.reporting_managers),
-                ...parseManagerNames(notifyData.escalation_managers),
-                ...parseManagerNames(notifyData.assigned_to),
-              ]),
-            );
-            const userIds = await getUserIdsFromNames(managerNames);
-            await sendReplicaDownAlertOnce(taskId, subtaskId, title, userIds);
-          } else {
-            console.log(
-              `Skipping immediate direct-call due to configured initial delay (${initialDelay} min); scheduler will handle initial alert`,
-            );
-          }
-        }
 
         // Log user activity and update task status
         await logUserActivity(userName, taskId);
