@@ -1886,7 +1886,7 @@ router.post(
           `Manual ${alert_type} alert sent: ${message}`,
         );
 
-        // In a real implementation, this would send actual notifications
+        // In a real implementation, this sends notifications and enqueues external Pulse alert
         console.log(
           `Manual alert sent for task ${taskData.task_name}, subtask ${taskData.subtask_name}`,
         );
@@ -1931,10 +1931,39 @@ router.post(
           }
         })();
 
+        // Enqueue external direct-call via finops_external_alerts; processed by netlify/functions/pulse-sync.ts
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS finops_external_alerts (
+            id SERIAL PRIMARY KEY,
+            task_id INTEGER NOT NULL,
+            subtask_id INTEGER NOT NULL,
+            alert_key TEXT NOT NULL,
+            title TEXT,
+            next_call_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(task_id, subtask_id, alert_key)
+          )
+        `);
+
+        const fallbackTitle = `Kindly take prompt action on the overdue subtask ${taskData.subtask_name} from the task ${taskData.task_name}.`;
+        const title = (typeof message === "string" && message.trim().length)
+          ? String(message)
+          : fallbackTitle;
+
+        const reserve = await pool.query(
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+           VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
+           ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+           RETURNING id`,
+          [taskId, Number(subtaskId), title]
+        );
+        const external_enqueued = reserve.rows.length > 0;
+
         res.json({
           message: "Manual alert sent successfully",
           alert_type: alert_type,
           recipients,
+          external_enqueued,
         });
       } else {
         res.json({
