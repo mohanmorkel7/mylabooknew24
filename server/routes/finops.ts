@@ -1927,8 +1927,8 @@ router.post(
         const reportingManagers = parseManagers(taskData.reporting_managers);
         const escalationManagers = parseManagers(taskData.escalation_managers);
         const recipients = Array.from(
-          new Set([...
-            assignedTo,
+          new Set([
+            ...assignedTo,
             ...reportingManagers,
             ...escalationManagers,
           ])
