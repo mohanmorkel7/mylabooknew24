@@ -602,6 +602,29 @@ class FinOpsAlertService {
         user_ids: userIds,
       });
 
+      // if (userIds.length) {
+      //   fetch("https://pulsealerts.mylapay.com/direct-call", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({ receiver: "CRM_Switch", title, userIds }),
+      //   }).catch((err) => {
+      //     console.warn("Manual direct-call error:", (err as Error).message);
+      //   });
+      // }
+
+      const response = await fetch(
+        "https://pulsealerts.mylapay.com/direct-call",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            receiver: "CRM_Switch",
+            title,
+            user_ids: userIds,
+          }),
+        },
+      );
+
       // External call delegated to pulse-sync worker; finops_external_alerts already contains reservation row
       // No direct network call here to avoid duplicate/parallel requests and to centralize retries
     } catch (err) {
