@@ -251,7 +251,7 @@ const transformDbNotifications = (
           overdueMinutesFromSLA = Math.floor(Math.abs(exactRemainingMinutes));
 
           // Convert to overdue notification
-          realTimeDetails = `Overdue by ${overdueMinutesFromSLA} min ��� ${Math.floor(timeDiffMs / 60000)} min ago`;
+          realTimeDetails = `Overdue by ${overdueMinutesFromSLA} min • ${Math.floor(timeDiffMs / 60000)} min ago`;
           realTimeTitle = `SLA Overdue - ${overdueMinutesFromSLA} min overdue`;
           realTimeSlaRemaining = `Overdue by ${overdueMinutesFromSLA} min`;
 
@@ -517,7 +517,7 @@ const transformDbNotifications = (
       created_at: transformed.created_at,
       title: transformed.title,
     });
-    return transformed;
+    return { ...transformed, created_by: (dbNotif as any).created_by, updated_by: (dbNotif as any).updated_by };
   });
 };
 
