@@ -685,6 +685,71 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
   }
 });
 
+// Approve subtask (only reporting managers)
+router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
+  try {
+    await requireDatabase();
+    const subtaskId = parseInt(req.params.id);
+    const { approver_name, note } = req.body || {};
+    if (!approver_name) return res.status(400).json({ error: "approver_name is required" });
+
+    const stRes = await pool.query(
+      `SELECT st.id, st.task_id, st.name as subtask_name, ft.task_name, ft.reporting_managers, ft.created_by
+       FROM finops_subtasks st
+       JOIN finops_tasks ft ON st.task_id = ft.id
+       WHERE st.id = $1 LIMIT 1`,
+      [subtaskId],
+    );
+    if (stRes.rows.length === 0) return res.status(404).json({ error: "Subtask not found" });
+    const row = stRes.rows[0];
+
+    const parseManagers = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
+      try {
+        const p = JSON.parse(val);
+        return Array.isArray(p) ? p.map(String).map((s) => s.trim()).filter(Boolean) : [];
+      } catch {}
+      return String(val).split(",").map((s) => s.trim()).filter(Boolean);
+    };
+
+    const reporters = parseManagers(row.reporting_managers);
+    const isReporter = reporters
+      .map((n) => n.toLowerCase().replace(/\s+/g, " ").trim())
+      .includes(String(approver_name).toLowerCase().replace(/\s+/g, " ").trim());
+    if (!isReporter) return res.status(403).json({ error: "Only reporting managers can approve" });
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_approvals (
+        id SERIAL PRIMARY KEY,
+        task_id INTEGER NOT NULL,
+        subtask_id INTEGER NOT NULL,
+        approved_by TEXT NOT NULL,
+        note TEXT,
+        approved_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(task_id, subtask_id)
+      )
+    `);
+    await pool.query(
+      `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (task_id, subtask_id) DO UPDATE SET approved_by = EXCLUDED.approved_by, note = EXCLUDED.note, approved_at = NOW()`,
+      [row.task_id, subtaskId, approver_name, note || null],
+    );
+
+    await pool.query(
+      `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+       VALUES ($1, $2, 'approved', $3, $4)`,
+      [row.task_id, subtaskId, approver_name, note ? `Approved: ${note}` : "Approved"],
+    );
+
+    res.json({ ok: true, approved: true });
+  } catch (e: any) {
+    console.error("Approve subtask failed:", e);
+    res.status(500).json({ error: "Failed to approve subtask", message: e.message });
+  }
+});
+
 // Get activity log
 router.get("/activity-log", async (req: Request, res: Response) => {
   try {
