@@ -251,7 +251,7 @@ const transformDbNotifications = (
           overdueMinutesFromSLA = Math.floor(Math.abs(exactRemainingMinutes));
 
           // Convert to overdue notification
-          realTimeDetails = `Overdue by ${overdueMinutesFromSLA} min • ${Math.floor(timeDiffMs / 60000)} min ago`;
+          realTimeDetails = `Overdue by ${overdueMinutesFromSLA} min ��� ${Math.floor(timeDiffMs / 60000)} min ago`;
           realTimeTitle = `SLA Overdue - ${overdueMinutesFromSLA} min overdue`;
           realTimeSlaRemaining = `Overdue by ${overdueMinutesFromSLA} min`;
 
@@ -1782,9 +1782,34 @@ export default function FinOpsNotifications() {
                             <div className="text-yellow-700 text-sm leading-relaxed">
                               {detailsDialog.notification.delay_reason}
                             </div>
+                    </div>
+                  )}
+
+                  {/* Created/Updated By */}
+                  <div className="rounded-md border bg-white p-4 mt-4">
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                      Audit
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {((detailsDialog as any)?.notification as any)?.created_by && (
+                        <div>
+                          <div className="text-gray-500">Created by</div>
+                          <div className="font-medium">
+                            {((detailsDialog as any)?.notification as any)?.created_by}
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      {((detailsDialog as any)?.notification as any)?.updated_by && (
+                        <div>
+                          <div className="text-gray-500">Updated by</div>
+                          <div className="font-medium">
+                            {((detailsDialog as any)?.notification as any)?.updated_by}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
                     </div>
                   )}
                 </div>
