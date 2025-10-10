@@ -431,6 +431,38 @@ function SortableSubTaskItem({
                         <SelectItem value="overdue">Overdue</SelectItem>
                       </SelectContent>
                     </Select>
+                    {/* Approve button: visible to reporting managers when subtask completed */}
+                    {(() => {
+                      try {
+                        const task: any = (subtask as any).task || null;
+                        const currentUser = (useAuth() as any)?.user || null;
+                        const isReporting = currentUser && task && Array.isArray(task.reporting_managers)
+                          ? task.reporting_managers
+                              .map((m: string) => (m || "").toLowerCase().replace(/\s+/g, " ").trim())
+                              .includes(String(currentUser.name || currentUser.email || "").toLowerCase().replace(/\s+/g, " ").trim())
+                          : false;
+                        if (isReporting && subtask.status === "completed") {
+                          return (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                try {
+                                  const approverName = currentUser?.name || currentUser?.email || "";
+                                  await apiClient.approveFinOpsSubtask(Number(subtask.id), approverName);
+                                  alert("Approved");
+                                } catch (e) {
+                                  alert("Failed to approve");
+                                }
+                              }}
+                            >
+                              Approve
+                            </Button>
+                          );
+                        }
+                      } catch {}
+                      return null;
+                    })()}
                   </div>
                 </div>
 
