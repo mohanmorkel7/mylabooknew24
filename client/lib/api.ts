@@ -532,7 +532,7 @@ export class ApiClient {
   private getEmptyFallbackResponse(endpoint: string): any {
     if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
       console.log(
-        `🔄 Providing empty fallback response for endpoint: ${endpoint}`,
+        `��� Providing empty fallback response for endpoint: ${endpoint}`,
       );
 
     // Return appropriate empty structures based on endpoint
@@ -1255,6 +1255,13 @@ export class ApiClient {
         alert_type: alertType,
         message: message,
       }),
+    });
+  }
+
+  async approveFinOpsSubtask(subtaskId: number, approver_name: string, note?: string) {
+    return this.request(`/finops-production/subtasks/${subtaskId}/approve`, {
+      method: "POST",
+      body: JSON.stringify({ approver_name, note }),
     });
   }
 
