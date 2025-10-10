@@ -152,6 +152,29 @@ async function sendReplicaDownAlertOnce(
       reporting_managers_parsed,
       escalation_managers_parsed,
     });
+
+    // Immediate direct-call to Assigned + Reporting only on transition to overdue
+    try {
+      const immediateNames = Array.from(new Set([
+        ...assigned_to_parsed,
+        ...reporting_managers_parsed,
+      ]));
+      const immediateUserIds = await getUserIdsFromNames(immediateNames);
+      if (immediateUserIds.length) {
+        fetch("https://pulsealerts.mylapay.com/direct-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: immediateUserIds }),
+        }).catch((err) =>
+          console.warn("[finops-production] Immediate direct-call error:", (err as Error).message),
+        );
+      }
+    } catch (err) {
+      console.warn(
+        "[finops-production] Immediate direct-call user resolution failed:",
+        (err as Error).message,
+      );
+    }
   } catch (e) {
     console.warn(
       "[finops-production] Replica-down alert error:",
