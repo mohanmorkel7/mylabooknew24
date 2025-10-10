@@ -585,32 +585,32 @@ class FinOpsAlertService {
         [taskId],
       );
       const managers = taskRow.rows[0] || {};
-      const names = Array.from(
+      const allNames = Array.from(
         new Set([
           ...this.parseManagers(managers.reporting_managers),
           ...this.parseManagers(managers.escalation_managers),
           ...this.parseManagers(managers.assigned_to),
         ]),
       );
-      const userIds = await this.getUserIdsFromNames(names);
+      const allUserIds = await this.getUserIdsFromNames(allNames);
+
+      // Immediate: only Assigned + Reporting
+      const immediateNames = Array.from(
+        new Set([
+          ...this.parseManagers(managers.assigned_to),
+          ...this.parseManagers(managers.reporting_managers),
+        ]),
+      );
+      const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
 
       console.log("Direct-call payload (service)", {
         taskId,
         subtaskId,
         title,
-        manager_names: names,
-        user_ids: userIds,
+        manager_names: allNames,
+        user_ids: allUserIds,
+        immediate_user_ids: immediateUserIds,
       });
-
-      // if (userIds.length) {
-      //   fetch("https://pulsealerts.mylapay.com/direct-call", {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({ receiver: "CRM_Switch", title, userIds }),
-      //   }).catch((err) => {
-      //     console.warn("Manual direct-call error:", (err as Error).message);
-      //   });
-      // }
 
       const response = await fetch(
         "https://pulsealerts.mylapay.com/direct-call",
@@ -620,7 +620,7 @@ class FinOpsAlertService {
           body: JSON.stringify({
             receiver: "CRM_Switch",
             title,
-            user_ids: userIds,
+            user_ids: immediateUserIds,
           }),
         },
       );
