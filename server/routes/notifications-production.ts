@@ -280,7 +280,6 @@ router.get("/", async (req: Request, res: Response) => {
           fs.name as subtask_name,
           fs.start_time,
           fs.auto_notify,
-          fot.reason_text as overdue_reason,
           CASE
             WHEN rn.action = 'created' THEN 'task_created'
             WHEN rn.action = 'updated' AND rn.details NOT ILIKE '%status changed%' THEN 'task_updated'
@@ -302,7 +301,6 @@ router.get("/", async (req: Request, res: Response) => {
         LEFT JOIN finops_subtasks fs ON rn.subtask_id = fs.id
         LEFT JOIN finops_notification_read_status fnrs ON rn.id = fnrs.activity_log_id
         LEFT JOIN finops_notification_archived_status fnas ON rn.id = fnas.activity_log_id
-        LEFT JOIN finops_overdue_tracking fot ON (fot.task_id = rn.task_id AND fot.subtask_id = rn.subtask_id)
         WHERE rn.rn = 1
         AND fnas.activity_log_id IS NULL
         AND (
@@ -921,33 +919,33 @@ router.post("/overdue-reason", async (req: Request, res: Response) => {
         created_at || new Date().toISOString(),
       ]);
 
-      // Also update the overdue tracking table if it exists
-      try {
-        const updateTrackingQuery = `
-          UPDATE finops_overdue_tracking
-          SET reason_provided = TRUE,
-              reason_text = $1,
-              reason_provided_at = NOW(),
-              status = 'reason_provided'
-          WHERE task_id = (
-            SELECT task_id FROM finops_activity_log WHERE id = $2
-          )
-          AND reason_provided = FALSE
-        `;
+      // // Also update the overdue tracking table if it exists
+      // try {
+      //   const updateTrackingQuery = `
+      //     UPDATE finops_overdue_tracking
+      //     SET reason_provided = TRUE,
+      //         reason_text = $1,
+      //         reason_provided_at = NOW(),
+      //         status = 'reason_provided'
+      //     WHERE task_id = (
+      //       SELECT task_id FROM finops_activity_log WHERE id = $2
+      //     )
+      //     AND reason_provided = FALSE
+      //   `;
 
-        await pool.query(updateTrackingQuery, [
-          overdue_reason,
-          notification_id,
-        ]);
-        console.log(
-          `✅ Updated overdue tracking for notification ${notification_id}`,
-        );
-      } catch (trackingError) {
-        console.log(
-          "Note: Could not update tracking table:",
-          trackingError.message,
-        );
-      }
+      //   await pool.query(updateTrackingQuery, [
+      //     overdue_reason,
+      //     notification_id,
+      //   ]);
+      //   console.log(
+      //     `✅ Updated overdue tracking for notification ${notification_id}`,
+      //   );
+      // } catch (trackingError) {
+      //   console.log(
+      //     "Note: Could not update tracking table:",
+      //     trackingError.message,
+      //   );
+      // }
 
       res.status(201).json({
         message: "Overdue reason stored successfully",
@@ -2101,21 +2099,21 @@ router.post(
         ]);
 
         // Create overdue tracking entry
-        const trackingQuery = `
-        INSERT INTO finops_overdue_tracking
-        (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
-        ON CONFLICT DO NOTHING
-      `;
+      //   const trackingQuery = `
+      //   INSERT INTO finops_overdue_tracking
+      //   (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
+      //   VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
+      //   ON CONFLICT DO NOTHING
+      // `;
 
-        await pool.query(trackingQuery, [
-          99,
-          99,
-          "TEST OVERDUE TASK",
-          "Test Subtask",
-          "Test User",
-          0,
-        ]);
+        // await pool.query(trackingQuery, [
+        //   99,
+        //   99,
+        //   "TEST OVERDUE TASK",
+        //   "Test Subtask",
+        //   "Test User",
+        //   0,
+        // ]);
 
         res.json({
           message: "Immediate overdue notification created successfully!",
