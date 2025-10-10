@@ -280,6 +280,10 @@ router.get("/", async (req: Request, res: Response) => {
           fs.name as subtask_name,
           fs.start_time,
           fs.auto_notify,
+          ft.created_by as created_by,
+          rn.user_name as updated_by,
+          fs.delay_reason as overdue_reason,
+          fs.delay_notes as delay_notes,
           CASE
             WHEN rn.action = 'created' THEN 'task_created'
             WHEN rn.action = 'updated' AND rn.details NOT ILIKE '%status changed%' THEN 'task_updated'
