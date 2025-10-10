@@ -2103,12 +2103,12 @@ router.post(
         ]);
 
         // Create overdue tracking entry
-      //   const trackingQuery = `
-      //   INSERT INTO finops_overdue_tracking
-      //   (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
-      //   VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
-      //   ON CONFLICT DO NOTHING
-      // `;
+        //   const trackingQuery = `
+        //   INSERT INTO finops_overdue_tracking
+        //   (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
+        //   VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
+        //   ON CONFLICT DO NOTHING
+        // `;
 
         // await pool.query(trackingQuery, [
         //   99,

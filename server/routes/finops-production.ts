@@ -155,18 +155,24 @@ async function sendReplicaDownAlertOnce(
 
     // Immediate direct-call to Assigned + Reporting only on transition to overdue
     try {
-      const immediateNames = Array.from(new Set([
-        ...assigned_to_parsed,
-        ...reporting_managers_parsed,
-      ]));
+      const immediateNames = Array.from(
+        new Set([...assigned_to_parsed, ...reporting_managers_parsed]),
+      );
       const immediateUserIds = await getUserIdsFromNames(immediateNames);
       if (immediateUserIds.length) {
         fetch("https://pulsealerts.mylapay.com/direct-call", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids: immediateUserIds }),
+          body: JSON.stringify({
+            receiver: "CRM_Switch",
+            title,
+            user_ids: immediateUserIds,
+          }),
         }).catch((err) =>
-          console.warn("[finops-production] Immediate direct-call error:", (err as Error).message),
+          console.warn(
+            "[finops-production] Immediate direct-call error:",
+            (err as Error).message,
+          ),
         );
       }
     } catch (err) {
@@ -691,7 +697,8 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
     await requireDatabase();
     const subtaskId = parseInt(req.params.id);
     const { approver_name, note } = req.body || {};
-    if (!approver_name) return res.status(400).json({ error: "approver_name is required" });
+    if (!approver_name)
+      return res.status(400).json({ error: "approver_name is required" });
 
     const stRes = await pool.query(
       `SELECT st.id, st.task_id, st.name as subtask_name, ft.task_name, ft.reporting_managers, ft.created_by
@@ -700,24 +707,42 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
        WHERE st.id = $1 LIMIT 1`,
       [subtaskId],
     );
-    if (stRes.rows.length === 0) return res.status(404).json({ error: "Subtask not found" });
+    if (stRes.rows.length === 0)
+      return res.status(404).json({ error: "Subtask not found" });
     const row = stRes.rows[0];
 
     const parseManagers = (val: any): string[] => {
       if (!val) return [];
-      if (Array.isArray(val)) return val.map(String).map((s) => s.trim()).filter(Boolean);
+      if (Array.isArray(val))
+        return val
+          .map(String)
+          .map((s) => s.trim())
+          .filter(Boolean);
       try {
         const p = JSON.parse(val);
-        return Array.isArray(p) ? p.map(String).map((s) => s.trim()).filter(Boolean) : [];
+        return Array.isArray(p)
+          ? p
+              .map(String)
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
       } catch {}
-      return String(val).split(",").map((s) => s.trim()).filter(Boolean);
+      return String(val)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
     };
 
     const reporters = parseManagers(row.reporting_managers);
     const isReporter = reporters
       .map((n) => n.toLowerCase().replace(/\s+/g, " ").trim())
-      .includes(String(approver_name).toLowerCase().replace(/\s+/g, " ").trim());
-    if (!isReporter) return res.status(403).json({ error: "Only reporting managers can approve" });
+      .includes(
+        String(approver_name).toLowerCase().replace(/\s+/g, " ").trim(),
+      );
+    if (!isReporter)
+      return res
+        .status(403)
+        .json({ error: "Only reporting managers can approve" });
 
     await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_approvals (
@@ -740,13 +765,20 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
     await pool.query(
       `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
        VALUES ($1, $2, 'approved', $3, $4)`,
-      [row.task_id, subtaskId, approver_name, note ? `Approved: ${note}` : "Approved"],
+      [
+        row.task_id,
+        subtaskId,
+        approver_name,
+        note ? `Approved: ${note}` : "Approved",
+      ],
     );
 
     res.json({ ok: true, approved: true });
   } catch (e: any) {
     console.error("Approve subtask failed:", e);
-    res.status(500).json({ error: "Failed to approve subtask", message: e.message });
+    res
+      .status(500)
+      .json({ error: "Failed to approve subtask", message: e.message });
   }
 });
 

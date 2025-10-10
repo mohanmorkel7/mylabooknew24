@@ -1258,7 +1258,11 @@ export class ApiClient {
     });
   }
 
-  async approveFinOpsSubtask(subtaskId: number, approver_name: string, note?: string) {
+  async approveFinOpsSubtask(
+    subtaskId: number,
+    approver_name: string,
+    note?: string,
+  ) {
     return this.request(`/finops-production/subtasks/${subtaskId}/approve`, {
       method: "POST",
       body: JSON.stringify({ approver_name, note }),

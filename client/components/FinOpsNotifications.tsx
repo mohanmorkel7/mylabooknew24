@@ -517,7 +517,11 @@ const transformDbNotifications = (
       created_at: transformed.created_at,
       title: transformed.title,
     });
-    return { ...transformed, created_by: (dbNotif as any).created_by, updated_by: (dbNotif as any).updated_by };
+    return {
+      ...transformed,
+      created_by: (dbNotif as any).created_by,
+      updated_by: (dbNotif as any).updated_by,
+    };
   });
 };
 
@@ -1782,34 +1786,46 @@ export default function FinOpsNotifications() {
                             <div className="text-yellow-700 text-sm leading-relaxed">
                               {detailsDialog.notification.delay_reason}
                             </div>
-                    </div>
-                  )}
+                          </div>
+                        )}
 
-                  {/* Created/Updated By */}
-                  <div className="rounded-md border bg-white p-4 mt-4">
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                      Audit
-                    </div>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      {((detailsDialog as any)?.notification as any)?.created_by && (
-                        <div>
-                          <div className="text-gray-500">Created by</div>
-                          <div className="font-medium">
-                            {((detailsDialog as any)?.notification as any)?.created_by}
+                        {/* Created/Updated By */}
+                        <div className="rounded-md border bg-white p-4 mt-4">
+                          <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                            Audit
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            {((detailsDialog as any)?.notification as any)
+                              ?.created_by && (
+                              <div>
+                                <div className="text-gray-500">Created by</div>
+                                <div className="font-medium">
+                                  {
+                                    (
+                                      (detailsDialog as any)
+                                        ?.notification as any
+                                    )?.created_by
+                                  }
+                                </div>
+                              </div>
+                            )}
+                            {((detailsDialog as any)?.notification as any)
+                              ?.updated_by && (
+                              <div>
+                                <div className="text-gray-500">Updated by</div>
+                                <div className="font-medium">
+                                  {
+                                    (
+                                      (detailsDialog as any)
+                                        ?.notification as any
+                                    )?.updated_by
+                                  }
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      )}
-                      {((detailsDialog as any)?.notification as any)?.updated_by && (
-                        <div>
-                          <div className="text-gray-500">Updated by</div>
-                          <div className="font-medium">
-                            {((detailsDialog as any)?.notification as any)?.updated_by}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                      </div>
                     </div>
                   )}
                 </div>
