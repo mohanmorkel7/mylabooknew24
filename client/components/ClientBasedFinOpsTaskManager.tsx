@@ -476,8 +476,17 @@ function SortableSubTaskItem({
                                     Number(subtask.id),
                                     approverName,
                                   );
-                                  try { queryClient.invalidateQueries({ queryKey: ["client-finops-tasks"] }); } catch {}
-                                  try { toast({ title: "Approved", description: `Approved by ${approverName}` }); } catch {}
+                                  try {
+                                    queryClient.invalidateQueries({
+                                      queryKey: ["client-finops-tasks"],
+                                    });
+                                  } catch {}
+                                  try {
+                                    toast({
+                                      title: "Approved",
+                                      description: `Approved by ${approverName}`,
+                                    });
+                                  } catch {}
                                 } catch (e) {
                                   alert("Failed to approve");
                                 }
@@ -494,14 +503,20 @@ function SortableSubTaskItem({
                 </div>
 
                 {/* Show approval info if present */}
-                {subtask.status === "completed" && (subtask as any).approved_by && (
-                  <div className="mt-2">
-                    <Badge variant="outline" className="text-green-700 border-green-300 bg-green-50">
-                      Approved by {(subtask as any).approved_by}
-                      { (subtask as any).approved_at ? ` on ${new Date((subtask as any).approved_at).toLocaleString()}` : "" }
-                    </Badge>
-                  </div>
-                )}
+                {subtask.status === "completed" &&
+                  (subtask as any).approved_by && (
+                    <div className="mt-2">
+                      <Badge
+                        variant="outline"
+                        className="text-green-700 border-green-300 bg-green-50"
+                      >
+                        Approved by {(subtask as any).approved_by}
+                        {(subtask as any).approved_at
+                          ? ` on ${new Date((subtask as any).approved_at).toLocaleString()}`
+                          : ""}
+                      </Badge>
+                    </div>
+                  )}
 
                 {/* Show delay information if present */}
                 {subtask.status === "delayed" && subtask.delay_reason && (
