@@ -761,10 +761,19 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
         UNIQUE(task_id, subtask_id)
       )
     `);
+    // Prevent re-approval
+    const existing = await pool.query(
+      `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 LIMIT 1`,
+      [row.task_id, subtaskId],
+    );
+    if (existing.rows.length) {
+      return res.status(409).json({ error: "Already approved" });
+    }
+
     await pool.query(
       `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
        VALUES ($1, $2, $3, $4)
-       ON CONFLICT (task_id, subtask_id) DO UPDATE SET approved_by = EXCLUDED.approved_by, note = EXCLUDED.note, approved_at = NOW()`,
+       ON CONFLICT (task_id, subtask_id) DO NOTHING`,
       [row.task_id, subtaskId, approver_name, note || null],
     );
 
