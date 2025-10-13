@@ -1027,18 +1027,23 @@ router.patch(
         // Persist status change to finops_subtasks table to keep the authoritative subtask status in sync
         try {
           const statusToSet = status;
+          const isInProgress = statusToSet === "in_progress";
+          const isCompleted = statusToSet === "completed";
+
           const subtaskUpdateParams: any[] = [
             statusToSet,
+            isInProgress,
+            isCompleted,
             taskId,
             Number(subtaskId),
           ];
           const subtaskUpdateQuery = `
             UPDATE finops_subtasks
             SET status = $1,
-                started_at = CASE WHEN $1 = 'in_progress' THEN COALESCE(started_at, CURRENT_TIMESTAMP) ELSE started_at END,
-                completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP WHEN $1 != 'completed' THEN NULL ELSE completed_at END,
+                started_at = CASE WHEN $2 THEN COALESCE(started_at, CURRENT_TIMESTAMP) ELSE started_at END,
+                completed_at = CASE WHEN $3 THEN CURRENT_TIMESTAMP ELSE NULL END,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE task_id = $2 AND id = $3
+            WHERE task_id = $4 AND id = $5
           `;
           await pool.query(subtaskUpdateQuery, subtaskUpdateParams);
         } catch (err) {
