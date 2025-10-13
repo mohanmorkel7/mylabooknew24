@@ -457,7 +457,10 @@ function SortableSubTaskItem({
                                 )
                             : false;
                         const isAdmin = currentUser?.role === "admin";
-                        if ((isReporting || isAdmin) && subtask.status === "completed") {
+                        if (
+                          (isReporting || isAdmin) &&
+                          subtask.status === "completed"
+                        ) {
                           return (
                             <Button
                               size="sm"
