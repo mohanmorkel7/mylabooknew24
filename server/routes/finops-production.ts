@@ -230,7 +230,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
               ft.notification_sent_escalation,
               ft.assigned_to,
               ft.reporting_managers,
-              ft.escalation_managers
+              ft.escalation_managers,
+              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_by,
+              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_at
             FROM finops_tracker ft
             WHERE ft.task_id = t.id AND ft.run_date = $1
 
@@ -263,7 +265,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
               COALESCE(st.notification_sent_escalation, false) AS notification_sent_escalation,
               COALESCE(st.assigned_to, t.assigned_to) AS assigned_to,
               t.reporting_managers::text AS reporting_managers,
-              t.escalation_managers::text AS escalation_managers
+              t.escalation_managers::text AS escalation_managers,
+              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_by,
+              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_at
             FROM finops_subtasks st
             WHERE st.task_id = t.id
               AND st.scheduled_date = $1
@@ -305,7 +309,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'notification_sent_escalation', ft.notification_sent_escalation,
                 'assigned_to', ft.assigned_to,
                 'reporting_managers', ft.reporting_managers,
-                'escalation_managers', ft.escalation_managers
+                'escalation_managers', ft.escalation_managers,
+                'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1),
+                'approved_at', (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1)
               ) ORDER BY ft.order_position
             ) FILTER (WHERE ft.subtask_id IS NOT NULL),
             '[]'::json
