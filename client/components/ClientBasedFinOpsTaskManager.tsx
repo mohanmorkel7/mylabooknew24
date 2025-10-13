@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
+import { formatToISTDateTime } from "@/lib/dateUtils";
 import {
   DndContext,
   closestCenter,
@@ -516,7 +517,7 @@ function SortableSubTaskItem({
                       >
                         Approved by {(subtask as any).approved_by}
                         {(subtask as any).approved_at
-                          ? ` on ${new Date((subtask as any).approved_at).toLocaleString()}`
+                          ? ` on ${formatToISTDateTime((subtask as any).approved_at, { second: "2-digit" })} IST (+05:30)`
                           : ""}
                       </Badge>
                     </div>
