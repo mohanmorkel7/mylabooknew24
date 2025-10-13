@@ -107,10 +107,18 @@ export const handler: Handler = async () => {
       };
 
       // Determine whether this is the initial immediate call (Assigned + Reporting only)
-      const createdAt = alertRow.created_at ? new Date(alertRow.created_at) : null;
-      const nextCallAt = alertRow.next_call_at ? new Date(alertRow.next_call_at) : null;
+      const createdAt = alertRow.created_at
+        ? new Date(alertRow.created_at)
+        : null;
+      const nextCallAt = alertRow.next_call_at
+        ? new Date(alertRow.next_call_at)
+        : null;
       // If next_call_at is within 5 minutes of created_at, treat as the initial call
-      const isInitial = !!(createdAt && nextCallAt && nextCallAt.getTime() - createdAt.getTime() < 5 * 60 * 1000);
+      const isInitial = !!(
+        createdAt &&
+        nextCallAt &&
+        nextCallAt.getTime() - createdAt.getTime() < 5 * 60 * 1000
+      );
 
       // Always include Assigned + Reporting; include Escalation only after 15 minutes
       const baseNames = Array.from(
@@ -121,7 +129,9 @@ export const handler: Handler = async () => {
       );
       const names = isInitial
         ? baseNames
-        : Array.from(new Set([...baseNames, ...parseManagers(meta.escalation_managers)]));
+        : Array.from(
+            new Set([...baseNames, ...parseManagers(meta.escalation_managers)]),
+          );
 
       const lowered = names.map((n) => n.toLowerCase());
       const users = await pool.query(
