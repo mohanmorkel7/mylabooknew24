@@ -343,7 +343,7 @@ export default function Mails() {
                         return (
                           <AccordionItem key={m.id} value={m.id}>
                             <AccordionTrigger className="px-3">
-                              <div className="flex items-center justify-between w-full">
+                              <div className="flex items-start justify-between w-full">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-3">
                                     <div className="flex-1">
