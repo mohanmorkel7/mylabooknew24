@@ -356,7 +356,7 @@ export default function Mails() {
                                       {formatTime(m.receivedDateTime)}
                                     </div>
                                   </div>
-                                  <div className="mt-2 text-sm text-gray-700 line-clamp-2">
+                                  <div className="mt-2 text-sm text-gray-700 line-clamp-2 text-left">
                                     {bodyText}
                                   </div>
                                 </div>
