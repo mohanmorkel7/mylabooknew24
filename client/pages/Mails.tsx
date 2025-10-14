@@ -26,9 +26,19 @@ const TARGET_MAIL =
 
 const SUBJECT_FILTER = (import.meta as any).env?.VITE_MS_SUBJECT_FILTER || "";
 
+function removeCautionFromText(str: string) {
+  if (!str) return "";
+  // Remove the common caution banner and variations
+  let s = str.replace(/CAUTION:\s*/i, "");
+  s = s.replace(/this email originated from outside of the organization\.[\s\S]*?safe\.?/i, "");
+  s = s.replace(/(^|\n)\s*caution[:\s\-–—].*?(\n|$)/gi, "");
+  // Collapse whitespace
+  return s.replace(/\s+/g, " ").trim();
+}
+
 function htmlToText(html: string): string {
   try {
-    // First decode HTML entities if the content is escaped (e.g. &lt;html&gt;)
+    // Decode HTML entities
     const decoder = document.createElement("textarea");
     decoder.innerHTML = html || "";
     const decoded = decoder.value;
@@ -36,13 +46,25 @@ function htmlToText(html: string): string {
     const doc = new DOMParser().parseFromString(decoded || "", "text/html");
     // remove styles/scripts and meta/link tags that may contain CSS or external refs
     doc.querySelectorAll("style,script,meta,link").forEach((el) => el.remove());
+
+    // Remove any elements containing the caution banner
+    Array.from(doc.body.querySelectorAll("*")).forEach((el) => {
+      const t = (el.textContent || "").toLowerCase();
+      if (
+        t.includes("caution:") ||
+        t.includes("this email originated from outside of the organization") ||
+        t.includes("caution")
+      ) {
+        el.remove();
+      }
+    });
+
     const text = doc.body ? doc.body.textContent || "" : "";
-    // collapse whitespace and trim
-    return text.replace(/\s+/g, " ").trim();
+    return removeCautionFromText(text);
   } catch (e) {
     const div = document.createElement("div");
     div.innerHTML = html || "";
-    return (div.textContent || div.innerText || "").replace(/\s+/g, " ").trim();
+    return removeCautionFromText((div.textContent || div.innerText || "").replace(/\s+/g, " ").trim());
   }
 }
 
@@ -56,40 +78,49 @@ function sanitizeHtml(html: string): string {
     const doc = new DOMParser().parseFromString(decoded || "", "text/html");
 
     // Remove dangerous or noisy elements
-    doc
-      .querySelectorAll("script,style,meta,link,iframe,object,embed")
-      .forEach((el) => el.remove());
+    doc.querySelectorAll("script,style,meta,link,iframe,object,embed").forEach((el) => el.remove());
 
-    // Remove elements that contain the word 'CAUTION' (case-insensitive)
+    // Remove elements that contain the caution banner
     Array.from(doc.body.querySelectorAll("*")).forEach((el) => {
       const t = (el.textContent || "").toLowerCase();
-      if (t.includes("caution:") || t.includes("caution")) {
+      if (
+        t.includes("caution:") ||
+        t.includes("this email originated from outside of the organization") ||
+        t.includes("caution")
+      ) {
         el.remove();
       }
     });
 
+    // Remove text nodes containing caution
+    const walker = document.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT, null);
+    const toRemove: Node[] = [];
+    while (walker.nextNode()) {
+      const node = walker.currentNode as Text;
+      if ((node.nodeValue || "").toLowerCase().includes("caution")) {
+        toRemove.push(node);
+      }
+    }
+    toRemove.forEach((n) => n.parentNode?.removeChild(n));
+
     // Remove event handler attributes and style attributes
     Array.from(doc.body.querySelectorAll("*")).forEach((el) => {
-      // remove attributes starting with on (onclick, onload, etc.) and style
       Array.from(el.attributes || []).forEach((attr) => {
         const name = attr.name.toLowerCase();
         if (name.startsWith("on") || name === "style") {
           el.removeAttribute(attr.name);
         }
-        // Optionally strip javascript: hrefs
-        if (
-          name === "href" &&
-          attr.value.trim().toLowerCase().startsWith("javascript:")
-        ) {
+        if (name === "href" && attr.value.trim().toLowerCase().startsWith("javascript:")) {
           el.removeAttribute(attr.name);
         }
       });
     });
 
-    // Return the cleaned innerHTML
-    return doc.body ? doc.body.innerHTML : "";
+    let cleaned = doc.body ? doc.body.innerHTML : "";
+    cleaned = cleaned.replace(/CAUTION:\s*/gi, "");
+    cleaned = cleaned.replace(/this email originated from outside of the organization\.[\s\S]*?safe\.?/gi, "");
+    return cleaned;
   } catch (e) {
-    // fallback: strip tags and return text
     return htmlToText(html);
   }
 }
