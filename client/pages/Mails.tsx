@@ -5,14 +5,20 @@ import { azureSyncService } from "@/lib/azure-sync-service";
 
 type GraphEmail = {
   id: string;
-  subject: string;
+  subject?: string;
   from?: { emailAddress?: { name?: string; address?: string } };
+  sender?: { emailAddress?: { name?: string; address?: string } };
   body?: { contentType?: string; content?: string };
+  bodyPreview?: string;
   receivedDateTime?: string;
+  hasAttachments?: boolean;
+  webLink?: string;
 };
 
 const TARGET_MAIL =
   (import.meta as any).env?.VITE_MS_TARGET_MAIL || "mohan.m@mylapay.com";
+
+const SUBJECT_FILTER = (import.meta as any).env?.VITE_MS_SUBJECT_FILTER || "";
 
 function htmlToText(html: string): string {
   const div = document.createElement("div");
@@ -90,10 +96,30 @@ export default function Mails() {
       }
 
       const data = await res.json();
-      const items: GraphEmail[] = Array.isArray(data?.value) ? data.value : [];
-      const filtered = items.filter((m) =>
-        (m.subject || "").toLowerCase().includes("Gopikrishnan"),
-      );
+      const rawItems: any[] = Array.isArray(data?.value) ? data.value : [];
+
+      // Normalise items into GraphEmail
+      const items: GraphEmail[] = rawItems.map((it) => ({
+        id: it.id,
+        subject: it.subject,
+        from: it.from,
+        sender: it.sender,
+        body: it.body,
+        bodyPreview: it.bodyPreview,
+        receivedDateTime: it.receivedDateTime,
+        hasAttachments: it.hasAttachments,
+        webLink: it.webLink,
+      }));
+
+      // Apply optional subject filter if provided; otherwise show all
+      const filtered = SUBJECT_FILTER
+        ? items.filter((m) =>
+            (m.subject || "")
+              .toLowerCase()
+              .includes(SUBJECT_FILTER.toLowerCase()),
+          )
+        : items;
+
       const top10 = filtered.slice(0, 10);
       if (mounted) setEmails(top10);
     } catch (e: any) {
