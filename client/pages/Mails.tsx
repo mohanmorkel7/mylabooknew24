@@ -208,8 +208,8 @@ export default function Mails() {
                 let bodyText = preview
                   ? preview
                   : contentType.toLowerCase() === "html"
-                  ? htmlToText(rawContent)
-                  : rawContent;
+                    ? htmlToText(rawContent)
+                    : rawContent;
                 bodyText = (bodyText || "").replace(/\s+/g, " ").trim();
 
                 return (
