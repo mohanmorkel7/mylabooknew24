@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { azureSilentAuth } from "@/lib/azure-silent-auth";
+import { azureSyncService } from "@/lib/azure-sync-service";
 
 type GraphEmail = {
   id: string;
