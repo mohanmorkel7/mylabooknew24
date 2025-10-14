@@ -12,7 +12,7 @@ type GraphEmail = {
 };
 
 const TARGET_MAIL =
-  (import.meta as any).env?.VITE_MS_TARGET_MAIL || "target@email.com";
+  (import.meta as any).env?.VITE_MS_TARGET_MAIL || "mohan.m@mylapay.com";
 
 function htmlToText(html: string): string {
   const div = document.createElement("div");
@@ -68,9 +68,15 @@ export default function Mails() {
     setLoading(true);
     setError(null);
     try {
-      const url =
-        `https://graph.microsoft.com/v1.0/users/${targetUser}/messages` +
-        `?$top=25&$orderby=receivedDateTime%20desc&$select=subject,from,body,receivedDateTime`;
+      // const url =
+      //   `https://graph.microsoft.com/v1.0/users/${targetUser}/messages` +
+      //   `?$top=25&$orderby=receivedDateTime%20desc&$select=subject,from,body,receivedDateTime`;
+
+      const url=`https://graph.microsoft.com/v1.0/users/mohan.m%40mylapay.com/mailFolders/Inbox/messages`
+
+      // const url=`https://graph.microsoft.com/v1.0/users/mohan.m%40mylapay.com/mailFolders`
+
+      
 
       const res = await fetch(url, {
         headers: {
@@ -86,7 +92,7 @@ export default function Mails() {
       const data = await res.json();
       const items: GraphEmail[] = Array.isArray(data?.value) ? data.value : [];
       const filtered = items.filter((m) =>
-        (m.subject || "").toLowerCase().includes("invoice"),
+        (m.subject || "").toLowerCase().includes("Gopikrishnan"),
       );
       const top10 = filtered.slice(0, 10);
       if (mounted) setEmails(top10);

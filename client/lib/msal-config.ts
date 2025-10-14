@@ -26,7 +26,6 @@ export const loginRequest: PopupRequest = {
     "profile",
     "email",
     "Mail.Read",
-    "Mail.Read.Shared",
     "offline_access",
   ],
 };
