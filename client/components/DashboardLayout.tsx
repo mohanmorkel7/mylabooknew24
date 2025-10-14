@@ -21,6 +21,7 @@ import {
   Target,
   FileText,
   MessageCircle,
+  Mail,
   AlertCircle,
   Ticket,
   DollarSign,
@@ -150,7 +151,15 @@ const navigationItems: NavigationItem[] = [
     icon: Bell,
     roles: ["admin", "sales", "product"],
   },
-  // m) Settings
+  // m) Mails (Outlook)
+  {
+    name: "Mails",
+    href: "/mails",
+    icon: Mail,
+    roles: ["admin"],
+    permissions: ["admin"],
+  },
+  // n) Settings
   {
     name: "Settings",
     icon: Settings,
