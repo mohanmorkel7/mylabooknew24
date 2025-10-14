@@ -56,10 +56,12 @@ export default function Mails() {
         }
 
         const data = await res.json();
-        const items: GraphEmail[] = Array.isArray(data?.value) ? data.value : [];
+        const items: GraphEmail[] = Array.isArray(data?.value)
+          ? data.value
+          : [];
 
         const filtered = items.filter((m) =>
-          (m.subject || "").toLowerCase().includes("invoice")
+          (m.subject || "").toLowerCase().includes("invoice"),
         );
 
         const top10 = filtered.slice(0, 10);
@@ -115,9 +117,13 @@ export default function Mails() {
                 return (
                   <li key={m.id} className="py-4">
                     <div className="mb-1 text-sm text-gray-500">
-                      {m.receivedDateTime ? new Date(m.receivedDateTime).toLocaleString() : ""}
+                      {m.receivedDateTime
+                        ? new Date(m.receivedDateTime).toLocaleString()
+                        : ""}
                     </div>
-                    <div className="font-semibold text-gray-900">{m.subject || "(No subject)"}</div>
+                    <div className="font-semibold text-gray-900">
+                      {m.subject || "(No subject)"}
+                    </div>
                     <div className="text-sm text-gray-700 mb-2">
                       From: {sender?.name || sender?.address || "Unknown"}
                     </div>
