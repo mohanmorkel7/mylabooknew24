@@ -110,7 +110,10 @@ export default function Mails() {
       }
     } catch (e: any) {
       // If redirect-based auth was initiated, the page will reload - show message briefly
-      if (e?.message && e.message.includes("Redirect authentication initiated")) {
+      if (
+        e?.message &&
+        e.message.includes("Redirect authentication initiated")
+      ) {
         setError("Redirecting to Microsoft for authentication...");
         return;
       }
@@ -142,7 +145,9 @@ export default function Mails() {
             </div>
           ) : needsAuth ? (
             <div className="space-y-3">
-              <div className="text-gray-700">You need to sign in to Microsoft to view mails.</div>
+              <div className="text-gray-700">
+                You need to sign in to Microsoft to view mails.
+              </div>
               <div>
                 <button
                   onClick={handleSignIn}
@@ -172,9 +177,13 @@ export default function Mails() {
                 return (
                   <li key={m.id} className="py-4">
                     <div className="mb-1 text-sm text-gray-500">
-                      {m.receivedDateTime ? new Date(m.receivedDateTime).toLocaleString() : ""}
+                      {m.receivedDateTime
+                        ? new Date(m.receivedDateTime).toLocaleString()
+                        : ""}
                     </div>
-                    <div className="font-semibold text-gray-900">{m.subject || "(No subject)"}</div>
+                    <div className="font-semibold text-gray-900">
+                      {m.subject || "(No subject)"}
+                    </div>
                     <div className="text-sm text-gray-700 mb-2">
                       From: {sender?.name || sender?.address || "Unknown"}
                     </div>
