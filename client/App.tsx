@@ -144,6 +144,7 @@ import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
 import PipelineSettings from "@/pages/PipelineSettings";
 import Tickets from "@/pages/Tickets";
+import Mails from "@/pages/Mails";
 import AdminTemplates from "@/pages/AdminTemplates";
 import FinOpsDashboard from "@/pages/FinOpsDashboard";
 import FinOpsAutomation from "@/pages/FinOpsAutomation";
@@ -297,6 +298,17 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <Tickets />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mails"
+        element={
+          <ProtectedRoute allowedRoles={["admin"]}>
+            <DashboardLayout>
+              <Mails />
             </DashboardLayout>
           </ProtectedRoute>
         }

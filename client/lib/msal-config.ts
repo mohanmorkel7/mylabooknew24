@@ -13,19 +13,36 @@ export const msalConfig: Configuration = {
       import.meta.env.VITE_AZURE_REDIRECT_URI || window.location.origin,
   },
   cache: {
-    cacheLocation: "sessionStorage", // This configures where your cache will be stored
+    cacheLocation: "localStorage", // This configures where your cache will be stored
     storeAuthStateInCookie: false, // Set this to "true" if you are having issues on IE11 or Edge
   },
 };
 
 // Add scopes here for ID token to be used at Microsoft Graph API endpoints.
 export const loginRequest: PopupRequest = {
-  scopes: ["User.Read", "openid", "profile", "email"],
+  scopes: [
+    "User.Read",
+    "openid",
+    "profile",
+    "email",
+    "Mail.Read",
+    "Mail.Read.Shared",
+    "offline_access",
+  ],
 };
 
 // Add scopes for Azure AD sync functionality
 export const syncRequest: PopupRequest = {
-  scopes: ["User.Read.All", "Directory.Read.All", "openid", "profile", "email"],
+  scopes: [
+    "User.Read.All",
+    "Directory.Read.All",
+    "openid",
+    "profile",
+    "email",
+    "Mail.Read",
+    "Mail.Read.Shared",
+    "offline_access",
+  ],
 };
 
 // Add the endpoints here for Microsoft Graph API services you'd like to use.
