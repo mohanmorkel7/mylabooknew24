@@ -362,7 +362,7 @@ export default function Mails() {
                                       {formatTime(m.receivedDateTime)}
                                     </div>
                                   </div>
-                                  <div className="mt-2 text-sm text-gray-700 line-clamp-2">
+                                  <div className="mt-2 text-sm text-gray-700 line-clamp-2 text-left">
                                     {bodyText}
                                   </div>
                                 </div>
@@ -381,8 +381,14 @@ export default function Mails() {
                                       ).toLocaleString()
                                     : ""}
                                 </div>
-                                <div className="whitespace-pre-wrap break-words">
-                                  {bodyText}
+                                <div className="whitespace-pre-wrap break-words text-left">
+                                  {m.body && m.body.content
+                                    ? m.body.contentType &&
+                                      m.body.contentType.toLowerCase() ===
+                                        "html"
+                                      ? htmlToText(m.body.content)
+                                      : m.body.content
+                                    : m.bodyPreview || bodyText}
                                 </div>
                                 {m.webLink && (
                                   <div className="mt-3">
