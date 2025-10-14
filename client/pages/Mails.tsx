@@ -208,18 +208,36 @@ export default function Mails() {
       const data = await res.json();
       const rawItems: any[] = Array.isArray(data?.value) ? data.value : [];
 
-      // Normalise items into GraphEmail
-      const items: GraphEmail[] = rawItems.map((it) => ({
-        id: it.id,
-        subject: it.subject,
-        from: it.from,
-        sender: it.sender,
-        body: it.body,
-        bodyPreview: it.bodyPreview,
-        receivedDateTime: it.receivedDateTime,
-        hasAttachments: it.hasAttachments,
-        webLink: it.webLink,
-      }));
+      // Normalise items into GraphEmail and sanitize previews/bodies to remove caution banners
+      const items: GraphEmail[] = rawItems.map((it) => {
+        const rawPreview = it.bodyPreview || "";
+        const sanitizedPreview = removeCautionFromText(rawPreview);
+
+        // Sanitize full HTML body if present (will also strip CAUTION banners)
+        let sanitizedBody = undefined as any;
+        if (it.body && it.body.content) {
+          try {
+            sanitizedBody = {
+              contentType: it.body.contentType,
+              content: sanitizeHtml(it.body.content),
+            };
+          } catch (e) {
+            sanitizedBody = { contentType: it.body.contentType, content: removeCautionFromText(it.body.content) };
+          }
+        }
+
+        return {
+          id: it.id,
+          subject: it.subject,
+          from: it.from,
+          sender: it.sender,
+          body: sanitizedBody,
+          bodyPreview: sanitizedPreview,
+          receivedDateTime: it.receivedDateTime,
+          hasAttachments: it.hasAttachments,
+          webLink: it.webLink,
+        };
+      });
 
       // Apply optional subject filter if provided; otherwise show all
       const filtered = SUBJECT_FILTER
