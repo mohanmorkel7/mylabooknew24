@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { azureSilentAuth } from "@/lib/azure-silent-auth";
 import { azureSyncService } from "@/lib/azure-sync-service";
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from "@/components/ui/accordion";
 
 type GraphEmail = {
   id: string;
@@ -156,6 +157,59 @@ export default function Mails() {
     } finally {
       setAuthenticating(false);
     }
+  }
+
+  // Helpers for grouping and formatting
+  function formatTime(dateStr?: string) {
+    if (!dateStr) return "";
+    try {
+      return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  function groupEmailsByDay(items: GraphEmail[]) {
+    const groups: Record<string, GraphEmail[]> = {};
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    items.forEach((it) => {
+      const d = it.receivedDateTime ? new Date(it.receivedDateTime) : null;
+      let label = "Unknown";
+      if (d) {
+        const startOfItem = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+        const diffDays = Math.floor((startOfToday - startOfItem) / MS_PER_DAY);
+        if (diffDays === 0) label = "Today";
+        else if (diffDays === 1) label = "Yesterday";
+        else {
+          // show Month day, Year if different year
+          const opts: any = { month: "short", day: "numeric" };
+          if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
+          label = d.toLocaleDateString(undefined, opts);
+        }
+      }
+
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(it);
+    });
+
+    // Sort groups by date descending: Today, Yesterday, then other dates
+    const ordered: Record<string, GraphEmail[]> = {};
+    const priority = ["Today", "Yesterday"];
+    priority.forEach((p) => {
+      if (groups[p]) ordered[p] = groups[p];
+    });
+
+    const others = Object.keys(groups).filter((k) => !priority.includes(k)).sort((a, b) => {
+      // parse date strings back if possible
+      const da = new Date(a).getTime() || 0;
+      const db = new Date(b).getTime() || 0;
+      return db - da;
+    });
+    others.forEach((k) => (ordered[k] = groups[k]));
+    return ordered;
   }
 
   return (
