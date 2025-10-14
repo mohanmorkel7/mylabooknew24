@@ -46,6 +46,54 @@ function htmlToText(html: string): string {
   }
 }
 
+// Sanitize HTML for safe rendering in the UI and remove the CAUTION banner
+function sanitizeHtml(html: string): string {
+  try {
+    const decoder = document.createElement("textarea");
+    decoder.innerHTML = html || "";
+    const decoded = decoder.value;
+
+    const doc = new DOMParser().parseFromString(decoded || "", "text/html");
+
+    // Remove dangerous or noisy elements
+    doc
+      .querySelectorAll("script,style,meta,link,iframe,object,embed")
+      .forEach((el) => el.remove());
+
+    // Remove elements that contain the word 'CAUTION' (case-insensitive)
+    Array.from(doc.body.querySelectorAll("*")).forEach((el) => {
+      const t = (el.textContent || "").toLowerCase();
+      if (t.includes("caution:") || t.includes("caution")) {
+        el.remove();
+      }
+    });
+
+    // Remove event handler attributes and style attributes
+    Array.from(doc.body.querySelectorAll("*")).forEach((el) => {
+      // remove attributes starting with on (onclick, onload, etc.) and style
+      Array.from(el.attributes || []).forEach((attr) => {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith("on") || name === "style") {
+          el.removeAttribute(attr.name);
+        }
+        // Optionally strip javascript: hrefs
+        if (
+          name === "href" &&
+          attr.value.trim().toLowerCase().startsWith("javascript:")
+        ) {
+          el.removeAttribute(attr.name);
+        }
+      });
+    });
+
+    // Return the cleaned innerHTML
+    return doc.body ? doc.body.innerHTML : "";
+  } catch (e) {
+    // fallback: strip tags and return text
+    return htmlToText(html);
+  }
+}
+
 export default function Mails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -387,13 +435,17 @@ export default function Mails() {
                                     : ""}
                                 </div>
                                 <div className="whitespace-pre-wrap break-words text-left">
-                                  {m.body && m.body.content
-                                    ? m.body.contentType &&
-                                      m.body.contentType.toLowerCase() ===
-                                        "html"
-                                      ? htmlToText(m.body.content)
-                                      : m.body.content
-                                    : m.bodyPreview || bodyText}
+                                  {m.body && m.body.content ? (
+                                    // Render sanitized HTML when full body is available
+                                    <div
+                                      className="prose max-w-none"
+                                      dangerouslySetInnerHTML={{
+                                        __html: sanitizeHtml(m.body.content),
+                                      }}
+                                    />
+                                  ) : (
+                                    <div>{m.bodyPreview || bodyText}</div>
+                                  )}
                                 </div>
                                 {m.webLink && (
                                   <div className="mt-3">
