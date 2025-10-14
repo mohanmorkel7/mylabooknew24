@@ -2,6 +2,12 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { azureSilentAuth } from "@/lib/azure-silent-auth";
 import { azureSyncService } from "@/lib/azure-sync-service";
+import {
+  Accordion,
+  AccordionItem,
+  AccordionTrigger,
+  AccordionContent,
+} from "@/components/ui/accordion";
 
 type GraphEmail = {
   id: string;
@@ -164,6 +170,72 @@ export default function Mails() {
     }
   }
 
+  // Helpers for grouping and formatting
+  function formatTime(dateStr?: string) {
+    if (!dateStr) return "";
+    try {
+      return new Date(dateStr).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch {
+      return dateStr;
+    }
+  }
+
+  function groupEmailsByDay(items: GraphEmail[]) {
+    const groups: Record<string, GraphEmail[]> = {};
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    ).getTime();
+    const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+    items.forEach((it) => {
+      const d = it.receivedDateTime ? new Date(it.receivedDateTime) : null;
+      let label = "Unknown";
+      if (d) {
+        const startOfItem = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+        ).getTime();
+        const diffDays = Math.floor((startOfToday - startOfItem) / MS_PER_DAY);
+        if (diffDays === 0) label = "Today";
+        else if (diffDays === 1) label = "Yesterday";
+        else {
+          // show Month day, Year if different year
+          const opts: any = { month: "short", day: "numeric" };
+          if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
+          label = d.toLocaleDateString(undefined, opts);
+        }
+      }
+
+      if (!groups[label]) groups[label] = [];
+      groups[label].push(it);
+    });
+
+    // Sort groups by date descending: Today, Yesterday, then other dates
+    const ordered: Record<string, GraphEmail[]> = {};
+    const priority = ["Today", "Yesterday"];
+    priority.forEach((p) => {
+      if (groups[p]) ordered[p] = groups[p];
+    });
+
+    const others = Object.keys(groups)
+      .filter((k) => !priority.includes(k))
+      .sort((a, b) => {
+        // parse date strings back if possible
+        const da = new Date(a).getTime() || 0;
+        const db = new Date(b).getTime() || 0;
+        return db - da;
+      });
+    others.forEach((k) => (ordered[k] = groups[k]));
+    return ordered;
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -205,39 +277,98 @@ export default function Mails() {
           ) : emails.length === 0 ? (
             <div className="text-gray-600">No matching emails found.</div>
           ) : (
-            <ul className="divide-y divide-gray-200">
-              {emails.map((m) => {
-                const sender = m.from?.emailAddress;
-                const preview = m.bodyPreview || "";
-                const contentType = m.body?.contentType || "text";
-                const rawContent = m.body?.content || "";
-                let bodyText = preview
-                  ? preview
-                  : contentType.toLowerCase() === "html"
-                    ? htmlToText(rawContent)
-                    : rawContent;
-                bodyText = (bodyText || "").replace(/\s+/g, " ").trim();
+            <div className="space-y-6">
+              {Object.entries(groupEmailsByDay(emails)).map(
+                ([groupLabel, groupEmails]) => (
+                  <div key={groupLabel}>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-sm font-semibold text-gray-700">
+                        {groupLabel}
+                      </h3>
+                      <span className="text-xs text-gray-500">
+                        {groupEmails.length}
+                      </span>
+                    </div>
 
-                return (
-                  <li key={m.id} className="py-4">
-                    <div className="mb-1 text-sm text-gray-500">
-                      {m.receivedDateTime
-                        ? new Date(m.receivedDateTime).toLocaleString()
-                        : ""}
-                    </div>
-                    <div className="font-semibold text-gray-900">
-                      {m.subject || "(No subject)"}
-                    </div>
-                    <div className="text-sm text-gray-700 mb-2">
-                      From: {sender?.name || sender?.address || "Unknown"}
-                    </div>
-                    <div className="text-gray-800 whitespace-pre-wrap break-words">
-                      {bodyText}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                    <Accordion type="single" collapsible>
+                      {groupEmails.map((m) => {
+                        const sender =
+                          m.from?.emailAddress || m.sender?.emailAddress;
+                        const preview = m.bodyPreview || "";
+                        const contentType = m.body?.contentType || "text";
+                        const rawContent = m.body?.content || "";
+                        let bodyText = preview
+                          ? preview
+                          : contentType.toLowerCase() === "html"
+                            ? htmlToText(rawContent)
+                            : rawContent;
+                        bodyText = (bodyText || "").replace(/\s+/g, " ").trim();
+
+                        return (
+                          <AccordionItem key={m.id} value={m.id}>
+                            <AccordionTrigger className="px-3">
+                              <div className="flex items-center justify-between w-full">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-3">
+                                    <div className="flex-1">
+                                      <div className="text-sm font-medium text-gray-900 truncate">
+                                        {m.subject || "(No subject)"}
+                                      </div>
+                                      <div className="text-xs text-gray-500 truncate">
+                                        From:{" "}
+                                        {sender?.name ||
+                                          sender?.address ||
+                                          "Unknown"}
+                                      </div>
+                                    </div>
+                                    <div className="text-xs text-gray-400 ml-3 whitespace-nowrap">
+                                      {formatTime(m.receivedDateTime)}
+                                    </div>
+                                  </div>
+                                  <div className="mt-2 text-sm text-gray-700 line-clamp-2">
+                                    {bodyText}
+                                  </div>
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+
+                            <AccordionContent className="px-3">
+                              <div className="prose max-w-none text-sm text-gray-800">
+                                <div className="mb-3 text-xs text-gray-500">
+                                  From:{" "}
+                                  {sender?.name || sender?.address || "Unknown"}{" "}
+                                  •{" "}
+                                  {m.receivedDateTime
+                                    ? new Date(
+                                        m.receivedDateTime,
+                                      ).toLocaleString()
+                                    : ""}
+                                </div>
+                                <div className="whitespace-pre-wrap break-words">
+                                  {bodyText}
+                                </div>
+                                {m.webLink && (
+                                  <div className="mt-3">
+                                    <a
+                                      href={m.webLink}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-sm text-primary underline"
+                                    >
+                                      Open in Outlook
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        );
+                      })}
+                    </Accordion>
+                  </div>
+                ),
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
