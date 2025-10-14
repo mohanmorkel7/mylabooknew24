@@ -152,6 +152,35 @@ async function sendReplicaDownAlertOnce(
       reporting_managers_parsed,
       escalation_managers_parsed,
     });
+
+    // Immediate direct-call to Assigned + Reporting only on transition to overdue
+    try {
+      const immediateNames = Array.from(
+        new Set([...assigned_to_parsed, ...reporting_managers_parsed]),
+      );
+      const immediateUserIds = await getUserIdsFromNames(immediateNames);
+      if (immediateUserIds.length) {
+        fetch("https://pulsealerts.mylapay.com/direct-call", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            receiver: "CRM_Switch",
+            title,
+            user_ids: immediateUserIds,
+          }),
+        }).catch((err) =>
+          console.warn(
+            "[finops-production] Immediate direct-call error:",
+            (err as Error).message,
+          ),
+        );
+      }
+    } catch (err) {
+      console.warn(
+        "[finops-production] Immediate direct-call user resolution failed:",
+        (err as Error).message,
+      );
+    }
   } catch (e) {
     console.warn(
       "[finops-production] Replica-down alert error:",
@@ -201,7 +230,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
               ft.notification_sent_escalation,
               ft.assigned_to,
               ft.reporting_managers,
-              ft.escalation_managers
+              ft.escalation_managers,
+              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_by,
+              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_at
             FROM finops_tracker ft
             WHERE ft.task_id = t.id AND ft.run_date = $1
 
@@ -234,7 +265,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
               COALESCE(st.notification_sent_escalation, false) AS notification_sent_escalation,
               COALESCE(st.assigned_to, t.assigned_to) AS assigned_to,
               t.reporting_managers::text AS reporting_managers,
-              t.escalation_managers::text AS escalation_managers
+              t.escalation_managers::text AS escalation_managers,
+              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_by,
+              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_at
             FROM finops_subtasks st
             WHERE st.task_id = t.id
               AND st.scheduled_date = $1
@@ -276,7 +309,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'notification_sent_escalation', ft.notification_sent_escalation,
                 'assigned_to', ft.assigned_to,
                 'reporting_managers', ft.reporting_managers,
-                'escalation_managers', ft.escalation_managers
+                'escalation_managers', ft.escalation_managers,
+                'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1),
+                'approved_at', (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1)
               ) ORDER BY ft.order_position
             ) FILTER (WHERE ft.subtask_id IS NOT NULL),
             '[]'::json
@@ -659,6 +694,106 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       error: "Failed to update subtask",
       message: error.message,
     });
+  }
+});
+
+// Approve subtask (only reporting managers)
+router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
+  try {
+    await requireDatabase();
+    const subtaskId = parseInt(req.params.id);
+    const { approver_name, note } = req.body || {};
+    if (!approver_name)
+      return res.status(400).json({ error: "approver_name is required" });
+
+    const stRes = await pool.query(
+      `SELECT st.id, st.task_id, st.name as subtask_name, ft.task_name, ft.reporting_managers, ft.created_by
+       FROM finops_subtasks st
+       JOIN finops_tasks ft ON st.task_id = ft.id
+       WHERE st.id = $1 LIMIT 1`,
+      [subtaskId],
+    );
+    if (stRes.rows.length === 0)
+      return res.status(404).json({ error: "Subtask not found" });
+    const row = stRes.rows[0];
+
+    const parseManagers = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val))
+        return val
+          .map(String)
+          .map((s) => s.trim())
+          .filter(Boolean);
+      try {
+        const p = JSON.parse(val);
+        return Array.isArray(p)
+          ? p
+              .map(String)
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [];
+      } catch {}
+      return String(val)
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+    };
+
+    const reporters = parseManagers(row.reporting_managers);
+    const isReporter = reporters
+      .map((n) => n.toLowerCase().replace(/\s+/g, " ").trim())
+      .includes(
+        String(approver_name).toLowerCase().replace(/\s+/g, " ").trim(),
+      );
+    if (!isReporter)
+      return res
+        .status(403)
+        .json({ error: "Only reporting managers can approve" });
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_approvals (
+        id SERIAL PRIMARY KEY,
+        task_id INTEGER NOT NULL,
+        subtask_id INTEGER NOT NULL,
+        approved_by TEXT NOT NULL,
+        note TEXT,
+        approved_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(task_id, subtask_id)
+      )
+    `);
+    // Prevent re-approval
+    const existing = await pool.query(
+      `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 LIMIT 1`,
+      [row.task_id, subtaskId],
+    );
+    if (existing.rows.length) {
+      return res.status(409).json({ error: "Already approved" });
+    }
+
+    await pool.query(
+      `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (task_id, subtask_id) DO NOTHING`,
+      [row.task_id, subtaskId, approver_name, note || null],
+    );
+
+    await pool.query(
+      `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+       VALUES ($1, $2, 'approved', $3, $4)`,
+      [
+        row.task_id,
+        subtaskId,
+        approver_name,
+        note ? `Approved: ${note}` : "Approved",
+      ],
+    );
+
+    res.json({ ok: true, approved: true });
+  } catch (e: any) {
+    console.error("Approve subtask failed:", e);
+    res
+      .status(500)
+      .json({ error: "Failed to approve subtask", message: e.message });
   }
 });
 

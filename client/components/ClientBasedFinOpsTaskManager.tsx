@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
+import { formatToISTDateTime } from "@/lib/dateUtils";
 import {
   DndContext,
   closestCenter,
@@ -431,8 +432,96 @@ function SortableSubTaskItem({
                         <SelectItem value="overdue">Overdue</SelectItem>
                       </SelectContent>
                     </Select>
+                    {/* Approve button: visible to reporting managers when subtask completed */}
+                    {(() => {
+                      try {
+                        const task: any = (subtask as any).task || null;
+                        const currentUser = (useAuth() as any)?.user || null;
+                        const isReporting =
+                          currentUser &&
+                          task &&
+                          Array.isArray(task.reporting_managers)
+                            ? task.reporting_managers
+                                .map((m: string) =>
+                                  (m || "")
+                                    .toLowerCase()
+                                    .replace(/\s+/g, " ")
+                                    .trim(),
+                                )
+                                .includes(
+                                  String(
+                                    currentUser.name || currentUser.email || "",
+                                  )
+                                    .toLowerCase()
+                                    .replace(/\s+/g, " ")
+                                    .trim(),
+                                )
+                            : false;
+                        const isAdmin = currentUser?.role === "admin";
+                        const isApproved = Boolean(
+                          (subtask as any).approved_by,
+                        );
+                        if (
+                          (isReporting || isAdmin) &&
+                          subtask.status === "completed" &&
+                          !isApproved
+                        ) {
+                          return (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={async () => {
+                                if (!confirm("Approve this subtask?")) return;
+                                try {
+                                  const approverName =
+                                    currentUser?.name ||
+                                    currentUser?.email ||
+                                    "";
+                                  await apiClient.approveFinOpsSubtask(
+                                    Number(subtask.id),
+                                    approverName,
+                                  );
+                                  try {
+                                    queryClient.invalidateQueries({
+                                      queryKey: ["client-finops-tasks"],
+                                    });
+                                  } catch {}
+                                  try {
+                                    toast({
+                                      title: "Approved",
+                                      description: `Approved by ${approverName}`,
+                                    });
+                                  } catch {}
+                                } catch (e) {
+                                  alert("Failed to approve");
+                                }
+                              }}
+                            >
+                              Approve
+                            </Button>
+                          );
+                        }
+                      } catch {}
+                      return null;
+                    })()}
                   </div>
                 </div>
+
+                {/* Show approval info if present */}
+                {subtask.status === "completed" &&
+                  (subtask as any).approved_by && (
+                    <div className="mt-2">
+                      <Badge
+                        variant="outline"
+                        className="text-green-700 border-green-300 bg-green-50"
+                      >
+                        Approved by {(subtask as any).approved_by}
+                        {(subtask as any).approved_at
+                          ? ` on ${formatToISTDateTime((subtask as any).approved_at, { second: "2-digit" })} IST (+05:30)`
+                          : ""}
+                      </Badge>
+                    </div>
+                  )}
 
                 {/* Show delay information if present */}
                 {subtask.status === "delayed" && subtask.delay_reason && (

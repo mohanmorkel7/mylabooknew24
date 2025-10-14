@@ -1027,18 +1027,23 @@ router.patch(
         // Persist status change to finops_subtasks table to keep the authoritative subtask status in sync
         try {
           const statusToSet = status;
+          const isInProgress = statusToSet === "in_progress";
+          const isCompleted = statusToSet === "completed";
+
           const subtaskUpdateParams: any[] = [
             statusToSet,
+            isInProgress,
+            isCompleted,
             taskId,
             Number(subtaskId),
           ];
           const subtaskUpdateQuery = `
             UPDATE finops_subtasks
             SET status = $1,
-                started_at = CASE WHEN $1 = 'in_progress' THEN COALESCE(started_at, CURRENT_TIMESTAMP) ELSE started_at END,
-                completed_at = CASE WHEN $1 = 'completed' THEN CURRENT_TIMESTAMP WHEN $1 != 'completed' THEN NULL ELSE completed_at END,
+                started_at = CASE WHEN $2 THEN COALESCE(started_at, CURRENT_TIMESTAMP) ELSE started_at END,
+                completed_at = CASE WHEN $3 THEN CURRENT_TIMESTAMP ELSE NULL END,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE task_id = $2 AND id = $3
+            WHERE task_id = $4 AND id = $5
           `;
           await pool.query(subtaskUpdateQuery, subtaskUpdateParams);
         } catch (err) {
@@ -1886,15 +1891,14 @@ router.post(
           `Manual ${alert_type} alert sent: ${message}`,
         );
 
-        // In a real implementation, this would send actual notifications
+        // In a real implementation, this sends notifications and enqueues external Pulse alert
         console.log(
           `Manual alert sent for task ${taskData.task_name}, subtask ${taskData.subtask_name}`,
         );
         console.log(`Alert type: ${alert_type}, Message: ${message}`);
 
-        const recipients = (() => {
-          const val = taskData.reporting_managers;
-          if (!val) return [] as string[];
+        const parseManagers = (val: any): string[] => {
+          if (!val) return [];
           if (Array.isArray(val))
             return val
               .map(String)
@@ -1925,16 +1929,101 @@ router.post(
           }
           try {
             const parsed = JSON.parse(val);
-            return Array.isArray(parsed) ? parsed : [];
+            return Array.isArray(parsed)
+              ? parsed
+                  .map(String)
+                  .map((x) => x.trim())
+                  .filter(Boolean)
+              : [];
           } catch {
             return [] as string[];
           }
-        })();
+        };
+
+        const assignedTo = parseManagers(taskData.assigned_to);
+        const reportingManagers = parseManagers(taskData.reporting_managers);
+        const escalationManagers = parseManagers(taskData.escalation_managers);
+        const recipients = Array.from(
+          new Set([...assignedTo, ...reportingManagers, ...escalationManagers]),
+        );
+
+        // Enqueue external direct-call via finops_external_alerts; processed by netlify/functions/pulse-sync.ts
+        await pool.query(`
+          CREATE TABLE IF NOT EXISTS finops_external_alerts (
+            id SERIAL PRIMARY KEY,
+            task_id INTEGER NOT NULL,
+            subtask_id INTEGER NOT NULL,
+            alert_key TEXT NOT NULL,
+            title TEXT,
+            next_call_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE(task_id, subtask_id, alert_key)
+          )
+        `);
+
+        const fallbackTitle = `Kindly take prompt action on the overdue subtask ${taskData.subtask_name} from the task ${taskData.task_name}.`;
+        const title =
+          typeof message === "string" && message.trim().length
+            ? String(message)
+            : fallbackTitle;
+
+        const reserve = await pool.query(
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+           VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
+           ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+           RETURNING id`,
+          [taskId, Number(subtaskId), title],
+        );
+        const external_enqueued = reserve.rows.length > 0;
+
+        // Immediately trigger Pulse direct-call once as well (best-effort)
+        try {
+          const normalized = recipients
+            .map((n) => (n || "").toLowerCase().replace(/\s+/g, " ").trim())
+            .filter(Boolean);
+          const collapsed = normalized.map((n) => n.replace(/\s+/g, ""));
+          const usersRes = await pool.query(
+            `SELECT azure_object_id, sso_id, first_name, last_name, email
+             FROM users
+             WHERE (
+               LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)
+               OR REPLACE(LOWER(CONCAT(first_name,' ',last_name)),' ','') = ANY($2)
+               OR LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))) = ANY($1)
+               OR REPLACE(LOWER(CONCAT(first_name,' ',LEFT(COALESCE(last_name,''),1))),' ','') = ANY($2)
+               OR LOWER(SPLIT_PART(COALESCE(email,''),'@',1)) = ANY($1)
+               OR REPLACE(LOWER(SPLIT_PART(COALESCE(email,''),'@',1)),'.','') = ANY($2)
+             )`,
+            [normalized, collapsed],
+          );
+          const user_ids = Array.from(
+            new Set(
+              usersRes.rows
+                .map((r: any) => r.azure_object_id || r.sso_id)
+                .filter((id: string | null) => !!id),
+            ),
+          );
+
+          if (user_ids.length) {
+            fetch("https://pulsealerts.mylapay.com/direct-call", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+            }).catch((err) => {
+              console.warn("Manual direct-call error:", (err as Error).message);
+            });
+          }
+        } catch (e) {
+          console.warn(
+            "Manual direct-call user resolution failed:",
+            (e as Error).message,
+          );
+        }
 
         res.json({
           message: "Manual alert sent successfully",
           alert_type: alert_type,
           recipients,
+          external_enqueued,
         });
       } else {
         res.json({

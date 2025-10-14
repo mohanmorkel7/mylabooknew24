@@ -74,7 +74,7 @@ export const handler: Handler = async () => {
 
     // Send pending external alerts whose time has arrived
     const pending = await pool.query(
-      `SELECT id, task_id, subtask_id, alert_key, title FROM finops_external_alerts WHERE next_call_at IS NOT NULL AND next_call_at <= NOW() ORDER BY next_call_at ASC LIMIT 200`,
+      `SELECT id, task_id, subtask_id, alert_key, title, next_call_at, created_at FROM finops_external_alerts WHERE next_call_at IS NOT NULL AND next_call_at <= NOW() ORDER BY next_call_at ASC LIMIT 200`,
     );
 
     for (const alertRow of pending.rows) {
@@ -106,13 +106,33 @@ export const handler: Handler = async () => {
           .filter(Boolean);
       };
 
-      const names = Array.from(
+      // Determine whether this is the initial immediate call (Assigned + Reporting only)
+      const createdAt = alertRow.created_at
+        ? new Date(alertRow.created_at)
+        : null;
+      const nextCallAt = alertRow.next_call_at
+        ? new Date(alertRow.next_call_at)
+        : null;
+      // If next_call_at is within 5 minutes of created_at, treat as the initial call
+      const isInitial = !!(
+        createdAt &&
+        nextCallAt &&
+        nextCallAt.getTime() - createdAt.getTime() < 5 * 60 * 1000
+      );
+
+      // Always include Assigned + Reporting; include Escalation only after 15 minutes
+      const baseNames = Array.from(
         new Set([
           ...parseManagers(meta.reporting_managers),
-          ...parseManagers(meta.escalation_managers),
           ...(meta.assigned_to ? [String(meta.assigned_to)] : []),
         ]),
       );
+      const names = isInitial
+        ? baseNames
+        : Array.from(
+            new Set([...baseNames, ...parseManagers(meta.escalation_managers)]),
+          );
+
       const lowered = names.map((n) => n.toLowerCase());
       const users = await pool.query(
         `SELECT azure_object_id FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = ANY($1)`,

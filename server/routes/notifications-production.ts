@@ -256,11 +256,7 @@ router.get("/", async (req: Request, res: Response) => {
             fal.details,
             fal.timestamp,
             ROW_NUMBER() OVER (
-              PARTITION BY
-                CASE
-                  WHEN fal.action = 'sla_alert' THEN CONCAT('sla_alert_', fal.id)
-                  ELSE CONCAT(fal.action, '_', fal.task_id, '_', fal.subtask_id, '_', LEFT(fal.details, 50))
-                END
+              PARTITION BY CONCAT(fal.action, '_', fal.task_id, '_', fal.subtask_id, '_', LEFT(fal.details, 50))
               ORDER BY fal.timestamp DESC
             ) as rn
           FROM finops_activity_log fal
@@ -284,30 +280,23 @@ router.get("/", async (req: Request, res: Response) => {
           fs.name as subtask_name,
           fs.start_time,
           fs.auto_notify,
-          for_reason.reason as overdue_reason,
+          ft.created_by as created_by,
+          rn.user_name as updated_by,
+          fs.delay_reason as overdue_reason,
+          fs.delay_notes as delay_notes,
           CASE
-            WHEN rn.action = 'delay_reported' THEN 'task_delayed'
+            WHEN rn.action = 'created' THEN 'task_created'
+            WHEN rn.action = 'updated' AND rn.details NOT ILIKE '%status changed%' THEN 'task_updated'
+            WHEN rn.action IN ('status_changed','task_status_changed') AND LOWER(rn.details) LIKE '%from "overdue"%' THEN 'status_resolved_from_overdue'
             WHEN rn.action = 'overdue_notification_sent' THEN 'sla_overdue'
-            WHEN rn.action = 'completion_notification_sent' THEN 'task_completed'
-            WHEN rn.action = 'sla_alert' THEN 'sla_warning'
-            WHEN rn.action = 'escalation_required' THEN 'escalation'
-            WHEN LOWER(rn.details) LIKE '%overdue%' THEN 'sla_overdue'
-            WHEN rn.action IN ('status_changed', 'task_status_changed') AND LOWER(rn.details) LIKE '%overdue%' THEN 'sla_overdue'
-            WHEN rn.action IN ('status_changed', 'task_status_changed') AND LOWER(rn.details) LIKE '%completed%' THEN 'task_completed'
-            WHEN LOWER(rn.details) LIKE '%starting in%' OR LOWER(rn.details) LIKE '%sla warning%' THEN 'sla_warning'
-            WHEN LOWER(rn.details) LIKE '%min remaining%' THEN 'sla_warning'
-            WHEN LOWER(rn.details) LIKE '%pending%' AND LOWER(rn.details) LIKE '%need to start%' THEN 'task_pending'
-            WHEN LOWER(rn.details) LIKE '%pending status%' THEN 'task_pending'
-            ELSE 'daily_reminder'
+            ELSE 'ignored'
           END as type,
           CASE
-            WHEN rn.action = 'delay_reported' OR rn.action = 'overdue_notification_sent' OR LOWER(rn.details) LIKE '%overdue%' THEN 'critical'
-            WHEN rn.action = 'completion_notification_sent' THEN 'low'
-            WHEN rn.action = 'sla_alert' OR LOWER(rn.details) LIKE '%starting in%' OR LOWER(rn.details) LIKE '%sla warning%' OR LOWER(rn.details) LIKE '%min remaining%' THEN 'high'
-            WHEN rn.action = 'escalation_required' THEN 'critical'
-            WHEN LOWER(rn.details) LIKE '%pending%' AND LOWER(rn.details) LIKE '%need to start%' THEN 'medium'
-            WHEN LOWER(rn.details) LIKE '%pending status%' THEN 'medium'
-            ELSE 'medium'
+            WHEN rn.action = 'overdue_notification_sent' THEN 'critical'
+            WHEN rn.action IN ('status_changed','task_status_changed') AND LOWER(rn.details) LIKE '%from "overdue"%' THEN 'high'
+            WHEN rn.action = 'created' THEN 'medium'
+            WHEN rn.action = 'updated' THEN 'medium'
+            ELSE 'low'
           END as priority,
           COALESCE(fnrs.activity_log_id IS NOT NULL, false) as read,
           1 as user_id
@@ -316,10 +305,14 @@ router.get("/", async (req: Request, res: Response) => {
         LEFT JOIN finops_subtasks fs ON rn.subtask_id = fs.id
         LEFT JOIN finops_notification_read_status fnrs ON rn.id = fnrs.activity_log_id
         LEFT JOIN finops_notification_archived_status fnas ON rn.id = fnas.activity_log_id
-        LEFT JOIN finops_overdue_reasons for_reason ON (rn.task_id = for_reason.task_id AND rn.subtask_id::text = for_reason.subtask_id)
         WHERE rn.rn = 1
         AND fnas.activity_log_id IS NULL
-        AND NOT (rn.action = 'completion_notification_sent' OR LOWER(rn.details) LIKE '%completed%')
+        AND (
+          rn.action = 'created'
+          OR (rn.action = 'updated' AND rn.details NOT ILIKE '%status changed%')
+          OR (rn.action IN ('status_changed','task_status_changed') AND LOWER(rn.details) LIKE '%from "overdue"%')
+          OR rn.action = 'overdue_notification_sent'
+        )
         ORDER BY rn.timestamp DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}
       `;
@@ -339,6 +332,12 @@ router.get("/", async (req: Request, res: Response) => {
         WHERE fal.timestamp >= NOW() - INTERVAL '7 days'
         AND fnas.activity_log_id IS NULL
         ${date ? `AND DATE(fal.timestamp) = DATE($1)` : ""}
+        AND (
+          fal.action = 'created'
+          OR (fal.action = 'updated' AND fal.details NOT ILIKE '%status changed%')
+          OR (fal.action IN ('status_changed','task_status_changed') AND LOWER(fal.details) LIKE '%from "overdue"%')
+          OR fal.action = 'overdue_notification_sent'
+        )
       `;
 
       const countsResult = await pool.query(
@@ -924,33 +923,33 @@ router.post("/overdue-reason", async (req: Request, res: Response) => {
         created_at || new Date().toISOString(),
       ]);
 
-      // Also update the overdue tracking table if it exists
-      try {
-        const updateTrackingQuery = `
-          UPDATE finops_overdue_tracking
-          SET reason_provided = TRUE,
-              reason_text = $1,
-              reason_provided_at = NOW(),
-              status = 'reason_provided'
-          WHERE task_id = (
-            SELECT task_id FROM finops_activity_log WHERE id = $2
-          )
-          AND reason_provided = FALSE
-        `;
+      // // Also update the overdue tracking table if it exists
+      // try {
+      //   const updateTrackingQuery = `
+      //     UPDATE finops_overdue_tracking
+      //     SET reason_provided = TRUE,
+      //         reason_text = $1,
+      //         reason_provided_at = NOW(),
+      //         status = 'reason_provided'
+      //     WHERE task_id = (
+      //       SELECT task_id FROM finops_activity_log WHERE id = $2
+      //     )
+      //     AND reason_provided = FALSE
+      //   `;
 
-        await pool.query(updateTrackingQuery, [
-          overdue_reason,
-          notification_id,
-        ]);
-        console.log(
-          `✅ Updated overdue tracking for notification ${notification_id}`,
-        );
-      } catch (trackingError) {
-        console.log(
-          "Note: Could not update tracking table:",
-          trackingError.message,
-        );
-      }
+      //   await pool.query(updateTrackingQuery, [
+      //     overdue_reason,
+      //     notification_id,
+      //   ]);
+      //   console.log(
+      //     `✅ Updated overdue tracking for notification ${notification_id}`,
+      //   );
+      // } catch (trackingError) {
+      //   console.log(
+      //     "Note: Could not update tracking table:",
+      //     trackingError.message,
+      //   );
+      // }
 
       res.status(201).json({
         message: "Overdue reason stored successfully",
@@ -2104,21 +2103,21 @@ router.post(
         ]);
 
         // Create overdue tracking entry
-        const trackingQuery = `
-        INSERT INTO finops_overdue_tracking
-        (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
-        ON CONFLICT DO NOTHING
-      `;
+        //   const trackingQuery = `
+        //   INSERT INTO finops_overdue_tracking
+        //   (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
+        //   VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
+        //   ON CONFLICT DO NOTHING
+        // `;
 
-        await pool.query(trackingQuery, [
-          99,
-          99,
-          "TEST OVERDUE TASK",
-          "Test Subtask",
-          "Test User",
-          0,
-        ]);
+        // await pool.query(trackingQuery, [
+        //   99,
+        //   99,
+        //   "TEST OVERDUE TASK",
+        //   "Test Subtask",
+        //   "Test User",
+        //   0,
+        // ]);
 
         res.json({
           message: "Immediate overdue notification created successfully!",
