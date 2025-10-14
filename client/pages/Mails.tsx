@@ -24,6 +24,8 @@ export default function Mails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [emails, setEmails] = useState<GraphEmail[]>([]);
+  const [needsAuth, setNeedsAuth] = useState(false);
+  const [authenticating, setAuthenticating] = useState(false);
 
   const targetUser = useMemo(() => encodeURIComponent(TARGET_MAIL), []);
 
@@ -35,38 +37,20 @@ export default function Mails() {
         setLoading(true);
         setError(null);
 
-        // Handle auth redirect if coming back from Microsoft login
+        // Handle return from Azure AD if applicable
         await azureSilentAuth.handleAuthReturn();
-        const token = await azureSilentAuth.getAccessToken();
 
-        // Fetch latest messages and filter client-side by subject contains "Invoice"
-        // We fetch more than 10 to ensure enough results after filtering
-        const url =
-          `https://graph.microsoft.com/v1.0/users/${targetUser}/messages` +
-          `?$top=25&$orderby=receivedDateTime%20desc&$select=subject,from,body,receivedDateTime`;
-
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!res.ok) {
-          throw new Error(`${res.status} ${res.statusText}`);
+        // Check if already authenticated
+        const isAuth = await azureSilentAuth.isAuthenticated();
+        if (!isAuth) {
+          // Don't trigger interactive auth automatically; show sign-in CTA
+          if (mounted) setNeedsAuth(true);
+          return;
         }
 
-        const data = await res.json();
-        const items: GraphEmail[] = Array.isArray(data?.value)
-          ? data.value
-          : [];
-
-        const filtered = items.filter((m) =>
-          (m.subject || "").toLowerCase().includes("invoice"),
-        );
-
-        const top10 = filtered.slice(0, 10);
-        if (mounted) setEmails(top10);
+        // Authenticated - fetch emails
+        const token = await azureSilentAuth.getAccessToken();
+        await fetchEmailsWithToken(token, mounted);
       } catch (e: any) {
         if (mounted) setError(e?.message || "Failed to load emails");
       } finally {
@@ -79,6 +63,62 @@ export default function Mails() {
       mounted = false;
     };
   }, [targetUser]);
+
+  async function fetchEmailsWithToken(token: string, mounted = true) {
+    setLoading(true);
+    setError(null);
+    try {
+      const url =
+        `https://graph.microsoft.com/v1.0/users/${targetUser}/messages` +
+        `?$top=25&$orderby=receivedDateTime%20desc&$select=subject,from,body,receivedDateTime`;
+
+      const res = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!res.ok) {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+
+      const data = await res.json();
+      const items: GraphEmail[] = Array.isArray(data?.value) ? data.value : [];
+      const filtered = items.filter((m) =>
+        (m.subject || "").toLowerCase().includes("invoice"),
+      );
+      const top10 = filtered.slice(0, 10);
+      if (mounted) setEmails(top10);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load emails");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSignIn() {
+    setAuthenticating(true);
+    setError(null);
+    try {
+      // Try popup-based authentication first (will fallback to redirect if needed)
+      const token = await azureSyncService.getAccessToken(false);
+      // If token available, fetch emails
+      if (token) {
+        setNeedsAuth(false);
+        await fetchEmailsWithToken(token);
+      }
+    } catch (e: any) {
+      // If redirect-based auth was initiated, the page will reload - show message briefly
+      if (e?.message && e.message.includes("Redirect authentication initiated")) {
+        setError("Redirecting to Microsoft for authentication...");
+        return;
+      }
+      setError(e?.message || "Authentication failed");
+    } finally {
+      setAuthenticating(false);
+    }
+  }
 
   return (
     <div className="p-6">
@@ -100,6 +140,20 @@ export default function Mails() {
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mr-3"></div>
               Loading emails...
             </div>
+          ) : needsAuth ? (
+            <div className="space-y-3">
+              <div className="text-gray-700">You need to sign in to Microsoft to view mails.</div>
+              <div>
+                <button
+                  onClick={handleSignIn}
+                  className="px-4 py-2 bg-primary text-white rounded"
+                  disabled={authenticating}
+                >
+                  {authenticating ? "Signing in..." : "Sign in with Microsoft"}
+                </button>
+              </div>
+              {error && <div className="text-red-600">{error}</div>}
+            </div>
           ) : error ? (
             <div className="text-red-600">{error}</div>
           ) : emails.length === 0 ? (
@@ -118,13 +172,9 @@ export default function Mails() {
                 return (
                   <li key={m.id} className="py-4">
                     <div className="mb-1 text-sm text-gray-500">
-                      {m.receivedDateTime
-                        ? new Date(m.receivedDateTime).toLocaleString()
-                        : ""}
+                      {m.receivedDateTime ? new Date(m.receivedDateTime).toLocaleString() : ""}
                     </div>
-                    <div className="font-semibold text-gray-900">
-                      {m.subject || "(No subject)"}
-                    </div>
+                    <div className="font-semibold text-gray-900">{m.subject || "(No subject)"}</div>
                     <div className="text-sm text-gray-700 mb-2">
                       From: {sender?.name || sender?.address || "Unknown"}
                     </div>
