@@ -424,13 +424,17 @@ export default function Mails() {
                                     : ""}
                                 </div>
                                 <div className="whitespace-pre-wrap break-words text-left">
-                                  {m.body && m.body.content
-                                    ? m.body.contentType &&
-                                      m.body.contentType.toLowerCase() ===
-                                        "html"
-                                      ? htmlToText(m.body.content)
-                                      : m.body.content
-                                    : m.bodyPreview || bodyText}
+                                  {m.body && m.body.content ? (
+                                    // Render sanitized HTML when full body is available
+                                    <div
+                                      className="prose max-w-none"
+                                      dangerouslySetInnerHTML={{
+                                        __html: sanitizeHtml(m.body.content),
+                                      }}
+                                    />
+                                  ) : (
+                                    <div>{m.bodyPreview || bodyText}</div>
+                                  )}
                                 </div>
                                 {m.webLink && (
                                   <div className="mt-3">
