@@ -28,7 +28,12 @@ const SUBJECT_FILTER = (import.meta as any).env?.VITE_MS_SUBJECT_FILTER || "";
 
 function htmlToText(html: string): string {
   try {
-    const doc = new DOMParser().parseFromString(html || "", "text/html");
+    // First decode HTML entities if the content is escaped (e.g. &lt;html&gt;)
+    const decoder = document.createElement("textarea");
+    decoder.innerHTML = html || "";
+    const decoded = decoder.value;
+
+    const doc = new DOMParser().parseFromString(decoded || "", "text/html");
     // remove styles/scripts and meta/link tags that may contain CSS or external refs
     doc.querySelectorAll("style,script,meta,link").forEach((el) => el.remove());
     const text = doc.body ? doc.body.textContent || "" : "";
@@ -344,9 +349,9 @@ export default function Mails() {
                         return (
                           <AccordionItem key={m.id} value={m.id}>
                             <AccordionTrigger className="px-3">
-                              <div className="flex items-center justify-between w-full">
+                              <div className="flex items-start justify-between w-full">
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-start gap-3">
                                     <div className="flex-1">
                                       <div className="text-sm font-medium text-gray-900 truncate">
                                         {m.subject || "(No subject)"}
