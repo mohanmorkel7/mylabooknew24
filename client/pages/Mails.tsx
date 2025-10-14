@@ -376,11 +376,13 @@ export default function Mails() {
                                     : ""}
                                 </div>
                                 <div className="whitespace-pre-wrap break-words text-left">
-                                  {(m.body && m.body.content)
-                                    ? (m.body.contentType && m.body.contentType.toLowerCase() === 'html'
-                                        ? htmlToText(m.body.content)
-                                        : m.body.content)
-                                    : (m.bodyPreview || bodyText)}
+                                  {m.body && m.body.content
+                                    ? m.body.contentType &&
+                                      m.body.contentType.toLowerCase() ===
+                                        "html"
+                                      ? htmlToText(m.body.content)
+                                      : m.body.content
+                                    : m.bodyPreview || bodyText}
                                 </div>
                                 {m.webLink && (
                                   <div className="mt-3">
