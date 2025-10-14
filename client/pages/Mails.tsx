@@ -56,7 +56,9 @@ function sanitizeHtml(html: string): string {
     const doc = new DOMParser().parseFromString(decoded || "", "text/html");
 
     // Remove dangerous or noisy elements
-    doc.querySelectorAll("script,style,meta,link,iframe,object,embed").forEach((el) => el.remove());
+    doc
+      .querySelectorAll("script,style,meta,link,iframe,object,embed")
+      .forEach((el) => el.remove());
 
     // Remove elements that contain the word 'CAUTION' (case-insensitive)
     Array.from(doc.body.querySelectorAll("*")).forEach((el) => {
@@ -75,7 +77,10 @@ function sanitizeHtml(html: string): string {
           el.removeAttribute(attr.name);
         }
         // Optionally strip javascript: hrefs
-        if (name === "href" && attr.value.trim().toLowerCase().startsWith("javascript:")) {
+        if (
+          name === "href" &&
+          attr.value.trim().toLowerCase().startsWith("javascript:")
+        ) {
           el.removeAttribute(attr.name);
         }
       });
