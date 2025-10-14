@@ -290,7 +290,44 @@ export default function Mails() {
                       </span>
                     </div>
 
-                    <Accordion type="single" collapsible>
+                    <Accordion
+                      type="single"
+                      collapsible
+                      onValueChange={async (val) => {
+                        if (!val) return;
+                        try {
+                          const existing = emails.find((e) => e.id === val);
+                          if (!existing) return;
+                          if (existing.body && existing.body.content) return;
+
+                          const token = await azureSilentAuth.getAccessToken();
+                          const url = `https://graph.microsoft.com/v1.0/users/${targetUser}/messages/${encodeURIComponent(val)}?$select=body,bodyPreview`;
+                          const res = await fetch(url, {
+                            headers: {
+                              Authorization: `Bearer ${token}`,
+                              "Content-Type": "application/json",
+                            },
+                          });
+                          if (!res.ok) return;
+                          const data = await res.json();
+                          const fullBody = data?.body;
+                          setEmails((prev) =>
+                            prev.map((it) =>
+                              it.id === val
+                                ? {
+                                    ...it,
+                                    body: fullBody,
+                                    bodyPreview:
+                                      data?.bodyPreview || it.bodyPreview,
+                                  }
+                                : it,
+                            ),
+                          );
+                        } catch (e) {
+                          // ignore
+                        }
+                      }}
+                    >
                       {groupEmails.map((m) => {
                         const sender =
                           m.from?.emailAddress || m.sender?.emailAddress;
