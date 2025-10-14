@@ -253,39 +253,58 @@ export default function Mails() {
           ) : emails.length === 0 ? (
             <div className="text-gray-600">No matching emails found.</div>
           ) : (
-            <ul className="divide-y divide-gray-200">
-              {emails.map((m) => {
-                const sender = m.from?.emailAddress;
-                const preview = m.bodyPreview || "";
-                const contentType = m.body?.contentType || "text";
-                const rawContent = m.body?.content || "";
-                let bodyText = preview
-                  ? preview
-                  : contentType.toLowerCase() === "html"
-                    ? htmlToText(rawContent)
-                    : rawContent;
-                bodyText = (bodyText || "").replace(/\s+/g, " ").trim();
+            <div className="space-y-6">
+              {Object.entries(groupEmailsByDay(emails)).map(([groupLabel, groupEmails]) => (
+                <div key={groupLabel}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700">{groupLabel}</h3>
+                    <span className="text-xs text-gray-500">{groupEmails.length}</span>
+                  </div>
 
-                return (
-                  <li key={m.id} className="py-4">
-                    <div className="mb-1 text-sm text-gray-500">
-                      {m.receivedDateTime
-                        ? new Date(m.receivedDateTime).toLocaleString()
-                        : ""}
-                    </div>
-                    <div className="font-semibold text-gray-900">
-                      {m.subject || "(No subject)"}
-                    </div>
-                    <div className="text-sm text-gray-700 mb-2">
-                      From: {sender?.name || sender?.address || "Unknown"}
-                    </div>
-                    <div className="text-gray-800 whitespace-pre-wrap break-words">
-                      {bodyText}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+                  <Accordion type="single" collapsible>
+                    {groupEmails.map((m) => {
+                      const sender = m.from?.emailAddress || m.sender?.emailAddress;
+                      const preview = m.bodyPreview || "";
+                      const contentType = m.body?.contentType || "text";
+                      const rawContent = m.body?.content || "";
+                      let bodyText = preview ? preview : contentType.toLowerCase() === "html" ? htmlToText(rawContent) : rawContent;
+                      bodyText = (bodyText || "").replace(/\s+/g, " ").trim();
+
+                      return (
+                        <AccordionItem key={m.id} value={m.id}>
+                          <AccordionTrigger className="px-3">
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-3">
+                                  <div className="flex-1">
+                                    <div className="text-sm font-medium text-gray-900 truncate">{m.subject || "(No subject)"}</div>
+                                    <div className="text-xs text-gray-500 truncate">From: {sender?.name || sender?.address || "Unknown"}</div>
+                                  </div>
+                                  <div className="text-xs text-gray-400 ml-3 whitespace-nowrap">{formatTime(m.receivedDateTime)}</div>
+                                </div>
+                                <div className="mt-2 text-sm text-gray-700 line-clamp-2">{bodyText}</div>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+
+                          <AccordionContent className="px-3">
+                            <div className="prose max-w-none text-sm text-gray-800">
+                              <div className="mb-3 text-xs text-gray-500">From: {sender?.name || sender?.address || "Unknown"} • {m.receivedDateTime ? new Date(m.receivedDateTime).toLocaleString() : ""}</div>
+                              <div className="whitespace-pre-wrap break-words">{bodyText}</div>
+                              {m.webLink && (
+                                <div className="mt-3">
+                                  <a href={m.webLink} target="_blank" rel="noreferrer" className="text-sm text-primary underline">Open in Outlook</a>
+                                </div>
+                              )}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
