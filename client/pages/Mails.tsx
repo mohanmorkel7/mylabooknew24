@@ -222,7 +222,10 @@ export default function Mails() {
               content: sanitizeHtml(it.body.content),
             };
           } catch (e) {
-            sanitizedBody = { contentType: it.body.contentType, content: removeCautionFromText(it.body.content) };
+            sanitizedBody = {
+              contentType: it.body.contentType,
+              content: removeCautionFromText(it.body.content),
+            };
           }
         }
 
