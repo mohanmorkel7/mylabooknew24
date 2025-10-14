@@ -107,7 +107,11 @@ export default function Mails() {
 
       // Apply optional subject filter if provided; otherwise show all
       const filtered = SUBJECT_FILTER
-        ? items.filter((m) => (m.subject || "").toLowerCase().includes(SUBJECT_FILTER.toLowerCase()))
+        ? items.filter((m) =>
+            (m.subject || "")
+              .toLowerCase()
+              .includes(SUBJECT_FILTER.toLowerCase()),
+          )
         : items;
 
       const top10 = filtered.slice(0, 10);
