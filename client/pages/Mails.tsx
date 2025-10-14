@@ -21,9 +21,18 @@ const TARGET_MAIL =
 const SUBJECT_FILTER = (import.meta as any).env?.VITE_MS_SUBJECT_FILTER || "";
 
 function htmlToText(html: string): string {
-  const div = document.createElement("div");
-  div.innerHTML = html;
-  return div.textContent || div.innerText || "";
+  try {
+    const doc = new DOMParser().parseFromString(html || "", "text/html");
+    // remove styles/scripts and meta/link tags that may contain CSS or external refs
+    doc.querySelectorAll("style,script,meta,link").forEach((el) => el.remove());
+    const text = doc.body ? doc.body.textContent || "" : "";
+    // collapse whitespace and trim
+    return text.replace(/\s+/g, " ").trim();
+  } catch (e) {
+    const div = document.createElement("div");
+    div.innerHTML = html || "";
+    return (div.textContent || div.innerText || "").replace(/\s+/g, " ").trim();
+  }
 }
 
 export default function Mails() {
@@ -193,12 +202,15 @@ export default function Mails() {
             <ul className="divide-y divide-gray-200">
               {emails.map((m) => {
                 const sender = m.from?.emailAddress;
+                const preview = m.bodyPreview || "";
                 const contentType = m.body?.contentType || "text";
                 const rawContent = m.body?.content || "";
-                const bodyText =
-                  contentType.toLowerCase() === "html"
-                    ? htmlToText(rawContent)
-                    : rawContent;
+                let bodyText = preview
+                  ? preview
+                  : contentType.toLowerCase() === "html"
+                  ? htmlToText(rawContent)
+                  : rawContent;
+                bodyText = (bodyText || "").replace(/\s+/g, " ").trim();
 
                 return (
                   <li key={m.id} className="py-4">
