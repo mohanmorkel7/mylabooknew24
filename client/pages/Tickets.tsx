@@ -447,7 +447,7 @@ export default function Tickets() {
                 </Card>
               ))}
 
-              {ticketsData?.tickets?.length === 0 && (
+              {displayedTickets.length === 0 && (
                 <Card>
                   <CardContent className="p-8 text-center">
                     <p className="text-gray-500">No tickets found</p>
