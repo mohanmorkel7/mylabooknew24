@@ -64,6 +64,8 @@ export default function Tickets() {
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [tabValue, setTabValue] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState<string>(filters.search || "");
 
   // Fetch tickets
   const {
@@ -79,6 +81,12 @@ export default function Tickets() {
   const { data: metadata } = useQuery({
     queryKey: ["ticket-metadata"],
     queryFn: () => apiClient.getTicketMetadata(),
+  });
+
+  // Fetch users for admin filters
+  const { data: users } = useQuery({
+    queryKey: ["users"],
+    queryFn: () => apiClient.getUsers(),
   });
 
   const handleFilterChange = (key: keyof TicketFilters, value: any) => {
@@ -110,6 +118,84 @@ export default function Tickets() {
       ? "bg-gray-100 text-gray-600"
       : "bg-blue-100 text-blue-800";
   };
+
+  // Compute displayed tickets based on active tab
+  const displayedTickets = useMemo(() => {
+    const all = ticketsData?.tickets || [];
+    if (tabValue === "all") return all;
+    if (tabValue === "my-tickets") {
+      if (!user) return [];
+      return all.filter((t: any) => String(t.creator?.id) === String(user.id));
+    }
+    if (tabValue === "assigned") {
+      if (!user) return [];
+      return all.filter((t: any) => String(t.assignee?.id) === String(user.id));
+    }
+    if (tabValue === "open") {
+      return all.filter((t: any) => !t.status?.is_closed);
+    }
+    if (tabValue === "closed") {
+      return all.filter((t: any) => t.status?.is_closed);
+    }
+    return all;
+  }, [ticketsData, tabValue, user]);
+
+  // Handle search Enter key for tracking by ticket ID
+  const handleSearchKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    const raw = searchTerm.trim();
+    if (!raw) return;
+
+    // Normalize track id (allow starting with #)
+    const normalized = raw.replace(/^#/, "");
+
+    // If it looks like a track id (e.g., TKT-1234), try to open ticket by track id
+    if (/^TKT-\d+/i.test(normalized)) {
+      try {
+        const ticket = await apiClient.getTicketByTrackId(normalized.toUpperCase());
+        if (ticket) {
+          setSelectedTicket(ticket);
+          setIsDetailsDialogOpen(true);
+          return;
+        }
+      } catch (err) {
+        // Not found: fallback to regular search filter
+      }
+    }
+
+    // Fallback to normal search filter
+    handleFilterChange("search", raw);
+  };
+
+  // Keep search state in sync with filters
+  useEffect(() => {
+    setSearchTerm(filters.search || "");
+  }, [filters.search]);
+
+  // When tab changes, adjust filters for server-side where possible
+  useEffect(() => {
+    if (!user) return;
+    if (tabValue === "my-tickets") {
+      setFilters((prev) => ({ ...prev, created_by: parseInt(user.id) }));
+      setPage(1);
+      return;
+    }
+    if (tabValue === "assigned") {
+      setFilters((prev) => ({ ...prev, assigned_to: parseInt(user.id) }));
+      setPage(1);
+      return;
+    }
+
+    // For other tabs, remove created_by/assigned_to to show all and filter client-side
+    setFilters((prev) => {
+      const copy = { ...prev } as any;
+      delete copy.created_by;
+      delete copy.assigned_to;
+      return copy;
+    });
+    setPage(1);
+  }, [tabValue, user]);
+
 
   return (
     <div className="container mx-auto p-6 space-y-6">
