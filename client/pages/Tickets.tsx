@@ -342,7 +342,7 @@ export default function Tickets() {
       </Card>
 
       {/* Tickets Tabs */}
-      <Tabs defaultValue="all" className="space-y-4">
+      <Tabs value={tabValue} onValueChange={setTabValue} className="space-y-4">
         <TabsList>
           <TabsTrigger value="all">All Tickets</TabsTrigger>
           <TabsTrigger value="my-tickets">My Tickets</TabsTrigger>
