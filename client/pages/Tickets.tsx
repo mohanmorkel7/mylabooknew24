@@ -141,6 +141,125 @@ export default function Tickets() {
     return all;
   }, [ticketsData, tabValue, user]);
 
+  // Helper to render the tickets list (used in each tab panel)
+  const renderTicketsList = () => {
+    if (ticketsLoading) {
+      return <div className="text-center py-8">Loading tickets...</div>;
+    }
+
+    return (
+      <div className="space-y-4">
+        {displayedTickets.map((ticket: any) => (
+          <Card
+            key={ticket.id}
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleViewTicket(ticket)}
+          >
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge variant="outline" className="font-mono text-xs">
+                      {ticket.track_id}
+                    </Badge>
+                    {ticket.priority && (
+                      <Badge className={getPriorityColor(ticket.priority)}>
+                        {ticket.priority.name}
+                      </Badge>
+                    )}
+                    {ticket.status && (
+                      <Badge className={getStatusColor(ticket.status)}>
+                        {ticket.status.name}
+                      </Badge>
+                    )}
+                    {ticket.category && (
+                      <Badge
+                        variant="secondary"
+                        style={{
+                          backgroundColor: `${ticket.category.color}20`,
+                          color: ticket.category.color,
+                        }}
+                      >
+                        {ticket.category.name}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <h3 className="font-semibold text-lg mb-1">{ticket.subject}</h3>
+
+                  {ticket.description && (
+                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                      {ticket.description}
+                    </p>
+                  )}
+
+                  <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <User className="w-4 h-4" />
+                      <span>Created by {ticket.creator?.name}</span>
+                    </div>
+                    {ticket.assignee && (
+                      <div className="flex items-center gap-1">
+                        <User className="w-4 h-4" />
+                        <span>Assigned to {ticket.assignee?.name}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4" />
+                      <span>
+                        {formatDistanceToNow(new Date(ticket.created_at), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 ml-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewTicket(ticket);
+                    }}
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+
+        {displayedTickets.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <p className="text-gray-500">No tickets found</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Pagination */}
+        {ticketsData && ticketsData.pages > 1 && (
+          <div className="flex justify-center gap-2 mt-6">
+            <Button variant="outline" disabled={page === 1} onClick={() => setPage(page - 1)}>
+              Previous
+            </Button>
+            <span className="flex items-center px-4">Page {page} of {ticketsData.pages}</span>
+            <Button
+              variant="outline"
+              disabled={page === ticketsData.pages}
+              onClick={() => setPage(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Handle search Enter key for tracking by ticket ID
   const handleSearchKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
