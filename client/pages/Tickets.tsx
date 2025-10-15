@@ -98,7 +98,17 @@ export default function Tickets() {
   };
 
   const handleTicketCreated = () => {
+    // Close dialog and blur any focused element to avoid focus-based re-open (e.g., Enter key triggering the trigger button)
     setIsCreateDialogOpen(false);
+    try {
+      if (typeof window !== "undefined" && document.activeElement instanceof HTMLElement) {
+        // Use setTimeout to ensure closing happens before blur
+        setTimeout(() => document.activeElement && (document.activeElement as HTMLElement).blur(), 0);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     refetchTickets();
   };
 
