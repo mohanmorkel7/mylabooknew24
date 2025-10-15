@@ -313,6 +313,30 @@ export default function Tickets() {
                 ))}
               </SelectContent>
             </Select>
+
+            {user?.role === "admin" && (
+              <Select
+                value={filters.assigned_to?.toString() || "all"}
+                onValueChange={(value) =>
+                  handleFilterChange(
+                    "assigned_to",
+                    value === "all" ? undefined : parseInt(value),
+                  )
+                }
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Assigned User" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Any Assignee</SelectItem>
+                  {users?.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id.toString()}>
+                      {u.first_name} {u.last_name} ({u.role})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
