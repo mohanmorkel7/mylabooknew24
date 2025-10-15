@@ -601,29 +601,13 @@ export default function Tickets() {
         </TabsContent>
 
         {/* Other tab contents would be similar with different filters */}
-        <TabsContent value="my-tickets">
-          <div className="text-center py-8 text-gray-500">
-            My tickets view - would filter by created_by
-          </div>
-        </TabsContent>
+        <TabsContent value="my-tickets">{renderTicketsList()}</TabsContent>
 
-        <TabsContent value="assigned">
-          <div className="text-center py-8 text-gray-500">
-            Assigned tickets view - would filter by assigned_to
-          </div>
-        </TabsContent>
+        <TabsContent value="assigned">{renderTicketsList()}</TabsContent>
 
-        <TabsContent value="open">
-          <div className="text-center py-8 text-gray-500">
-            Open tickets view - would filter by open statuses
-          </div>
-        </TabsContent>
+        <TabsContent value="open">{renderTicketsList()}</TabsContent>
 
-        <TabsContent value="closed">
-          <div className="text-center py-8 text-gray-500">
-            Closed tickets view - would filter by closed statuses
-          </div>
-        </TabsContent>
+        <TabsContent value="closed">{renderTicketsList()}</TabsContent>
       </Tabs>
 
       {/* Ticket Details Dialog */}
