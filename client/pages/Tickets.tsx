@@ -237,8 +237,12 @@ export default function Tickets() {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   placeholder="Search tickets..."
-                  value={filters.search || ""}
-                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
+                    handleFilterChange("search", e.target.value);
+                  }}
+                  onKeyDown={handleSearchKeyDown}
                   className="pl-10"
                 />
               </div>
