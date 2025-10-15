@@ -356,7 +356,7 @@ export default function Tickets() {
             <div className="text-center py-8">Loading tickets...</div>
           ) : (
             <div className="space-y-4">
-              {ticketsData?.tickets?.map((ticket) => (
+              {displayedTickets.map((ticket: any) => (
                 <Card
                   key={ticket.id}
                   className="hover:shadow-md transition-shadow cursor-pointer"
