@@ -31,7 +31,10 @@ const originalQuery = (pool as any).query.bind(pool);
   try {
     const sql = typeof text === "string" ? text : String(text?.text || "");
     if (sql.toLowerCase().includes("insert into finops_activity_log")) {
-      console.warn("Activity logging disabled: skipping query:", sql.replace(/\s+/g, " ").trim());
+      console.warn(
+        "Activity logging disabled: skipping query:",
+        sql.replace(/\s+/g, " ").trim(),
+      );
       // Return a harmless query result compatible with pg responses
       return { rows: [], rowCount: 0 };
     }
