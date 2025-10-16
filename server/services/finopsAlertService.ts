@@ -1125,7 +1125,9 @@ class FinOpsAlertService {
     try {
       // Defensive: do not attempt to insert if taskId is missing or the referenced task no longer exists.
       if (!taskId) {
-        console.warn(`Skipping activity log because taskId is missing. Action: ${action}. Details: ${details}`);
+        console.warn(
+          `Skipping activity log because taskId is missing. Action: ${action}. Details: ${details}`,
+        );
         return;
       }
 
@@ -1135,7 +1137,9 @@ class FinOpsAlertService {
       );
 
       if (taskExists.rows.length === 0) {
-        console.warn(`Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`);
+        console.warn(
+          `Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`,
+        );
         return;
       }
 
