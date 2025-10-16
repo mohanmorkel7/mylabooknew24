@@ -176,7 +176,11 @@ export class DepartmentService {
 
       // Find user in our department mapping (fresh read from disk)
       const { users } = this.readUserDepartments();
-      let userMapping = users.find((u: any) => String(u.email || "").toLowerCase() === String(ssoUser.mail || "").toLowerCase());
+      let userMapping = users.find(
+        (u: any) =>
+          String(u.email || "").toLowerCase() ===
+          String(ssoUser.mail || "").toLowerCase(),
+      );
 
       if (!userMapping) {
         console.warn(`❌ User ${ssoUser.mail} not found in department mapping`);
@@ -191,7 +195,9 @@ export class DepartmentService {
         try {
           const dbUserInfo = await this.getUserDepartmentByEmail(ssoUser.mail);
           if (dbUserInfo) {
-            console.log(`ℹ️ Found user in database for ${ssoUser.mail}, using DB info`);
+            console.log(
+              `ℹ️ Found user in database for ${ssoUser.mail}, using DB info`,
+            );
             // Build a minimal userMapping from DB info for consistent processing below
             const fallbackMapping: any = {
               email: dbUserInfo.email,
@@ -215,7 +221,10 @@ export class DepartmentService {
             return null;
           }
         } catch (err) {
-          console.error("Error while falling back to DB lookup for SSO user:", err);
+          console.error(
+            "Error while falling back to DB lookup for SSO user:",
+            err,
+          );
           return null;
         }
       }
