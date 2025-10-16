@@ -494,18 +494,8 @@ class FinOpsScheduler {
         [taskId],
       );
       if (taskRes.rows.length === 0) {
-        // Task missing — insert activity without task_id to avoid FK violation and include original taskId in details
-        const fallbackDetails = `${details} (original_task_id:${taskId} - task record missing)`;
-        await pool.query(
-          `
-          INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-          VALUES (NULL, $1, $2, $3, $4)
-        `,
-          [subtaskId, action, userName, fallbackDetails],
-        );
-        console.warn(
-          `Logged activity with NULL task_id because finops_tasks[${taskId}] not found`,
-        );
+        // Task missing — skip logging to avoid DB constraint violations
+        console.warn(`Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`);
         return;
       }
 
