@@ -282,67 +282,63 @@ class FinOpsAlertService {
           `Pending task overdue - Task: ${task.task_name}, Subtask: ${subtask.name}, Overdue by: ${minutesOverdue} minutes`,
         );
 
-
         var task_id = task.id;
         var sub_task_id = subtask.id;
 
-
         // Resolve user_ids from reporting & escalation managers
-          const taskRow = await pool.query(
-            `SELECT reporting_managers, escalation_managers, assigned_to FROM finops_tasks WHERE id = $1`,
-            [task_id],
-          );
-          const managers = taskRow.rows[0] || {};
-          const allNames = Array.from(
-            new Set([
-              ...this.parseManagers(managers.reporting_managers),
-              ...this.parseManagers(managers.escalation_managers),
-              ...this.parseManagers(managers.assigned_to),
-            ]),
-          );
-          const allUserIds = await this.getUserIdsFromNames(allNames);
+        const taskRow = await pool.query(
+          `SELECT reporting_managers, escalation_managers, assigned_to FROM finops_tasks WHERE id = $1`,
+          [task_id],
+        );
+        const managers = taskRow.rows[0] || {};
+        const allNames = Array.from(
+          new Set([
+            ...this.parseManagers(managers.reporting_managers),
+            ...this.parseManagers(managers.escalation_managers),
+            ...this.parseManagers(managers.assigned_to),
+          ]),
+        );
+        const allUserIds = await this.getUserIdsFromNames(allNames);
 
-          // Immediate: only Assigned + Reporting
-          const immediateNames = Array.from(
-            new Set([
-              ...this.parseManagers(managers.assigned_to),
-              ...this.parseManagers(managers.reporting_managers),
-            ]),
-          );
-          const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
+        // Immediate: only Assigned + Reporting
+        const immediateNames = Array.from(
+          new Set([
+            ...this.parseManagers(managers.assigned_to),
+            ...this.parseManagers(managers.reporting_managers),
+          ]),
+        );
+        const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
 
-          const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
+        const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
 
-          console.log("Direct-call payload (service) Pending", {
-            task_id,
-            sub_task_id,
-            title,
-            manager_names: allNames,
-            user_ids: allUserIds,
-            immediate_user_ids: allUserIds,
-          });
+        console.log("Direct-call payload (service) Pending", {
+          task_id,
+          sub_task_id,
+          title,
+          manager_names: allNames,
+          user_ids: allUserIds,
+          immediate_user_ids: allUserIds,
+        });
 
-          const response = await fetch(
-            "https://pulsealerts.mylapay.com/direct-call",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                receiver: "CRM_Switch",
-                title,
-                user_ids: immediateUserIds,
-              }),
-            },
-          );
+        const response = await fetch(
+          "https://pulsealerts.mylapay.com/direct-call",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              receiver: "CRM_Switch",
+              title,
+              user_ids: immediateUserIds,
+            }),
+          },
+        );
 
-
-          const subtaskUpdateQuery = `
+        const subtaskUpdateQuery = `
             UPDATE finops_subtasks
             SET status = 'overdue'
             WHERE task_id = $1
           `;
-          await pool.query(subtaskUpdateQuery, [subtask.id]);
-
+        await pool.query(subtaskUpdateQuery, [subtask.id]);
 
         // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (30 minute window)
         try {
@@ -1133,7 +1129,10 @@ class FinOpsAlertService {
   ): Promise<void> {
     try {
       // Ensure task exists to avoid FK violation
-      const taskRes = await pool.query(`SELECT id FROM finops_tasks WHERE id = $1 LIMIT 1`, [taskId]);
+      const taskRes = await pool.query(
+        `SELECT id FROM finops_tasks WHERE id = $1 LIMIT 1`,
+        [taskId],
+      );
       if (taskRes.rows.length === 0) {
         const fallbackDetails = `${details} (original_task_id:${taskId} - task record missing)`;
         await pool.query(
@@ -1143,7 +1142,9 @@ class FinOpsAlertService {
         `,
           [subtaskId, action, userName, fallbackDetails],
         );
-        console.warn(`Logged activity with NULL task_id because finops_tasks[${taskId}] not found`);
+        console.warn(
+          `Logged activity with NULL task_id because finops_tasks[${taskId}] not found`,
+        );
         return;
       }
 

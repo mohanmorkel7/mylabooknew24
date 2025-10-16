@@ -489,7 +489,10 @@ class FinOpsScheduler {
   ): Promise<void> {
     try {
       // Ensure task exists to satisfy foreign key constraint
-      const taskRes = await pool.query(`SELECT id FROM finops_tasks WHERE id = $1 LIMIT 1`, [taskId]);
+      const taskRes = await pool.query(
+        `SELECT id FROM finops_tasks WHERE id = $1 LIMIT 1`,
+        [taskId],
+      );
       if (taskRes.rows.length === 0) {
         // Task missing — insert activity without task_id to avoid FK violation and include original taskId in details
         const fallbackDetails = `${details} (original_task_id:${taskId} - task record missing)`;
@@ -500,7 +503,9 @@ class FinOpsScheduler {
         `,
           [subtaskId, action, userName, fallbackDetails],
         );
-        console.warn(`Logged activity with NULL task_id because finops_tasks[${taskId}] not found`);
+        console.warn(
+          `Logged activity with NULL task_id because finops_tasks[${taskId}] not found`,
+        );
         return;
       }
 
