@@ -558,7 +558,7 @@ router.get("/stats/summary", async (req: Request, res: Response) => {
           COUNT(*) as count,
           DATE(timestamp) as date
         FROM finops_activity_log
-        WHERE timestamp >= NOW() - INTERVAL $1 || ' days'
+        WHERE timestamp >= NOW() - ($1::int * INTERVAL '1 day')
         GROUP BY action, DATE(timestamp)
         ORDER BY date DESC, count DESC
       `;
@@ -571,7 +571,7 @@ router.get("/stats/summary", async (req: Request, res: Response) => {
           action,
           COUNT(*) as total_count
         FROM finops_activity_log
-        WHERE timestamp >= NOW() - INTERVAL $1 || ' days'
+        WHERE timestamp >= NOW() - ($1::int * INTERVAL '1 day')
         GROUP BY action
         ORDER BY total_count DESC
       `;
