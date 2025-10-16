@@ -361,7 +361,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (item.permissions) {
       return hasAnyPermission(item.permissions);
     }
-    return item.roles.includes(user.role);
+    const effectiveRole = user.role === "unknown" ? "development" : user.role;
+    return item.roles.includes(effectiveRole as UserRole);
   });
 
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
