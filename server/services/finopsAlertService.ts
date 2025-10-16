@@ -1128,19 +1128,6 @@ class FinOpsAlertService {
     details: string,
   ): Promise<void> {
     try {
-      // Ensure task exists to avoid FK violation
-      const taskRes = await pool.query(
-        `SELECT id FROM finops_tasks WHERE id = $1 LIMIT 1`,
-        [taskId],
-      );
-      if (taskRes.rows.length === 0) {
-        // Task missing — skip logging to avoid DB constraint violations
-        console.warn(
-          `Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`,
-        );
-        return;
-      }
-
       await pool.query(
         `
         INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
