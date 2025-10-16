@@ -176,7 +176,7 @@ export class DepartmentService {
 
       // Find user in our department mapping (fresh read from disk)
       const { users } = this.readUserDepartments();
-      let userMapping = users.find((u: any) => u.email === ssoUser.mail);
+      let userMapping = users.find((u: any) => String(u.email || "").toLowerCase() === String(ssoUser.mail || "").toLowerCase());
 
       if (!userMapping) {
         console.warn(`❌ User ${ssoUser.mail} not found in department mapping`);
