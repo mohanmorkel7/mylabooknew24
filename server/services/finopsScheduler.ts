@@ -495,7 +495,9 @@ class FinOpsScheduler {
       );
       if (taskRes.rows.length === 0) {
         // Task missing — skip logging to avoid DB constraint violations
-        console.warn(`Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`);
+        console.warn(
+          `Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`,
+        );
         return;
       }
 
