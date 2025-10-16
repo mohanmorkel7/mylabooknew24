@@ -481,13 +481,29 @@ class FinOpsScheduler {
    * Log activity
    */
   private async logActivity(
-    taskId: number,
+    taskId: number | null,
     subtaskId: string | null,
     action: string,
     userName: string,
     details: string,
   ): Promise<void> {
     try {
+      // Defensive: do not attempt to insert if taskId is missing or the referenced task no longer exists.
+      if (!taskId) {
+        console.warn(`Skipping activity log because taskId is missing. Action: ${action}. Details: ${details}`);
+        return;
+      }
+
+      const taskExists = await pool.query(
+        `SELECT 1 FROM finops_tasks WHERE id = $1 AND deleted_at IS NULL LIMIT 1`,
+        [taskId],
+      );
+
+      if (taskExists.rows.length === 0) {
+        console.warn(`Skipping activity log because finops_tasks[${taskId}] not found. Details: ${details}`);
+        return;
+      }
+
       await pool.query(
         `
         INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
