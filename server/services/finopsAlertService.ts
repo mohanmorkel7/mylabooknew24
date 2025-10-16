@@ -294,7 +294,7 @@ class FinOpsAlertService {
             return;
           }
         } catch (err) {
-          console.warn('Error while checking existing overdue alerts:', err);
+          console.warn("Error while checking existing overdue alerts:", err);
           // proceed to send alert to avoid missing critical notifications
         }
 
