@@ -270,14 +270,33 @@ class FinOpsAlertService {
       );
 
       // If the scheduled time has passed today, the task is overdue
-      if (now > dueTime) {
-        const minutesOverdue = Math.floor(
-          (now.getTime() - dueTime.getTime()) / (1000 * 60),
-        );
+      // Treat equality/near-equality as overdue (minutes >= 0)
+      const minutesOverdue = Math.floor(
+        (now.getTime() - dueTime.getTime()) / (1000 * 60),
+      );
 
+      if (minutesOverdue >= 0) {
         console.log(
           `Pending task overdue - Task: ${task.task_name}, Subtask: ${subtask.name}, Overdue by: ${minutesOverdue} minutes`,
         );
+
+        // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (30 minute window)
+        try {
+          const existing = await pool.query(
+            `SELECT id FROM finops_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue' AND created_at > (CURRENT_TIMESTAMP - INTERVAL '30 minutes') LIMIT 1`,
+            [task.id, subtask.id],
+          );
+
+          if (existing.rows.length > 0) {
+            console.log(
+              `Skipping overdue alert for task ${task.id} subtask ${subtask.id} — recent alert already exists`,
+            );
+            return;
+          }
+        } catch (err) {
+          console.warn('Error while checking existing overdue alerts:', err);
+          // proceed to send alert to avoid missing critical notifications
+        }
 
         // Mark as overdue and send alert
         await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
