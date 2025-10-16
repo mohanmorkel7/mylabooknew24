@@ -128,7 +128,7 @@ const navigationItems: NavigationItem[] = [
     name: "Product Management",
     href: "/product",
     icon: Grid3X3,
-    roles: ["admin", "product"],
+    roles: ["admin", "product", "switch_team"],
   },
   // Keep Proposals (not specified in ordering list)
   {
@@ -142,7 +142,7 @@ const navigationItems: NavigationItem[] = [
     name: "Support Tickets",
     href: "/tickets",
     icon: Ticket,
-    roles: ["admin", "sales", "product"],
+    roles: ["admin", "sales", "product","switch_team"],
   },
   // l) Alerts & notifications
   {

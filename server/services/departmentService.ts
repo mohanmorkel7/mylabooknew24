@@ -66,7 +66,8 @@ export class DepartmentService {
       backend: "development", // Backend department gets 'development' role (backend not allowed in constraint)
       infra: "infra",
       admin: "admin", // Admin department gets 'admin' role
-      administration: "admin", // Administration department also gets 'admin' role
+      administration: "admin",
+      switch_team: "switch_team", // Administration department also gets 'admin' role
     };
 
     return departmentRoleMap[department] || "unknown"; // Default to 'unknown' for unrecognized departments
@@ -256,6 +257,8 @@ export class DepartmentService {
 
       if (existingUser.rows.length > 0) {
         // Update existing user
+
+        console.log("Existing User");
         userId = existingUser.rows[0].id;
         await pool.query(
           `
@@ -266,7 +269,6 @@ export class DepartmentService {
             department = $3,
             azure_object_id = $4,
             job_title = $5,
-            role = $6,
             sso_provider = $8,
             updated_at = NOW()
           WHERE id = $7
@@ -279,7 +281,7 @@ export class DepartmentService {
             userMapping.department,
             userMapping.ssoId,
             userMapping.jobTitle || "Employee",
-            this.getDepartmentRole(userMapping.department), // Role based on department
+            //this.getDepartmentRole(userMapping.department), // Role based on department
             userId,
             "microsoft", // sso_provider
           ],

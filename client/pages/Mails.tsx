@@ -8,6 +8,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { textAlign } from "html2canvas/dist/types/css/property-descriptors/text-align";
 
 type GraphEmail = {
   id: string;
@@ -22,7 +23,7 @@ type GraphEmail = {
 };
 
 const TARGET_MAIL =
-  (import.meta as any).env?.VITE_MS_TARGET_MAIL || "target@email.com";
+  (import.meta as any).env?.VITE_MS_TARGET_MAIL || "upialerts@mylapay.com";
 
 const SUBJECT_FILTER = (import.meta as any).env?.VITE_MS_SUBJECT_FILTER || "";
 
@@ -190,9 +191,19 @@ export default function Mails() {
     setLoading(true);
     setError(null);
     try {
-      const url =
-        `https://graph.microsoft.com/v1.0/users/${targetUser}/messages` +
-        `?$top=25&$orderby=receivedDateTime%20desc&$select=subject,from,sender,body,bodyPreview,receivedDateTime,hasAttachments,webLink`;
+      // const url =
+      //   `https://graph.microsoft.com/v1.0/users/${targetUser}/messages` +
+      //   `?$top=25&$orderby=receivedDateTime%20desc&$select=subject,from,body,receivedDateTime`;
+
+      const url=`https://graph.microsoft.com/v1.0/users/reconops@mylapay.com/mailFolders/inbox/messages`;
+
+      // const url=`https://graph.microsoft.com/v1.0/users/mohan.m@mylapay.com/mailFolders/inbox/messages`;
+
+      //dcfb7108-ce83-442b-ba56-0e56a1c1583c
+
+      // const url=`https://graph.microsoft.com/v1.0//users/reconops@mylapay.com/mailFolders`
+
+      
 
       const res = await fetch(url, {
         headers: {
@@ -355,11 +366,11 @@ export default function Mails() {
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Mails</h1>
-        <p className="text-gray-600 mt-1">
+        <h1 className="text-3xl font-bold text-gray-900">Mails Inbox</h1>
+        {/* <p className="text-gray-600 mt-1">
           Showing latest emails for {decodeURIComponent(targetUser)} containing
           "Invoice" in the subject.
-        </p>
+        </p> */}
       </div>
 
       <Card>
@@ -397,7 +408,7 @@ export default function Mails() {
               {Object.entries(groupEmailsByDay(emails)).map(
                 ([groupLabel, groupEmails]) => (
                   <div key={groupLabel}>
-                    <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-left justify-between mb-3">
                       <h3 className="text-sm font-semibold text-gray-700">
                         {groupLabel}
                       </h3>
@@ -463,7 +474,7 @@ export default function Mails() {
                               <div className="flex items-start justify-between w-full">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start gap-3">
-                                    <div className="flex-1">
+                                    <div className="flex-1" style={{textAlign:"left"}}>
                                       <div className="text-sm font-medium text-gray-900 truncate">
                                         {m.subject || "(No subject)"}
                                       </div>

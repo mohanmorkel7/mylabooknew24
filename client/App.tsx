@@ -930,7 +930,7 @@ function AppRoutes() {
       <Route
         path="/product"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <ProductWorkflow />
             </DashboardLayout>
@@ -941,7 +941,7 @@ function AppRoutes() {
       <Route
         path="/product/workflow"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <ProductWorkflow />
             </DashboardLayout>
@@ -952,7 +952,7 @@ function AppRoutes() {
       <Route
         path="/product/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <ProductManagement />
             </DashboardLayout>
@@ -963,7 +963,7 @@ function AppRoutes() {
       <Route
         path="/product/deployment/new"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <NewDeployment />
             </DashboardLayout>
@@ -974,7 +974,7 @@ function AppRoutes() {
       <Route
         path="/product/deployment/:id"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <DeploymentDetails />
             </DashboardLayout>
@@ -985,7 +985,7 @@ function AppRoutes() {
       <Route
         path="/product/deployment/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <DeploymentEdit />
             </DashboardLayout>
@@ -996,7 +996,7 @@ function AppRoutes() {
       <Route
         path="/product/pipeline"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <PlaceholderPage
                 title="Release Pipeline"
@@ -1010,7 +1010,7 @@ function AppRoutes() {
       <Route
         path="/product/health"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <PlaceholderPage
                 title="System Health"
