@@ -19,8 +19,11 @@ export function usePermissions() {
   const hasPermission = (permission: Permission): boolean => {
     if (!user) return false;
 
+    // Normalize role: treat 'unknown' as 'development' to grant basic navigation and permissions
+    const normalizedRole = user.role === "unknown" ? "development" : user.role;
+
     // Admin role has all permissions
-    if (user.role === "admin") return true;
+    if (normalizedRole === "admin") return true;
 
     // Check department-based permissions
     if (user.permissions) {
