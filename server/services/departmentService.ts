@@ -46,7 +46,7 @@ export class DepartmentService {
   }
 
   // Map departments to appropriate user roles
-  private static getDepartmentRole(department: string): string {
+  static getDepartmentRole(department: string): string {
     // If no department provided, assign 'unknown' role for manual assignment
     if (
       !department ||
