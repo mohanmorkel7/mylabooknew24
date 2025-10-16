@@ -247,6 +247,8 @@ class FinOpsAlertService {
   private async checkSubtaskSLA(task: any, subtask: any): Promise<void> {
     const now = new Date();
 
+    console.log("subtask.status : ", subtask.status);
+
     // Only check pending tasks for overdue status
     if (subtask.status !== "pending") {
       return;
@@ -279,6 +281,68 @@ class FinOpsAlertService {
         console.log(
           `Pending task overdue - Task: ${task.task_name}, Subtask: ${subtask.name}, Overdue by: ${minutesOverdue} minutes`,
         );
+
+
+        var task_id = task.id;
+        var sub_task_id = subtask.id;
+
+
+        // Resolve user_ids from reporting & escalation managers
+          const taskRow = await pool.query(
+            `SELECT reporting_managers, escalation_managers, assigned_to FROM finops_tasks WHERE id = $1`,
+            [task_id],
+          );
+          const managers = taskRow.rows[0] || {};
+          const allNames = Array.from(
+            new Set([
+              ...this.parseManagers(managers.reporting_managers),
+              ...this.parseManagers(managers.escalation_managers),
+              ...this.parseManagers(managers.assigned_to),
+            ]),
+          );
+          const allUserIds = await this.getUserIdsFromNames(allNames);
+
+          // Immediate: only Assigned + Reporting
+          const immediateNames = Array.from(
+            new Set([
+              ...this.parseManagers(managers.assigned_to),
+              ...this.parseManagers(managers.reporting_managers),
+            ]),
+          );
+          const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
+
+          const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
+
+          console.log("Direct-call payload (service) Pending", {
+            task_id,
+            sub_task_id,
+            title,
+            manager_names: allNames,
+            user_ids: allUserIds,
+            immediate_user_ids: allUserIds,
+          });
+
+          const response = await fetch(
+            "https://pulsealerts.mylapay.com/direct-call",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                receiver: "CRM_Switch",
+                title,
+                user_ids: immediateUserIds,
+              }),
+            },
+          );
+
+
+          const subtaskUpdateQuery = `
+            UPDATE finops_subtasks
+            SET status = 'overdue'
+            WHERE task_id = $1
+          `;
+          await pool.query(subtaskUpdateQuery, [subtask.id]);
+
 
         // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (30 minute window)
         try {
@@ -622,7 +686,7 @@ class FinOpsAlertService {
       );
       const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
 
-      console.log("Direct-call payload (service)", {
+      console.log("Direct-call payload (service) sendReplicaDownAlert", {
         taskId,
         subtaskId,
         title,
@@ -631,18 +695,18 @@ class FinOpsAlertService {
         immediate_user_ids: immediateUserIds,
       });
 
-      const response = await fetch(
-        "https://pulsealerts.mylapay.com/direct-call",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            receiver: "CRM_Switch",
-            title,
-            user_ids: immediateUserIds,
-          }),
-        },
-      );
+      // const response = await fetch(
+      //   "https://pulsealerts.mylapay.com/direct-call",
+      //   {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({
+      //       receiver: "CRM_Switch",
+      //       title,
+      //       user_ids: immediateUserIds,
+      //     }),
+      //   },
+      // );
 
       // External call delegated to pulse-sync worker; finops_external_alerts already contains reservation row
       // No direct network call here to avoid duplicate/parallel requests and to centralize retries
