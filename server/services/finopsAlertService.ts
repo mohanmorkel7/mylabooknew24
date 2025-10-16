@@ -1056,18 +1056,13 @@ class FinOpsAlertService {
       );
 
       // Create a special notification type that requires overdue reason
-      await pool.query(
-        `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-      `,
-        [
-          "overdue_reason_required",
-          task.id,
-          subtask.id,
-          "System",
-          `OVERDUE REASON REQUIRED: ${task.task_name} - ${subtask.name} is overdue by ${overdueMinutes} minutes. Immediate explanation required.`,
-        ],
+      // Use centralized logActivity which performs defensive checks for missing tasks
+      await this.logActivity(
+        task.id,
+        subtask.id,
+        "overdue_reason_required",
+        "System",
+        `OVERDUE REASON REQUIRED: ${task.task_name} - ${subtask.name} is overdue by ${overdueMinutes} minutes. Immediate explanation required.`,
       );
 
       // Also create an entry in a dedicated overdue tracking table
@@ -1110,7 +1105,7 @@ class FinOpsAlertService {
       );
 
       console.log(
-        `✅ Overdue reason request created for ${task.task_name} - ${subtask.name}`,
+        `��� Overdue reason request created for ${task.task_name} - ${subtask.name}`,
       );
     } catch (error) {
       console.error("Error creating overdue reason request:", error);
