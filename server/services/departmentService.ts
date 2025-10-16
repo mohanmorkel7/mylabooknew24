@@ -186,7 +186,38 @@ export class DepartmentService {
             `Available users in mapping: ${allUsers.map((u: any) => u.email).join(", ")}`,
           );
         } catch {}
-        return null;
+
+        // Fall back to checking the database for existing user info
+        try {
+          const dbUserInfo = await this.getUserDepartmentByEmail(ssoUser.mail);
+          if (dbUserInfo) {
+            console.log(`ℹ️ Found user in database for ${ssoUser.mail}, using DB info`);
+            // Build a minimal userMapping from DB info for consistent processing below
+            const fallbackMapping: any = {
+              email: dbUserInfo.email,
+              givenName: undefined,
+              surname: undefined,
+              displayName: undefined,
+              department: dbUserInfo.department,
+              ssoId: dbUserInfo.ssoId,
+              jobTitle: dbUserInfo.jobTitle,
+            };
+
+            console.log(`✅ Using fallback mapping for ${ssoUser.mail}:`, {
+              department: fallbackMapping.department,
+              role: this.getDepartmentRole(fallbackMapping.department),
+            });
+
+            // assign to userMapping variable so rest of flow continues
+            (userMapping as any) = fallbackMapping;
+          } else {
+            // Nothing to do
+            return null;
+          }
+        } catch (err) {
+          console.error("Error while falling back to DB lookup for SSO user:", err);
+          return null;
+        }
       }
 
       console.log(`✅ Found user mapping for ${ssoUser.mail}:`, {
