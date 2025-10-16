@@ -209,7 +209,7 @@ export class DepartmentService {
             });
 
             // assign to userMapping variable so rest of flow continues
-            (userMapping as any) = fallbackMapping;
+            userMapping = fallbackMapping as any;
           } else {
             // Nothing to do
             return null;
