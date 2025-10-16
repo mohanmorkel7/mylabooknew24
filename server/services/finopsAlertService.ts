@@ -283,7 +283,7 @@ class FinOpsAlertService {
         // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (30 minute window)
         try {
           const existing = await pool.query(
-            `SELECT id FROM finops_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue' AND created_at > (CURRENT_TIMESTAMP - INTERVAL '30 minutes') LIMIT 1`,
+            `SELECT id FROM finops_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue' AND created_at > (CURRENT_TIMESTAMP - INTERVAL '15 minutes') LIMIT 1`,
             [task.id, subtask.id],
           );
 
@@ -501,7 +501,7 @@ class FinOpsAlertService {
         `
         SELECT * FROM finops_alerts 
         WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue'
-        AND created_at > (CURRENT_TIMESTAMP - INTERVAL '30 minutes')
+        AND created_at > (CURRENT_TIMESTAMP - INTERVAL '15 minutes')
       `,
         [task.id, subtask.id],
       );
