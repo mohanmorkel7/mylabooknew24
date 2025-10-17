@@ -1105,7 +1105,7 @@ export class ApiClient {
 
       const prodPath = date
         ? `/finops-production/tasks?date=${encodeURIComponent(date)}${userNameParam}`
-        : `/finops-production/tasks?user_name=${encodeURIComponent("$USER_PLACEHOLDER")}`.replace("$USER_PLACEHOLDER", userNameParam ? decodeURIComponent(userNameParam.replace("&user_name=", "")) : "");
+        : `/finops-production/tasks${userNameParam ? `?${userNameParam.slice(1)}` : ""}`;
       // Try production endpoint first
       const result = await this.requestWithRetry(prodPath, {}, 3);
 
