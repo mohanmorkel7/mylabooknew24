@@ -323,7 +323,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
           const mgrRes = await pool.query(mgrQuery, [normalizedUser]);
           isManager = mgrRes.rows.length > 0;
         } catch (e) {
-          console.warn("Failed to evaluate manager status:", (e as Error).message);
+          console.warn(
+            "Failed to evaluate manager status:",
+            (e as Error).message,
+          );
         }
       }
 
@@ -359,9 +362,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ORDER BY t.created_at DESC
         `;
 
-        result = normalizedUser && !isManager
-          ? await pool.query(trackerQuery, [dateParam, normalizedUser])
-          : await pool.query(trackerQuery, [dateParam]);
+        result =
+          normalizedUser && !isManager
+            ? await pool.query(trackerQuery, [dateParam, normalizedUser])
+            : await pool.query(trackerQuery, [dateParam]);
       } else {
         // Current view: load today's subtasks from finops_tracker (IST date)
         const trackerTodayQuery = `
@@ -401,9 +405,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ORDER BY t.created_at DESC
         `;
 
-        result = normalizedUser && !isManager
-          ? await pool.query(trackerTodayQuery, [normalizedUser])
-          : await pool.query(trackerTodayQuery);
+        result =
+          normalizedUser && !isManager
+            ? await pool.query(trackerTodayQuery, [normalizedUser])
+            : await pool.query(trackerTodayQuery);
       }
 
       const tasks = result.rows.map((row) => {
