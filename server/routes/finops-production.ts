@@ -198,6 +198,34 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     const dateParam = (req.query.date as string) || null;
 
+    // Server-side user filter support: normalized caller name and manager detection
+    const userNameRaw = (req.query.user_name as string) || null;
+    const normalizedUser = userNameRaw ? userNameRaw.trim().toLowerCase() : null;
+    let callerIsManager = false;
+    if (normalizedUser) {
+      try {
+        const mg = await pool.query(
+          `SELECT 1 FROM finops_tasks t WHERE t.deleted_at IS NULL AND (
+              EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
+              OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
+            ) LIMIT 1`,
+          [normalizedUser],
+        );
+        callerIsManager = mg.rows.length > 0;
+      } catch (e) {
+        console.warn('Manager detection failed:', (e as Error).message);
+      }
+    }
+
+    // Build filter clauses used inside SQL templates (different param indices)
+    const filterDateClause = normalizedUser && !callerIsManager
+      ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $2 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2))"
+      : "";
+
+    const filterTodayClause = normalizedUser && !callerIsManager
+      ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $1 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1))"
+      : "";
+
     let result;
     if (dateParam) {
       // Historical view: Prefer finops_tracker for requested date, but fall back to finops_subtasks by scheduled_date when tracker rows are missing
