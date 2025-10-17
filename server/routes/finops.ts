@@ -348,7 +348,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ORDER BY t.created_at DESC
         `;
 
-        result = userName && !isManager ? await pool.query(trackerQuery, [dateParam, userName]) : await pool.query(trackerQuery, [dateParam]);
+        result =
+          userName && !isManager
+            ? await pool.query(trackerQuery, [dateParam, userName])
+            : await pool.query(trackerQuery, [dateParam]);
       } else {
         // Current view: load today's subtasks from finops_tracker (IST date)
         const trackerTodayQuery = `
@@ -388,7 +391,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ORDER BY t.created_at DESC
         `;
 
-        result = userName && !isManager ? await pool.query(trackerTodayQuery, [userName]) : await pool.query(trackerTodayQuery);
+        result =
+          userName && !isManager
+            ? await pool.query(trackerTodayQuery, [userName])
+            : await pool.query(trackerTodayQuery);
       }
 
       const tasks = result.rows.map((row) => {
@@ -1252,7 +1258,6 @@ async function logActivity(
       //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details, ip_address, user_agent)
       //   VALUES ($1, $2, $3, $4, $5, $6, $7)
       // `;
-
       // await pool.query(query, [
       //   taskId,
       //   subtaskId,
