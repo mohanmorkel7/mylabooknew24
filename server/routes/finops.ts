@@ -317,7 +317,6 @@ router.get("/tasks", async (req: Request, res: Response) => {
               OR EXISTS (
                 SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers, '[]'::jsonb)) AS m WHERE LOWER(TRIM(m)) = $1
               )
-              OR LOWER(TRIM(COALESCE(t.assigned_to, ''))) = $1
             ) LIMIT 1
           `;
           const mgrRes = await pool.query(mgrQuery, [normalizedUser]);
@@ -357,7 +356,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
           WHERE t.deleted_at IS NULL
-          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $2 OR LOWER(COALESCE(t.assigned_to,'')) LIKE '%' || $2 || '%')" : ""}
+          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
@@ -400,7 +399,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE t.deleted_at IS NULL
-          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $1 OR LOWER(COALESCE(t.assigned_to,'')) LIKE '%' || $1 || '%')" : ""}
+          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
