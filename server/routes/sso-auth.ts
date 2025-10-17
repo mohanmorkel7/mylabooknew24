@@ -21,7 +21,7 @@ router.post("/sso/login", async (req: Request, res: Response) => {
         error: "Invalid SSO user data",
       });
     }
-    console.log(`SSO login Details attempt for:`,JSON.stringify(ssoUser));
+    console.log(`SSO login Details attempt for:`, JSON.stringify(ssoUser));
     console.log(`SSO login attempt for: ${ssoUser.mail}`);
 
     // Create or update user based on SSO data
@@ -44,7 +44,10 @@ router.post("/sso/login", async (req: Request, res: Response) => {
       success: true,
       user: {
         id: userDepartmentInfo.userId,
-        name: userDepartmentInfo.displayName || ssoUser.displayName || userDepartmentInfo.email,
+        name:
+          userDepartmentInfo.displayName ||
+          ssoUser.displayName ||
+          userDepartmentInfo.email,
         email: userDepartmentInfo.email,
         role: DepartmentService.getDepartmentRole(
           userDepartmentInfo.department,

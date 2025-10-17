@@ -23,9 +23,9 @@ export interface UserDepartmentInfo {
   permissions: string[];
   jobTitle?: string;
   ssoId?: string;
-  surname?:string;
+  surname?: string;
   givenName?: string;
-  displayName?:string;
+  displayName?: string;
 }
 
 export class DepartmentService {
@@ -112,9 +112,9 @@ export class DepartmentService {
         userId: row.user_id,
         email: row.email,
         department: row.department,
-        displayName:row.displayName,
-        givenName:row.givenName,
-        surname:row.surname,
+        displayName: row.displayName,
+        givenName: row.givenName,
+        surname: row.surname,
         permissions: [
           ...new Set([...deptPermissions, ...additionalPermissions]),
         ],
@@ -209,7 +209,8 @@ export class DepartmentService {
           const dbUserInfo = await this.getUserDepartmentByEmail(ssoUser.mail);
           if (dbUserInfo) {
             console.log(
-              `ℹ️ Found user in database for ${ssoUser.mail}, using DB info`,JSON.stringify(dbUserInfo)
+              `ℹ️ Found user in database for ${ssoUser.mail}, using DB info`,
+              JSON.stringify(dbUserInfo),
             );
             // Build a minimal userMapping from DB info for consistent processing below
             const fallbackMapping: any = {
@@ -283,16 +284,25 @@ export class DepartmentService {
         const newFirstName =
           userMapping.givenName && String(userMapping.givenName).trim()
             ? userMapping.givenName
-            : existingRow.first_name || (userMapping.displayName ? String(userMapping.displayName).split(" ")[0] : "Unknown");
+            : existingRow.first_name ||
+              (userMapping.displayName
+                ? String(userMapping.displayName).split(" ")[0]
+                : "Unknown");
 
         const newLastName =
           userMapping.surname && String(userMapping.surname).trim()
             ? userMapping.surname
-            : existingRow.last_name || (userMapping.displayName ? String(userMapping.displayName).split(" ").slice(1).join(" ") : "User");
+            : existingRow.last_name ||
+              (userMapping.displayName
+                ? String(userMapping.displayName).split(" ").slice(1).join(" ")
+                : "User");
 
-        const newDepartment = userMapping.department || existingRow.department || null;
-        const newAzureId = userMapping.ssoId || existingRow.azure_object_id || null;
-        const newJobTitle = userMapping.jobTitle || existingRow.job_title || "Employee";
+        const newDepartment =
+          userMapping.department || existingRow.department || null;
+        const newAzureId =
+          userMapping.ssoId || existingRow.azure_object_id || null;
+        const newJobTitle =
+          userMapping.jobTitle || existingRow.job_title || "Employee";
         const newProvider = existingRow.sso_provider || "microsoft";
 
         await pool.query(
