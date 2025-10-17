@@ -229,7 +229,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
         : "";
 
     const filterTodayClause =
-      normalizedUser && !callerIsManager
+      normalizedUser && !callerIsManager && !callerIsAdmin
         ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)"
         : "";
 
