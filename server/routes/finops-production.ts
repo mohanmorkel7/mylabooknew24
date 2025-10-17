@@ -207,7 +207,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     const callerRole = (req.query.user_role as string) || (req.query.role as string) || null;
     const callerIsAdmin = callerRole === "admin";
     let callerIsManager = false;
-    if (normalizedUser) {
+    if (normalizedUser && !callerIsAdmin) {
       try {
         const mg = await pool.query(
           `SELECT 1 FROM finops_tasks t WHERE t.deleted_at IS NULL AND (
