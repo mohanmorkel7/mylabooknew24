@@ -454,20 +454,20 @@ router.post("/", async (req: Request, res: Response) => {
         });
       }
 
-      const query = `
-        INSERT INTO finops_activity_log (
-          action, task_id, subtask_id, user_name, details, timestamp
-        ) VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      // const query = `
+      //   INSERT INTO finops_activity_log (
+      //     action, task_id, subtask_id, user_name, details, timestamp
+      //   ) VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-      const result = await pool.query(query, [
-        action,
-        entity_type === "task" ? entity_id : null, // task_id
-        entity_type === "subtask" ? entity_id : null, // subtask_id
-        `User ${user_id}`, // user_name
-        details || `${action} action performed`,
-      ]);
+      // const result = await pool.query(query, [
+      //   action,
+      //   entity_type === "task" ? entity_id : null, // task_id
+      //   entity_type === "subtask" ? entity_id : null, // subtask_id
+      //   `User ${user_id}`, // user_name
+      //   details || `${action} action performed`,
+      // ]);
 
       res.status(201).json(result.rows[0]);
     } else {

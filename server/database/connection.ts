@@ -30,7 +30,7 @@ const originalQuery = (pool as any).query.bind(pool);
 (pool as any).query = async function (text: any, params?: any, callback?: any) {
   try {
     const sql = typeof text === "string" ? text : String(text?.text || "");
-    if (sql.toLowerCase().includes("insert into finops_activity_log")) {
+    if (sql.toLowerCase().includes("finops_activity_log")) {
       console.warn(
         "Activity logging disabled: skipping query:",
         sql.replace(/\s+/g, " ").trim(),

@@ -58,8 +58,7 @@ const navigationItems: NavigationItem[] = [
     name: "Overview",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads", "vc", "product"],
+    roles: ["admin", "sales", "product", "finops"]
   },
   // b) Templates (was Admin Panel)
   {
@@ -121,7 +120,7 @@ const navigationItems: NavigationItem[] = [
     name: "FinOps",
     href: "/finops",
     icon: DollarSign,
-    roles: ["admin", "finance"],
+    roles: ["admin", "finance", "finops"],
   },
   // j) Product Management
   {
@@ -156,8 +155,7 @@ const navigationItems: NavigationItem[] = [
     name: "Mails",
     href: "/mails",
     icon: Mail,
-    roles: ["admin"],
-    permissions: ["admin"],
+    roles: ["admin","finance", "finops"]
   },
   // n) Settings
   {

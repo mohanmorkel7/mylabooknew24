@@ -508,13 +508,13 @@ class FinOpsScheduler {
         return;
       }
 
-      await pool.query(
-        `
-        INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-        VALUES ($1, $2, $3, $4, $5)
-      `,
-        [taskId, subtaskId, action, userName, details],
-      );
+      // await pool.query(
+      //   `
+      //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+      //   VALUES ($1, $2, $3, $4, $5)
+      // `,
+      //   [taskId, subtaskId, action, userName, details],
+      // );
     } catch (error) {
       console.error("Error logging activity:", error);
     }

@@ -578,6 +578,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
       task_name,
       description,
       assigned_to,
+      client_id,
+      client_name,
       reporting_managers,
       escalation_managers,
       effective_from,
@@ -603,8 +605,10 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
             effective_from = $6,
             duration = $7,
             is_active = $8,
+            client_id=$9,
+            client_name=$10,
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $9
+          WHERE id = $11
         `;
 
         await client.query(taskQuery, [
@@ -616,6 +620,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
           effective_from,
           duration,
           is_active,
+          client_id,
+          client_name,
           taskId,
         ]);
 
@@ -1225,20 +1231,20 @@ async function logActivity(
 ) {
   try {
     if (await isDatabaseAvailable()) {
-      const query = `
-        INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details, ip_address, user_agent)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `;
+      // const query = `
+      //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details, ip_address, user_agent)
+      //   VALUES ($1, $2, $3, $4, $5, $6, $7)
+      // `;
 
-      await pool.query(query, [
-        taskId,
-        subtaskId,
-        action,
-        userName,
-        details,
-        "system",
-        "finops-api",
-      ]);
+      // await pool.query(query, [
+      //   taskId,
+      //   subtaskId,
+      //   action,
+      //   userName,
+      //   details,
+      //   "system",
+      //   "finops-api",
+      // ]);
     } else {
       // Mock logging
       mockActivityLog.push({
@@ -1271,15 +1277,15 @@ async function logUserActivity(userName: string, taskId: number) {
         [userName, today],
       );
 
-      if (existingActivity.rows[0].count === "0") {
-        await pool.query(
-          `
-          INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-          VALUES ($1, NULL, 'daily_login', $2, 'User first activity of the day')
-        `,
-          [taskId, userName],
-        );
-      }
+      // if (existingActivity.rows[0].count === "0") {
+      //   await pool.query(
+      //     `
+      //     INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+      //     VALUES ($1, NULL, 'daily_login', $2, 'User first activity of the day')
+      //   `,
+      //     [taskId, userName],
+      //   );
+      // }
     }
   } catch (error) {
     console.error("Error logging user activity:", error);
