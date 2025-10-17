@@ -44,7 +44,7 @@ router.post("/sso/login", async (req: Request, res: Response) => {
       success: true,
       user: {
         id: userDepartmentInfo.userId,
-        name: ssoUser.displayName,
+        name: userDepartmentInfo.displayName || ssoUser.displayName || userDepartmentInfo.email,
         email: userDepartmentInfo.email,
         role: DepartmentService.getDepartmentRole(
           userDepartmentInfo.department,
