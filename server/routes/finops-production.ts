@@ -222,12 +222,12 @@ router.get("/tasks", async (req: Request, res: Response) => {
     // Build filter clauses used inside SQL templates (different param indices)
     const filterDateClause =
       normalizedUser && !callerIsManager
-        ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $2 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2))"
+        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)"
         : "";
 
     const filterTodayClause =
       normalizedUser && !callerIsManager
-        ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $1 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1))"
+        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)"
         : "";
 
     let result;
