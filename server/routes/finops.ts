@@ -294,7 +294,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     );
 
     if (await isDatabaseAvailable()) {
-      console.log("✅ Database is available, fetching real data");
+      console.log("��� Database is available, fetching real data");
 
       // Optional date filter (YYYY-MM-DD) to view historical daily statuses
       const dateParam = (req.query.date as string) || null;
@@ -302,8 +302,23 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
       let result;
 
+      const userName = (req.query.user_name as string) || null;
+      let isManager = false;
+      if (userName) {
+        try {
+          const mgrRes = await pool.query(
+            `SELECT 1 FROM finops_tasks WHERE reporting_managers::text ILIKE $1 OR escalation_managers::text ILIKE $1 LIMIT 1`,
+            [`%${userName}%`],
+          );
+          isManager = mgrRes.rows.length > 0;
+        } catch (e) {
+          console.warn("Failed to evaluate manager status:", e.message);
+        }
+      }
+
       if (dateParam) {
         // When a specific date is requested, use finops_tracker to show historical statuses
+        // If user is not a manager and userName provided, restrict to tasks assigned to this user
         const trackerQuery = `
           SELECT
             t.*,
@@ -328,11 +343,12 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
           WHERE t.deleted_at IS NULL
+          ${userName && !isManager ? "AND (LOWER(t.assigned_to) = LOWER($2) OR t.assigned_to ILIKE '%' || $2 || '%')" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
 
-        result = await pool.query(trackerQuery, [dateParam]);
+        result = userName && !isManager ? await pool.query(trackerQuery, [dateParam, userName]) : await pool.query(trackerQuery, [dateParam]);
       } else {
         // Current view: load today's subtasks from finops_tracker (IST date)
         const trackerTodayQuery = `
@@ -367,11 +383,12 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE t.deleted_at IS NULL
+          ${userName && !isManager ? "AND (LOWER(t.assigned_to) = LOWER($1) OR t.assigned_to ILIKE '%' || $1 || '%')" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
 
-        result = await pool.query(trackerTodayQuery);
+        result = userName && !isManager ? await pool.query(trackerTodayQuery, [userName]) : await pool.query(trackerTodayQuery);
       }
 
       const tasks = result.rows.map((row) => {
