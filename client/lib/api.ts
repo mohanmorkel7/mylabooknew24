@@ -1123,8 +1123,8 @@ export class ApiClient {
         );
       try {
         const fallbackPath = date
-          ? `/finops/tasks?date=${encodeURIComponent(date)}`
-          : "/finops/tasks";
+          ? `/finops/tasks?date=${encodeURIComponent(date)}${userNameParam}`
+          : `/finops/tasks${userNameParam ? `?${userNameParam.slice(1)}` : ""}`;
         const fallback = await this.requestWithRetry(fallbackPath, {}, 2);
         if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
           console.log(
