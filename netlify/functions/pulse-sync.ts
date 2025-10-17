@@ -142,33 +142,33 @@ export const handler: Handler = async () => {
         .map((r) => r.azure_object_id)
         .filter((id) => !!id);
 
-      try {
-        const resp = await fetch(
-          "https://pulsealerts.mylapay.com/direct-call",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              receiver: "CRM_Switch",
-              title: alertRow.title,
-              user_ids,
-            }),
-          },
-        );
-        if (!resp.ok) {
-          console.warn("[pulse-sync] Pulse call failed:", resp.status);
-          continue;
-        }
+      // try {
+      //   const resp = await fetch(
+      //     "https://pulsealerts.mylapay.com/direct-call",
+      //     {
+      //       method: "POST",
+      //       headers: { "Content-Type": "application/json" },
+      //       body: JSON.stringify({
+      //         receiver: "CRM_Switch",
+      //         title: alertRow.title,
+      //         user_ids,
+      //       }),
+      //     },
+      //   );
+      //   if (!resp.ok) {
+      //     console.warn("[pulse-sync] Pulse call failed:", resp.status);
+      //     continue;
+      //   }
 
-        // Update next_call_at to avoid immediate resend
-        await pool.query(
-          `UPDATE finops_external_alerts SET next_call_at = NOW() + INTERVAL '15 minutes' WHERE id = $1`,
-          [alertRow.id],
-        );
-        sent++;
-      } catch (err) {
-        console.warn("[pulse-sync] Pulse call error:", (err as Error).message);
-      }
+      //   // Update next_call_at to avoid immediate resend
+      //   await pool.query(
+      //     `UPDATE finops_external_alerts SET next_call_at = NOW() + INTERVAL '15 minutes' WHERE id = $1`,
+      //     [alertRow.id],
+      //   );
+      //   sent++;
+      // } catch (err) {
+      //   console.warn("[pulse-sync] Pulse call error:", (err as Error).message);
+      // }
     }
 
     const finishedAt = new Date().toISOString();

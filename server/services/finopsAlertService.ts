@@ -305,6 +305,7 @@ class FinOpsAlertService {
           new Set([
             ...this.parseManagers(managers.assigned_to),
             ...this.parseManagers(managers.reporting_managers),
+            ...this.parseManagers(managers.escalation_managers),
           ]),
         );
         const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
@@ -317,7 +318,7 @@ class FinOpsAlertService {
           title,
           manager_names: allNames,
           user_ids: allUserIds,
-          immediate_user_ids: allUserIds,
+          immediate_user_ids: immediateUserIds,
         });
 
         const response = await fetch(
@@ -336,7 +337,7 @@ class FinOpsAlertService {
         const subtaskUpdateQuery = `
             UPDATE finops_subtasks
             SET status = 'overdue'
-            WHERE task_id = $1
+            WHERE id = $1
           `;
         await pool.query(subtaskUpdateQuery, [subtask.id]);
 
@@ -1143,13 +1144,13 @@ class FinOpsAlertService {
         return;
       }
 
-      await pool.query(
-        `
-        INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-        VALUES ($1, $2, $3, $4, $5)
-      `,
-        [taskId, subtaskId, action, userName, details],
-      );
+      // await pool.query(
+      //   `
+      //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+      //   VALUES ($1, $2, $3, $4, $5)
+      // `,
+      //   [taskId, subtaskId, action, userName, details],
+      // );
     } catch (error) {
       console.error("Error logging activity:", error);
     }

@@ -159,22 +159,22 @@ async function sendReplicaDownAlertOnce(
         new Set([...assigned_to_parsed, ...reporting_managers_parsed]),
       );
       const immediateUserIds = await getUserIdsFromNames(immediateNames);
-      if (immediateUserIds.length) {
-        fetch("https://pulsealerts.mylapay.com/direct-call", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            receiver: "CRM_Switch",
-            title,
-            user_ids: immediateUserIds,
-          }),
-        }).catch((err) =>
-          console.warn(
-            "[finops-production] Immediate direct-call error:",
-            (err as Error).message,
-          ),
-        );
-      }
+      // if (immediateUserIds.length) {
+      //   fetch("https://pulsealerts.mylapay.com/direct-call", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({
+      //       receiver: "CRM_Switch",
+      //       title,
+      //       user_ids: immediateUserIds,
+      //     }),
+      //   }).catch((err) =>
+      //     console.warn(
+      //       "[finops-production] Immediate direct-call error:",
+      //       (err as Error).message,
+      //     ),
+      //   );
+      // }
     } catch (err) {
       console.warn(
         "[finops-production] Immediate direct-call user resolution failed:",
@@ -436,18 +436,18 @@ router.post("/tasks", async (req: Request, res: Response) => {
       await client.query("COMMIT");
 
       // Log activity
-      await client.query(
-        `
-        INSERT INTO finops_activity_log (task_id, action, user_name, details)
-        VALUES ($1, $2, $3, $4)
-      `,
-        [
-          task.id,
-          "created",
-          assigned_to,
-          `Task "${task_name}" created with ${subtaskResults.length} subtasks`,
-        ],
-      );
+      // await client.query(
+      //   `
+      //   INSERT INTO finops_activity_log (task_id, action, user_name, details)
+      //   VALUES ($1, $2, $3, $4)
+      // `,
+      //   [
+      //     task.id,
+      //     "created",
+      //     assigned_to,
+      //     `Task "${task_name}" created with ${subtaskResults.length} subtasks`,
+      //   ],
+      // );
 
       const response = {
         ...task,
@@ -635,16 +635,16 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       if (delay_reason && status === "overdue")
         activityDetails += `. Delay reason: ${delay_reason}`;
 
-      await client.query(
-        `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details) VALUES ($1, $2, $3, $4, $5)`,
-        [
-          updated.task_id,
-          subtaskId,
-          "updated",
-          user_name || "System",
-          activityDetails,
-        ],
-      );
+      // await client.query(
+      //   `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details) VALUES ($1, $2, $3, $4, $5)`,
+      //   [
+      //     updated.task_id,
+      //     subtaskId,
+      //     "updated",
+      //     user_name || "System",
+      //     activityDetails,
+      //   ],
+      // );
 
       // Trigger alerts if needed
       if (status === "overdue") {
@@ -777,16 +777,16 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       [row.task_id, subtaskId, approver_name, note || null],
     );
 
-    await pool.query(
-      `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-       VALUES ($1, $2, 'approved', $3, $4)`,
-      [
-        row.task_id,
-        subtaskId,
-        approver_name,
-        note ? `Approved: ${note}` : "Approved",
-      ],
-    );
+    // await pool.query(
+    //   `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+    //    VALUES ($1, $2, 'approved', $3, $4)`,
+    //   [
+    //     row.task_id,
+    //     subtaskId,
+    //     approver_name,
+    //     note ? `Approved: ${note}` : "Approved",
+    //   ],
+    // );
 
     res.json({ ok: true, approved: true });
   } catch (e: any) {
@@ -1202,19 +1202,19 @@ router.post("/tasks/overdue-reason", async (req: Request, res: Response) => {
         ]);
 
         // Log activity
-        await client.query(
-          `
-          INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-          [
-            task_id,
-            subtask_id,
-            "overdue_reason_provided",
-            "User",
-            `Overdue reason provided: ${reason}`,
-          ],
-        );
+        // await client.query(
+        //   `
+        //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+        //   VALUES ($1, $2, $3, $4, $5)
+        // `,
+        //   [
+        //     task_id,
+        //     subtask_id,
+        //     "overdue_reason_provided",
+        //     "User",
+        //     `Overdue reason provided: ${reason}`,
+        //   ],
+        // );
 
         await client.query("COMMIT");
 

@@ -269,9 +269,9 @@ export class DepartmentService {
             department = $3,
             azure_object_id = $4,
             job_title = $5,
-            sso_provider = $8,
+            sso_provider = $7,
             updated_at = NOW()
-          WHERE id = $7
+          WHERE id = $6
         `,
           [
             userMapping.givenName || userMapping.displayName || "Unknown",
