@@ -359,7 +359,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
           WHERE t.deleted_at IS NULL
-          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)" : ""}
+          ${normalizedUser && !isManager && !callerIsAdmin ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
