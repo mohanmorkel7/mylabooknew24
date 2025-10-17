@@ -364,7 +364,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
       `;
 
       result =
-        normalizedUser && !callerIsManager
+        normalizedUser && !callerIsManager && !callerIsAdmin
           ? await pool.query(trackerTodayQuery, [normalizedUser])
           : await pool.query(trackerTodayQuery);
     }
