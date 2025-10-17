@@ -303,16 +303,27 @@ router.get("/tasks", async (req: Request, res: Response) => {
       let result;
 
       const userName = (req.query.user_name as string) || null;
+      const normalizedUser = userName ? userName.trim().toLowerCase() : null;
       let isManager = false;
-      if (userName) {
+      if (normalizedUser) {
         try {
-          const mgrRes = await pool.query(
-            `SELECT 1 FROM finops_tasks WHERE reporting_managers::text ILIKE $1 OR escalation_managers::text ILIKE $1 LIMIT 1`,
-            [`%${userName}%`],
-          );
+          // Robust manager detection: check JSONB arrays and assigned_to normalized value
+          const mgrQuery = `
+            SELECT 1 FROM finops_tasks t
+            WHERE t.deleted_at IS NULL AND (
+              EXISTS (
+                SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers, '[]'::jsonb)) AS m WHERE LOWER(TRIM(m)) = $1
+              )
+              OR EXISTS (
+                SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers, '[]'::jsonb)) AS m WHERE LOWER(TRIM(m)) = $1
+              )
+              OR LOWER(TRIM(COALESCE(t.assigned_to, ''))) = $1
+            ) LIMIT 1
+          `;
+          const mgrRes = await pool.query(mgrQuery, [normalizedUser]);
           isManager = mgrRes.rows.length > 0;
         } catch (e) {
-          console.warn("Failed to evaluate manager status:", e.message);
+          console.warn("Failed to evaluate manager status:", (e as Error).message);
         }
       }
 
@@ -343,15 +354,14 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
           WHERE t.deleted_at IS NULL
-          ${userName && !isManager ? "AND (LOWER(t.assigned_to) = LOWER($2) OR t.assigned_to ILIKE '%' || $2 || '%')" : ""}
+          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $2 OR LOWER(COALESCE(t.assigned_to,'')) LIKE '%' || $2 || '%')" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
 
-        result =
-          userName && !isManager
-            ? await pool.query(trackerQuery, [dateParam, userName])
-            : await pool.query(trackerQuery, [dateParam]);
+        result = normalizedUser && !isManager
+          ? await pool.query(trackerQuery, [dateParam, normalizedUser])
+          : await pool.query(trackerQuery, [dateParam]);
       } else {
         // Current view: load today's subtasks from finops_tracker (IST date)
         const trackerTodayQuery = `
@@ -386,15 +396,14 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE t.deleted_at IS NULL
-          ${userName && !isManager ? "AND (LOWER(t.assigned_to) = LOWER($1) OR t.assigned_to ILIKE '%' || $1 || '%')" : ""}
+          ${normalizedUser && !isManager ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $1 OR LOWER(COALESCE(t.assigned_to,'')) LIKE '%' || $1 || '%')" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
 
-        result =
-          userName && !isManager
-            ? await pool.query(trackerTodayQuery, [userName])
-            : await pool.query(trackerTodayQuery);
+        result = normalizedUser && !isManager
+          ? await pool.query(trackerTodayQuery, [normalizedUser])
+          : await pool.query(trackerTodayQuery);
       }
 
       const tasks = result.rows.map((row) => {
