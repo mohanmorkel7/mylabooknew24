@@ -315,9 +315,13 @@ router.get("/tasks", async (req: Request, res: Response) => {
             `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
             [normalizedUser],
           );
-          if (ur.rows.length && ur.rows[0].role === 'admin') callerIsAdmin = true;
+          if (ur.rows.length && ur.rows[0].role === "admin")
+            callerIsAdmin = true;
         } catch (e) {
-          console.warn('Failed to resolve caller role from users table:', (e as Error).message);
+          console.warn(
+            "Failed to resolve caller role from users table:",
+            (e as Error).message,
+          );
         }
       }
       let isManager = false;
