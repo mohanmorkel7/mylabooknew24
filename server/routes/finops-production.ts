@@ -306,10 +306,13 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ) AS s
         ) AS sub ON TRUE
         WHERE t.deleted_at IS NULL
+        ${filterDateClause}
         ORDER BY t.created_at DESC
       `;
 
-      result = await pool.query(trackerQuery, [dateParam]);
+      result = normalizedUser && !callerIsManager
+        ? await pool.query(trackerQuery, [dateParam, normalizedUser])
+        : await pool.query(trackerQuery, [dateParam]);
     } else {
       // Today's view: read from finops_tracker for today's IST date
       const trackerTodayQuery = `
