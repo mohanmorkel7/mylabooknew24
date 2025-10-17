@@ -304,6 +304,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
       const userName = (req.query.user_name as string) || null;
       const normalizedUser = userName ? userName.trim().toLowerCase() : null;
+      // Accept explicit role from caller (if provided by client) to allow admin bypass
+      const callerRole = (req.query.user_role as string) || (req.query.role as string) || null;
+      const callerIsAdmin = callerRole === "admin";
       let isManager = false;
       if (normalizedUser) {
         try {
