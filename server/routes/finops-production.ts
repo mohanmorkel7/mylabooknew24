@@ -350,11 +350,14 @@ router.get("/tasks", async (req: Request, res: Response) => {
         FROM finops_tasks t
         LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         WHERE t.deleted_at IS NULL
+        ${filterTodayClause}
         GROUP BY t.id
         ORDER BY t.created_at DESC
       `;
 
-      result = await pool.query(trackerTodayQuery);
+      result = normalizedUser && !callerIsManager
+        ? await pool.query(trackerTodayQuery, [normalizedUser])
+        : await pool.query(trackerTodayQuery);
     }
 
     const tasks = result.rows.map((row) => ({
