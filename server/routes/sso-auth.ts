@@ -21,7 +21,7 @@ router.post("/sso/login", async (req: Request, res: Response) => {
         error: "Invalid SSO user data",
       });
     }
-
+    console.log(`SSO login Details attempt for:`,JSON.stringify(ssoUser));
     console.log(`SSO login attempt for: ${ssoUser.mail}`);
 
     // Create or update user based on SSO data

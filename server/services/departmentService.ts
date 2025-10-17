@@ -23,6 +23,9 @@ export interface UserDepartmentInfo {
   permissions: string[];
   jobTitle?: string;
   ssoId?: string;
+  surname?:string;
+  givenName?: string;
+  displayName?:string;
 }
 
 export class DepartmentService {
@@ -84,6 +87,9 @@ export class DepartmentService {
           u.department,
           u.job_title,
           u.sso_id,
+          u.last_name as surname,
+          u.first_name as givenName,
+          (u.first_name || ' ' || u.last_name) AS displayName,
           d.permissions as dept_permissions,
           udp.permissions as additional_permissions
         FROM users u
@@ -106,6 +112,9 @@ export class DepartmentService {
         userId: row.user_id,
         email: row.email,
         department: row.department,
+        displayName:row.displayName,
+        givenName:row.givenName,
+        surname:row.surname,
         permissions: [
           ...new Set([...deptPermissions, ...additionalPermissions]),
         ],
@@ -130,6 +139,9 @@ export class DepartmentService {
           u.department,
           u.job_title,
           u.sso_id,
+          u.surname,
+          u.givenName,
+          u.displayName,
           d.permissions as dept_permissions,
           udp.permissions as additional_permissions
         FROM users u
@@ -197,14 +209,14 @@ export class DepartmentService {
           const dbUserInfo = await this.getUserDepartmentByEmail(ssoUser.mail);
           if (dbUserInfo) {
             console.log(
-              `ℹ️ Found user in database for ${ssoUser.mail}, using DB info`,
+              `ℹ️ Found user in database for ${ssoUser.mail}, using DB info`,JSON.stringify(dbUserInfo)
             );
             // Build a minimal userMapping from DB info for consistent processing below
             const fallbackMapping: any = {
               email: dbUserInfo.email,
-              givenName: undefined,
-              surname: undefined,
-              displayName: undefined,
+              givenName: dbUserInfo.givenName,
+              surname: dbUserInfo.surname,
+              displayName: dbUserInfo.displayName,
               department: dbUserInfo.department,
               ssoId: dbUserInfo.ssoId,
               jobTitle: dbUserInfo.jobTitle,
