@@ -224,7 +224,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     // Build filter clauses used inside SQL templates (different param indices)
     const filterDateClause =
-      normalizedUser && !callerIsManager
+      normalizedUser && !callerIsManager && !callerIsAdmin
         ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)"
         : "";
 
