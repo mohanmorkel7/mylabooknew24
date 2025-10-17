@@ -200,7 +200,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     // Server-side user filter support: normalized caller name and manager detection
     const userNameRaw = (req.query.user_name as string) || null;
-    const normalizedUser = userNameRaw ? userNameRaw.trim().toLowerCase() : null;
+    const normalizedUser = userNameRaw
+      ? userNameRaw.trim().toLowerCase()
+      : null;
     let callerIsManager = false;
     if (normalizedUser) {
       try {
@@ -213,18 +215,20 @@ router.get("/tasks", async (req: Request, res: Response) => {
         );
         callerIsManager = mg.rows.length > 0;
       } catch (e) {
-        console.warn('Manager detection failed:', (e as Error).message);
+        console.warn("Manager detection failed:", (e as Error).message);
       }
     }
 
     // Build filter clauses used inside SQL templates (different param indices)
-    const filterDateClause = normalizedUser && !callerIsManager
-      ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $2 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2))"
-      : "";
+    const filterDateClause =
+      normalizedUser && !callerIsManager
+        ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $2 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $2))"
+        : "";
 
-    const filterTodayClause = normalizedUser && !callerIsManager
-      ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $1 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1))"
-      : "";
+    const filterTodayClause =
+      normalizedUser && !callerIsManager
+        ? "AND (LOWER(TRIM(COALESCE(t.assigned_to,''))) = $1 OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1) OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1))"
+        : "";
 
     let result;
     if (dateParam) {
@@ -310,9 +314,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
         ORDER BY t.created_at DESC
       `;
 
-      result = normalizedUser && !callerIsManager
-        ? await pool.query(trackerQuery, [dateParam, normalizedUser])
-        : await pool.query(trackerQuery, [dateParam]);
+      result =
+        normalizedUser && !callerIsManager
+          ? await pool.query(trackerQuery, [dateParam, normalizedUser])
+          : await pool.query(trackerQuery, [dateParam]);
     } else {
       // Today's view: read from finops_tracker for today's IST date
       const trackerTodayQuery = `
@@ -355,9 +360,10 @@ router.get("/tasks", async (req: Request, res: Response) => {
         ORDER BY t.created_at DESC
       `;
 
-      result = normalizedUser && !callerIsManager
-        ? await pool.query(trackerTodayQuery, [normalizedUser])
-        : await pool.query(trackerTodayQuery);
+      result =
+        normalizedUser && !callerIsManager
+          ? await pool.query(trackerTodayQuery, [normalizedUser])
+          : await pool.query(trackerTodayQuery);
     }
 
     const tasks = result.rows.map((row) => ({
