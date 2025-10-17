@@ -206,7 +206,19 @@ router.get("/tasks", async (req: Request, res: Response) => {
     // Accept explicit role from caller (if provided by client) to allow admin bypass
     const callerRole =
       (req.query.user_role as string) || (req.query.role as string) || null;
-    const callerIsAdmin = callerRole === "admin";
+    let callerIsAdmin = callerRole === "admin";
+    // If role was not provided, try to look up the user's role from users table by matching name or email
+    if (!callerIsAdmin && normalizedUser) {
+      try {
+        const ur = await pool.query(
+          `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
+          [normalizedUser],
+        );
+        if (ur.rows.length && ur.rows[0].role === 'admin') callerIsAdmin = true;
+      } catch (e) {
+        console.warn('Failed to resolve caller role from users table:', (e as Error).message);
+      }
+    }
     let callerIsManager = false;
     if (normalizedUser && !callerIsAdmin) {
       try {
