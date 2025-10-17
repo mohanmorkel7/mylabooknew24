@@ -308,7 +308,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
       const callerRole = (req.query.user_role as string) || (req.query.role as string) || null;
       const callerIsAdmin = callerRole === "admin";
       let isManager = false;
-      if (normalizedUser) {
+      if (normalizedUser && !callerIsAdmin) {
         try {
           // Robust manager detection: check JSONB arrays and assigned_to normalized value
           const mgrQuery = `
@@ -471,7 +471,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
-      console.log("�� Database connection refused - using mock data");
+      console.log("��� Database connection refused - using mock data");
       return res.json(mockFinOpsTasks);
     }
 
