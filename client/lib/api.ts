@@ -532,7 +532,7 @@ export class ApiClient {
   private getEmptyFallbackResponse(endpoint: string): any {
     if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
       console.log(
-        `��� Providing empty fallback response for endpoint: ${endpoint}`,
+        `����� Providing empty fallback response for endpoint: ${endpoint}`,
       );
 
     // Return appropriate empty structures based on endpoint
@@ -1087,9 +1087,25 @@ export class ApiClient {
           date ? `(date=${date})` : "",
         );
 
+      // Include user_name from localStorage (if available) to enable server-side filtering
+      let userNameParam = "";
+      try {
+        if (typeof window !== "undefined") {
+          const stored = localStorage.getItem("banani_user");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (parsed && parsed.name) {
+              userNameParam = `&user_name=${encodeURIComponent(parsed.name)}`;
+            }
+          }
+        }
+      } catch (e) {
+        // ignore localStorage errors
+      }
+
       const prodPath = date
-        ? `/finops-production/tasks?date=${encodeURIComponent(date)}`
-        : "/finops-production/tasks";
+        ? `/finops-production/tasks?date=${encodeURIComponent(date)}${userNameParam}`
+        : `/finops-production/tasks?user_name=${encodeURIComponent("$USER_PLACEHOLDER")}`.replace("$USER_PLACEHOLDER", userNameParam ? decodeURIComponent(userNameParam.replace("&user_name=", "")) : "");
       // Try production endpoint first
       const result = await this.requestWithRetry(prodPath, {}, 3);
 
