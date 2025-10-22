@@ -51,4 +51,106 @@ router.post(
   },
 );
 
+// List orphaned activity log entries (task_id missing or task deleted)
+router.get(
+  "/admin/finops/orphaned-activity",
+  async (req: Request, res: Response) => {
+    try {
+      const rows = await pool.query(
+        `
+        SELECT id, task_id, action, user_name, details, timestamp
+        FROM finops_activity_log
+        WHERE task_id IS NULL OR task_id NOT IN (SELECT id FROM finops_tasks)
+        ORDER BY timestamp DESC
+        LIMIT 1000
+      `,
+      );
+      res.json({ success: true, rows: rows.rows });
+    } catch (error) {
+      console.error("Error fetching orphaned activity logs:", error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  },
+);
+
+// List orphaned tracker task_ids
+router.get(
+  "/admin/finops/orphaned-tracker",
+  async (req: Request, res: Response) => {
+    try {
+      const rows = await pool.query(
+        `
+        SELECT DISTINCT task_id
+        FROM finops_tracker
+        WHERE task_id NOT IN (SELECT id FROM finops_tasks)
+        ORDER BY task_id
+        LIMIT 1000
+      `,
+      );
+      res.json({ success: true, rows: rows.rows });
+    } catch (error) {
+      console.error("Error fetching orphaned tracker task_ids:", error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  },
+);
+
+// Cleanup orphaned activity logs (destructive). Requires ?confirm=true to run.
+router.post(
+  "/admin/finops/cleanup-activity",
+  async (req: Request, res: Response) => {
+    try {
+      if (req.query.confirm !== "true") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "This is a destructive operation. Call with ?confirm=true to proceed.",
+        });
+      }
+
+      const deleted = await pool.query(
+        `
+        DELETE FROM finops_activity_log
+        WHERE task_id IS NULL OR task_id NOT IN (SELECT id FROM finops_tasks)
+        RETURNING id
+      `,
+      );
+
+      res.json({ success: true, deleted_count: deleted.rowCount });
+    } catch (error) {
+      console.error("Error cleaning up orphaned activity logs:", error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  },
+);
+
+// Cleanup orphaned finops_tracker rows for missing tasks. Requires ?confirm=true to run.
+router.post(
+  "/admin/finops/cleanup-tracker",
+  async (req: Request, res: Response) => {
+    try {
+      if (req.query.confirm !== "true") {
+        return res.status(400).json({
+          success: false,
+          message:
+            "This is a destructive operation. Call with ?confirm=true to proceed.",
+        });
+      }
+
+      const deleted = await pool.query(
+        `
+        DELETE FROM finops_tracker
+        WHERE task_id NOT IN (SELECT id FROM finops_tasks)
+        RETURNING id
+      `,
+      );
+
+      res.json({ success: true, deleted_count: deleted.rowCount });
+    } catch (error) {
+      console.error("Error cleaning up orphaned finops_tracker rows:", error);
+      res.status(500).json({ success: false, error: (error as Error).message });
+    }
+  },
+);
+
 export default router;

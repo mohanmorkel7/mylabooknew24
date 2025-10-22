@@ -192,11 +192,11 @@ router.get("/", async (req: Request, res: Response) => {
         const autoSyncResult = await pool.query(autoSyncQuery);
 
         for (const notification of autoSyncResult.rows) {
-          const insertQuery = `
-            INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-            ON CONFLICT DO NOTHING
-          `;
+          // const insertQuery = `
+          //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+          //   VALUES ($1, $2, $3, $4, $5, NOW())
+          //   ON CONFLICT DO NOTHING
+          // `;
 
           // Map notification types to actions and mark as sent
           let action;
@@ -226,13 +226,13 @@ router.get("/", async (req: Request, res: Response) => {
             );
           }
 
-          await pool.query(insertQuery, [
-            action,
-            notification.task_id,
-            notification.subtask_id,
-            "System",
-            notification.message,
-          ]);
+          // await pool.query(insertQuery, [
+          //   action,
+          //   notification.task_id,
+          //   notification.subtask_id,
+          //   "System",
+          //   notification.message,
+          // ]);
         }
 
         if (autoSyncResult.rows.length > 0) {
@@ -843,21 +843,21 @@ router.post("/test/create-sample", async (req: Request, res: Response) => {
           timeInterval = "1 hour 8 minutes"; // 1h 8m ago as per user's requirement
         }
 
-        const query = `
-          INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-          VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '${timeInterval}')
-          RETURNING *
-        `;
+        // const query = `
+        //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+        //   VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '${timeInterval}')
+        //   RETURNING *
+        // `;
 
-        const result = await pool.query(query, [
-          notif.action,
-          notif.task_id,
-          notif.subtask_id,
-          notif.user_name,
-          notif.details,
-        ]);
+        // const result = await pool.query(query, [
+        //   notif.action,
+        //   notif.task_id,
+        //   notif.subtask_id,
+        //   notif.user_name,
+        //   notif.details,
+        // ]);
 
-        insertedNotifications.push(result.rows[0]);
+        // insertedNotifications.push(result.rows[0]);
       }
 
       res.json({
@@ -1037,27 +1037,27 @@ router.post("/test/create-user-format", async (req: Request, res: Response) => {
       console.log("Creating notification with user's exact format...");
 
       // Create the exact notification format the user described
-      const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '1 hour 8 minutes')
-        RETURNING *
-      `;
+      // const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '1 hour 8 minutes')
+      //   RETURNING *
+      // `;
 
-      const result = await pool.query(query, [
-        "task_status_changed",
-        4,
-        4,
-        "System",
-        "Start: 04:00 PM Pending Overdue by 54 min",
-      ]);
+      // const result = await pool.query(query, [
+      //   "task_status_changed",
+      //   4,
+      //   4,
+      //   "System",
+      //   "Start: 04:00 PM Pending Overdue by 54 min",
+      // ]);
 
-      res.json({
-        message: "User format notification created successfully!",
-        notification: result.rows[0],
-        description:
-          "This should show: Start: 04:00 PM Pending Overdue by 54 min • 1h 8m ago",
-        timestamp: new Date().toISOString(),
-      });
+      // res.json({
+      //   message: "User format notification created successfully!",
+      //   notification: result.rows[0],
+      //   description:
+      //     "This should show: Start: 04:00 PM Pending Overdue by 54 min • 1h 8m ago",
+      //   timestamp: new Date().toISOString(),
+      // });
     } else {
       res.json({
         message:
@@ -1092,45 +1092,45 @@ router.post("/test/create-sla-warning", async (req: Request, res: Response) => {
 
       await pool.query(taskQuery);
 
-      // Create the SLA warning notification
-      const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '57 minutes')
-        RETURNING *
-      `;
+      // // Create the SLA warning notification
+      // const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '57 minutes')
+      //   RETURNING *
+      // `;
 
-      const result = await pool.query(query, [
-        "sla_alert",
-        5,
-        1,
-        "System",
-        "FinOps: sla warning Task starting in 10 minutes - prepare for execution",
-      ]);
+      // const result = await pool.query(query, [
+      //   "sla_alert",
+      //   5,
+      //   1,
+      //   "System",
+      //   "FinOps: sla warning Task starting in 10 minutes - prepare for execution",
+      // ]);
 
-      // Also insert subtask data for MASTER AND VISA FILE VALIDATION
-      const subtaskQuery = `
-        INSERT INTO finops_subtasks (task_id, name, sla_hours, sla_minutes, status, assigned_to)
-        SELECT 5, 'MASTER AND VISA FILE VALIDATION', 1, 0, 'pending', 'Maria Garcia'
-        WHERE NOT EXISTS (
-          SELECT 1 FROM finops_subtasks
-          WHERE task_id = 5 AND name = 'MASTER AND VISA FILE VALIDATION'
-        )
-      `;
+      // // Also insert subtask data for MASTER AND VISA FILE VALIDATION
+      // const subtaskQuery = `
+      //   INSERT INTO finops_subtasks (task_id, name, sla_hours, sla_minutes, status, assigned_to)
+      //   SELECT 5, 'MASTER AND VISA FILE VALIDATION', 1, 0, 'pending', 'Maria Garcia'
+      //   WHERE NOT EXISTS (
+      //     SELECT 1 FROM finops_subtasks
+      //     WHERE task_id = 5 AND name = 'MASTER AND VISA FILE VALIDATION'
+      //   )
+      // `;
 
-      await pool.query(subtaskQuery);
+      // await pool.query(subtaskQuery);
 
-      res.json({
-        message: "SLA warning notification created successfully!",
-        notification: result.rows[0],
-        description:
-          "FinOps: sla warning Task starting in 10 minutes - prepare for execution",
-        task_details: "RECONCILIATION - DAILY SETTLEMENT PROCESS",
-        assigned_to: "Maria Garcia",
-        subtask: "MASTER AND VISA FILE VALIDATION",
-        reporting_managers: "Robert Chen",
-        created_57_minutes_ago: true,
-        timestamp: new Date().toISOString(),
-      });
+      // res.json({
+      //   message: "SLA warning notification created successfully!",
+      //   notification: result.rows[0],
+      //   description:
+      //     "FinOps: sla warning Task starting in 10 minutes - prepare for execution",
+      //   task_details: "RECONCILIATION - DAILY SETTLEMENT PROCESS",
+      //   assigned_to: "Maria Garcia",
+      //   subtask: "MASTER AND VISA FILE VALIDATION",
+      //   reporting_managers: "Robert Chen",
+      //   created_57_minutes_ago: true,
+      //   timestamp: new Date().toISOString(),
+      // });
     } else {
       res.json({
         message:
@@ -1173,36 +1173,36 @@ router.post(
           await pool.query(createTaskQuery);
         }
 
-        // Create the overdue notification for task 16 (Check task)
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '18 minutes')
-        RETURNING *
-      `;
+      //   // Create the overdue notification for task 16 (Check task)
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '18 minutes')
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(query, [
-          "task_status_changed",
-          16,
-          29,
-          "System",
-          "Subtasks (0/1 completed) check test Start: 05:15 PM Pending Overdue by 4 min",
-        ]);
+      //   const result = await pool.query(query, [
+      //     "task_status_changed",
+      //     16,
+      //     29,
+      //     "System",
+      //     "Subtasks (0/1 completed) check test Start: 05:15 PM Pending Overdue by 4 min",
+      //   ]);
 
-        res.json({
-          message:
-            "PaySwiff Check task overdue notification created successfully!",
-          notification: result.rows[0],
-          description:
-            "Subtasks (0/1 completed) check test Start: 05:15 PM Pending Overdue by 4 min • 18 min ago",
-          task_details: "Check",
-          client: "PaySwiff",
-          assigned_to: "Sanjay Kumar, Mugundhan Selvam",
-          reporting_managers: "Sarumathi Manickam, Vishnu Vardhan",
-          escalation_managers: "Harini NL, Vishal S",
-          subtask: "check",
-          created_18_minutes_ago: true,
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message:
+      //       "PaySwiff Check task overdue notification created successfully!",
+      //     notification: result.rows[0],
+      //     description:
+      //       "Subtasks (0/1 completed) check test Start: 05:15 PM Pending Overdue by 4 min • 18 min ago",
+      //     task_details: "Check",
+      //     client: "PaySwiff",
+      //     assigned_to: "Sanjay Kumar, Mugundhan Selvam",
+      //     reporting_managers: "Sarumathi Manickam, Vishnu Vardhan",
+      //     escalation_managers: "Harini NL, Vishal S",
+      //     subtask: "check",
+      //     created_18_minutes_ago: true,
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -1228,68 +1228,68 @@ router.post(
       if (await isDatabaseAvailable()) {
         console.log("Creating notification with exact user-reported values...");
 
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-      `;
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, $6)
+      //   RETURNING *
+      // `;
 
-        // Create with exact timestamp user mentioned: "2025-08-29T01:07:55.113Z"
-        const userTimestamp = "2025-08-29T01:07:55.113Z";
+      //   // Create with exact timestamp user mentioned: "2025-08-29T01:07:55.113Z"
+      //   const userTimestamp = "2025-08-29T01:07:55.113Z";
 
-        const result = await pool.query(query, [
-          "updated",
-          4,
-          4,
-          "User", // This should map to assigned_to
-          "Task updated", // This should be the title
-          userTimestamp,
-        ]);
+      //   const result = await pool.query(query, [
+      //     "updated",
+      //     4,
+      //     4,
+      //     "User", // This should map to assigned_to
+      //     "Task updated", // This should be the title
+      //     userTimestamp,
+      //   ]);
 
-        // Now test the query that the main endpoint uses to see what it returns
-        const testQuery = `
-        SELECT
-          fal.id,
-          fal.task_id,
-          fal.subtask_id,
-          fal.action,
-          fal.user_name,
-          fal.details,
-          fal.timestamp as created_at,
-          ft.task_name,
-          ft.client_name,
-          fs.name as subtask_name,
-          fs.start_time,
-          fs.auto_notify,
-          'task_pending' as type,
-          'medium' as priority,
-          false as read
-        FROM finops_activity_log fal
-        LEFT JOIN finops_tasks ft ON fal.task_id = ft.id
-        LEFT JOIN finops_subtasks fs ON fal.subtask_id = fs.id
-        WHERE fal.id = $1
-      `;
+      //   // Now test the query that the main endpoint uses to see what it returns
+      //   const testQuery = `
+      //   SELECT
+      //     fal.id,
+      //     fal.task_id,
+      //     fal.subtask_id,
+      //     fal.action,
+      //     fal.user_name,
+      //     fal.details,
+      //     fal.timestamp as created_at,
+      //     ft.task_name,
+      //     ft.client_name,
+      //     fs.name as subtask_name,
+      //     fs.start_time,
+      //     fs.auto_notify,
+      //     'task_pending' as type,
+      //     'medium' as priority,
+      //     false as read
+      //   FROM finops_activity_log fal
+      //   LEFT JOIN finops_tasks ft ON fal.task_id = ft.id
+      //   LEFT JOIN finops_subtasks fs ON fal.subtask_id = fs.id
+      //   WHERE fal.id = $1
+      // `;
 
-        const testResult = await pool.query(testQuery, [result.rows[0].id]);
+      //   const testResult = await pool.query(testQuery, [result.rows[0].id]);
 
-        res.json({
-          message: "Test notification created with user-reported values!",
-          inserted_data: result.rows[0],
-          query_result: testResult.rows[0],
-          expected_mapping: {
-            priority: "medium (should be preserved)",
-            user_name: "User (should map to assigned_to)",
-            created_at: userTimestamp,
-            details: "Task updated (should be clean title)",
-          },
-          debug_info: {
-            api_priority: testResult.rows[0]?.priority,
-            api_user_name: testResult.rows[0]?.user_name,
-            api_created_at: testResult.rows[0]?.created_at,
-            api_details: testResult.rows[0]?.details,
-          },
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message: "Test notification created with user-reported values!",
+      //     inserted_data: result.rows[0],
+      //     query_result: testResult.rows[0],
+      //     expected_mapping: {
+      //       priority: "medium (should be preserved)",
+      //       user_name: "User (should map to assigned_to)",
+      //       created_at: userTimestamp,
+      //       details: "Task updated (should be clean title)",
+      //     },
+      //     debug_info: {
+      //       api_priority: testResult.rows[0]?.priority,
+      //       api_user_name: testResult.rows[0]?.user_name,
+      //       api_created_at: testResult.rows[0]?.created_at,
+      //       api_details: testResult.rows[0]?.details,
+      //     },
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -1328,47 +1328,47 @@ router.post(
         await pool.query(taskQuery);
 
         // Create the exact SLA warning notification format the user described
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '57 minutes')
-        RETURNING *
-      `;
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW() - INTERVAL '57 minutes')
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(query, [
-          "sla_alert",
-          6,
-          1,
-          "System",
-          "FinOps: sla warning Task starting in 10 minutes - prepare for execution medium RECONCILIATION - DAILY SETTLEMENT PROCESS Enterprise Banking Solutions Maria Garcia",
-        ]);
+      //   const result = await pool.query(query, [
+      //     "sla_alert",
+      //     6,
+      //     1,
+      //     "System",
+      //     "FinOps: sla warning Task starting in 10 minutes - prepare for execution medium RECONCILIATION - DAILY SETTLEMENT PROCESS Enterprise Banking Solutions Maria Garcia",
+      //   ]);
 
-        // Insert subtask data for MASTER AND VISA FILE VALIDATION
-        const subtaskQuery = `
-        INSERT INTO finops_subtasks (task_id, name, sla_hours, sla_minutes, status, assigned_to)
-        SELECT 6, 'MASTER AND VISA FILE VALIDATION', 1, 0, 'pending', 'Maria Garcia'
-        WHERE NOT EXISTS (
-          SELECT 1 FROM finops_subtasks
-          WHERE task_id = 6 AND name = 'MASTER AND VISA FILE VALIDATION'
-        )
-      `;
+      //   // Insert subtask data for MASTER AND VISA FILE VALIDATION
+      //   const subtaskQuery = `
+      //   INSERT INTO finops_subtasks (task_id, name, sla_hours, sla_minutes, status, assigned_to)
+      //   SELECT 6, 'MASTER AND VISA FILE VALIDATION', 1, 0, 'pending', 'Maria Garcia'
+      //   WHERE NOT EXISTS (
+      //     SELECT 1 FROM finops_subtasks
+      //     WHERE task_id = 6 AND name = 'MASTER AND VISA FILE VALIDATION'
+      //   )
+      // `;
 
-        await pool.query(subtaskQuery);
+      //   await pool.query(subtaskQuery);
 
-        res.json({
-          message:
-            "Enterprise Banking SLA warning notification created successfully!",
-          notification: result.rows[0],
-          description:
-            "FinOps: sla warning Task starting in 10 minutes - prepare for execution",
-          task_details: "RECONCILIATION - DAILY SETTLEMENT PROCESS",
-          client: "Enterprise Banking Solutions",
-          assigned_to: "Maria Garcia",
-          subtask: "MASTER AND VISA FILE VALIDATION",
-          reporting_managers: "Robert Chen",
-          priority: "medium",
-          created_57_minutes_ago: true,
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message:
+      //       "Enterprise Banking SLA warning notification created successfully!",
+      //     notification: result.rows[0],
+      //     description:
+      //       "FinOps: sla warning Task starting in 10 minutes - prepare for execution",
+      //     task_details: "RECONCILIATION - DAILY SETTLEMENT PROCESS",
+      //     client: "Enterprise Banking Solutions",
+      //     assigned_to: "Maria Garcia",
+      //     subtask: "MASTER AND VISA FILE VALIDATION",
+      //     reporting_managers: "Robert Chen",
+      //     priority: "medium",
+      //     created_57_minutes_ago: true,
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -1463,62 +1463,62 @@ router.post("/auto-sync", async (req: Request, res: Response) => {
 
         let newNotificationsCount = 0;
 
-        for (const notification of autoSyncResult.rows) {
-          const insertQuery = `
-            INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-            ON CONFLICT DO NOTHING
-            RETURNING id
-          `;
+        //for (const notification of autoSyncResult.rows) {
+        //   const insertQuery = `
+        //     INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+        //     VALUES ($1, $2, $3, $4, $5, NOW())
+        //     ON CONFLICT DO NOTHING
+        //     RETURNING id
+        //   `;
 
-          // Map notification types to actions
-          let action;
-          switch (notification.notification_type) {
-            case "pre_start_alert":
-              action = "pre_start_notification";
-              break;
-            case "sla_warning":
-              action = "sla_alert";
-              break;
-            case "escalation_alert":
-              action = "escalation_notification";
-              break;
-            default:
-              action = "overdue_notification_sent";
-          }
+        //   // Map notification types to actions
+        //   let action;
+        //   switch (notification.notification_type) {
+        //     case "pre_start_alert":
+        //       action = "pre_start_notification";
+        //       break;
+        //     case "sla_warning":
+        //       action = "sla_alert";
+        //       break;
+        //     case "escalation_alert":
+        //       action = "escalation_notification";
+        //       break;
+        //     default:
+        //       action = "overdue_notification_sent";
+        //   }
 
-          const result = await pool.query(insertQuery, [
-            action,
-            notification.task_id,
-            notification.subtask_id,
-            "System",
-            notification.message,
-          ]);
+        //   const result = await pool.query(insertQuery, [
+        //     action,
+        //     notification.task_id,
+        //     notification.subtask_id,
+        //     "System",
+        //     notification.message,
+        //   ]);
 
-          if (result.rows.length > 0) {
-            newNotificationsCount++;
-          }
+        //   if (result.rows.length > 0) {
+        //     newNotificationsCount++;
+        //   }
 
-          // Mark notification as sent to prevent duplicates
-          try {
-            await pool.query(`SELECT mark_notification_sent($1, $2)`, [
-              notification.subtask_id,
-              notification.notification_type,
-            ]);
-          } catch (markError) {
-            console.log(
-              `Warning: Could not mark notification as sent: ${markError.message}`,
-            );
-          }
-        }
+        //   // Mark notification as sent to prevent duplicates
+        //   try {
+        //     await pool.query(`SELECT mark_notification_sent($1, $2)`, [
+        //       notification.subtask_id,
+        //       notification.notification_type,
+        //     ]);
+        //   } catch (markError) {
+        //     console.log(
+        //       `Warning: Could not mark notification as sent: ${markError.message}`,
+        //     );
+        //   }
+        // }
 
-        res.json({
-          success: true,
-          message: `Auto-sync completed: ${newNotificationsCount} new notifications created`,
-          new_notifications: newNotificationsCount,
-          total_checked: autoSyncResult.rows.length,
-          timestamp: new Date().toISOString(),
-        });
+        // res.json({
+        //   success: true,
+        //   message: `Auto-sync completed: ${newNotificationsCount} new notifications created`,
+        //   new_notifications: newNotificationsCount,
+        //   total_checked: autoSyncResult.rows.length,
+        //   timestamp: new Date().toISOString(),
+        // });
       } catch (syncError) {
         console.log("Auto-sync error:", syncError.message);
         res.json({
@@ -1828,51 +1828,51 @@ router.post("/auto-sync", async (req: Request, res: Response) => {
       for (const notification of slaResult.rows) {
         try {
           // Insert into activity log
-          const insertQuery = `
-            INSERT INTO finops_activity_log (
-              action, task_id, subtask_id, user_name, details, timestamp
-            ) VALUES ($1, $2, $3, $4, $5, NOW())
-            ON CONFLICT DO NOTHING
-            RETURNING id
-          `;
+          // const insertQuery = `
+          //   INSERT INTO finops_activity_log (
+          //     action, task_id, subtask_id, user_name, details, timestamp
+          //   ) VALUES ($1, $2, $3, $4, $5, NOW())
+          //   ON CONFLICT DO NOTHING
+          //   RETURNING id
+          // `;
 
-          // Map notification types to actions
-          let action;
-          switch (notification.notification_type) {
-            case "pre_start_alert":
-              action = "pre_start_notification";
-              break;
-            case "sla_warning":
-              action = "sla_alert";
-              break;
-            case "escalation_alert":
-              action = "escalation_notification";
-              break;
-            default:
-              action = "overdue_notification_sent";
-          }
+          // // Map notification types to actions
+          // let action;
+          // switch (notification.notification_type) {
+          //   case "pre_start_alert":
+          //     action = "pre_start_notification";
+          //     break;
+          //   case "sla_warning":
+          //     action = "sla_alert";
+          //     break;
+          //   case "escalation_alert":
+          //     action = "escalation_notification";
+          //     break;
+          //   default:
+          //     action = "overdue_notification_sent";
+          // }
 
-          const insertResult = await pool.query(insertQuery, [
-            action,
-            notification.task_id,
-            notification.subtask_id,
-            "System",
-            notification.message,
-          ]);
+          // const insertResult = await pool.query(insertQuery, [
+          //   action,
+          //   notification.task_id,
+          //   notification.subtask_id,
+          //   "System",
+          //   notification.message,
+          // ]);
 
-          if (insertResult.rows.length > 0) {
-            createdNotifications++;
+          // if (insertResult.rows.length > 0) {
+          //   createdNotifications++;
 
-            // Mark notification as sent to prevent duplicates
-            await pool.query(`SELECT mark_notification_sent($1, $2)`, [
-              notification.subtask_id,
-              notification.notification_type,
-            ]);
+          //   // Mark notification as sent to prevent duplicates
+          //   await pool.query(`SELECT mark_notification_sent($1, $2)`, [
+          //     notification.subtask_id,
+          //     notification.notification_type,
+          //   ]);
 
-            console.log(
-              `✅ Created ${notification.notification_type} notification for task ${notification.task_id}`,
-            );
-          }
+          //   console.log(
+          //     `✅ Created ${notification.notification_type} notification for task ${notification.task_id}`,
+          //   );
+          // }
         } catch (notificationError) {
           console.error(
             `❌ Failed to create notification: ${notificationError.message}`,
@@ -1930,33 +1930,33 @@ router.post("/trigger-sla-check", async (req: Request, res: Response) => {
       const createdNotifications = [];
 
       for (const notification of checkResult.rows) {
-        const insertQuery = `
-          INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-          VALUES ($1, $2, $3, $4, $5, NOW())
-          RETURNING *
-        `;
+        // const insertQuery = `
+        //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+        //   VALUES ($1, $2, $3, $4, $5, NOW())
+        //   RETURNING *
+        // `;
 
-        const action =
-          notification.notification_type === "sla_warning"
-            ? "sla_alert"
-            : "overdue_notification_sent";
+        // const action =
+        //   notification.notification_type === "sla_warning"
+        //     ? "sla_alert"
+        //     : "overdue_notification_sent";
 
-        const result = await pool.query(insertQuery, [
-          action,
-          notification.task_id,
-          notification.subtask_id,
-          "System",
-          notification.message,
-        ]);
+        // const result = await pool.query(insertQuery, [
+        //   action,
+        //   notification.task_id,
+        //   notification.subtask_id,
+        //   "System",
+        //   notification.message,
+        // ]);
 
-        createdNotifications.push({
-          ...result.rows[0],
-          notification_type: notification.notification_type,
-          task_name: notification.task_name,
-          subtask_name: notification.subtask_name,
-          assigned_to: notification.assigned_to,
-          time_diff_minutes: notification.time_diff_minutes,
-        });
+        // createdNotifications.push({
+        //   ...result.rows[0],
+        //   notification_type: notification.notification_type,
+        //   task_name: notification.task_name,
+        //   subtask_name: notification.subtask_name,
+        //   assigned_to: notification.assigned_to,
+        //   time_diff_minutes: notification.time_diff_minutes,
+        // });
       }
 
       res.json({
@@ -2088,51 +2088,51 @@ router.post(
         await pool.query(taskQuery);
 
         // Create the overdue reason required notification
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(query, [
-          "overdue_reason_required",
-          99,
-          99,
-          "System",
-          "OVERDUE REASON REQUIRED: TEST OVERDUE TASK - Test Subtask is overdue by 0 minutes. Immediate explanation required.",
-        ]);
+      //   const result = await pool.query(query, [
+      //     "overdue_reason_required",
+      //     99,
+      //     99,
+      //     "System",
+      //     "OVERDUE REASON REQUIRED: TEST OVERDUE TASK - Test Subtask is overdue by 0 minutes. Immediate explanation required.",
+      //   ]);
 
-        // Create overdue tracking entry
-        //   const trackingQuery = `
-        //   INSERT INTO finops_overdue_tracking
-        //   (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
-        //   VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
-        //   ON CONFLICT DO NOTHING
-        // `;
+      //   // Create overdue tracking entry
+      //   //   const trackingQuery = `
+      //   //   INSERT INTO finops_overdue_tracking
+      //   //   (task_id, subtask_id, task_name, subtask_name, assigned_to, overdue_minutes, status)
+      //   //   VALUES ($1, $2, $3, $4, $5, $6, 'pending_reason')
+      //   //   ON CONFLICT DO NOTHING
+      //   // `;
 
-        // await pool.query(trackingQuery, [
-        //   99,
-        //   99,
-        //   "TEST OVERDUE TASK",
-        //   "Test Subtask",
-        //   "Test User",
-        //   0,
-        // ]);
+      //   // await pool.query(trackingQuery, [
+      //   //   99,
+      //   //   99,
+      //   //   "TEST OVERDUE TASK",
+      //   //   "Test Subtask",
+      //   //   "Test User",
+      //   //   0,
+      //   // ]);
 
-        res.json({
-          message: "Immediate overdue notification created successfully!",
-          notification: result.rows[0],
-          description:
-            "This notification will auto-open the overdue reason dialog",
-          instructions: [
-            "1. Check the FinOps Notifications page",
-            "2. The overdue reason dialog should auto-open",
-            "3. The notification should have critical priority and pulse animation",
-            "4. Provide an explanation to test the full workflow",
-          ],
-          test_scenario: "Immediate overdue (0 minutes) - requires explanation",
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message: "Immediate overdue notification created successfully!",
+      //     notification: result.rows[0],
+      //     description:
+      //       "This notification will auto-open the overdue reason dialog",
+      //     instructions: [
+      //       "1. Check the FinOps Notifications page",
+      //       "2. The overdue reason dialog should auto-open",
+      //       "3. The notification should have critical priority and pulse animation",
+      //       "4. Provide an explanation to test the full workflow",
+      //     ],
+      //     test_scenario: "Immediate overdue (0 minutes) - requires explanation",
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -2487,35 +2487,35 @@ router.post(
           });
         }
 
-        // Create the pending status notification exactly as user described
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      //   // Create the pending status notification exactly as user described
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(query, [
-          "status_changed",
-          16,
-          29,
-          "System",
-          "Check Active Pending check Assigned: Sanjay Kumar daily 0/1 completed Starts: 06:15 PM Edit Subtasks (0/1 completed) test check Start: 06:15 PM Pending Status • need to start",
-        ]);
+      //   const result = await pool.query(query, [
+      //     "status_changed",
+      //     16,
+      //     29,
+      //     "System",
+      //     "Check Active Pending check Assigned: Sanjay Kumar daily 0/1 completed Starts: 06:15 PM Edit Subtasks (0/1 completed) test check Start: 06:15 PM Pending Status • need to start",
+      //   ]);
 
-        res.json({
-          message: "Pending status notification created successfully!",
-          notification: result.rows[0],
-          description:
-            "Check Active Pending check - Starts: 06:15 PM Pending Status • need to start",
-          task_details: "Check",
-          client: "PaySwiff",
-          assigned_to: "Sanjay Kumar",
-          subtask: "test check",
-          status: "Pending",
-          action_needed: "need to start",
-          created_now: true,
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message: "Pending status notification created successfully!",
+      //     notification: result.rows[0],
+      //     description:
+      //       "Check Active Pending check - Starts: 06:15 PM Pending Status • need to start",
+      //     task_details: "Check",
+      //     client: "PaySwiff",
+      //     assigned_to: "Sanjay Kumar",
+      //     subtask: "test check",
+      //     status: "Pending",
+      //     action_needed: "need to start",
+      //     created_now: true,
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -2649,27 +2649,27 @@ router.post("/enable-auto-sync", async (req: Request, res: Response) => {
             const checkResult = await pool.query(checkQuery);
 
             for (const notification of checkResult.rows) {
-              const insertQuery = `
-              INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-              VALUES ($1, $2, $3, $4, $5, NOW())
-            `;
+            //   const insertQuery = `
+            //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+            //   VALUES ($1, $2, $3, $4, $5, NOW())
+            // `;
 
-              const action =
-                notification.notification_type === "sla_warning"
-                  ? "sla_alert"
-                  : "overdue_notification_sent";
+            //   const action =
+            //     notification.notification_type === "sla_warning"
+            //       ? "sla_alert"
+            //       : "overdue_notification_sent";
 
-              await pool.query(insertQuery, [
-                action,
-                notification.task_id,
-                notification.subtask_id,
-                "System",
-                notification.message,
-              ]);
+            //   await pool.query(insertQuery, [
+            //     action,
+            //     notification.task_id,
+            //     notification.subtask_id,
+            //     "System",
+            //     notification.message,
+            //   ]);
 
-              console.log(
-                `✅ Auto-created ${notification.notification_type} for ${notification.task_name}`,
-              );
+            //   console.log(
+            //     `✅ Auto-created ${notification.notification_type} for ${notification.task_name}`,
+            //   );
             }
           }
         } catch (error) {
@@ -3012,32 +3012,32 @@ router.post(
           });
         }
 
-        // Create the SLA warning notification
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      //   // Create the SLA warning notification
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(query, [
-          "sla_alert",
-          16,
-          29,
-          "System",
-          "SLA Warning - 14 min remaining • need to start",
-        ]);
+      //   const result = await pool.query(query, [
+      //     "sla_alert",
+      //     16,
+      //     29,
+      //     "System",
+      //     "SLA Warning - 14 min remaining • need to start",
+      //   ]);
 
-        res.json({
-          message:
-            "SLA warning notification (14 min remaining) created successfully!",
-          notification: result.rows[0],
-          description: "SLA Warning - 14 min remaining • need to start",
-          task_details: "Check",
-          client: "PaySwiff",
-          assigned_to: "Sanjay Kumar",
-          created_now: true,
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message:
+      //       "SLA warning notification (14 min remaining) created successfully!",
+      //     notification: result.rows[0],
+      //     description: "SLA Warning - 14 min remaining • need to start",
+      //     task_details: "Check",
+      //     client: "PaySwiff",
+      //     assigned_to: "Sanjay Kumar",
+      //     created_now: true,
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -3097,33 +3097,33 @@ router.post(
           });
         }
 
-        // Create the current SLA warning notification
-        const query = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      //   // Create the current SLA warning notification
+      //   const query = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(query, [
-          "sla_alert",
-          16,
-          29,
-          "System",
-          "SLA Warning - 10 min remaining • need to start",
-        ]);
+      //   const result = await pool.query(query, [
+      //     "sla_alert",
+      //     16,
+      //     29,
+      //     "System",
+      //     "SLA Warning - 10 min remaining • need to start",
+      //   ]);
 
-        res.json({
-          message:
-            "Current SLA warning notification (10 min remaining) created successfully!",
-          notification: result.rows[0],
-          description: "SLA Warning - 10 min remaining • need to start",
-          task_details: "Check",
-          client: "PaySwiff",
-          assigned_to: "Sanjay Kumar",
-          archived_old_14min: true,
-          created_now: true,
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message:
+      //       "Current SLA warning notification (10 min remaining) created successfully!",
+      //     notification: result.rows[0],
+      //     description: "SLA Warning - 10 min remaining • need to start",
+      //     task_details: "Check",
+      //     client: "PaySwiff",
+      //     assigned_to: "Sanjay Kumar",
+      //     archived_old_14min: true,
+      //     created_now: true,
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message:
@@ -3173,26 +3173,26 @@ router.put(
         await pool.query(archiveQuery);
 
         // Create new notification with current time
-        const insertQuery = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      //   const insertQuery = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(insertQuery, [
-          "sla_alert",
-          16,
-          29,
-          "System",
-          `SLA Warning - ${current_minutes} min remaining • need to start`,
-        ]);
+      //   const result = await pool.query(insertQuery, [
+      //     "sla_alert",
+      //     16,
+      //     29,
+      //     "System",
+      //     `SLA Warning - ${current_minutes} min remaining • need to start`,
+      //   ]);
 
-        res.json({
-          message: `SLA warning updated to ${current_minutes} min remaining`,
-          notification: result.rows[0],
-          archived_old_notifications: true,
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message: `SLA warning updated to ${current_minutes} min remaining`,
+      //     notification: result.rows[0],
+      //     archived_old_notifications: true,
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           message: "Database unavailable",
@@ -3287,28 +3287,28 @@ router.post("/sync-sla-warning-time", async (req: Request, res: Response) => {
 
       const archiveResult = await pool.query(archiveQuery, [task_id]);
 
-      // Create new notification with current time
-      const insertQuery = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      // // Create new notification with current time
+      // const insertQuery = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-      const result = await pool.query(insertQuery, [
-        action,
-        task_id,
-        subtask_id || null,
-        "System",
-        `SLA Warning - ${remaining_minutes} min remaining • need to start`,
-      ]);
+      // const result = await pool.query(insertQuery, [
+      //   action,
+      //   task_id,
+      //   subtask_id || null,
+      //   "System",
+      //   `SLA Warning - ${remaining_minutes} min remaining • need to start`,
+      // ]);
 
-      res.json({
-        message: `SLA warning synchronized to ${remaining_minutes} min remaining`,
-        notification: result.rows[0],
-        archived_count: archiveResult.rowCount || 0,
-        updated_from_previous: currentResult.rows.length > 0,
-        timestamp: new Date().toISOString(),
-      });
+      // res.json({
+      //   message: `SLA warning synchronized to ${remaining_minutes} min remaining`,
+      //   notification: result.rows[0],
+      //   archived_count: archiveResult.rowCount || 0,
+      //   updated_from_previous: currentResult.rows.length > 0,
+      //   timestamp: new Date().toISOString(),
+      // });
     } else {
       res.json({
         message: "Database unavailable",
@@ -3685,49 +3685,49 @@ router.post(
           action = "task_status_changed";
         }
 
-        // Create the notification
-        const insertQuery = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      //   // Create the notification
+      //   const insertQuery = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-        const result = await pool.query(insertQuery, [
-          action,
-          subtask.task_id,
-          subtaskId,
-          "System",
-          message,
-        ]);
+      //   const result = await pool.query(insertQuery, [
+      //     action,
+      //     subtask.task_id,
+      //     subtaskId,
+      //     "System",
+      //     message,
+      //   ]);
 
-        res.json({
-          message: `Test notification created for subtask ID ${subtaskId}`,
-          notification: result.rows[0],
-          subtask_info: {
-            id: subtask.id,
-            name: subtask.name,
-            start_time: subtask.start_time,
-            auto_notify: subtask.auto_notify,
-            status: subtask.status,
-            task_name: subtask.task_name,
-            client_name: subtask.client_name,
-            task_active: subtask.is_active,
-          },
-          time_analysis: {
-            minutes_until_start: timeDiff.minutes_until_start
-              ? parseFloat(timeDiff.minutes_until_start.toFixed(2))
-              : null,
-            minutes_after_start: timeDiff.minutes_after_start
-              ? parseFloat(timeDiff.minutes_after_start.toFixed(2))
-              : null,
-          },
-          notification_details: {
-            type: notification_type,
-            message: message,
-            action: action,
-          },
-          timestamp: new Date().toISOString(),
-        });
+      //   res.json({
+      //     message: `Test notification created for subtask ID ${subtaskId}`,
+      //     notification: result.rows[0],
+      //     subtask_info: {
+      //       id: subtask.id,
+      //       name: subtask.name,
+      //       start_time: subtask.start_time,
+      //       auto_notify: subtask.auto_notify,
+      //       status: subtask.status,
+      //       task_name: subtask.task_name,
+      //       client_name: subtask.client_name,
+      //       task_active: subtask.is_active,
+      //     },
+      //     time_analysis: {
+      //       minutes_until_start: timeDiff.minutes_until_start
+      //         ? parseFloat(timeDiff.minutes_until_start.toFixed(2))
+      //         : null,
+      //       minutes_after_start: timeDiff.minutes_after_start
+      //         ? parseFloat(timeDiff.minutes_after_start.toFixed(2))
+      //         : null,
+      //     },
+      //     notification_details: {
+      //       type: notification_type,
+      //       message: message,
+      //       action: action,
+      //     },
+      //     timestamp: new Date().toISOString(),
+      //   });
       } else {
         res.json({
           error: "Database unavailable",
@@ -3783,27 +3783,27 @@ router.post("/auto-sync-current-time", async (req: Request, res: Response) => {
 
       const archiveResult = await pool.query(archiveQuery, [task_id]);
 
-      // Create new notification with current actual time
-      const insertQuery = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      // // Create new notification with current actual time
+      // const insertQuery = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-      const result = await pool.query(insertQuery, [
-        "sla_alert",
-        task_id,
-        29, // Default subtask for task 16
-        "System",
-        `SLA Warning - ${actual_remaining_minutes} min remaining • need to start`,
-      ]);
+      // const result = await pool.query(insertQuery, [
+      //   "sla_alert",
+      //   task_id,
+      //   29, // Default subtask for task 16
+      //   "System",
+      //   `SLA Warning - ${actual_remaining_minutes} min remaining • need to start`,
+      // ]);
 
-      res.json({
-        message: `SLA warning auto-synced to actual ${actual_remaining_minutes} min remaining`,
-        notification: result.rows[0],
-        archived_count: archiveResult.rowCount || 0,
-        sync_time: new Date().toISOString(),
-      });
+      // res.json({
+      //   message: `SLA warning auto-synced to actual ${actual_remaining_minutes} min remaining`,
+      //   notification: result.rows[0],
+      //   archived_count: archiveResult.rowCount || 0,
+      //   sync_time: new Date().toISOString(),
+      // });
     } else {
       res.json({
         message: "Database unavailable",
@@ -3856,44 +3856,44 @@ router.post("/create-overdue-from-sla", async (req: Request, res: Response) => {
         );
       }
 
-      // Create new overdue notification
-      const insertQuery = `
-        INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
-        VALUES ($1, $2, $3, $4, $5, NOW())
-        RETURNING *
-      `;
+      // // Create new overdue notification
+      // const insertQuery = `
+      //   INSERT INTO finops_activity_log (action, task_id, subtask_id, user_name, details, timestamp)
+      //   VALUES ($1, $2, $3, $4, $5, NOW())
+      //   RETURNING *
+      // `;
 
-      const currentTime = new Date();
-      const overdueTime = new Date(
-        currentTime.getTime() - overdue_minutes * 60000,
-      );
-      const timeAgo = Math.floor(
-        (currentTime.getTime() - overdueTime.getTime()) / 60000,
-      );
-      const toHM = (m: number) => {
-        const h = Math.floor(m / 60);
-        const mm = m % 60;
-        return `${h}h ${mm}m`;
-      };
+      // const currentTime = new Date();
+      // const overdueTime = new Date(
+      //   currentTime.getTime() - overdue_minutes * 60000,
+      // );
+      // const timeAgo = Math.floor(
+      //   (currentTime.getTime() - overdueTime.getTime()) / 60000,
+      // );
+      // const toHM = (m: number) => {
+      //   const h = Math.floor(m / 60);
+      //   const mm = m % 60;
+      //   return `${h}h ${mm}m`;
+      // };
 
-      const result = await pool.query(insertQuery, [
-        "overdue_notification_sent",
-        task_id,
-        subtask_id || null,
-        "System",
-        `Overdue by ${toHM(overdue_minutes)} • ${toHM(timeAgo)} ago`,
-      ]);
+      // const result = await pool.query(insertQuery, [
+      //   "overdue_notification_sent",
+      //   task_id,
+      //   subtask_id || null,
+      //   "System",
+      //   `Overdue by ${toHM(overdue_minutes)} • ${toHM(timeAgo)} ago`,
+      // ]);
 
-      res.json({
-        message: `Overdue notification created for ${overdue_minutes} min overdue`,
-        notification: result.rows[0],
-        archived_original: !!original_sla_warning_id,
-        overdue_details: {
-          overdue_minutes,
-          created_at: result.rows[0].timestamp,
-        },
-        timestamp: new Date().toISOString(),
-      });
+      // res.json({
+      //   message: `Overdue notification created for ${overdue_minutes} min overdue`,
+      //   notification: result.rows[0],
+      //   archived_original: !!original_sla_warning_id,
+      //   overdue_details: {
+      //     overdue_minutes,
+      //     created_at: result.rows[0].timestamp,
+      //   },
+      //   timestamp: new Date().toISOString(),
+      // });
     } else {
       res.json({
         message: "Database unavailable",

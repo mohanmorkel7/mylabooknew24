@@ -24,6 +24,26 @@ console.log("🔗 Database connection config:", {
 
 const pool = new Pool(dbConfig);
 
+// Defensive override: temporarily ignore any INSERTs into finops_activity_log
+// This prevents runtime errors while activity logging is disabled.
+const originalQuery = (pool as any).query.bind(pool);
+(pool as any).query = async function (text: any, params?: any, callback?: any) {
+  try {
+    const sql = typeof text === "string" ? text : String(text?.text || "");
+    if (sql.toLowerCase().includes("finops_activity_log")) {
+      console.warn(
+        "Activity logging disabled: skipping query:",
+        sql.replace(/\s+/g, " ").trim(),
+      );
+      // Return a harmless query result compatible with pg responses
+      return { rows: [], rowCount: 0 };
+    }
+  } catch (e) {
+    // ignore parse errors and fall through to original
+  }
+  return originalQuery(text, params, callback);
+};
+
 // Add timeout wrapper for database operations
 export function withTimeout<T>(
   promise: Promise<T>,

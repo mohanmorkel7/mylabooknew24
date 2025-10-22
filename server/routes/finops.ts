@@ -294,7 +294,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     );
 
     if (await isDatabaseAvailable()) {
-      console.log("✅ Database is available, fetching real data");
+      console.log("��� Database is available, fetching real data");
 
       // Optional date filter (YYYY-MM-DD) to view historical daily statuses
       const dateParam = (req.query.date as string) || null;
@@ -302,8 +302,56 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
       let result;
 
+      const userName = (req.query.user_name as string) || null;
+      const normalizedUser = userName ? userName.trim().toLowerCase() : null;
+      // Accept explicit role from caller (if provided by client) to allow admin bypass
+      const callerRole =
+        (req.query.user_role as string) || (req.query.role as string) || null;
+      let callerIsAdmin = callerRole === "admin";
+      // If role not provided, try to resolve role from users table by matching name or email
+      if (!callerIsAdmin && normalizedUser) {
+        try {
+          const ur = await pool.query(
+            `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
+            [normalizedUser],
+          );
+          if (ur.rows.length && ur.rows[0].role === "admin")
+            callerIsAdmin = true;
+        } catch (e) {
+          console.warn(
+            "Failed to resolve caller role from users table:",
+            (e as Error).message,
+          );
+        }
+      }
+      let isManager = false;
+      if (normalizedUser && !callerIsAdmin) {
+        try {
+          // Robust manager detection: check JSONB arrays and assigned_to normalized value
+          const mgrQuery = `
+            SELECT 1 FROM finops_tasks t
+            WHERE t.deleted_at IS NULL AND (
+              EXISTS (
+                SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers, '[]'::jsonb)) AS m WHERE LOWER(TRIM(m)) = $1
+              )
+              OR EXISTS (
+                SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers, '[]'::jsonb)) AS m WHERE LOWER(TRIM(m)) = $1
+              )
+            ) LIMIT 1
+          `;
+          const mgrRes = await pool.query(mgrQuery, [normalizedUser]);
+          isManager = mgrRes.rows.length > 0;
+        } catch (e) {
+          console.warn(
+            "Failed to evaluate manager status:",
+            (e as Error).message,
+          );
+        }
+      }
+
       if (dateParam) {
         // When a specific date is requested, use finops_tracker to show historical statuses
+        // If user is not a manager and userName provided, restrict to tasks assigned to this user
         const trackerQuery = `
           SELECT
             t.*,
@@ -328,11 +376,15 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = $1
           WHERE t.deleted_at IS NULL
+          ${normalizedUser && !isManager && !callerIsAdmin ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
 
-        result = await pool.query(trackerQuery, [dateParam]);
+        result =
+          normalizedUser && !isManager && !callerIsAdmin
+            ? await pool.query(trackerQuery, [dateParam, normalizedUser])
+            : await pool.query(trackerQuery, [dateParam]);
       } else {
         // Current view: load today's subtasks from finops_tracker (IST date)
         const trackerTodayQuery = `
@@ -367,11 +419,15 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE t.deleted_at IS NULL
+          ${normalizedUser && !isManager && !callerIsAdmin ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
 
-        result = await pool.query(trackerTodayQuery);
+        result =
+          normalizedUser && !isManager && !callerIsAdmin
+            ? await pool.query(trackerTodayQuery, [normalizedUser])
+            : await pool.query(trackerTodayQuery);
       }
 
       const tasks = result.rows.map((row) => {
@@ -432,7 +488,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
-      console.log("�� Database connection refused - using mock data");
+      console.log("���� Database connection refused - using mock data");
       return res.json(mockFinOpsTasks);
     }
 
@@ -508,9 +564,10 @@ router.post("/tasks", async (req: Request, res: Response) => {
               INSERT INTO finops_subtasks (
                 task_id, name, description, start_time, sla_hours, sla_minutes, order_position
               ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+              RETURNING id
             `;
 
-            await client.query(subtaskQuery, [
+            const subtaskResult = await client.query(subtaskQuery, [
               taskId,
               subtask.name,
               subtask.description || null,
@@ -519,6 +576,38 @@ router.post("/tasks", async (req: Request, res: Response) => {
               subtask.sla_minutes,
               subtask.order_position,
             ]);
+
+            console.log(
+              "✅ sub Task inserted with ID:",
+              subtaskResult.rows[0].id,
+            );
+
+            const subtaskId = subtaskResult.rows[0].id;
+
+            // Upsert into finops_tracker for datewise tracking (do not touch finops_subtasks table)
+            await pool.query(
+              `
+              INSERT INTO finops_tracker (
+                run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position
+              ) VALUES (
+                (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $7, $8, $9, $10
+              )
+              ON CONFLICT (run_date, period, task_id, subtask_id)
+              DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+              `,
+              [
+                String(duration || "daily"),
+                taskId,
+                task_name || "",
+                subtaskId,
+                subtask.name || "",
+                subtask.start_time || null,
+                subtask.description || null,
+                subtask.sla_hours || null,
+                subtask.sla_minutes || null,
+                subtask.order_position || null,
+              ],
+            );
           }
         }
 
@@ -578,6 +667,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
       task_name,
       description,
       assigned_to,
+      client_id,
+      client_name,
       reporting_managers,
       escalation_managers,
       effective_from,
@@ -603,8 +694,10 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
             effective_from = $6,
             duration = $7,
             is_active = $8,
+            client_id=$9,
+            client_name=$10,
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $9
+          WHERE id = $11
         `;
 
         await client.query(taskQuery, [
@@ -616,6 +709,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
           effective_from,
           duration,
           is_active,
+          client_id,
+          client_name,
           taskId,
         ]);
 
@@ -640,7 +735,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
 
           if (!isNaN(numericId) && existingIds.has(numericId)) {
             incomingIds.add(numericId);
-            // Update only editable fields; preserve status/started_at/completed_at
+            // Update editable fields; allow explicit status updates and sync to today's tracker
+            const incomingStatus = (subtask as any).status ?? null;
             await client.query(
               `UPDATE finops_subtasks
                SET name = $1,
@@ -649,8 +745,9 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
                    sla_hours = COALESCE($4, sla_hours),
                    sla_minutes = COALESCE($5, sla_minutes),
                    order_position = $6,
+                   status = COALESCE($8, status),
                    updated_at = CURRENT_TIMESTAMP
-               WHERE task_id = $7 AND id = $8`,
+               WHERE task_id = $7 AND id = $9`,
               [
                 subtask.name,
                 subtask.description || null,
@@ -659,9 +756,30 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
                 (subtask as any).sla_minutes ?? null,
                 subtask.order_position ?? 0,
                 taskId,
+                incomingStatus,
                 numericId,
               ],
             );
+
+            // Also update today's finops_tracker row for this subtask to reflect new scheduled time/status
+            try {
+              await client.query(
+                `UPDATE finops_tracker
+                 SET scheduled_time = COALESCE($1, scheduled_time),
+                     status = COALESCE($2, status),
+                     started_at = CASE WHEN $2 = 'in_progress' THEN COALESCE(started_at, NOW()) ELSE started_at END,
+                     completed_at = CASE WHEN $2 = 'completed' THEN COALESCE(completed_at, NOW()) ELSE completed_at END,
+                     updated_at = NOW()
+                 WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+                   AND task_id = $3 AND subtask_id = $4`,
+                [subtask.start_time || null, incomingStatus, taskId, numericId],
+              );
+            } catch (err) {
+              console.warn(
+                "Failed to sync finops_tracker for updated subtask",
+                err,
+              );
+            }
           } else {
             // Insert new subtask; allow optional status from payload, default to 'pending'
             await client.query(
@@ -1225,20 +1343,19 @@ async function logActivity(
 ) {
   try {
     if (await isDatabaseAvailable()) {
-      const query = `
-        INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details, ip_address, user_agent)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-      `;
-
-      await pool.query(query, [
-        taskId,
-        subtaskId,
-        action,
-        userName,
-        details,
-        "system",
-        "finops-api",
-      ]);
+      // const query = `
+      //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details, ip_address, user_agent)
+      //   VALUES ($1, $2, $3, $4, $5, $6, $7)
+      // `;
+      // await pool.query(query, [
+      //   taskId,
+      //   subtaskId,
+      //   action,
+      //   userName,
+      //   details,
+      //   "system",
+      //   "finops-api",
+      // ]);
     } else {
       // Mock logging
       mockActivityLog.push({
@@ -1271,15 +1388,15 @@ async function logUserActivity(userName: string, taskId: number) {
         [userName, today],
       );
 
-      if (existingActivity.rows[0].count === "0") {
-        await pool.query(
-          `
-          INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-          VALUES ($1, NULL, 'daily_login', $2, 'User first activity of the day')
-        `,
-          [taskId, userName],
-        );
-      }
+      // if (existingActivity.rows[0].count === "0") {
+      //   await pool.query(
+      //     `
+      //     INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+      //     VALUES ($1, NULL, 'daily_login', $2, 'User first activity of the day')
+      //   `,
+      //     [taskId, userName],
+      //   );
+      // }
     }
   } catch (error) {
     console.error("Error logging user activity:", error);
@@ -1617,19 +1734,18 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
       );
 
       let inserted = 0;
+      const todayStr = new Date().toISOString().slice(0, 10);
       for (const row of tasksRes.rows) {
         if (!row.subtask_id) continue;
-        const initialStatus =
-          runDate === new Date().toISOString().slice(0, 10)
-            ? "pending"
-            : "completed";
+        // For today and future dates keep tasks pending; past dates mark as completed
+        const initialStatus = runDate >= todayStr ? "pending" : "completed";
         const period = String(row.duration || "daily");
         const result = await pool.query(
           `INSERT INTO finops_tracker (
-             run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
-           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-           ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
-           RETURNING id`,
+           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+         ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+         RETURNING id`,
           [
             runDate,
             period,
@@ -1953,11 +2069,12 @@ router.post(
             id SERIAL PRIMARY KEY,
             task_id INTEGER NOT NULL,
             subtask_id INTEGER NOT NULL,
-            alert_key TEXT NOT NULL,
+            alert_group TEXT NOT NULL,
+            alert_bucket INTEGER NOT NULL DEFAULT -1,
             title TEXT,
             next_call_at TIMESTAMP,
             created_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE(task_id, subtask_id, alert_key)
+            UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
           )
         `);
 
@@ -1968,9 +2085,9 @@ router.post(
             : fallbackTitle;
 
         const reserve = await pool.query(
-          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-           VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
-           ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+           VALUES ($1, $2, 'replica_down_overdue', -1, $3, NOW())
+           ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
            RETURNING id`,
           [taskId, Number(subtaskId), title],
         );

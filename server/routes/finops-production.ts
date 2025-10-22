@@ -159,22 +159,22 @@ async function sendReplicaDownAlertOnce(
         new Set([...assigned_to_parsed, ...reporting_managers_parsed]),
       );
       const immediateUserIds = await getUserIdsFromNames(immediateNames);
-      if (immediateUserIds.length) {
-        fetch("https://pulsealerts.mylapay.com/direct-call", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            receiver: "CRM_Switch",
-            title,
-            user_ids: immediateUserIds,
-          }),
-        }).catch((err) =>
-          console.warn(
-            "[finops-production] Immediate direct-call error:",
-            (err as Error).message,
-          ),
-        );
-      }
+      // if (immediateUserIds.length) {
+      //   fetch("https://pulsealerts.mylapay.com/direct-call", {
+      //     method: "POST",
+      //     headers: { "Content-Type": "application/json" },
+      //     body: JSON.stringify({
+      //       receiver: "CRM_Switch",
+      //       title,
+      //       user_ids: immediateUserIds,
+      //     }),
+      //   }).catch((err) =>
+      //     console.warn(
+      //       "[finops-production] Immediate direct-call error:",
+      //       (err as Error).message,
+      //     ),
+      //   );
+      // }
     } catch (err) {
       console.warn(
         "[finops-production] Immediate direct-call user resolution failed:",
@@ -197,6 +197,57 @@ router.get("/tasks", async (req: Request, res: Response) => {
     await ensureExternalAlertsSchema();
 
     const dateParam = (req.query.date as string) || null;
+
+    // Server-side user filter support: normalized caller name and manager detection
+    const userNameRaw = (req.query.user_name as string) || null;
+    const normalizedUser = userNameRaw
+      ? userNameRaw.trim().toLowerCase()
+      : null;
+    // Accept explicit role from caller (if provided by client) to allow admin bypass
+    const callerRole =
+      (req.query.user_role as string) || (req.query.role as string) || null;
+    let callerIsAdmin = callerRole === "admin";
+    // If role was not provided, try to look up the user's role from users table by matching name or email
+    if (!callerIsAdmin && normalizedUser) {
+      try {
+        const ur = await pool.query(
+          `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
+          [normalizedUser],
+        );
+        if (ur.rows.length && ur.rows[0].role === "admin") callerIsAdmin = true;
+      } catch (e) {
+        console.warn(
+          "Failed to resolve caller role from users table:",
+          (e as Error).message,
+        );
+      }
+    }
+    let callerIsManager = false;
+    if (normalizedUser && !callerIsAdmin) {
+      try {
+        const mg = await pool.query(
+          `SELECT 1 FROM finops_tasks t WHERE t.deleted_at IS NULL AND (
+              EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
+              OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
+            ) LIMIT 1`,
+          [normalizedUser],
+        );
+        callerIsManager = mg.rows.length > 0;
+      } catch (e) {
+        console.warn("Manager detection failed:", (e as Error).message);
+      }
+    }
+
+    // Build filter clauses used inside SQL templates (different param indices)
+    const filterDateClause =
+      normalizedUser && !callerIsManager && !callerIsAdmin
+        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)"
+        : "";
+
+    const filterTodayClause =
+      normalizedUser && !callerIsManager && !callerIsAdmin
+        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)"
+        : "";
 
     let result;
     if (dateParam) {
@@ -278,10 +329,14 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ) AS s
         ) AS sub ON TRUE
         WHERE t.deleted_at IS NULL
+        ${filterDateClause}
         ORDER BY t.created_at DESC
       `;
 
-      result = await pool.query(trackerQuery, [dateParam]);
+      result =
+        normalizedUser && !callerIsManager && !callerIsAdmin
+          ? await pool.query(trackerQuery, [dateParam, normalizedUser])
+          : await pool.query(trackerQuery, [dateParam]);
     } else {
       // Today's view: read from finops_tracker for today's IST date
       const trackerTodayQuery = `
@@ -319,11 +374,15 @@ router.get("/tasks", async (req: Request, res: Response) => {
         FROM finops_tasks t
         LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
         WHERE t.deleted_at IS NULL
+        ${filterTodayClause}
         GROUP BY t.id
         ORDER BY t.created_at DESC
       `;
 
-      result = await pool.query(trackerTodayQuery);
+      result =
+        normalizedUser && !callerIsManager && !callerIsAdmin
+          ? await pool.query(trackerTodayQuery, [normalizedUser])
+          : await pool.query(trackerTodayQuery);
     }
 
     const tasks = result.rows.map((row) => ({
@@ -436,18 +495,18 @@ router.post("/tasks", async (req: Request, res: Response) => {
       await client.query("COMMIT");
 
       // Log activity
-      await client.query(
-        `
-        INSERT INTO finops_activity_log (task_id, action, user_name, details)
-        VALUES ($1, $2, $3, $4)
-      `,
-        [
-          task.id,
-          "created",
-          assigned_to,
-          `Task "${task_name}" created with ${subtaskResults.length} subtasks`,
-        ],
-      );
+      // await client.query(
+      //   `
+      //   INSERT INTO finops_activity_log (task_id, action, user_name, details)
+      //   VALUES ($1, $2, $3, $4)
+      // `,
+      //   [
+      //     task.id,
+      //     "created",
+      //     assigned_to,
+      //     `Task "${task_name}" created with ${subtaskResults.length} subtasks`,
+      //   ],
+      // );
 
       const response = {
         ...task,
@@ -635,16 +694,16 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       if (delay_reason && status === "overdue")
         activityDetails += `. Delay reason: ${delay_reason}`;
 
-      await client.query(
-        `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details) VALUES ($1, $2, $3, $4, $5)`,
-        [
-          updated.task_id,
-          subtaskId,
-          "updated",
-          user_name || "System",
-          activityDetails,
-        ],
-      );
+      // await client.query(
+      //   `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details) VALUES ($1, $2, $3, $4, $5)`,
+      //   [
+      //     updated.task_id,
+      //     subtaskId,
+      //     "updated",
+      //     user_name || "System",
+      //     activityDetails,
+      //   ],
+      // );
 
       // Trigger alerts if needed
       if (status === "overdue") {
@@ -777,16 +836,16 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       [row.task_id, subtaskId, approver_name, note || null],
     );
 
-    await pool.query(
-      `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-       VALUES ($1, $2, 'approved', $3, $4)`,
-      [
-        row.task_id,
-        subtaskId,
-        approver_name,
-        note ? `Approved: ${note}` : "Approved",
-      ],
-    );
+    // await pool.query(
+    //   `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+    //    VALUES ($1, $2, 'approved', $3, $4)`,
+    //   [
+    //     row.task_id,
+    //     subtaskId,
+    //     approver_name,
+    //     note ? `Approved: ${note}` : "Approved",
+    //   ],
+    // );
 
     res.json({ ok: true, approved: true });
   } catch (e: any) {
@@ -1202,19 +1261,19 @@ router.post("/tasks/overdue-reason", async (req: Request, res: Response) => {
         ]);
 
         // Log activity
-        await client.query(
-          `
-          INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-          VALUES ($1, $2, $3, $4, $5)
-        `,
-          [
-            task_id,
-            subtask_id,
-            "overdue_reason_provided",
-            "User",
-            `Overdue reason provided: ${reason}`,
-          ],
-        );
+        // await client.query(
+        //   `
+        //   INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
+        //   VALUES ($1, $2, $3, $4, $5)
+        // `,
+        //   [
+        //     task_id,
+        //     subtask_id,
+        //     "overdue_reason_provided",
+        //     "User",
+        //     `Overdue reason provided: ${reason}`,
+        //   ],
+        // );
 
         await client.query("COMMIT");
 
@@ -1303,7 +1362,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
         AND t.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM finops_external_alerts fea
-          WHERE fea.task_id = ft.task_id AND fea.subtask_id = ft.subtask_id AND fea.alert_key = 'replica_down_overdue'
+          WHERE fea.task_id = ft.task_id AND fea.subtask_id = ft.subtask_id AND fea.alert_group = 'replica_down_overdue' AND fea.alert_bucket = -1
         )
       ORDER BY ft.subtask_id DESC
       LIMIT 100
@@ -1417,12 +1476,11 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
     );
 
     let inserted = 0;
+    const todayStr = new Date().toISOString().slice(0, 10);
     for (const row of tasksRes.rows) {
       if (!row.subtask_id) continue;
-      const initialStatus =
-        runDate === new Date().toISOString().slice(0, 10)
-          ? "pending"
-          : "completed";
+      // For today and future dates keep tasks pending; past dates mark as completed
+      const initialStatus = runDate >= todayStr ? "pending" : "completed";
       const period = String(row.duration || "daily");
       const result = await pool.query(
         `INSERT INTO finops_tracker (

@@ -144,6 +144,7 @@ import ProposalList from "@/pages/ProposalList";
 import FollowUpTracker from "@/pages/FollowUpTracker";
 import PipelineSettings from "@/pages/PipelineSettings";
 import Tickets from "@/pages/Tickets";
+import Mails from "@/pages/Mails";
 import AdminTemplates from "@/pages/AdminTemplates";
 import FinOpsDashboard from "@/pages/FinOpsDashboard";
 import FinOpsAutomation from "@/pages/FinOpsAutomation";
@@ -297,6 +298,17 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <Tickets />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/mails"
+        element={
+          <ProtectedRoute allowedRoles={["admin", "development", "finops"]}>
+            <DashboardLayout>
+              <Mails />
             </DashboardLayout>
           </ProtectedRoute>
         }
@@ -470,7 +482,7 @@ function AppRoutes() {
       <Route
         path="/finops"
         element={
-          <ProtectedRoute allowedRoles={["admin", "finance"]}>
+          <ProtectedRoute allowedRoles={["admin", "finance", "finops"]}>
             <DashboardLayout>
               <FinOpsAutomation />
             </DashboardLayout>
@@ -918,7 +930,7 @@ function AppRoutes() {
       <Route
         path="/product"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <ProductWorkflow />
             </DashboardLayout>
@@ -929,7 +941,7 @@ function AppRoutes() {
       <Route
         path="/product/workflow"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <ProductWorkflow />
             </DashboardLayout>
@@ -940,7 +952,7 @@ function AppRoutes() {
       <Route
         path="/product/dashboard"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <ProductManagement />
             </DashboardLayout>
@@ -951,7 +963,7 @@ function AppRoutes() {
       <Route
         path="/product/deployment/new"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <NewDeployment />
             </DashboardLayout>
@@ -962,7 +974,7 @@ function AppRoutes() {
       <Route
         path="/product/deployment/:id"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <DeploymentDetails />
             </DashboardLayout>
@@ -973,7 +985,7 @@ function AppRoutes() {
       <Route
         path="/product/deployment/:id/edit"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <DeploymentEdit />
             </DashboardLayout>
@@ -984,7 +996,7 @@ function AppRoutes() {
       <Route
         path="/product/pipeline"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <PlaceholderPage
                 title="Release Pipeline"
@@ -998,7 +1010,7 @@ function AppRoutes() {
       <Route
         path="/product/health"
         element={
-          <ProtectedRoute allowedRoles={["admin", "product"]}>
+          <ProtectedRoute allowedRoles={["admin", "product", "switch_team"]}>
             <DashboardLayout>
               <PlaceholderPage
                 title="System Health"

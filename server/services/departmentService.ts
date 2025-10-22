@@ -23,6 +23,9 @@ export interface UserDepartmentInfo {
   permissions: string[];
   jobTitle?: string;
   ssoId?: string;
+  surname?: string;
+  givenName?: string;
+  displayName?: string;
 }
 
 export class DepartmentService {
@@ -46,7 +49,7 @@ export class DepartmentService {
   }
 
   // Map departments to appropriate user roles
-  private static getDepartmentRole(department: string): string {
+  static getDepartmentRole(department: string): string {
     // If no department provided, assign 'unknown' role for manual assignment
     if (
       !department ||
@@ -66,7 +69,8 @@ export class DepartmentService {
       backend: "development", // Backend department gets 'development' role (backend not allowed in constraint)
       infra: "infra",
       admin: "admin", // Admin department gets 'admin' role
-      administration: "admin", // Administration department also gets 'admin' role
+      administration: "admin",
+      switch_team: "switch_team", // Administration department also gets 'admin' role
     };
 
     return departmentRoleMap[department] || "unknown"; // Default to 'unknown' for unrecognized departments
@@ -83,6 +87,9 @@ export class DepartmentService {
           u.department,
           u.job_title,
           u.sso_id,
+          u.last_name as surname,
+          u.first_name as givenName,
+          (u.first_name || ' ' || u.last_name) AS displayName,
           d.permissions as dept_permissions,
           udp.permissions as additional_permissions
         FROM users u
@@ -105,6 +112,9 @@ export class DepartmentService {
         userId: row.user_id,
         email: row.email,
         department: row.department,
+        displayName: row.displayName,
+        givenName: row.givenName,
+        surname: row.surname,
         permissions: [
           ...new Set([...deptPermissions, ...additionalPermissions]),
         ],
@@ -129,6 +139,9 @@ export class DepartmentService {
           u.department,
           u.job_title,
           u.sso_id,
+          u.surname,
+          u.givenName,
+          u.displayName,
           d.permissions as dept_permissions,
           udp.permissions as additional_permissions
         FROM users u
@@ -176,7 +189,11 @@ export class DepartmentService {
 
       // Find user in our department mapping (fresh read from disk)
       const { users } = this.readUserDepartments();
-      const userMapping = users.find((u: any) => u.email === ssoUser.mail);
+      let userMapping = users.find(
+        (u: any) =>
+          String(u.email || "").toLowerCase() ===
+          String(ssoUser.mail || "").toLowerCase(),
+      );
 
       if (!userMapping) {
         console.warn(`❌ User ${ssoUser.mail} not found in department mapping`);
@@ -186,7 +203,44 @@ export class DepartmentService {
             `Available users in mapping: ${allUsers.map((u: any) => u.email).join(", ")}`,
           );
         } catch {}
-        return null;
+
+        // Fall back to checking the database for existing user info
+        try {
+          const dbUserInfo = await this.getUserDepartmentByEmail(ssoUser.mail);
+          if (dbUserInfo) {
+            console.log(
+              `ℹ️ Found user in database for ${ssoUser.mail}, using DB info`,
+              JSON.stringify(dbUserInfo),
+            );
+            // Build a minimal userMapping from DB info for consistent processing below
+            const fallbackMapping: any = {
+              email: dbUserInfo.email,
+              givenName: dbUserInfo.givenName,
+              surname: dbUserInfo.surname,
+              displayName: dbUserInfo.displayName,
+              department: dbUserInfo.department,
+              ssoId: dbUserInfo.ssoId,
+              jobTitle: dbUserInfo.jobTitle,
+            };
+
+            console.log(`✅ Using fallback mapping for ${ssoUser.mail}:`, {
+              department: fallbackMapping.department,
+              role: this.getDepartmentRole(fallbackMapping.department),
+            });
+
+            // assign to userMapping variable so rest of flow continues
+            userMapping = fallbackMapping as any;
+          } else {
+            // Nothing to do
+            return null;
+          }
+        } catch (err) {
+          console.error(
+            "Error while falling back to DB lookup for SSO user:",
+            err,
+          );
+          return null;
+        }
       }
 
       console.log(`✅ Found user mapping for ${ssoUser.mail}:`, {
@@ -215,8 +269,42 @@ export class DepartmentService {
       let userId: number;
 
       if (existingUser.rows.length > 0) {
-        // Update existing user
+        // Update existing user but preserve DB values when SSO/mapping doesn't provide them
+
+        console.log("Existing User");
         userId = existingUser.rows[0].id;
+
+        // Read current DB values to avoid overwriting with empty/unknown values
+        const existingFull = await pool.query(
+          `SELECT first_name, last_name, department, azure_object_id, job_title, sso_provider FROM users WHERE id = $1`,
+          [userId],
+        );
+        const existingRow = existingFull.rows[0] || {};
+
+        const newFirstName =
+          userMapping.givenName && String(userMapping.givenName).trim()
+            ? userMapping.givenName
+            : existingRow.first_name ||
+              (userMapping.displayName
+                ? String(userMapping.displayName).split(" ")[0]
+                : "Unknown");
+
+        const newLastName =
+          userMapping.surname && String(userMapping.surname).trim()
+            ? userMapping.surname
+            : existingRow.last_name ||
+              (userMapping.displayName
+                ? String(userMapping.displayName).split(" ").slice(1).join(" ")
+                : "User");
+
+        const newDepartment =
+          userMapping.department || existingRow.department || null;
+        const newAzureId =
+          userMapping.ssoId || existingRow.azure_object_id || null;
+        const newJobTitle =
+          userMapping.jobTitle || existingRow.job_title || "Employee";
+        const newProvider = existingRow.sso_provider || "microsoft";
+
         await pool.query(
           `
           UPDATE users
@@ -226,22 +314,18 @@ export class DepartmentService {
             department = $3,
             azure_object_id = $4,
             job_title = $5,
-            role = $6,
-            sso_provider = $8,
+            sso_provider = $6,
             updated_at = NOW()
           WHERE id = $7
         `,
           [
-            userMapping.givenName || userMapping.displayName || "Unknown",
-            userMapping.surname ||
-              userMapping.displayName?.split(" ").slice(1).join(" ") ||
-              "User",
-            userMapping.department,
-            userMapping.ssoId,
-            userMapping.jobTitle || "Employee",
-            this.getDepartmentRole(userMapping.department), // Role based on department
+            newFirstName,
+            newLastName,
+            newDepartment,
+            newAzureId,
+            newJobTitle,
+            newProvider,
             userId,
-            "microsoft", // sso_provider
           ],
         );
       } else {

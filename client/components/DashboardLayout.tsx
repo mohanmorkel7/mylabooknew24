@@ -21,6 +21,7 @@ import {
   Target,
   FileText,
   MessageCircle,
+  Mail,
   AlertCircle,
   Ticket,
   DollarSign,
@@ -57,8 +58,7 @@ const navigationItems: NavigationItem[] = [
     name: "Overview",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads", "vc", "product"],
+    roles: ["admin", "sales", "product", "finops"]
   },
   // b) Templates (was Admin Panel)
   {
@@ -120,14 +120,14 @@ const navigationItems: NavigationItem[] = [
     name: "FinOps",
     href: "/finops",
     icon: DollarSign,
-    roles: ["admin", "finance"],
+    roles: ["admin", "finance", "finops"],
   },
   // j) Product Management
   {
     name: "Product Management",
     href: "/product",
     icon: Grid3X3,
-    roles: ["admin", "product"],
+    roles: ["admin", "product", "switch_team"],
   },
   // Keep Proposals (not specified in ordering list)
   {
@@ -141,7 +141,7 @@ const navigationItems: NavigationItem[] = [
     name: "Support Tickets",
     href: "/tickets",
     icon: Ticket,
-    roles: ["admin", "sales", "product"],
+    roles: ["admin", "sales", "product","switch_team"],
   },
   // l) Alerts & notifications
   {
@@ -150,7 +150,14 @@ const navigationItems: NavigationItem[] = [
     icon: Bell,
     roles: ["admin", "sales", "product"],
   },
-  // m) Settings
+  // m) Mails (Outlook)
+  {
+    name: "Mails",
+    href: "/mails",
+    icon: Mail,
+    roles: ["admin","finance", "finops"]
+  },
+  // n) Settings
   {
     name: "Settings",
     icon: Settings,
@@ -352,7 +359,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     if (item.permissions) {
       return hasAnyPermission(item.permissions);
     }
-    return item.roles.includes(user.role);
+    const effectiveRole = user.role === "unknown" ? "development" : user.role;
+    return item.roles.includes(effectiveRole as UserRole);
   });
 
   const [notifications, setNotifications] = React.useState<Notification[]>([]);
