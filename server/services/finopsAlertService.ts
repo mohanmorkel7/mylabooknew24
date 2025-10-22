@@ -188,10 +188,15 @@ class FinOpsAlertService {
     const lockKey = 1234567890; // arbitrary constant
     let haveDbLock = false;
     try {
-      const lockRes = await pool.query(`SELECT pg_try_advisory_lock($1) as ok`, [lockKey]);
+      const lockRes = await pool.query(
+        `SELECT pg_try_advisory_lock($1) as ok`,
+        [lockKey],
+      );
       haveDbLock = !!(lockRes.rows && lockRes.rows[0] && lockRes.rows[0].ok);
       if (!haveDbLock) {
-        console.log("Another process holds the SLA advisory lock — skipping this run");
+        console.log(
+          "Another process holds the SLA advisory lock — skipping this run",
+        );
         this.isCheckingSLA = false;
         return;
       }
