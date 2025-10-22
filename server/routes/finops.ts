@@ -564,6 +564,7 @@ router.post("/tasks", async (req: Request, res: Response) => {
               INSERT INTO finops_subtasks (
                 task_id, name, description, start_time, sla_hours, sla_minutes, order_position
               ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+              RETURNING id
             `;
 
             const subtaskResult = await client.query(subtaskQuery, [
