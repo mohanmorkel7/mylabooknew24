@@ -326,7 +326,8 @@ class FinOpsAlertService {
               ...this.parseManagers(managers.escalation_managers),
             ]),
           );
-          const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
+          const immediateUserIds =
+            await this.getUserIdsFromNames(immediateNames);
 
           const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
 
