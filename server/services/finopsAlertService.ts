@@ -500,7 +500,8 @@ class FinOpsAlertService {
         // Repeat calls with configured interval
         if (minutes >= initialDelay + repeatInterval) {
           const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
-          const alertKey = `replica_down_overdue_${bucket}`;
+          const alertGroup = `replica_down_overdue`;
+          const alertBucket = bucket;
 
           // Try to atomically reserve a repeat alert for this bucket. If another process already reserved it, skip.
           const names = Array.from(
