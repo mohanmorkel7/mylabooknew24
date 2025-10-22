@@ -442,6 +442,53 @@ export async function initializeDatabase() {
       );
     }
 
+    // Normalize finops_external_alerts schema (alert_group/text + alert_bucket int)
+    try {
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS finops_external_alerts (
+          id SERIAL PRIMARY KEY,
+          task_id INTEGER NOT NULL,
+          subtask_id INTEGER NOT NULL,
+          alert_group TEXT NOT NULL,
+          alert_bucket INTEGER NOT NULL DEFAULT -1,
+          title TEXT,
+          next_call_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      // Add columns if missing
+      await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+      await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+      await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+
+      // If legacy alert_key exists and alert_group is NULL, migrate data then drop alert_key
+      const colInfo = await client.query(`
+        SELECT column_name, data_type, udt_name
+        FROM information_schema.columns
+        WHERE table_name = 'finops_external_alerts' AND column_name IN ('alert_key','alert_group')
+      `);
+      const hasAlertKey = colInfo.rows.some((r: any) => r.column_name === 'alert_key');
+      const alertGroupInfo = colInfo.rows.find((r: any) => r.column_name === 'alert_group');
+
+      if (hasAlertKey) {
+        await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT`);
+        await client.query(`UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)`);
+        await client.query(`ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group`);
+        await client.query(`ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group`);
+        await client.query(`ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key`);
+      } else if (alertGroupInfo && alertGroupInfo.data_type === 'ARRAY') {
+        // Convert text[] -> text using array_to_string
+        await client.query(`ALTER TABLE finops_external_alerts ALTER COLUMN alert_group TYPE TEXT USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END`);
+      }
+
+      // Ensure unique index on (task_id, subtask_id, alert_group, alert_bucket)
+      await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
+
+      console.log('finops_external_alerts schema normalized');
+    } catch (e) {
+      console.log('finops_external_alerts schema normalization skipped or failed:', (e as any).message);
+    }
+
     // Always try to apply Fund Raises table migration
     try {
       const fundRaisesMigrationPath = path.join(
