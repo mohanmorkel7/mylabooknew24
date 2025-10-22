@@ -1362,7 +1362,7 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
         AND t.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM finops_external_alerts fea
-          WHERE fea.task_id = ft.task_id AND fea.subtask_id = ft.subtask_id AND fea.alert_key = 'replica_down_overdue'
+          WHERE fea.task_id = ft.task_id AND fea.subtask_id = ft.subtask_id AND fea.alert_group = 'replica_down_overdue' AND fea.alert_bucket = -1
         )
       ORDER BY ft.subtask_id DESC
       LIMIT 100
