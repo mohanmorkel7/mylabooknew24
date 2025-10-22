@@ -935,7 +935,19 @@ class FinOpsAlertService {
     subject: string,
     htmlMessage: string,
   ): Promise<void> {
-    for (const recipient of recipients) {
+    // Deduplicate by email (or name fallback) to avoid multiple sends to the same person
+    const unique: EmailRecipient[] = [];
+    const seen = new Set<string>();
+    for (const r of recipients) {
+      const key = String(r.email || r.name || "").toLowerCase();
+      if (!key) continue;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(r);
+      }
+    }
+
+    for (const recipient of unique) {
       try {
         await this.emailTransporter.sendMail({
           from: process.env.SMTP_FROM || "finops@company.com",
