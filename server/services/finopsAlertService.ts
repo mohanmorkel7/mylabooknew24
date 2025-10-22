@@ -722,9 +722,9 @@ class FinOpsAlertService {
       `);
 
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+                 VALUES ($1, $2, $3, -1, $4, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
          RETURNING id`,
         [taskId, Number(subtaskId), "replica_down_overdue", title],
       );
