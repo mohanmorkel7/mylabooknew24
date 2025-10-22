@@ -566,7 +566,7 @@ router.post("/tasks", async (req: Request, res: Response) => {
               ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             `;
 
-            await client.query(subtaskQuery, [
+             const subtaskResult = await client.query(subtaskQuery, [
               taskId,
               subtask.name,
               subtask.description || null,
@@ -575,6 +575,37 @@ router.post("/tasks", async (req: Request, res: Response) => {
               subtask.sla_minutes,
               subtask.order_position,
             ]);
+
+
+            console.log("✅ sub Task inserted with ID:", subtaskResult.rows[0].id);
+
+            const subtaskId = subtaskResult.rows[0].id;
+
+            // Upsert into finops_tracker for datewise tracking (do not touch finops_subtasks table)
+            await pool.query(
+              `
+              INSERT INTO finops_tracker (
+                run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position
+              ) VALUES (
+                (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $7, $8, $9, $10
+              )
+              ON CONFLICT (run_date, period, task_id, subtask_id)
+              DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+              `,
+              [
+                String(duration || "daily"),
+                taskId,
+                task_name || "",
+                subtaskId,
+                subtask.name || "",
+                subtask.start_time || null,
+                subtask.description || null,
+                subtask.sla_hours || null,
+                subtask.sla_minutes || null,
+                subtask.order_position || null,
+              ],
+            );
+            
           }
         }
 
