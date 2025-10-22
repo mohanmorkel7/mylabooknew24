@@ -321,27 +321,25 @@ class FinOpsAlertService {
           immediate_user_ids: immediateUserIds,
         });
 
-        const response = await fetch(
-          "https://pulsealerts.mylapay.com/direct-call",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              receiver: "CRM_Switch",
-              title,
-              user_ids: immediateUserIds,
-            }),
-          },
-        );
+        // Reserve an external alert record to avoid duplicate immediate alerts and centralize external calls
+        try {
+          await pool.query(`
+            CREATE TABLE IF NOT EXISTS finops_external_alerts (
+              id SERIAL PRIMARY KEY,
+              task_id INTEGER NOT NULL,
+              subtask_id INTEGER NOT NULL,
+              alert_key TEXT NOT NULL,
+              title TEXT,
+              next_call_at TIMESTAMP,
+              created_at TIMESTAMP DEFAULT NOW(),
+              UNIQUE(task_id, subtask_id, alert_key)
+            )
+          `);
+        } catch (err) {
+          console.warn("Error ensuring finops_external_alerts table:", err);
+        }
 
-        const subtaskUpdateQuery = `
-            UPDATE finops_subtasks
-            SET status = 'overdue'
-            WHERE id = $1
-          `;
-        await pool.query(subtaskUpdateQuery, [subtask.id]);
-
-        // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (30 minute window)
+        // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
         try {
           const existing = await pool.query(
             `SELECT id FROM finops_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue' AND created_at > (CURRENT_TIMESTAMP - INTERVAL '15 minutes') LIMIT 1`,
@@ -356,8 +354,28 @@ class FinOpsAlertService {
           }
         } catch (err) {
           console.warn("Error while checking existing overdue alerts:", err);
-          // proceed to send alert to avoid missing critical notifications
+          // proceed to attempt reservation to avoid missing critical notifications
         }
+
+        const reserve = await pool.query(
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+               VALUES ($1, $2, $3, $4, NOW())
+               ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+               RETURNING id`,
+          [task_id, Number(subtask.id), "replica_down_overdue", title],
+        );
+
+        if (reserve.rows.length === 0) {
+          console.log(`Skipping immediate external call for task ${task_id} subtask ${subtask.id} — already reserved`);
+          return;
+        }
+
+        const subtaskUpdateQuery = `
+            UPDATE finops_subtasks
+            SET status = 'overdue'
+            WHERE id = $1
+          `;
+        await pool.query(subtaskUpdateQuery, [subtask.id]);
 
         // Mark as overdue and send alert
         await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
