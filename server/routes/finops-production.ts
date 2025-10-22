@@ -12,16 +12,16 @@ async function ensureExternalAlertsSchema(): Promise<void> {
       id SERIAL PRIMARY KEY,
       task_id INTEGER NOT NULL,
       subtask_id INTEGER NOT NULL,
-      alert_key TEXT NOT NULL,
+      alert_group TEXT NOT NULL,
+      alert_bucket INTEGER NOT NULL DEFAULT -1,
       title TEXT,
       next_call_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT NOW(),
-      UNIQUE(task_id, subtask_id, alert_key)
+      created_at TIMESTAMP DEFAULT NOW()
     )
   `);
-  await pool.query(
-    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
-  );
+  await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+  await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 }
 
 // Production database availability check - fail fast if no database
@@ -101,18 +101,18 @@ async function sendReplicaDownAlertOnce(
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL,
     subtask_id INTEGER NOT NULL,
-    alert_key TEXT NOT NULL,
+    alert_group TEXT NOT NULL,
+    alert_bucket INTEGER NOT NULL DEFAULT -1,
     title TEXT,
     next_call_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(task_id, subtask_id, alert_key)
+    created_at TIMESTAMP DEFAULT NOW()
   )
     `);
 
     const reserve = await pool.query(
-      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-       ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+       VALUES ($1, $2, $3, -1, $4, NOW() + INTERVAL '15 minutes')
+       ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
        RETURNING id`,
       [taskId, Number(subtaskId), "replica_down_overdue", title],
     );
@@ -1334,11 +1334,11 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL,
     subtask_id INTEGER NOT NULL,
-    alert_key TEXT NOT NULL,
+    alert_group TEXT NOT NULL,
+    alert_bucket INTEGER NOT NULL DEFAULT -1,
     title TEXT,
     next_call_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(task_id, subtask_id, alert_key)
+    created_at TIMESTAMP DEFAULT NOW()
   )
     `);
 
@@ -1377,9 +1377,9 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
 
       // Reserve to avoid duplicates
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-         VALUES ($1, $2, 'replica_down_overdue', $3, NOW() + INTERVAL '15 minutes')
-         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+         VALUES ($1, $2, 'replica_down_overdue', -1, $3, NOW() + INTERVAL '15 minutes')
+         ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],
       );
