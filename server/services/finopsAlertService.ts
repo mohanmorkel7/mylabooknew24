@@ -519,11 +519,11 @@ class FinOpsAlertService {
           const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
           const reserveRepeat = await pool.query(
-            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
                  RETURNING id`,
-            [row.task_id, row.subtask_id, alertKey, title],
+            [row.task_id, row.subtask_id, alertGroup, alertBucket, title],
           );
 
           if (reserveRepeat.rows.length === 0) {
