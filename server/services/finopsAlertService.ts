@@ -712,11 +712,12 @@ class FinOpsAlertService {
           id SERIAL PRIMARY KEY,
           task_id INTEGER NOT NULL,
           subtask_id INTEGER NOT NULL,
-          alert_key TEXT NOT NULL,
+          alert_group TEXT NOT NULL,
+          alert_bucket INTEGER NOT NULL DEFAULT -1,
           title TEXT,
           next_call_at TIMESTAMP,
           created_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(task_id, subtask_id, alert_key)
+          UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
         )
       `);
 
