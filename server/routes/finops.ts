@@ -775,7 +775,10 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
                 [subtask.start_time || null, incomingStatus, taskId, numericId],
               );
             } catch (err) {
-              console.warn('Failed to sync finops_tracker for updated subtask', err);
+              console.warn(
+                "Failed to sync finops_tracker for updated subtask",
+                err,
+              );
             }
           } else {
             // Insert new subtask; allow optional status from payload, default to 'pending'
