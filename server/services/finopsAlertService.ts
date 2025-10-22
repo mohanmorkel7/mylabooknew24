@@ -985,8 +985,11 @@ class FinOpsAlertService {
       const description_val = subtaskMetaRes.rows[0]?.description || null;
 
       // Determine period for this task (daily/weekly/monthly) to correctly upsert tracker rows
-      const durationRes = await pool.query(`SELECT COALESCE(duration,'daily') as duration FROM finops_tasks WHERE id = $1 LIMIT 1`, [taskId]);
-      const periodVal = durationRes.rows[0]?.duration || 'daily';
+      const durationRes = await pool.query(
+        `SELECT COALESCE(duration,'daily') as duration FROM finops_tasks WHERE id = $1 LIMIT 1`,
+        [taskId],
+      );
+      const periodVal = durationRes.rows[0]?.duration || "daily";
 
       // Upsert into finops_tracker for today's date (include scheduled_time and description)
       await pool.query(

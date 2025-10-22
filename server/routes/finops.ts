@@ -566,7 +566,7 @@ router.post("/tasks", async (req: Request, res: Response) => {
               ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             `;
 
-             const subtaskResult = await client.query(subtaskQuery, [
+            const subtaskResult = await client.query(subtaskQuery, [
               taskId,
               subtask.name,
               subtask.description || null,
@@ -576,8 +576,10 @@ router.post("/tasks", async (req: Request, res: Response) => {
               subtask.order_position,
             ]);
 
-
-            console.log("✅ sub Task inserted with ID:", subtaskResult.rows[0].id);
+            console.log(
+              "✅ sub Task inserted with ID:",
+              subtaskResult.rows[0].id,
+            );
 
             const subtaskId = subtaskResult.rows[0].id;
 
@@ -605,7 +607,6 @@ router.post("/tasks", async (req: Request, res: Response) => {
                 subtask.order_position || null,
               ],
             );
-            
           }
         }
 
@@ -1709,32 +1710,32 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
       );
 
       let inserted = 0;
-    const todayStr = new Date().toISOString().slice(0, 10);
-    for (const row of tasksRes.rows) {
-      if (!row.subtask_id) continue;
-      // For today and future dates keep tasks pending; past dates mark as completed
-      const initialStatus = runDate >= todayStr ? "pending" : "completed";
-      const period = String(row.duration || "daily");
-      const result = await pool.query(
-        `INSERT INTO finops_tracker (
+      const todayStr = new Date().toISOString().slice(0, 10);
+      for (const row of tasksRes.rows) {
+        if (!row.subtask_id) continue;
+        // For today and future dates keep tasks pending; past dates mark as completed
+        const initialStatus = runDate >= todayStr ? "pending" : "completed";
+        const period = String(row.duration || "daily");
+        const result = await pool.query(
+          `INSERT INTO finops_tracker (
            run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
          ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
          RETURNING id`,
-        [
-          runDate,
-          period,
-          row.id,
-          row.task_name || "",
-          row.subtask_id,
-          row.subtask_name || "",
-          initialStatus,
-          row.start_time || null,
-          runDate,
-        ],
-      );
-      if (result.rows.length > 0) inserted++;
-    }
+          [
+            runDate,
+            period,
+            row.id,
+            row.task_name || "",
+            row.subtask_id,
+            row.subtask_name || "",
+            initialStatus,
+            row.start_time || null,
+            runDate,
+          ],
+        );
+        if (result.rows.length > 0) inserted++;
+      }
 
       res.json({ success: true, run_date: runDate, inserted });
     } else {
