@@ -650,7 +650,7 @@ class FinOpsAlertService {
     taskId: number,
     subtaskId: string | number,
     title: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     try {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS finops_external_alerts (
@@ -674,7 +674,7 @@ class FinOpsAlertService {
       );
 
       if (reserve.rows.length === 0) {
-        return;
+        return false;
       }
 
       // Resolve user_ids from reporting & escalation managers
@@ -710,23 +710,12 @@ class FinOpsAlertService {
         immediate_user_ids: immediateUserIds,
       });
 
-      // const response = await fetch(
-      //   "https://pulsealerts.mylapay.com/direct-call",
-      //   {
-      //     method: "POST",
-      //     headers: { "Content-Type": "application/json" },
-      //     body: JSON.stringify({
-      //       receiver: "CRM_Switch",
-      //       title,
-      //       user_ids: immediateUserIds,
-      //     }),
-      //   },
-      // );
-
       // External call delegated to pulse-sync worker; finops_external_alerts already contains reservation row
       // No direct network call here to avoid duplicate/parallel requests and to centralize retries
+      return true;
     } catch (err) {
       console.warn("Replica-down alert error:", (err as Error).message);
+      return false;
     }
   }
 
