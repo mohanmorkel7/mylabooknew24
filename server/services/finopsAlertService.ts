@@ -831,8 +831,10 @@ class FinOpsAlertService {
    * Get all active tasks with their subtasks
    */
   private async getActiveTasksWithSubtasks(): Promise<any[]> {
+    // Prefer finops_tracker entries for today's IST date when available, fallback to finops_subtasks
+    const todayExpr = `(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date`;
     const query = `
-      SELECT 
+      SELECT
         t.*,
         json_agg(
           json_build_object(
@@ -842,14 +844,15 @@ class FinOpsAlertService {
             'sla_hours', st.sla_hours,
             'sla_minutes', st.sla_minutes,
             'order_position', st.order_position,
-            'status', st.status,
-            'started_at', st.started_at,
-            'completed_at', st.completed_at,
-            'start_time', st.start_time
+            'status', COALESCE(ft.status, st.status),
+            'started_at', COALESCE(ft.started_at, st.started_at),
+            'completed_at', COALESCE(ft.completed_at, st.completed_at),
+            'start_time', COALESCE(ft.scheduled_time, st.start_time)
           ) ORDER BY st.order_position
         ) FILTER (WHERE st.id IS NOT NULL) as subtasks
       FROM finops_tasks t
       LEFT JOIN finops_subtasks st ON t.id = st.task_id
+      LEFT JOIN finops_tracker ft ON ft.task_id = st.task_id AND ft.subtask_id = st.id AND ft.run_date = ${todayExpr}
       WHERE t.is_active = true AND t.deleted_at IS NULL
       GROUP BY t.id
     `;
