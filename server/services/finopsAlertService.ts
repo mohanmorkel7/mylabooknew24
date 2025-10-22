@@ -312,15 +312,6 @@ class FinOpsAlertService {
 
         const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
 
-        console.log("Direct-call payload (service) Pending", {
-          task_id,
-          sub_task_id,
-          title,
-          manager_names: allNames,
-          user_ids: allUserIds,
-          immediate_user_ids: immediateUserIds,
-        });
-
         // Reserve an external alert record to avoid duplicate immediate alerts and centralize external calls
         try {
           await pool.query(`
@@ -366,22 +357,25 @@ class FinOpsAlertService {
         );
 
         if (reserve.rows.length === 0) {
-          console.log(
-            `Skipping immediate external call for task ${task_id} subtask ${subtask.id} — already reserved`,
-          );
+          // already reserved by another concurrent run — nothing to do
           return;
         }
 
-        const subtaskUpdateQuery = `
-            UPDATE finops_subtasks
-            SET status = 'overdue'
-            WHERE id = $1
-          `;
-        await pool.query(subtaskUpdateQuery, [subtask.id]);
-
-        // Mark as overdue and send alert
-        await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
+        // Mark subtask as overdue before sending alerts so other concurrent checks will short-circuit
         await this.updateSubtaskStatus(task.id, subtask.id, "overdue");
+
+        // Log and send alerts (only after successful reservation)
+        console.log("Direct-call payload (service) Pending", {
+          task_id,
+          sub_task_id,
+          title,
+          manager_names: allNames,
+          user_ids: allUserIds,
+          immediate_user_ids: immediateUserIds,
+        });
+
+        // Send notifications and log
+        await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
       }
     } else {
       console.log(
