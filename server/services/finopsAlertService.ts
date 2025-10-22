@@ -214,6 +214,12 @@ class FinOpsAlertService {
     } catch (error) {
       console.error("Error in SLA alert check:", error);
     } finally {
+      try {
+        // Release DB advisory lock if held
+        await pool.query(`SELECT pg_advisory_unlock($1)`, [1234567890]);
+      } catch (e) {
+        /* ignore */
+      }
       this.isCheckingSLA = false;
     }
   }
