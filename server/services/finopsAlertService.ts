@@ -377,6 +377,34 @@ class FinOpsAlertService {
               UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
             )
           `);
+          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+          await client.query(`
+            DO $$
+            BEGIN
+              IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
+              ) THEN
+                EXECUTE $$ALTER TABLE finops_external_alerts
+                  ALTER COLUMN alert_group TYPE TEXT
+                  USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
+              END IF;
+              IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
+              ) THEN
+                EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
+                EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
+                EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
+                EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
+                EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
+              END IF;
+            END
+            $$;
+          `);
+          await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 
           // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
           const existing = await client.query(
@@ -487,6 +515,34 @@ class FinOpsAlertService {
           UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
         )
       `);
+      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
+          ) THEN
+            EXECUTE $$ALTER TABLE finops_external_alerts
+              ALTER COLUMN alert_group TYPE TEXT
+              USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
+          END IF;
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
+          ) THEN
+            EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
+            EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
+            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
+            EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
+            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
+          END IF;
+        END
+        $$;
+      `);
+      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 
       const now = new Date();
       for (const row of result.rows) {
@@ -720,6 +776,34 @@ class FinOpsAlertService {
           UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
         )
       `);
+      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+      await pool.query(`
+        DO $$
+        BEGIN
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
+          ) THEN
+            EXECUTE $$ALTER TABLE finops_external_alerts
+              ALTER COLUMN alert_group TYPE TEXT
+              USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
+          END IF;
+          IF EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
+          ) THEN
+            EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
+            EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
+            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
+            EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
+            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
+          END IF;
+        END
+        $$;
+      `);
+      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 
       const reserve = await pool.query(
         `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
