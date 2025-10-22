@@ -735,7 +735,8 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
 
           if (!isNaN(numericId) && existingIds.has(numericId)) {
             incomingIds.add(numericId);
-            // Update only editable fields; preserve status/started_at/completed_at
+            // Update editable fields; allow explicit status updates and sync to today's tracker
+            const incomingStatus = (subtask as any).status ?? null;
             await client.query(
               `UPDATE finops_subtasks
                SET name = $1,
@@ -744,8 +745,9 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
                    sla_hours = COALESCE($4, sla_hours),
                    sla_minutes = COALESCE($5, sla_minutes),
                    order_position = $6,
+                   status = COALESCE($8, status),
                    updated_at = CURRENT_TIMESTAMP
-               WHERE task_id = $7 AND id = $8`,
+               WHERE task_id = $7 AND id = $9`,
               [
                 subtask.name,
                 subtask.description || null,
@@ -754,9 +756,27 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
                 (subtask as any).sla_minutes ?? null,
                 subtask.order_position ?? 0,
                 taskId,
+                incomingStatus,
                 numericId,
               ],
             );
+
+            // Also update today's finops_tracker row for this subtask to reflect new scheduled time/status
+            try {
+              await client.query(
+                `UPDATE finops_tracker
+                 SET scheduled_time = COALESCE($1, scheduled_time),
+                     status = COALESCE($2, status),
+                     started_at = CASE WHEN $2 = 'in_progress' THEN COALESCE(started_at, NOW()) ELSE started_at END,
+                     completed_at = CASE WHEN $2 = 'completed' THEN COALESCE(completed_at, NOW()) ELSE completed_at END,
+                     updated_at = NOW()
+                 WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+                   AND task_id = $3 AND subtask_id = $4`,
+                [subtask.start_time || null, incomingStatus, taskId, numericId],
+              );
+            } catch (err) {
+              console.warn('Failed to sync finops_tracker for updated subtask', err);
+            }
           } else {
             // Insert new subtask; allow optional status from payload, default to 'pending'
             await client.query(
