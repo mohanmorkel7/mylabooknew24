@@ -184,7 +184,18 @@ class FinOpsAlertService {
     }
 
     this.isCheckingSLA = true;
+    // Attempt to acquire DB-level advisory lock so only one process across the cluster runs checks
+    const lockKey = 1234567890; // arbitrary constant
+    let haveDbLock = false;
     try {
+      const lockRes = await pool.query(`SELECT pg_try_advisory_lock($1) as ok`, [lockKey]);
+      haveDbLock = !!(lockRes.rows && lockRes.rows[0] && lockRes.rows[0].ok);
+      if (!haveDbLock) {
+        console.log("Another process holds the SLA advisory lock — skipping this run");
+        this.isCheckingSLA = false;
+        return;
+      }
+
       const { isDatabaseAvailable } = await import("../database/connection");
       if (!(await isDatabaseAvailable())) return;
       console.log("Starting SLA alert check...");
