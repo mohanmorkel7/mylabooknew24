@@ -43,6 +43,7 @@ interface EmailRecipient {
 
 class FinOpsAlertService {
   private emailTransporter: nodemailer.Transporter;
+  private isCheckingSLA: boolean = false;
 
   private parseManagers(val: any): string[] {
     if (!val) return [];
