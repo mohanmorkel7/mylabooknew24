@@ -366,7 +366,9 @@ class FinOpsAlertService {
         );
 
         if (reserve.rows.length === 0) {
-          console.log(`Skipping immediate external call for task ${task_id} subtask ${subtask.id} — already reserved`);
+          console.log(
+            `Skipping immediate external call for task ${task_id} subtask ${subtask.id} — already reserved`,
+          );
           return;
         }
 
