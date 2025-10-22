@@ -49,7 +49,7 @@ export const handler: Handler = async () => {
         AND t.deleted_at IS NULL
         AND NOT EXISTS (
           SELECT 1 FROM finops_external_alerts fea
-          WHERE fea.task_id = t.id AND fea.subtask_id = st.id AND fea.alert_key = 'replica_down_overdue'
+          WHERE fea.task_id = t.id AND fea.subtask_id = st.id AND fea.alert_group = 'replica_down_overdue' AND fea.alert_bucket = -1
         )
       ORDER BY st.id DESC
       LIMIT 100
@@ -64,9 +64,9 @@ export const handler: Handler = async () => {
 
       // Reserve to avoid duplicates (schedule immediate send)
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-         VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
-         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+         VALUES ($1, $2, 'replica_down_overdue', -1, $3, NOW())
+         ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],
       );
@@ -75,7 +75,7 @@ export const handler: Handler = async () => {
 
     // Send pending external alerts whose time has arrived
     const pending = await pool.query(
-      `SELECT id, task_id, subtask_id, alert_key, title, next_call_at, created_at FROM finops_external_alerts WHERE next_call_at IS NOT NULL AND next_call_at <= NOW() ORDER BY next_call_at ASC LIMIT 200`,
+      `SELECT id, task_id, subtask_id, alert_group, alert_bucket, title, next_call_at, created_at FROM finops_external_alerts WHERE next_call_at IS NOT NULL AND next_call_at <= NOW() ORDER BY next_call_at ASC LIMIT 200`,
     );
 
     for (const alertRow of pending.rows) {
