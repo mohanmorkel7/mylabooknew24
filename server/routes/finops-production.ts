@@ -19,9 +19,15 @@ async function ensureExternalAlertsSchema(): Promise<void> {
       created_at TIMESTAMP DEFAULT NOW()
     )
   `);
-  await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-  await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
+  await pool.query(
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`,
+  );
+  await pool.query(
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`,
+  );
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`,
+  );
 }
 
 // Production database availability check - fail fast if no database
