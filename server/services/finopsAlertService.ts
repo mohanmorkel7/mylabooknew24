@@ -177,6 +177,13 @@ class FinOpsAlertService {
    * Check all active tasks for SLA breaches and send alerts
    */
   async checkSLAAlerts(): Promise<void> {
+    if (this.isCheckingSLA) {
+      // Skip overlapping executions
+      console.log("SLA alert check already running — skipping this invocation");
+      return;
+    }
+
+    this.isCheckingSLA = true;
     try {
       const { isDatabaseAvailable } = await import("../database/connection");
       if (!(await isDatabaseAvailable())) return;
@@ -195,6 +202,8 @@ class FinOpsAlertService {
       console.log("SLA alert check completed");
     } catch (error) {
       console.error("Error in SLA alert check:", error);
+    } finally {
+      this.isCheckingSLA = false;
     }
   }
 
