@@ -488,7 +488,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
-      console.log("��� Database connection refused - using mock data");
+      console.log("���� Database connection refused - using mock data");
       return res.json(mockFinOpsTasks);
     }
 
@@ -2085,9 +2085,9 @@ router.post(
             : fallbackTitle;
 
         const reserve = await pool.query(
-          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-           VALUES ($1, $2, 'replica_down_overdue', $3, NOW())
-           ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+           VALUES ($1, $2, 'replica_down_overdue', -1, $3, NOW())
+           ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
            RETURNING id`,
           [taskId, Number(subtaskId), title],
         );
