@@ -468,12 +468,7 @@ class FinOpsAlertService {
           const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
           const alertKey = `replica_down_overdue_${bucket}`;
 
-          const exists = await pool.query(
-            `SELECT id FROM finops_external_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_key = $3 LIMIT 1`,
-            [row.task_id, row.subtask_id, alertKey],
-          );
-          if (exists.rows.length) continue; // already sent for this bucket
-
+          // Try to atomically reserve a repeat alert for this bucket. If another process already reserved it, skip.
           const names = Array.from(
             new Set([
               ...this.parseManagers(row.reporting_managers),
@@ -487,6 +482,18 @@ class FinOpsAlertService {
           const clientName = row.client_name || "Unknown Client";
           const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
+          const reserveRepeat = await pool.query(
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+                 RETURNING id`,
+            [row.task_id, row.subtask_id, alertKey, title],
+          );
+
+          if (reserveRepeat.rows.length === 0) {
+            continue; // someone else reserved this repeat bucket
+          }
+
           console.log("Direct-call payload (service repeat)", {
             taskId: row.task_id,
             subtaskId: row.subtask_id,
@@ -496,14 +503,6 @@ class FinOpsAlertService {
             repeat_interval: repeatInterval,
             user_ids: userIds,
           });
-
-          // Reserve an external alert record; actual external call is performed by pulse-sync or external worker
-          await pool.query(
-            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-                 VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING`,
-            [row.task_id, row.subtask_id, alertKey, title],
-          );
 
           await this.logAlert(
             row.task_id,
