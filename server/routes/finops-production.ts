@@ -1476,12 +1476,11 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
     );
 
     let inserted = 0;
+    const todayStr = new Date().toISOString().slice(0, 10);
     for (const row of tasksRes.rows) {
       if (!row.subtask_id) continue;
-      const initialStatus =
-        runDate === new Date().toISOString().slice(0, 10)
-          ? "pending"
-          : "completed";
+      // For today and future dates keep tasks pending; past dates mark as completed
+      const initialStatus = runDate >= todayStr ? "pending" : "completed";
       const period = String(row.duration || "daily");
       const result = await pool.query(
         `INSERT INTO finops_tracker (
