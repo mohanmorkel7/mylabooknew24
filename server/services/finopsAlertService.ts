@@ -285,36 +285,53 @@ class FinOpsAlertService {
         var task_id = task.id;
         var sub_task_id = subtask.id;
 
-        // Resolve user_ids from reporting & escalation managers
-        const taskRow = await pool.query(
-          `SELECT reporting_managers, escalation_managers, assigned_to FROM finops_tasks WHERE id = $1`,
-          [task_id],
-        );
-        const managers = taskRow.rows[0] || {};
-        const allNames = Array.from(
-          new Set([
-            ...this.parseManagers(managers.reporting_managers),
-            ...this.parseManagers(managers.escalation_managers),
-            ...this.parseManagers(managers.assigned_to),
-          ]),
-        );
-        const allUserIds = await this.getUserIdsFromNames(allNames);
-
-        // Immediate: only Assigned + Reporting
-        const immediateNames = Array.from(
-          new Set([
-            ...this.parseManagers(managers.assigned_to),
-            ...this.parseManagers(managers.reporting_managers),
-            ...this.parseManagers(managers.escalation_managers),
-          ]),
-        );
-        const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
-
-        const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
-
-        // Reserve an external alert record to avoid duplicate immediate alerts and centralize external calls
+        // Use a dedicated client transaction and row-level lock to serialize processing for this finops_tracker row
+        const client = await pool.connect();
         try {
-          await pool.query(`
+          await client.query("BEGIN");
+
+          // Lock the tracker row for today for this task/subtask; if locked by another process, SKIP it
+          const todayExpr = `(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date`;
+          const lockRes = await client.query(
+            `SELECT id FROM finops_tracker WHERE run_date = ${todayExpr} AND task_id = $1 AND subtask_id = $2 FOR UPDATE SKIP LOCKED`,
+            [task_id, sub_task_id],
+          );
+
+          if (lockRes.rows.length === 0) {
+            // Another process has locked/processing this row — skip
+            await client.query("ROLLBACK");
+            return;
+          }
+
+          // Resolve user_ids from reporting & escalation managers using the same transaction
+          const taskRow = await client.query(
+            `SELECT reporting_managers, escalation_managers, assigned_to FROM finops_tasks WHERE id = $1 FOR SHARE`,
+            [task_id],
+          );
+          const managers = taskRow.rows[0] || {};
+          const allNames = Array.from(
+            new Set([
+              ...this.parseManagers(managers.reporting_managers),
+              ...this.parseManagers(managers.escalation_managers),
+              ...this.parseManagers(managers.assigned_to),
+            ]),
+          );
+          const allUserIds = await this.getUserIdsFromNames(allNames);
+
+          // Immediate: only Assigned + Reporting
+          const immediateNames = Array.from(
+            new Set([
+              ...this.parseManagers(managers.assigned_to),
+              ...this.parseManagers(managers.reporting_managers),
+              ...this.parseManagers(managers.escalation_managers),
+            ]),
+          );
+          const immediateUserIds = await this.getUserIdsFromNames(immediateNames);
+
+          const title = `Kindly take prompt action on the overdue subtask ${subtask.name} from the task ${task.task_name} for the client ${task.client_name}.`;
+
+          // Ensure external alerts table exists
+          await client.query(`
             CREATE TABLE IF NOT EXISTS finops_external_alerts (
               id SERIAL PRIMARY KEY,
               task_id INTEGER NOT NULL,
@@ -326,56 +343,63 @@ class FinOpsAlertService {
               UNIQUE(task_id, subtask_id, alert_key)
             )
           `);
-        } catch (err) {
-          console.warn("Error ensuring finops_external_alerts table:", err);
-        }
 
-        // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
-        try {
-          const existing = await pool.query(
+          // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
+          const existing = await client.query(
             `SELECT id FROM finops_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue' AND created_at > (CURRENT_TIMESTAMP - INTERVAL '15 minutes') LIMIT 1`,
-            [task.id, subtask.id],
+            [task_id, sub_task_id],
           );
 
           if (existing.rows.length > 0) {
+            await client.query("ROLLBACK");
             console.log(
-              `Skipping overdue alert for task ${task.id} subtask ${subtask.id} — recent alert already exists`,
+              `Skipping overdue alert for task ${task_id} subtask ${sub_task_id} — recent alert already exists`,
             );
             return;
           }
+
+          const reserve = await client.query(
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
+                 VALUES ($1, $2, $3, $4, NOW())
+                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+                 RETURNING id`,
+            [task_id, Number(sub_task_id), "replica_down_overdue", title],
+          );
+
+          if (reserve.rows.length === 0) {
+            // already reserved by another concurrent run — nothing to do
+            await client.query("ROLLBACK");
+            return;
+          }
+
+          // Update finops_tracker row status to overdue
+          await client.query(
+            `UPDATE finops_tracker SET status = 'overdue', updated_at = NOW() WHERE id = $1`,
+            [lockRes.rows[0].id],
+          );
+
+          await client.query("COMMIT");
+
+          // Now outside the transaction: log and send alerts
+          console.log("Direct-call payload (service) Pending", {
+            task_id,
+            sub_task_id,
+            title,
+            manager_names: allNames,
+            user_ids: allUserIds,
+            immediate_user_ids: immediateUserIds,
+          });
+
+          // Send notifications and log (these can use pool)
+          await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
         } catch (err) {
-          console.warn("Error while checking existing overdue alerts:", err);
-          // proceed to attempt reservation to avoid missing critical notifications
+          try {
+            await client.query("ROLLBACK");
+          } catch {}
+          console.warn("Error while reserving/processing overdue alert:", err);
+        } finally {
+          client.release();
         }
-
-        const reserve = await pool.query(
-          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-               VALUES ($1, $2, $3, $4, NOW())
-               ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
-               RETURNING id`,
-          [task_id, Number(subtask.id), "replica_down_overdue", title],
-        );
-
-        if (reserve.rows.length === 0) {
-          // already reserved by another concurrent run — nothing to do
-          return;
-        }
-
-        // Mark subtask as overdue before sending alerts so other concurrent checks will short-circuit
-        await this.updateSubtaskStatus(task.id, subtask.id, "overdue");
-
-        // Log and send alerts (only after successful reservation)
-        console.log("Direct-call payload (service) Pending", {
-          task_id,
-          sub_task_id,
-          title,
-          manager_names: allNames,
-          user_ids: allUserIds,
-          immediate_user_ids: immediateUserIds,
-        });
-
-        // Send notifications and log
-        await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
       }
     } else {
       console.log(
