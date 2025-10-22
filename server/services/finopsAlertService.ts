@@ -393,9 +393,9 @@ class FinOpsAlertService {
           }
 
           const reserve = await client.query(
-            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-                 VALUES ($1, $2, $3, $4, NOW())
-                 ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+                 VALUES ($1, $2, $3, -1, $4, NOW())
+                 ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
                  RETURNING id`,
             [task_id, Number(sub_task_id), "replica_down_overdue", title],
           );
