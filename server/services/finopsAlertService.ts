@@ -1098,10 +1098,21 @@ class FinOpsAlertService {
     `;
 
     const result = await pool.query(query);
-    return result.rows.map((row) => ({
+    const tasksWithSubtasks = result.rows.map((row) => ({
       ...row,
       subtasks: row.subtasks || [],
     }));
+
+    // Debug: log subtask statuses from finops_tracker
+    for (const task of tasksWithSubtasks) {
+      for (const subtask of task.subtasks) {
+        console.log(
+          `Task ${task.task_name} -> Subtask ${subtask.name}: status=${subtask.status}`,
+        );
+      }
+    }
+
+    return tasksWithSubtasks;
   }
 
   /**
