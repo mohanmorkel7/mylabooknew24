@@ -443,10 +443,16 @@ class FinOpsAlertService {
           }
 
           // Update finops_tracker row status to overdue
-          await client.query(
-            `UPDATE finops_tracker SET status = 'overdue', updated_at = NOW() WHERE id = $1`,
+          const updateRes = await client.query(
+            `UPDATE finops_tracker SET status = 'overdue', updated_at = NOW() WHERE id = $1 RETURNING id, task_id, subtask_id, status`,
             [lockRes.rows[0].id],
           );
+
+          if (updateRes.rows.length > 0) {
+            console.log(
+              `✅ finops_tracker updated to overdue: task_id=${updateRes.rows[0].task_id}, subtask_id=${updateRes.rows[0].subtask_id}, status=${updateRes.rows[0].status}`,
+            );
+          }
 
           await client.query("COMMIT");
 
