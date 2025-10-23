@@ -1467,4 +1467,6 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
   }
 }
 
-export default FinOpsAlertService;
+// Export a singleton instance
+const finopsAlertServiceInstance = new FinOpsAlertService();
+export default finopsAlertServiceInstance;
