@@ -377,33 +377,33 @@ class FinOpsAlertService {
               UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
             )
           `);
-          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
-          await client.query(`
-            DO $$
-            BEGIN
-              IF EXISTS (
-                SELECT 1 FROM information_schema.columns
-                WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
-              ) THEN
-                EXECUTE $$ALTER TABLE finops_external_alerts
-                  ALTER COLUMN alert_group TYPE TEXT
-                  USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
-              END IF;
-              IF EXISTS (
-                SELECT 1 FROM information_schema.columns
-                WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
-              ) THEN
-                EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
-                EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
-                EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
-                EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
-                EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
-              END IF;
-            END
-            $$;
-          `);
+          // await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+          // await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+          // await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+          // await client.query(`
+          //   DO $$
+          //   BEGIN
+          //     IF EXISTS (
+          //       SELECT 1 FROM information_schema.columns
+          //       WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
+          //     ) THEN
+          //       EXECUTE $$ALTER TABLE finops_external_alerts
+          //         ALTER COLUMN alert_group TYPE TEXT
+          //         USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
+          //     END IF;
+          //     IF EXISTS (
+          //       SELECT 1 FROM information_schema.columns
+          //       WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
+          //     ) THEN
+          //       EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
+          //       EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
+          //       EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
+          //       EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
+          //       EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
+          //     END IF;
+          //   END
+          //   $$;
+          // `);
           await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 
           // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
@@ -451,7 +451,30 @@ class FinOpsAlertService {
             user_ids: allUserIds,
             immediate_user_ids: immediateUserIds,
           });
+        console.log("PULSE ALERT CALL STARTS")
+          // await fetch("https://pulsealerts.mylapay.com/direct-call", {
+          //     method: "POST",
+          //     headers: { "Content-Type": "application/json" },
+          //     body: JSON.stringify({ receiver: "CRM_Switch", title, allUserIds }),
+          //   }).catch((err) => {
+          //     console.warn("Manual direct-call error:", (err as Error).message);
+          //   });
 
+          const response = await fetch(
+              "https://pulsealerts.mylapay.com/direct-call",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  receiver: "CRM_Switch",
+                  title,
+                  user_ids: allUserIds,
+                }),
+              },
+            );
+
+            
+console.log("PULSE ALERT CALL ENDS",response)
           // Send notifications and log (these can use pool)
           await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
         } catch (err) {
@@ -473,143 +496,176 @@ class FinOpsAlertService {
   /**
    * For subtasks that remain overdue, send repeat external alerts every 10 minutes
    */
-  private async checkOverdueRepeatAlerts(): Promise<void> {
-    try {
-      // Trigger on transition (handled elsewhere). Then repeat every 15 minutes while still overdue.
-      const initialDelay = 15; // minutes after overdue before first repeat
-      const repeatInterval = 15;
+  
+private async checkOverdueRepeatAlerts(): Promise<void> {
+  try {
+    // Trigger on transition (handled elsewhere). Then repeat every 15 minutes while still overdue.
+    const initialDelay = 15; // minutes after overdue before first repeat
+    const repeatInterval = 15;
 
-      const result = await pool.query(
-        `
-        SELECT
-          t.id as task_id,
-          t.task_name,
-          t.client_name,
-          t.reporting_managers,
-          t.escalation_managers,
-          t.assigned_to,
-          ft.subtask_id,
-          ft.subtask_name,
-          ft.updated_at as overdue_since,
-          ft.status
-        FROM finops_tracker ft
-        JOIN finops_tasks t ON t.id = ft.task_id
-        WHERE ft.status = 'overdue'
-          AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-          AND t.is_active = true
-          AND t.deleted_at IS NULL
-          AND (ft.subtask_scheduled_date IS NULL OR ft.subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
-      `,
-      );
+    const result = await pool.query(
+      `
+      SELECT
+        t.id as task_id,
+        t.task_name,
+        t.client_name,
+        t.reporting_managers,
+        t.escalation_managers,
+        t.assigned_to,
+        ft.subtask_id,
+        ft.subtask_name,
+        ft.updated_at as overdue_since,
+        ft.status
+      FROM finops_tracker ft
+      JOIN finops_tasks t ON t.id = ft.task_id
+      WHERE ft.status = 'overdue'
+        AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
+        AND t.is_active = true
+        AND t.deleted_at IS NULL
+        AND (ft.subtask_scheduled_date IS NULL OR ft.subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
+    `,
+    );
 
-      await pool.query(`
-        CREATE TABLE IF NOT EXISTS finops_external_alerts (
-          id SERIAL PRIMARY KEY,
-          task_id INTEGER NOT NULL,
-          subtask_id INTEGER NOT NULL,
-          alert_group TEXT NOT NULL,
-          alert_bucket INTEGER NOT NULL DEFAULT -1,
-          title TEXT,
-          next_call_at TIMESTAMP,
-          created_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
-        )
-      `);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
-      await pool.query(`
-        DO $$
-        BEGIN
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
-          ) THEN
-            EXECUTE $$ALTER TABLE finops_external_alerts
-              ALTER COLUMN alert_group TYPE TEXT
-              USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
-          END IF;
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
-          ) THEN
-            EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
-            EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
-            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
-            EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
-            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
-          END IF;
-        END
-        $$;
-      `);
-      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
+    // Ensure the 'finops_external_alerts' table exists
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS finops_external_alerts (
+        id SERIAL PRIMARY KEY,
+        task_id INTEGER NOT NULL,
+        subtask_id INTEGER NOT NULL,
+        alert_group TEXT NOT NULL,
+        alert_bucket INTEGER NOT NULL DEFAULT -1,
+        title TEXT,
+        next_call_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
+      )
+    `);
 
-      const now = new Date();
-      for (const row of result.rows) {
-        const since = row.overdue_since ? new Date(row.overdue_since) : null;
-        if (!since) continue;
-        const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
+    // Add missing columns if they do not exist
+    // await pool.query(`
+    //   ALTER TABLE finops_external_alerts 
+    //   ADD COLUMN IF NOT EXISTS alert_group TEXT;
+    //   ALTER TABLE finops_external_alerts 
+    //   ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1;
+    //   ALTER TABLE finops_external_alerts 
+    //   ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP;
+    // `);
 
-        // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
-        if (minutes >= initialDelay) {
-        }
+    // Perform conditional column changes
+//     const query =`
+//      DO $$ 
+// BEGIN
+//   -- Ensure the 'alert_group' column is not of ARRAY type and alter if necessary
+//   IF EXISTS (
+//     SELECT 1 FROM information_schema.columns
+//     WHERE table_name = 'finops_external_alerts' 
+//       AND column_name = 'alert_group' 
+//       AND data_type = 'ARRAY'
+//   ) THEN
+//     EXECUTE 'ALTER TABLE finops_external_alerts
+//              ALTER COLUMN alert_group TYPE TEXT
+//              USING CASE 
+//                WHEN alert_group IS NULL THEN NULL 
+//                ELSE array_to_string(alert_group, '') 
+//              END';
+//   END IF;
 
-        // Repeat calls with configured interval
-        if (minutes >= initialDelay + repeatInterval) {
-          const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
-          const alertGroup = `replica_down_overdue`;
-          const alertBucket = bucket;
+//   -- Check and handle 'alert_key' column if it exists
+//   IF EXISTS (
+//     SELECT 1 
+//     FROM information_schema.columns 
+//     WHERE table_name = 'finops_external_alerts' 
+//       AND column_name = 'alert_key'
+//   ) THEN
+//     -- Add 'alert_group_tmp' column and clean up
+//     EXECUTE 'ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT';
+//     EXECUTE 'UPDATE finops_external_alerts 
+//              SET alert_group_tmp = COALESCE(alert_group::TEXT, alert_key::TEXT)';
+//     EXECUTE 'ALTER TABLE finops_external_alerts 
+//              DROP COLUMN IF EXISTS alert_group';
+//     EXECUTE 'ALTER TABLE finops_external_alerts 
+//              RENAME COLUMN alert_group_tmp TO alert_group';
+//     EXECUTE 'ALTER TABLE finops_external_alerts 
+//              DROP COLUMN IF EXISTS alert_key';
+//   END IF;
+// END $$;
+//     `;
+    // console.log('Executing SQL: ', query);  // Log to verify the SQL
+// await pool.query(query);
 
-          // Try to atomically reserve a repeat alert for this bucket. If another process already reserved it, skip.
-          const names = Array.from(
-            new Set([
-              ...this.parseManagers(row.reporting_managers),
-              ...this.parseManagers(row.escalation_managers),
-              ...this.parseManagers(row.assigned_to),
-            ]),
-          );
-          const userIds = await this.getUserIdsFromNames(names);
+    // Create unique index
+    await pool.query(`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique 
+      ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket);
+    `);
 
-          const taskName = row.task_name || "Unknown Task";
-          const clientName = row.client_name || "Unknown Client";
-          const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
+    const now = new Date();
+    for (const row of result.rows) {
+      const since = row.overdue_since ? new Date(row.overdue_since) : null;
+      if (!since) continue;
+      const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
 
-          const reserveRepeat = await pool.query(
-            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
-                 VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '15 minutes')
-                 ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
-                 RETURNING id`,
-            [row.task_id, row.subtask_id, alertGroup, alertBucket, title],
-          );
-
-          if (reserveRepeat.rows.length === 0) {
-            continue; // someone else reserved this repeat bucket
-          }
-
-          console.log("Direct-call payload (service repeat)", {
-            taskId: row.task_id,
-            subtaskId: row.subtask_id,
-            title,
-            minutes_overdue: minutes,
-            bucket,
-            repeat_interval: repeatInterval,
-            user_ids: userIds,
-          });
-
-          await this.logAlert(
-            row.task_id,
-            String(row.subtask_id),
-            "sla_overdue_repeat",
-            "all",
-            minutes,
-            title,
-          );
-        }
+      // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
+      if (minutes >= initialDelay) {
+        // Do something for the initial call if needed
       }
-    } catch (e) {
-      console.warn("Error in overdue repeat alerts:", (e as Error).message);
+
+      // Repeat calls with configured interval
+      if (minutes >= initialDelay + repeatInterval) {
+        const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
+        const alertGroup = `replica_down_overdue`;
+        const alertBucket = bucket;
+
+        // Try to atomically reserve a repeat alert for this bucket. If another process already reserved it, skip.
+        const names = Array.from(
+          new Set([
+            ...this.parseManagers(row.reporting_managers),
+            ...this.parseManagers(row.escalation_managers),
+            ...this.parseManagers(row.assigned_to),
+          ]),
+        );
+        const userIds = await this.getUserIdsFromNames(names);
+
+        const taskName = row.task_name || "Unknown Task";
+        const clientName = row.client_name || "Unknown Client";
+        const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
+
+        const reserveRepeat = await pool.query(
+          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+            VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '15 minutes')
+            ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
+            RETURNING id`,
+          [row.task_id, row.subtask_id, alertGroup, alertBucket, title],
+        );
+
+        if (reserveRepeat.rows.length === 0) {
+          continue; // someone else reserved this repeat bucket
+        }
+
+        console.log("Direct-call payload (service repeat)", {
+          taskId: row.task_id,
+          subtaskId: row.subtask_id,
+          title,
+          minutes_overdue: minutes,
+          bucket,
+          repeat_interval: repeatInterval,
+          user_ids: userIds,
+        });
+
+        await this.logAlert(
+          row.task_id,
+          String(row.subtask_id),
+          "sla_overdue_repeat",
+          "all",
+          minutes,
+          title,
+        );
+      }
     }
+  } catch (e) {
+    console.warn("Error in overdue repeat alerts:", (e as Error).message);
   }
+}
 
   /**
    * Send SLA warning alert (15 minutes before breach)
@@ -776,33 +832,33 @@ class FinOpsAlertService {
           UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
         )
       `);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
-      await pool.query(`
-        DO $$
-        BEGIN
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
-          ) THEN
-            EXECUTE $$ALTER TABLE finops_external_alerts
-              ALTER COLUMN alert_group TYPE TEXT
-              USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
-          END IF;
-          IF EXISTS (
-            SELECT 1 FROM information_schema.columns
-            WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
-          ) THEN
-            EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
-            EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
-            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
-            EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
-            EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
-          END IF;
-        END
-        $$;
-      `);
+      // await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
+      // await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
+      // await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+      // await pool.query(`
+      //   DO $$
+      //   BEGIN
+      //     IF EXISTS (
+      //       SELECT 1 FROM information_schema.columns
+      //       WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_group' AND data_type = 'ARRAY'
+      //     ) THEN
+      //       EXECUTE $$ALTER TABLE finops_external_alerts
+      //         ALTER COLUMN alert_group TYPE TEXT
+      //         USING CASE WHEN alert_group IS NULL THEN NULL ELSE array_to_string(alert_group, ',') END$$;
+      //     END IF;
+      //     IF EXISTS (
+      //       SELECT 1 FROM information_schema.columns
+      //       WHERE table_name = 'finops_external_alerts' AND column_name = 'alert_key'
+      //     ) THEN
+      //       EXECUTE $$ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group_tmp TEXT$$;
+      //       EXECUTE $$UPDATE finops_external_alerts SET alert_group_tmp = COALESCE(alert_group::text, alert_key::text)$$;
+      //       EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_group$$;
+      //       EXECUTE $$ALTER TABLE finops_external_alerts RENAME COLUMN alert_group_tmp TO alert_group$$;
+      //       EXECUTE $$ALTER TABLE finops_external_alerts DROP COLUMN IF EXISTS alert_key$$;
+      //     END IF;
+      //   END
+      //   $$;
+      // `);
       await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 
       const reserve = await pool.query(
