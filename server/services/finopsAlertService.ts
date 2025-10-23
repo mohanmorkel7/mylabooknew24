@@ -434,9 +434,16 @@ class FinOpsAlertService {
 
           if (reserve.rows.length === 0) {
             // already reserved by another concurrent run — nothing to do
+            console.log(
+              `External alert already reserved by another process for task ${task_id} subtask ${sub_task_id}`,
+            );
             await client.query("ROLLBACK");
             return;
           }
+
+          console.log(
+            `✅ External alert reserved in finops_external_alerts for task ${task_id} subtask ${sub_task_id}`,
+          );
 
           // Update finops_tracker row status to overdue
           const updateRes = await client.query(
