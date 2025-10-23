@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS finops_subtasks (
     sla_hours INTEGER DEFAULT 1,
     sla_minutes INTEGER DEFAULT 0,
     order_position INTEGER DEFAULT 0,
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'overdue', 'cancelled')),
+    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'in_progress', 'completed', 'overdue', 'cancelled', 'approved')),
     assigned_to VARCHAR(255),
     started_at TIMESTAMP,
     completed_at TIMESTAMP,
