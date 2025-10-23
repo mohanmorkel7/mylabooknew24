@@ -377,9 +377,15 @@ class FinOpsAlertService {
               UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
             )
           `);
-          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-          await client.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+          await client.query(
+            `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`,
+          );
+          await client.query(
+            `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`,
+          );
+          await client.query(
+            `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
+          );
           await client.query(`
             DO $$
             BEGIN
@@ -404,7 +410,9 @@ class FinOpsAlertService {
             END
             $$;
           `);
-          await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
+          await client.query(
+            `CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`,
+          );
 
           // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
           const existing = await client.query(
@@ -451,7 +459,7 @@ class FinOpsAlertService {
             user_ids: allUserIds,
             immediate_user_ids: immediateUserIds,
           });
-        console.log("PULSE ALERT CALL STARTS")
+          console.log("PULSE ALERT CALL STARTS");
           // await fetch("https://pulsealerts.mylapay.com/direct-call", {
           //     method: "POST",
           //     headers: { "Content-Type": "application/json" },
@@ -461,20 +469,19 @@ class FinOpsAlertService {
           //   });
 
           const response = await fetch(
-              "https://pulsealerts.mylapay.com/direct-call",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  receiver: "CRM_Switch",
-                  title,
-                  user_ids: allUserIds,
-                }),
-              },
-            );
+            "https://pulsealerts.mylapay.com/direct-call",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                receiver: "CRM_Switch",
+                title,
+                user_ids: allUserIds,
+              }),
+            },
+          );
 
-            
-console.log("PULSE ALERT CALL ENDS",response)
+          console.log("PULSE ALERT CALL ENDS", response);
           // Send notifications and log (these can use pool)
           await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
         } catch (err) {
@@ -496,15 +503,15 @@ console.log("PULSE ALERT CALL ENDS",response)
   /**
    * For subtasks that remain overdue, send repeat external alerts every 10 minutes
    */
-  
-private async checkOverdueRepeatAlerts(): Promise<void> {
-  try {
-    // Trigger on transition (handled elsewhere). Then repeat every 15 minutes while still overdue.
-    const initialDelay = 15; // minutes after overdue before first repeat
-    const repeatInterval = 15;
 
-    const result = await pool.query(
-      `
+  private async checkOverdueRepeatAlerts(): Promise<void> {
+    try {
+      // Trigger on transition (handled elsewhere). Then repeat every 15 minutes while still overdue.
+      const initialDelay = 15; // minutes after overdue before first repeat
+      const repeatInterval = 15;
+
+      const result = await pool.query(
+        `
       SELECT
         t.id as task_id,
         t.task_name,
@@ -524,10 +531,10 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
         AND t.deleted_at IS NULL
         AND (ft.subtask_scheduled_date IS NULL OR ft.subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date)
     `,
-    );
+      );
 
-    // Ensure the 'finops_external_alerts' table exists
-    await pool.query(`
+      // Ensure the 'finops_external_alerts' table exists
+      await pool.query(`
       CREATE TABLE IF NOT EXISTS finops_external_alerts (
         id SERIAL PRIMARY KEY,
         task_id INTEGER NOT NULL,
@@ -540,10 +547,16 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
         UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
       )
     `);
-    await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-    await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-    await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
-    await pool.query(`
+      await pool.query(
+        `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`,
+      );
+      await pool.query(
+        `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`,
+      );
+      await pool.query(
+        `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
+      );
+      await pool.query(`
       DO $$
       BEGIN
         IF EXISTS (
@@ -567,78 +580,78 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
       END
       $$;
     `);
-    await pool.query(`
+      await pool.query(`
       CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique 
       ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket);
     `);
 
-    const now = new Date();
-    for (const row of result.rows) {
-      const since = row.overdue_since ? new Date(row.overdue_since) : null;
-      if (!since) continue;
-      const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
+      const now = new Date();
+      for (const row of result.rows) {
+        const since = row.overdue_since ? new Date(row.overdue_since) : null;
+        if (!since) continue;
+        const minutes = Math.floor((now.getTime() - since.getTime()) / 60000);
 
-      // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
-      if (minutes >= initialDelay) {
-        // Do something for the initial call if needed
-      }
+        // Initial delayed call (always allowed; single-overdue constraint applies only to repeats)
+        if (minutes >= initialDelay) {
+          // Do something for the initial call if needed
+        }
 
-      // Repeat calls with configured interval
-      if (minutes >= initialDelay + repeatInterval) {
-        const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
-        const alertGroup = `replica_down_overdue`;
-        const alertBucket = bucket;
+        // Repeat calls with configured interval
+        if (minutes >= initialDelay + repeatInterval) {
+          const bucket = Math.floor((minutes - initialDelay) / repeatInterval); // 1,2,3...
+          const alertGroup = `replica_down_overdue`;
+          const alertBucket = bucket;
 
-        // Try to atomically reserve a repeat alert for this bucket. If another process already reserved it, skip.
-        const names = Array.from(
-          new Set([
-            ...this.parseManagers(row.reporting_managers),
-            ...this.parseManagers(row.escalation_managers),
-            ...this.parseManagers(row.assigned_to),
-          ]),
-        );
-        const userIds = await this.getUserIdsFromNames(names);
+          // Try to atomically reserve a repeat alert for this bucket. If another process already reserved it, skip.
+          const names = Array.from(
+            new Set([
+              ...this.parseManagers(row.reporting_managers),
+              ...this.parseManagers(row.escalation_managers),
+              ...this.parseManagers(row.assigned_to),
+            ]),
+          );
+          const userIds = await this.getUserIdsFromNames(names);
 
-        const taskName = row.task_name || "Unknown Task";
-        const clientName = row.client_name || "Unknown Client";
-        const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
+          const taskName = row.task_name || "Unknown Task";
+          const clientName = row.client_name || "Unknown Client";
+          const title = `Kindly take prompt action on the overdue subtask ${row.subtask_name} from the task ${taskName} for the client ${clientName}.`;
 
-        const reserveRepeat = await pool.query(
-          `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+          const reserveRepeat = await pool.query(
+            `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
             VALUES ($1, $2, $3, $4, $5, NOW() + INTERVAL '15 minutes')
             ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
             RETURNING id`,
-          [row.task_id, row.subtask_id, alertGroup, alertBucket, title],
-        );
+            [row.task_id, row.subtask_id, alertGroup, alertBucket, title],
+          );
 
-        if (reserveRepeat.rows.length === 0) {
-          continue; // someone else reserved this repeat bucket
+          if (reserveRepeat.rows.length === 0) {
+            continue; // someone else reserved this repeat bucket
+          }
+
+          console.log("Direct-call payload (service repeat)", {
+            taskId: row.task_id,
+            subtaskId: row.subtask_id,
+            title,
+            minutes_overdue: minutes,
+            bucket,
+            repeat_interval: repeatInterval,
+            user_ids: userIds,
+          });
+
+          await this.logAlert(
+            row.task_id,
+            String(row.subtask_id),
+            "sla_overdue_repeat",
+            "all",
+            minutes,
+            title,
+          );
         }
-
-        console.log("Direct-call payload (service repeat)", {
-          taskId: row.task_id,
-          subtaskId: row.subtask_id,
-          title,
-          minutes_overdue: minutes,
-          bucket,
-          repeat_interval: repeatInterval,
-          user_ids: userIds,
-        });
-
-        await this.logAlert(
-          row.task_id,
-          String(row.subtask_id),
-          "sla_overdue_repeat",
-          "all",
-          minutes,
-          title,
-        );
       }
+    } catch (e) {
+      console.warn("Error in overdue repeat alerts:", (e as Error).message);
     }
-  } catch (e) {
-    console.warn("Error in overdue repeat alerts:", (e as Error).message);
   }
-}
 
   /**
    * Send SLA warning alert (15 minutes before breach)
@@ -808,9 +821,15 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
           UNIQUE(task_id, subtask_id, alert_group, alert_bucket)
         )
       `);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`);
-      await pool.query(`ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`);
+      await pool.query(
+        `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`,
+      );
+      await pool.query(
+        `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`,
+      );
+      await pool.query(
+        `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
+      );
       await pool.query(`
         DO $$
         BEGIN
@@ -835,7 +854,9 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
         END
         $$;
       `);
-      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
+      await pool.query(
+        `CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`,
+      );
 
       const reserve = await pool.query(
         `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
