@@ -659,7 +659,7 @@ export async function initializeDatabase() {
           task_name TEXT,
           subtask_id INTEGER NOT NULL DEFAULT 0,
           subtask_name TEXT,
-          status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled')),
+          status VARCHAR(20) NOT NULL CHECK (status IN ('pending','in_progress','completed','overdue','delayed','cancelled','approved')),
           started_at TIMESTAMP NULL,
           completed_at TIMESTAMP NULL,
           scheduled_time TIME NULL,
