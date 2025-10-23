@@ -411,18 +411,17 @@ class FinOpsAlertService {
           // `);
           await client.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`);
 
-          // Prevent duplicate immediate alerts: check if a recent overdue alert already exists (15 minute window)
+          // Check if a recent overdue alert already exists (to avoid duplicate logging)
           const existing = await client.query(
             `SELECT id FROM finops_alerts WHERE task_id = $1 AND subtask_id = $2 AND alert_type = 'sla_overdue' AND created_at > (CURRENT_TIMESTAMP - INTERVAL '15 minutes') LIMIT 1`,
             [task_id, sub_task_id],
           );
 
-          if (existing.rows.length > 0) {
-            await client.query("ROLLBACK");
+          const shouldSkipLogging = existing.rows.length > 0;
+          if (shouldSkipLogging) {
             console.log(
-              `Skipping overdue alert for task ${task_id} subtask ${sub_task_id} — recent alert already exists`,
+              `Note: recent alert already logged for task ${task_id} subtask ${sub_task_id}, will skip duplicate log but still send external call`,
             );
-            return;
           }
 
           const reserve = await client.query(
