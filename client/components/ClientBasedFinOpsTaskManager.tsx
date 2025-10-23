@@ -432,11 +432,18 @@ function SortableSubTaskItem({
                         <SelectItem value="overdue">Overdue</SelectItem>
                       </SelectContent>
                     </Select>
-                    {/* Approve button: visible to reporting managers when subtask completed */}
+                    {/* Approve button: visible to admin, reporting managers, or escalation managers when subtask completed */}
                     {(() => {
                       try {
                         const task: any = (subtask as any).task || null;
                         const currentUser = (useAuth() as any)?.user || null;
+                        const normalizedUserName = String(
+                          currentUser?.name || currentUser?.email || "",
+                        )
+                          .toLowerCase()
+                          .replace(/\s+/g, " ")
+                          .trim();
+
                         const isReporting =
                           currentUser &&
                           task &&
@@ -448,22 +455,31 @@ function SortableSubTaskItem({
                                     .replace(/\s+/g, " ")
                                     .trim(),
                                 )
-                                .includes(
-                                  String(
-                                    currentUser.name || currentUser.email || "",
-                                  )
+                                .includes(normalizedUserName)
+                            : false;
+
+                        const isEscalation =
+                          currentUser &&
+                          task &&
+                          Array.isArray(task.escalation_managers)
+                            ? task.escalation_managers
+                                .map((m: string) =>
+                                  (m || "")
                                     .toLowerCase()
                                     .replace(/\s+/g, " ")
                                     .trim(),
                                 )
+                                .includes(normalizedUserName)
                             : false;
+
                         const isAdmin = currentUser?.role === "admin";
                         const isApproved = Boolean(
                           (subtask as any).approved_by,
                         );
                         if (
-                          (isReporting || isAdmin) &&
-                          subtask.status === "completed" &&
+                          (isReporting || isEscalation || isAdmin) &&
+                          (subtask.status === "completed" ||
+                            subtask.status === "approved") &&
                           !isApproved
                         ) {
                           return (
