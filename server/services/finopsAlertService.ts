@@ -756,20 +756,23 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
         return; // Alert already sent
       }
 
+      const assignedList: string[] = Array.isArray(task.assigned_to)
+        ? (task.assigned_to as string[])
+        : this.parseManagers(task.assigned_to);
       const recipients = [
-        {
-          name: task.assigned_to,
-          email: `${task.assigned_to.toLowerCase().replace(" ", ".")}@company.com`,
+        ...assignedList.map((name: string) => ({
+          name,
+          email: `${String(name).toLowerCase().replace(/\s+/g, ".")}@company.com`,
           type: "assigned" as const,
-        },
+        })),
         ...this.parseManagers(task.reporting_managers).map((name: string) => ({
           name,
-          email: `${name.toLowerCase().replace(" ", ".")}@company.com`,
+          email: `${String(name).toLowerCase().replace(/\s+/g, ".")}@company.com`,
           type: "reporting" as const,
         })),
         ...this.parseManagers(task.escalation_managers).map((name: string) => ({
           name,
-          email: `${name.toLowerCase().replace(" ", ".")}@company.com`,
+          email: `${String(name).toLowerCase().replace(/\s+/g, ".")}@company.com`,
           type: "escalation" as const,
         })),
       ];
@@ -1332,7 +1335,7 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
       );
 
       console.log(
-        `��� Overdue reason request created for ${task.task_name} - ${subtask.name}`,
+        `🚨 Overdue reason request created for ${task.task_name} - ${subtask.name}`,
       );
     } catch (error) {
       console.error("Error creating overdue reason request:", error);
@@ -1394,71 +1397,23 @@ private async checkOverdueRepeatAlerts(): Promise<void> {
                t.task_name, t.assigned_to, t.reporting_managers, t.escalation_managers
         FROM finops_subtasks st
         JOIN finops_tasks t ON st.task_id = t.id
-        WHERE st.status = 'in_progress'
-        AND st.started_at < (CURRENT_TIMESTAMP - INTERVAL '2 hours')
-        AND t.is_active = true
-        AND t.deleted_at IS NULL
       `);
 
-      for (const row of incompleteSubtasks.rows) {
-        await this.sendIncompleteSubtaskAlert(row);
+      for (const subtask of incompleteSubtasks.rows) {
+        await this.logActivity(
+          subtask.task_id,
+          String(subtask.id),
+          "incomplete_check",
+          "System",
+          `Subtask ${subtask.name} remains incomplete`,
+        );
       }
 
-      console.log(
-        `Incomplete subtask check completed. Found ${incompleteSubtasks.rows.length} incomplete subtasks`,
-      );
+      console.log("Incomplete subtask check completed");
     } catch (error) {
       console.error("Error checking incomplete subtasks:", error);
     }
   }
-
-  /**
-   * Send alert for incomplete subtasks
-   */
-  private async sendIncompleteSubtaskAlert(subtaskData: any): Promise<void> {
-    try {
-      const recipients = [
-        {
-          name: subtaskData.assigned_to,
-          email: `${subtaskData.assigned_to.toLowerCase().replace(" ", ".")}@company.com`,
-          type: "assigned" as const,
-        },
-        ...this.parseManagers(subtaskData.reporting_managers).map(
-          (name: string) => ({
-            name,
-            email: `${name.toLowerCase().replace(" ", ".")}@company.com`,
-            type: "reporting" as const,
-          }),
-        ),
-      ];
-
-      const subject = `📋 Incomplete Subtask Alert: ${subtaskData.task_name}`;
-      const message = `
-        <h2>Incomplete Subtask Alert</h2>
-        <p><strong>Task:</strong> ${subtaskData.task_name}</p>
-        <p><strong>Subtask:</strong> ${subtaskData.name}</p>
-        <p><strong>Status:</strong> ${subtaskData.status}</p>
-        <p><strong>Started At:</strong> ${new Date(subtaskData.started_at).toLocaleString()}</p>
-        <p><strong>Assigned To:</strong> ${subtaskData.assigned_to}</p>
-        
-        <p>This subtask has been in progress for more than 2 hours. Please review and update the status.</p>
-        
-        <hr>
-        <p><small>This is an automated alert from the FinOps Task Management System.</small></p>
-      `;
-
-      await this.sendEmailAlerts(recipients, subject, message);
-      await this.logAlert(
-        subtaskData.task_id,
-        subtaskData.id,
-        "subtask_incomplete",
-        "assigned_user,reporting_managers",
-        0,
-      );
-    } catch (error) {
-      console.error("Error sending incomplete subtask alert:", error);
-    }
-  }
 }
 
-export default new FinOpsAlertService();
+export default FinOpsAlertService;
