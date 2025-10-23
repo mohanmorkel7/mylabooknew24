@@ -836,7 +836,8 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
 
     if (!isAdmin && !isReporter && !isEscalator) {
       return res.status(403).json({
-        error: "Only admin, reporting managers, or escalation managers can approve",
+        error:
+          "Only admin, reporting managers, or escalation managers can approve",
       });
     }
 
@@ -890,7 +891,9 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
 
       await client.query("COMMIT");
 
-      console.log(`[finops-production] Subtask ${subtaskId} approved by ${approver_name}`);
+      console.log(
+        `[finops-production] Subtask ${subtaskId} approved by ${approver_name}`,
+      );
 
       res.json({ ok: true, approved: true, status: "approved" });
     } catch (error) {
