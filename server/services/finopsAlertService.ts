@@ -279,10 +279,15 @@ class FinOpsAlertService {
   private async checkSubtaskSLA(task: any, subtask: any): Promise<void> {
     const now = new Date();
 
-    console.log("subtask.status : ", subtask.status);
+    console.log(
+      `Checking SLA for subtask ${subtask.id} (${subtask.name}): status=${subtask.status}`,
+    );
 
     // Only check pending tasks for overdue status
     if (subtask.status !== "pending") {
+      console.log(
+        `Skipping overdue check - subtask ${subtask.id} status is already '${subtask.status}', not pending`,
+      );
       return;
     }
 
