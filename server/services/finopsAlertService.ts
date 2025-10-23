@@ -426,6 +426,7 @@ class FinOpsAlertService {
             );
           }
 
+          // Try to reserve the external alert (new alerts get inserted, existing ones do nothing)
           const reserve = await client.query(
             `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
                  VALUES ($1, $2, $3, -1, $4, NOW())
@@ -434,20 +435,19 @@ class FinOpsAlertService {
             [task_id, Number(sub_task_id), "replica_down_overdue", title],
           );
 
-          if (reserve.rows.length === 0) {
-            // already reserved by another concurrent run — nothing to do
+          const isNewAlert = reserve.rows.length > 0;
+          if (isNewAlert) {
             console.log(
-              `External alert already reserved by another process for task ${task_id} subtask ${sub_task_id}`,
+              `✅ External alert NEWLY reserved in finops_external_alerts for task ${task_id} subtask ${sub_task_id}`,
             );
-            await client.query("ROLLBACK");
-            return;
+          } else {
+            console.log(
+              `⏸️  External alert already reserved in prior run for task ${task_id} subtask ${sub_task_id}, but still updating tracker status`,
+            );
           }
 
-          console.log(
-            `✅ External alert reserved in finops_external_alerts for task ${task_id} subtask ${sub_task_id}`,
-          );
-
-          // Update finops_tracker row status to overdue
+          // ALWAYS update finops_tracker row status to overdue (regardless of whether alert is new or existing)
+          // This ensures that even if we're re-checking an already-reserved alert, we still update the status
           const updateRes = await client.query(
             `UPDATE finops_tracker SET status = 'overdue', updated_at = NOW() WHERE id = $1 RETURNING id, task_id, subtask_id, status`,
             [lockRes.rows[0].id],
@@ -455,7 +455,7 @@ class FinOpsAlertService {
 
           if (updateRes.rows.length > 0) {
             console.log(
-              `✅ finops_tracker updated to overdue: task_id=${updateRes.rows[0].task_id}, subtask_id=${updateRes.rows[0].subtask_id}, status=${updateRes.rows[0].status}`,
+              `✅ finops_tracker status updated to 'overdue': task_id=${updateRes.rows[0].task_id}, subtask_id=${updateRes.rows[0].subtask_id}`,
             );
           }
 
