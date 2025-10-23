@@ -489,6 +489,7 @@ class FinOpsAlertService {
             console.error("PULSE ALERT CALL ERROR:", (fetchErr as Error).message);
           }
           // Send notifications and log (these can use pool)
+          // Note: even if recent alert exists (shouldSkipLogging), we still send the alert since pulse call wasn't made before
           await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
         } catch (err) {
           try {
