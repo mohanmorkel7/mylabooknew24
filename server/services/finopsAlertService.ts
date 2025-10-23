@@ -1033,6 +1033,35 @@ class FinOpsAlertService {
   private async getActiveTasksWithSubtasks(): Promise<any[]> {
     // Prefer finops_tracker entries for today's IST date when available, fallback to finops_subtasks
     const todayExpr = `(CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date`;
+
+    // First, ensure finops_tracker entries exist for today for all daily/repeating tasks
+    // This handles the case where a task was created on a previous date
+    await pool.query(`
+      INSERT INTO finops_tracker (run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, description, subtask_scheduled_date)
+      SELECT
+        ${todayExpr},
+        COALESCE(t.duration, 'daily'),
+        t.id,
+        t.task_name,
+        st.id,
+        st.name,
+        'pending',
+        st.start_time,
+        st.description,
+        ${todayExpr}
+      FROM finops_tasks t
+      JOIN finops_subtasks st ON t.id = st.task_id
+      WHERE t.is_active = true
+        AND t.deleted_at IS NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM finops_tracker ft
+          WHERE ft.task_id = t.id
+            AND ft.subtask_id = st.id
+            AND ft.run_date = ${todayExpr}
+        )
+      ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+    `);
+
     const query = `
       SELECT
         t.*,
