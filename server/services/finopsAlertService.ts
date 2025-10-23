@@ -462,16 +462,9 @@ class FinOpsAlertService {
             user_ids: allUserIds,
             immediate_user_ids: immediateUserIds,
           });
-        console.log("PULSE ALERT CALL STARTS")
-          // await fetch("https://pulsealerts.mylapay.com/direct-call", {
-          //     method: "POST",
-          //     headers: { "Content-Type": "application/json" },
-          //     body: JSON.stringify({ receiver: "CRM_Switch", title, allUserIds }),
-          //   }).catch((err) => {
-          //     console.warn("Manual direct-call error:", (err as Error).message);
-          //   });
-
-          const response = await fetch(
+        console.log("PULSE ALERT CALL STARTS - allUserIds:", allUserIds);
+          try {
+            const response = await fetch(
               "https://pulsealerts.mylapay.com/direct-call",
               {
                 method: "POST",
@@ -483,9 +476,12 @@ class FinOpsAlertService {
                 }),
               },
             );
-
-            
-console.log("PULSE ALERT CALL ENDS",response)
+            console.log("PULSE ALERT CALL response status:", response.status);
+            const responseBody = await response.text();
+            console.log("PULSE ALERT CALL response body:", responseBody);
+          } catch (fetchErr) {
+            console.error("PULSE ALERT CALL ERROR:", (fetchErr as Error).message);
+          }
           // Send notifications and log (these can use pool)
           await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
         } catch (err) {
