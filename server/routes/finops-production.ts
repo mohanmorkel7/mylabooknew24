@@ -557,6 +557,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       "completed",
       "overdue",
       "cancelled",
+      "approved",
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
