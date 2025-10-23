@@ -468,7 +468,9 @@ class FinOpsAlertService {
             user_ids: allUserIds,
             immediate_user_ids: immediateUserIds,
           });
-        console.log("PULSE ALERT CALL STARTS - allUserIds:", allUserIds);
+
+          // Make the external Pulse alert call (unconditional - this is the primary notification)
+          console.log("PULSE ALERT CALL STARTS - allUserIds:", allUserIds);
           try {
             const response = await fetch(
               "https://pulsealerts.mylapay.com/direct-call",
@@ -488,9 +490,15 @@ class FinOpsAlertService {
           } catch (fetchErr) {
             console.error("PULSE ALERT CALL ERROR:", (fetchErr as Error).message);
           }
-          // Send notifications and log (these can use pool)
-          // Note: even if recent alert exists (shouldSkipLogging), we still send the alert since pulse call wasn't made before
-          await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
+
+          // Send notifications and log (these can use pool, but may skip if recent alert exists)
+          if (!shouldSkipLogging) {
+            await this.sendSLAOverdueAlert(task, subtask, minutesOverdue);
+          } else {
+            console.log(
+              `Skipping email + logging for task ${task_id} since recent alert already logged, but pulse call was made`,
+            );
+          }
         } catch (err) {
           try {
             await client.query("ROLLBACK");
