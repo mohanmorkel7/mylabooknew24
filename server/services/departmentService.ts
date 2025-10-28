@@ -70,7 +70,8 @@ export class DepartmentService {
       infra: "infra",
       admin: "admin", // Admin department gets 'admin' role
       administration: "admin",
-      switch_team: "switch_team", // Administration department also gets 'admin' role
+      switch_team: "switch_team",
+      business_analyst:"business_analyst" // Administration department also gets 'admin' role
     };
 
     return departmentRoleMap[department] || "unknown"; // Default to 'unknown' for unrecognized departments

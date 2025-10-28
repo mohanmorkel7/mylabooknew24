@@ -12,15 +12,21 @@ async function ensureExternalAlertsSchema(): Promise<void> {
       id SERIAL PRIMARY KEY,
       task_id INTEGER NOT NULL,
       subtask_id INTEGER NOT NULL,
-      alert_key TEXT NOT NULL,
+      alert_group TEXT NOT NULL,
+      alert_bucket INTEGER NOT NULL DEFAULT -1,
       title TEXT,
       next_call_at TIMESTAMP,
-      created_at TIMESTAMP DEFAULT NOW(),
-      UNIQUE(task_id, subtask_id, alert_key)
+      created_at TIMESTAMP DEFAULT NOW()
     )
   `);
   await pool.query(
-    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS next_call_at TIMESTAMP`,
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_group TEXT`,
+  );
+  await pool.query(
+    `ALTER TABLE finops_external_alerts ADD COLUMN IF NOT EXISTS alert_bucket INTEGER DEFAULT -1`,
+  );
+  await pool.query(
+    `CREATE UNIQUE INDEX IF NOT EXISTS idx_fea_unique ON finops_external_alerts(task_id, subtask_id, alert_group, alert_bucket)`,
   );
 }
 
@@ -101,18 +107,18 @@ async function sendReplicaDownAlertOnce(
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL,
     subtask_id INTEGER NOT NULL,
-    alert_key TEXT NOT NULL,
+    alert_group TEXT NOT NULL,
+    alert_bucket INTEGER NOT NULL DEFAULT -1,
     title TEXT,
     next_call_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(task_id, subtask_id, alert_key)
+    created_at TIMESTAMP DEFAULT NOW()
   )
     `);
 
     const reserve = await pool.query(
-      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-       VALUES ($1, $2, $3, $4, NOW() + INTERVAL '15 minutes')
-       ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+      `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+       VALUES ($1, $2, $3, -1, $4, NOW() + INTERVAL '15 minutes')
+       ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
        RETURNING id`,
       [taskId, Number(subtaskId), "replica_down_overdue", title],
     );
@@ -551,6 +557,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       "completed",
       "overdue",
       "cancelled",
+      "approved",
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
@@ -756,7 +763,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
   }
 });
 
-// Approve subtask (only reporting managers)
+// Approve subtask (admin, reporting managers, escalation managers)
 router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
@@ -766,7 +773,7 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       return res.status(400).json({ error: "approver_name is required" });
 
     const stRes = await pool.query(
-      `SELECT st.id, st.task_id, st.name as subtask_name, ft.task_name, ft.reporting_managers, ft.created_by
+      `SELECT st.id, st.task_id, st.name as subtask_name, ft.task_name, ft.reporting_managers, ft.escalation_managers, ft.created_by
        FROM finops_subtasks st
        JOIN finops_tasks ft ON st.task_id = ft.id
        WHERE st.id = $1 LIMIT 1`,
@@ -798,56 +805,103 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
         .filter(Boolean);
     };
 
-    const reporters = parseManagers(row.reporting_managers);
-    const isReporter = reporters
-      .map((n) => n.toLowerCase().replace(/\s+/g, " ").trim())
-      .includes(
-        String(approver_name).toLowerCase().replace(/\s+/g, " ").trim(),
-      );
-    if (!isReporter)
-      return res
-        .status(403)
-        .json({ error: "Only reporting managers can approve" });
+    // Check if approver is admin, reporting manager, or escalation manager
+    const normalizedApprover = String(approver_name)
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim();
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS finops_approvals (
-        id SERIAL PRIMARY KEY,
-        task_id INTEGER NOT NULL,
-        subtask_id INTEGER NOT NULL,
-        approved_by TEXT NOT NULL,
-        note TEXT,
-        approved_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(task_id, subtask_id)
-      )
-    `);
-    // Prevent re-approval
-    const existing = await pool.query(
-      `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 LIMIT 1`,
-      [row.task_id, subtaskId],
-    );
-    if (existing.rows.length) {
-      return res.status(409).json({ error: "Already approved" });
+    // Check if user is admin by looking up in users table
+    let isAdmin = false;
+    try {
+      const adminCheck = await pool.query(
+        `SELECT 1 FROM users WHERE (LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1) AND role = 'admin' LIMIT 1`,
+        [normalizedApprover],
+      );
+      isAdmin = adminCheck.rows.length > 0;
+    } catch (e) {
+      console.warn("Failed to check admin role:", (e as Error).message);
     }
 
-    await pool.query(
-      `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (task_id, subtask_id) DO NOTHING`,
-      [row.task_id, subtaskId, approver_name, note || null],
-    );
+    const reporters = parseManagers(row.reporting_managers);
+    const escalators = parseManagers(row.escalation_managers);
 
-    // await pool.query(
-    //   `INSERT INTO finops_activity_log (task_id, subtask_id, action, user_name, details)
-    //    VALUES ($1, $2, 'approved', $3, $4)`,
-    //   [
-    //     row.task_id,
-    //     subtaskId,
-    //     approver_name,
-    //     note ? `Approved: ${note}` : "Approved",
-    //   ],
-    // );
+    const isReporter = reporters
+      .map((n) => n.toLowerCase().replace(/\s+/g, " ").trim())
+      .includes(normalizedApprover);
 
-    res.json({ ok: true, approved: true });
+    const isEscalator = escalators
+      .map((n) => n.toLowerCase().replace(/\s+/g, " ").trim())
+      .includes(normalizedApprover);
+
+    if (!isAdmin && !isReporter && !isEscalator) {
+      return res.status(403).json({
+        error:
+          "Only admin, reporting managers, or escalation managers can approve",
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      await client.query(`
+        CREATE TABLE IF NOT EXISTS finops_approvals (
+          id SERIAL PRIMARY KEY,
+          task_id INTEGER NOT NULL,
+          subtask_id INTEGER NOT NULL,
+          approved_by TEXT NOT NULL,
+          note TEXT,
+          approved_at TIMESTAMP DEFAULT NOW(),
+          UNIQUE(task_id, subtask_id)
+        )
+      `);
+
+      // Prevent re-approval
+      const existing = await client.query(
+        `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 LIMIT 1`,
+        [row.task_id, subtaskId],
+      );
+      if (existing.rows.length) {
+        await client.query("ROLLBACK");
+        return res.status(409).json({ error: "Already approved" });
+      }
+
+      // Insert approval record
+      await client.query(
+        `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT (task_id, subtask_id) DO NOTHING`,
+        [row.task_id, subtaskId, approver_name, note || null],
+      );
+
+      // Update finops_subtasks status to approved
+      // await client.query(
+      //   `UPDATE finops_subtasks SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      //   [subtaskId],
+      // );
+
+      // // Also update finops_tracker for today's date if it exists
+      // const todayStr = new Date().toISOString().slice(0, 10);
+      // await client.query(
+      //   `UPDATE finops_tracker SET status = 'approved', updated_at = CURRENT_TIMESTAMP
+      //    WHERE subtask_id = $1 AND run_date = $2`,
+      //   [subtaskId, todayStr],
+      // );
+
+      await client.query("COMMIT");
+
+      console.log(
+        `[finops-production] Subtask ${subtaskId} approved by ${approver_name}`,
+      );
+
+      res.json({ ok: true, approved: true, status: "approved" });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
   } catch (e: any) {
     console.error("Approve subtask failed:", e);
     res
@@ -1334,11 +1388,11 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
     id SERIAL PRIMARY KEY,
     task_id INTEGER NOT NULL,
     subtask_id INTEGER NOT NULL,
-    alert_key TEXT NOT NULL,
+    alert_group TEXT NOT NULL,
+    alert_bucket INTEGER NOT NULL DEFAULT -1,
     title TEXT,
     next_call_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(task_id, subtask_id, alert_key)
+    created_at TIMESTAMP DEFAULT NOW()
   )
     `);
 
@@ -1377,9 +1431,9 @@ router.post("/public/pulse-sync", async (req: Request, res: Response) => {
 
       // Reserve to avoid duplicates
       const reserve = await pool.query(
-        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_key, title, next_call_at)
-         VALUES ($1, $2, 'replica_down_overdue', $3, NOW() + INTERVAL '15 minutes')
-         ON CONFLICT (task_id, subtask_id, alert_key) DO NOTHING
+        `INSERT INTO finops_external_alerts (task_id, subtask_id, alert_group, alert_bucket, title, next_call_at)
+         VALUES ($1, $2, 'replica_down_overdue', -1, $3, NOW() + INTERVAL '15 minutes')
+         ON CONFLICT (task_id, subtask_id, alert_group, alert_bucket) DO NOTHING
          RETURNING id`,
         [row.task_id, row.subtask_id, title],
       );

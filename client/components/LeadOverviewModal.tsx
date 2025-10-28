@@ -330,7 +330,7 @@ export function LeadOverviewModal({
                       "Detailed analysis of client needs and project scope",
                     status: "completed",
                     completedDate: "2024-01-18",
-                    assignedTo: "Business Analyst",
+                    assignedTo: "business_analyst",
                   },
                   {
                     id: 3,
@@ -432,7 +432,7 @@ export function LeadOverviewModal({
                     type: "DOCX",
                     size: "1.8 MB",
                     uploadedDate: "2024-01-18",
-                    uploadedBy: "Business Analyst",
+                    uploadedBy: "business_analyst",
                   },
                   {
                     id: 3,

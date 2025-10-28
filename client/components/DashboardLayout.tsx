@@ -58,7 +58,7 @@ const navigationItems: NavigationItem[] = [
     name: "Overview",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["admin", "sales", "product", "finops"]
+    roles: ["admin", "sales", "product", "finops","business_analyst"]
   },
   // b) Templates (was Admin Panel)
   {
@@ -96,8 +96,8 @@ const navigationItems: NavigationItem[] = [
     name: "Clients",
     href: "/clients",
     icon: Building,
-    roles: ["admin", "sales", "product"],
-    permissions: ["leads"],
+    roles: ["admin", "sales", "product","business_analyst"],
+    
   },
   // g) Sales (was Business Offerings)
   {

@@ -17,7 +17,8 @@
         "billing"
       ],
       "users": []
-    },
+    }
+    ,
     "finops": {
       "name": "Financial Operations",
       "permissions": [
@@ -53,6 +54,15 @@
         "database",
         "leads",
         "vc"
+      ],
+      "users": []
+    },
+    "business_analyst": {
+      "name": "business_analyst",
+      "permissions": [
+        "finops",
+        "reports",
+        "billing"
       ],
       "users": []
     },
@@ -196,7 +206,7 @@
       "displayName": "Lakshaa R S",
       "givenName": "Lakshaa R S",
       "surname": "R S",
-      "jobTitle": "Business Analyst",
+      "jobTitle": "business_analyst",
       "department": "admin",
       "ssoId": "5e9f77d1-ff0c-4b85-889a-09faf9c8fb05"
     }
