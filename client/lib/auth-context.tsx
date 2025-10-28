@@ -33,6 +33,7 @@ export type UserRole =
   | "infra"
   | "switch_team"
   | "backend"
+  | "business_analyst"
   | "unknown";
 
 export interface User {

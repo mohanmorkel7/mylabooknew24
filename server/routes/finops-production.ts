@@ -876,18 +876,18 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       );
 
       // Update finops_subtasks status to approved
-      await client.query(
-        `UPDATE finops_subtasks SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-        [subtaskId],
-      );
+      // await client.query(
+      //   `UPDATE finops_subtasks SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
+      //   [subtaskId],
+      // );
 
-      // Also update finops_tracker for today's date if it exists
-      const todayStr = new Date().toISOString().slice(0, 10);
-      await client.query(
-        `UPDATE finops_tracker SET status = 'approved', updated_at = CURRENT_TIMESTAMP
-         WHERE subtask_id = $1 AND run_date = $2`,
-        [subtaskId, todayStr],
-      );
+      // // Also update finops_tracker for today's date if it exists
+      // const todayStr = new Date().toISOString().slice(0, 10);
+      // await client.query(
+      //   `UPDATE finops_tracker SET status = 'approved', updated_at = CURRENT_TIMESTAMP
+      //    WHERE subtask_id = $1 AND run_date = $2`,
+      //   [subtaskId, todayStr],
+      // );
 
       await client.query("COMMIT");
 

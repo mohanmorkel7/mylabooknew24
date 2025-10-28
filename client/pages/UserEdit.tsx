@@ -109,6 +109,7 @@ export default function UserEdit() {
       backend: "development",
       infra: "infra",
       switch_team: "switch_team",
+      business_analyst: "business_analyst"
     };
 
     return departmentRoleMap[department] || "development";

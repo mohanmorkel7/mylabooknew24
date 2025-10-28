@@ -11,6 +11,7 @@ export type Permission =
   | "database"
   | "product"
   | "leads"
+  | "business_analyst"
   | "vc";
 
 export function usePermissions() {
@@ -43,6 +44,7 @@ export function usePermissions() {
         "product",
         "leads",
         "vc",
+
       ],
       sales: ["leads", "vc", "reports"],
       product: ["product", "leads", "vc"],
@@ -52,6 +54,7 @@ export function usePermissions() {
       finance: ["finops", "reports", "billing"],
       hr_management: ["users", "reports", "settings"],
       infra: ["admin", "settings", "database"],
+      business_analyst:["business_analyst"]
     };
 
     const userRolePermissions = rolePermissions[user.role] || [];

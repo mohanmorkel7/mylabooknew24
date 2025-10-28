@@ -8,6 +8,7 @@ const testRoles = [
   "finops",
   "finance",
   "hr_management",
+  "business_analyst",
   "infra",
   "switch_team",
   "invalid_role", // This should fail
@@ -22,6 +23,7 @@ for (const role of testRoles) {
     "product",
     "development",
     "db",
+    "business_analyst",
     "finops",
     "finance",
     "hr_management",
@@ -46,6 +48,7 @@ console.log(
     "finance",
     "hr_management",
     "infra",
+    "business_analyst",
     "switch_team",
   ].join(", "),
 );
