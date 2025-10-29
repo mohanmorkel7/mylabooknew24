@@ -474,18 +474,18 @@ class FinOpsAlertService {
           // Make the external Pulse alert call (unconditional - this is the primary notification)
           console.log("PULSE ALERT CALL STARTS - allUserIds:", allUserIds);
           try {
-            // const response = await fetch(
-            //   "https://pulsealerts.mylapay.com/direct-call",
-            //   {
-            //     method: "POST",
-            //     headers: { "Content-Type": "application/json" },
-            //     body: JSON.stringify({
-            //       receiver: "CRM_Switch",
-            //       title,
-            //       user_ids: allUserIds,
-            //     }),
-            //   },
-            // );
+            const response = await fetch(
+              "https://pulsealerts.mylapay.com/direct-call",
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  receiver: "CRM_Switch",
+                  title,
+                  user_ids: allUserIds,
+                }),
+              },
+            );
             console.log("PULSE ALERT CALL response status:", response.status);
             const responseBody = await response.text();
             console.log("PULSE ALERT CALL response body:", responseBody);
