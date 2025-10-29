@@ -703,7 +703,7 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
         await client.query(taskQuery, [
           task_name,
           description,
-          assigned_to,
+          typeof assigned_to === "string" ? assigned_to : JSON.stringify(assigned_to || []),
           JSON.stringify(reporting_managers),
           JSON.stringify(escalation_managers),
           effective_from,
