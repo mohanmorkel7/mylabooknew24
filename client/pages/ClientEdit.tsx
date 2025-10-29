@@ -299,8 +299,6 @@ export default function ClientEdit() {
       client_type,
       payment_offerings,
       geography,
-      txn_volume,
-      product_tag_info,
     } = errors;
     const filtered: Record<string, string> = {};
     if (source) filtered.source = source;
@@ -308,8 +306,6 @@ export default function ClientEdit() {
     if (client_type) filtered.client_type = client_type;
     if (payment_offerings) filtered.payment_offerings = payment_offerings;
     if (geography) filtered.geography = geography;
-    if (txn_volume) filtered.txn_volume = txn_volume;
-    if (product_tag_info) filtered.product_tag_info = product_tag_info;
     return filtered;
   }, [errors]);
 
