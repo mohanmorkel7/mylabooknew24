@@ -139,6 +139,8 @@ export default function CreateClient() {
       phone: string;
       email: string;
       linkedin_profile_link?: string;
+      department?: string;
+      reportingTo?: string;
     }>
   >([
     {
@@ -148,6 +150,8 @@ export default function CreateClient() {
       phone: "",
       email: "",
       linkedin_profile_link: "",
+      department: "",
+      reportingTo: "",
     },
   ]);
 
