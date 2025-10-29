@@ -65,6 +65,7 @@ export default function ClientDashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const [importModalOpen, setImportModalOpen] = useState(false);
   const openClient = (id: number) => navigate(`/clients/${id}`);
   const deleteMutation = useDeleteClient();
   const [deletingId, setDeletingId] = useState<number | null>(null);
