@@ -162,6 +162,7 @@ export default function ClientEdit() {
       phone_prefix: string;
       phone: string;
       email: string;
+      linkedin_profile_link?: string;
     }[]
   >([
     {
@@ -170,6 +171,7 @@ export default function ClientEdit() {
       phone_prefix: "+91",
       phone: "",
       email: "",
+      linkedin_profile_link: "",
     },
   ]);
 
