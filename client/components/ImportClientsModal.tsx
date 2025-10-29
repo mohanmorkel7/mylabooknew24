@@ -169,19 +169,10 @@ export function ImportClientsModal({
             productTagInfo: row[headerMap["product tag info"]]
               ?.toString()
               .trim(),
-            contactPerson: row[headerMap["contact person"]]
-              ?.toString()
-              .trim(),
-            email: row[headerMap["email"]]?.toString().trim(),
-            phone: row[headerMap["phone"]]?.toString().trim(),
-            companySize: row[headerMap["company size"]]?.toString().trim(),
-            industry: row[headerMap["industry"]]?.toString().trim(),
             address: row[headerMap["street address"]]?.toString().trim(),
             city: row[headerMap["city"]]?.toString().trim(),
             state: row[headerMap["state"]]?.toString().trim(),
             country: row[headerMap["country"]]?.toString().trim(),
-            priority: row[headerMap["priority"]]?.toString().trim() || "medium",
-            expectedValue: row[headerMap["expected value"]]?.toString().trim(),
             contacts: [],
           };
 
