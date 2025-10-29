@@ -286,8 +286,6 @@ export default function ClientEdit() {
     if (clientInfo.payment_offerings.length === 0)
       e.payment_offerings = "Select at least one";
     if (!clientInfo.geography) e.geography = "Required";
-    if (!clientInfo.txn_volume) e.txn_volume = "Required";
-    if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
     if (!addressInfo.country) e.country = "Required";
     if (!addressInfo.state) e.state = "Required";
     if (!addressInfo.city) e.city = "Required";
