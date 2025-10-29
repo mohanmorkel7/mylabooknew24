@@ -31,13 +31,21 @@ import { apiClient } from "@/lib/api";
 import * as XLSX from "xlsx";
 
 const TEMPLATE_HEADERS = [
+  "Source",
+  "Source Value",
   "Client Name",
+  "Client Type",
+  "Payment Offering",
+  "Website",
+  "Client Geography",
+  "Txn Volume / per day in million",
+  "Product Tag Info",
   "Contact Person",
   "Email",
   "Phone",
   "Company Size",
   "Industry",
-  "Address",
+  "Street Address",
   "City",
   "State",
   "Country",
