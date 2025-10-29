@@ -161,9 +161,7 @@ export function ImportClientsModal({
               .trim(),
             website: row[headerMap["website"]]?.toString().trim(),
             geography: row[headerMap["client geography"]]?.toString().trim(),
-            txnVolume: row[
-              headerMap["txn volume / per day in million"]
-            ]
+            txnVolume: row[headerMap["txn volume / per day in million"]]
               ?.toString()
               .trim(),
             productTagInfo: row[headerMap["product tag info"]]
@@ -176,8 +174,7 @@ export function ImportClientsModal({
             contacts: [],
           };
 
-          const contactName =
-            row[headerMap["contact name"]]?.toString().trim();
+          const contactName = row[headerMap["contact name"]]?.toString().trim();
           if (contactName) {
             importedRow.contacts = [
               {
@@ -187,9 +184,7 @@ export function ImportClientsModal({
                   row[headerMap["phone prefix"]]?.toString().trim() || "+91",
                 phone: row[headerMap["contact phone"]]?.toString().trim(),
                 email: row[headerMap["contact email"]]?.toString().trim(),
-                linkedin_profile_link: row[
-                  headerMap["linkedin profile link"]
-                ]
+                linkedin_profile_link: row[headerMap["linkedin profile link"]]
                   ?.toString()
                   .trim(),
               },
@@ -340,10 +335,7 @@ export function ImportClientsModal({
                         Start by downloading the Excel template with the correct
                         headers
                       </p>
-                      <Button
-                        onClick={downloadTemplate}
-                        className="gap-2"
-                      >
+                      <Button onClick={downloadTemplate} className="gap-2">
                         <Download className="w-4 h-4" />
                         Download Template
                       </Button>
@@ -433,8 +425,7 @@ export function ImportClientsModal({
                     <div className="mt-2 space-y-1 max-h-48 overflow-y-auto">
                       {errors.map((error, idx) => (
                         <div key={idx} className="text-sm">
-                          Row {error.rowIndex}: {error.field} -{" "}
-                          {error.message}
+                          Row {error.rowIndex}: {error.field} - {error.message}
                         </div>
                       ))}
                     </div>
@@ -508,7 +499,9 @@ export function ImportClientsModal({
                   onClick={handleImport}
                   disabled={importMutation.isPending}
                 >
-                  {importMutation.isPending ? "Importing..." : "Submit & Import"}
+                  {importMutation.isPending
+                    ? "Importing..."
+                    : "Submit & Import"}
                 </Button>
               </div>
             </div>

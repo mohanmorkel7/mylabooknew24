@@ -280,10 +280,7 @@ export default function ClientDashboard() {
           <p className="text-gray-600 mt-1">Manage clients and onboarding</p>
         </div>
         <div className="flex gap-3">
-          <Button
-            variant="outline"
-            onClick={() => setImportModalOpen(true)}
-          >
+          <Button variant="outline" onClick={() => setImportModalOpen(true)}>
             <Upload className="w-4 h-4 mr-2" />
             Import
           </Button>
