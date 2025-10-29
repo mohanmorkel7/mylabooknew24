@@ -217,6 +217,7 @@ export default function ClientEdit() {
       phone_prefix: meta.contacts?.[0]?.phone_prefix || "+91",
       phone: originalClient.phone || meta.contacts?.[0]?.phone || "",
       email: originalClient.email || meta.contacts?.[0]?.email || "",
+      linkedin_profile_link: meta.contacts?.[0]?.linkedin_profile_link || "",
     };
     const others = Array.isArray(meta.contacts) ? meta.contacts.slice(1) : [];
     setContacts([primary, ...others]);
