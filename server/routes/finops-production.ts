@@ -245,15 +245,16 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     // Build filter clauses used inside SQL templates (different param indices)
-    const filterDateClause =
-      normalizedUser && !callerIsManager && !callerIsAdmin
-        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)"
-        : "";
+   const filterDateClause =
+  normalizedUser && !callerIsManager && !callerIsAdmin
+    ? "AND t.assigned_to @> ('[\"' || $2 || '\"]')::jsonb"
+    : "";
 
-    const filterTodayClause =
-      normalizedUser && !callerIsManager && !callerIsAdmin
-        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)"
-        : "";
+const filterTodayClause =
+  normalizedUser && !callerIsManager && !callerIsAdmin
+    ? "AND t.assigned_to @> ('[\"' || $1 || '\"]')::jsonb"
+    : "";
+
 
     let result;
     if (dateParam) {
@@ -261,7 +262,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
       const trackerQuery = `
         SELECT
           t.*,
-          COALESCE(sub.subtasks, '[]'::json) AS subtasks
+         COALESCE(sub.subtasks::jsonb, '[]'::jsonb) AS subtasks
         FROM finops_tasks t
         LEFT JOIN LATERAL (
           SELECT json_agg(s.* ORDER BY s.order_position) AS subtasks
@@ -320,9 +321,16 @@ router.get("/tasks", async (req: Request, res: Response) => {
               COALESCE(st.notification_sent_15min, false) AS notification_sent_15min,
               COALESCE(st.notification_sent_start, false) AS notification_sent_start,
               COALESCE(st.notification_sent_escalation, false) AS notification_sent_escalation,
-              COALESCE(st.assigned_to, t.assigned_to) AS assigned_to,
-              t.reporting_managers::text AS reporting_managers,
-              t.escalation_managers::text AS escalation_managers,
+            COALESCE(
+  CASE
+    WHEN st.assigned_to IS NULL THEN NULL
+    WHEN st.assigned_to ~ '^\s*\[' THEN st.assigned_to::jsonb  -- already JSON array
+    ELSE to_jsonb(st.assigned_to)                               -- wrap plain text
+  END,
+  t.assigned_to
+) AS assigned_to,
+             t.reporting_managers::jsonb AS reporting_managers,
+t.escalation_managers::jsonb AS escalation_managers,
               (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_by,
               (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_at
             FROM finops_subtasks st
