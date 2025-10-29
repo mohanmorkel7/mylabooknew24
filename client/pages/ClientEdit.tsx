@@ -936,6 +936,18 @@ export default function ClientEdit() {
                         </div>
                       </div>
                     </div>
+
+                    <div>
+                      <Label>LinkedIn Profile Link (Optional)</Label>
+                      <Input
+                        value={c.linkedin_profile_link || ""}
+                        onChange={(e) =>
+                          updateContact(idx, "linkedin_profile_link", e.target.value)
+                        }
+                        placeholder="https://linkedin.com/in/..."
+                        type="url"
+                      />
+                    </div>
                   </div>
                 ))}
 
