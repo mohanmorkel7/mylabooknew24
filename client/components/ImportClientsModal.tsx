@@ -62,17 +62,10 @@ interface ImportClientRow {
   geography?: string;
   txnVolume?: string;
   productTagInfo?: string;
-  contactPerson?: string;
-  email?: string;
-  phone?: string;
-  companySize?: string;
-  industry?: string;
   address?: string;
   city?: string;
   state?: string;
   country?: string;
-  priority?: string;
-  expectedValue?: string;
   contacts?: Array<{
     contact_name: string;
     designation?: string;
