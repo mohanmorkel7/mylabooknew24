@@ -166,13 +166,31 @@ export function ImportClientsModal({
           }
 
           const importedRow: ImportClientRow = {
+            source: row[headerMap["source"]]?.toString().trim(),
+            sourceValue: row[headerMap["source value"]]?.toString().trim(),
             clientName,
-            contactPerson: row[headerMap["contact person"]]?.toString().trim(),
+            clientType: row[headerMap["client type"]]?.toString().trim(),
+            paymentOffering: row[headerMap["payment offering"]]
+              ?.toString()
+              .trim(),
+            website: row[headerMap["website"]]?.toString().trim(),
+            geography: row[headerMap["client geography"]]?.toString().trim(),
+            txnVolume: row[
+              headerMap["txn volume / per day in million"]
+            ]
+              ?.toString()
+              .trim(),
+            productTagInfo: row[headerMap["product tag info"]]
+              ?.toString()
+              .trim(),
+            contactPerson: row[headerMap["contact person"]]
+              ?.toString()
+              .trim(),
             email: row[headerMap["email"]]?.toString().trim(),
             phone: row[headerMap["phone"]]?.toString().trim(),
             companySize: row[headerMap["company size"]]?.toString().trim(),
             industry: row[headerMap["industry"]]?.toString().trim(),
-            address: row[headerMap["address"]]?.toString().trim(),
+            address: row[headerMap["street address"]]?.toString().trim(),
             city: row[headerMap["city"]]?.toString().trim(),
             state: row[headerMap["state"]]?.toString().trim(),
             country: row[headerMap["country"]]?.toString().trim(),
