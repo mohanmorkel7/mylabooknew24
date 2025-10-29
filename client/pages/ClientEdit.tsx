@@ -719,7 +719,7 @@ export default function ClientEdit() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Txn Volume / per day in million *</Label>
+                    <Label>Txn Volume / per day in million</Label>
                     <Select
                       value={clientInfo.txn_volume}
                       onValueChange={(v) =>
@@ -737,14 +737,9 @@ export default function ClientEdit() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {showClientErrors && errors.txn_volume && (
-                      <p className="text-red-600 text-xs mt-1">
-                        {errors.txn_volume}
-                      </p>
-                    )}
                   </div>
                   <div>
-                    <Label>Product Tag Info *</Label>
+                    <Label>Product Tag Info</Label>
                     <Input
                       value={clientInfo.product_tag_info}
                       onChange={(e) =>
@@ -755,11 +750,6 @@ export default function ClientEdit() {
                       }
                       placeholder="Enter product tags"
                     />
-                    {showClientErrors && errors.product_tag_info && (
-                      <p className="text-red-600 text-xs mt-1">
-                        {errors.product_tag_info}
-                      </p>
-                    )}
                   </div>
                 </div>
               </CardContent>
