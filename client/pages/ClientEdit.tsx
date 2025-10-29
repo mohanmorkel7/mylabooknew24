@@ -419,6 +419,7 @@ export default function ClientEdit() {
         phone_prefix: "+91",
         phone: "",
         email: "",
+        linkedin_profile_link: "",
       },
     ]);
   const removeContact = (idx: number) =>
