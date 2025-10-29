@@ -823,6 +823,16 @@ export default function ClientDashboard() {
           </DialogContent>
         </Dialog>
       )}
+
+      <ImportClientsModal
+        open={importModalOpen}
+        onOpenChange={setImportModalOpen}
+        onImportSuccess={() => {
+          setImportModalOpen(false);
+          queryClient.invalidateQueries({ queryKey: ["clients"] });
+          queryClient.invalidateQueries({ queryKey: ["client-stats"] });
+        }}
+      />
     </div>
   );
 }
