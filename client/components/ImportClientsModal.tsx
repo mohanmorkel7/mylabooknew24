@@ -289,7 +289,16 @@ export function ImportClientsModal({
             : undefined,
           status: "active",
           notes: JSON.stringify({
-            source: "Bulk Import",
+            source: client.source || "Bulk Import",
+            source_value: client.sourceValue,
+            client_type: client.clientType,
+            payment_offerings: client.paymentOffering
+              ? client.paymentOffering.split(",").map((s) => s.trim())
+              : [],
+            website: client.website,
+            geography: client.geography,
+            txn_volume: client.txnVolume,
+            product_tag_info: client.productTagInfo,
             contacts: client.contacts || [],
           }),
         };
