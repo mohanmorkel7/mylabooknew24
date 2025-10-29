@@ -245,14 +245,15 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     // Build filter clauses used inside SQL templates (different param indices)
+    // Handle JSONB array format for assigned_to: ["name1", "name2"]
     const filterDateClause =
       normalizedUser && !callerIsManager && !callerIsAdmin
-        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $2)"
+        ? "AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.assigned_to,'[]'::jsonb)) a WHERE LOWER(TRIM(a)) = $2)"
         : "";
 
     const filterTodayClause =
       normalizedUser && !callerIsManager && !callerIsAdmin
-        ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)"
+        ? "AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.assigned_to,'[]'::jsonb)) a WHERE LOWER(TRIM(a)) = $1)"
         : "";
 
     let result;
