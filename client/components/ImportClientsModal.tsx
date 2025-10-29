@@ -174,9 +174,9 @@ export function ImportClientsModal({
   onOpenChange: (open: boolean) => void;
   onImportSuccess: () => void;
 }) {
-  const [step, setStep] = useState<"download" | "upload" | "preview" | "duplicates">(
-    "download",
-  );
+  const [step, setStep] = useState<
+    "download" | "upload" | "preview" | "duplicates"
+  >("download");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ImportClientRow[]>([]);
   const [errors, setErrors] = useState<ValidationError[]>([]);
@@ -683,18 +683,10 @@ export function ImportClientsModal({
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={selectAll}
-                >
+                <Button size="sm" variant="outline" onClick={selectAll}>
                   Select All
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={selectNone}
-                >
+                <Button size="sm" variant="outline" onClick={selectNone}>
                   Deselect All
                 </Button>
               </div>
@@ -761,7 +753,9 @@ export function ImportClientsModal({
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setStep(duplicateInfo.length > 0 ? "duplicates" : "download");
+                    setStep(
+                      duplicateInfo.length > 0 ? "duplicates" : "download",
+                    );
                     setParsedData([]);
                     setSelectedFile(null);
                     setDuplicateInfo([]);

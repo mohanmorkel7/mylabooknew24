@@ -322,7 +322,6 @@ export default function CreateClient() {
     createMutation.mutate();
   };
 
-
   // Simple searchable combobox component
   function Combobox({
     items,

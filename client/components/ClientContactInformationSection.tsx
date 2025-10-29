@@ -340,8 +340,7 @@ export function ClientContactInformationSection({
               <div className="mt-2 space-y-1 text-sm max-h-48 overflow-y-auto">
                 {validationErrors.map((error, idx) => (
                   <div key={idx}>
-                    Contact #{error.index + 1} - {error.field}:{" "}
-                    {error.message}
+                    Contact #{error.index + 1} - {error.field}: {error.message}
                   </div>
                 ))}
               </div>
@@ -418,9 +417,7 @@ export function ClientContactInformationSection({
                 <Label>Department</Label>
                 <Select
                   value={c.department || ""}
-                  onValueChange={(v) =>
-                    updateContact(idx, "department", v)
-                  }
+                  onValueChange={(v) => updateContact(idx, "department", v)}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select department" />
@@ -460,7 +457,9 @@ export function ClientContactInformationSection({
                         : ""
                     }`}
                     value={c.email}
-                    onChange={(e) => updateContact(idx, "email", e.target.value)}
+                    onChange={(e) =>
+                      updateContact(idx, "email", e.target.value)
+                    }
                     placeholder="name@company.com"
                   />
                 </div>
@@ -470,9 +469,7 @@ export function ClientContactInformationSection({
                 <div className="flex gap-2">
                   <Select
                     value={c.phone_prefix || "+91"}
-                    onValueChange={(v) =>
-                      updateContact(idx, "phone_prefix", v)
-                    }
+                    onValueChange={(v) => updateContact(idx, "phone_prefix", v)}
                   >
                     <SelectTrigger className="w-[140px]">
                       <SelectValue />
@@ -563,8 +560,8 @@ export function ClientContactInformationSection({
           <DialogHeader>
             <DialogTitle>Bulk Import Contacts</DialogTitle>
             <DialogDescription>
-              Paste contacts in the format: Name | Designation | Email | Phone
-              | LinkedIn | Department | ReportingTo (separated by line breaks)
+              Paste contacts in the format: Name | Designation | Email | Phone |
+              LinkedIn | Department | ReportingTo (separated by line breaks)
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -583,10 +580,7 @@ export function ClientContactInformationSection({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setBulkImportOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setBulkImportOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleBulkImport}>Import Contacts</Button>

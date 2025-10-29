@@ -11,20 +11,24 @@ This document outlines the enhancements made to handle duplicate clients during 
 #### New Features:
 
 **Duplicate Detection**
+
 - Automatically detects duplicate client names within the same import batch
 - Creates a "Duplicates" step in the import workflow where users can review identified duplicates
 - Provides clear warnings about which clients appear multiple times with their contact details
 
 **Deduplication Options**
+
 - **Skip Duplicates (Default)**: Imports only unique clients, removing duplicate entries
 - **Import All**: Allows importing duplicate entries (with warning)
 
 **Enhanced Preview**
+
 - Added "Status" column showing "New" vs "Duplicate" clients
 - Added selection checkboxes to allow granular control over which clients to import
 - Shows count of selected clients for import
 
 **Improved Workflow**
+
 - **Step 1: Download Template** - Download the import template with headers
 - **Step 2: Upload File** - Upload Excel file with client data
 - **Step 3: Duplicates Review** (if duplicates found) - Review and select how to handle duplicates
@@ -48,12 +52,14 @@ This document outlines the enhancements made to handle duplicate clients during 
 #### New Features:
 
 **Duplicate Contact Detection**
+
 - Automatically detects duplicate contacts within the same client
 - Matches by contact name and email address
 - Shows warnings for identified duplicates
 - One-click removal of duplicate contacts
 
 **Contact Validation**
+
 - Validates required fields (Contact Name, Designation)
 - Email format validation
 - Phone number format validation (minimum 7 digits)
@@ -61,17 +67,20 @@ This document outlines the enhancements made to handle duplicate clients during 
 - Real-time error display
 
 **Enhanced Contact Fields**
+
 - **Department** - Select from common departments (Finance, Operations, Technical, Sales, Marketing, HR, Legal, Executive, Product, Engineering, Customer Success)
 - **Reporting To** - Name of the contact's manager/superior
 - Maintains existing fields: Contact Name, Designation, Email, Phone, LinkedIn
 
 **Contact Management Features**
+
 - **Add Another Contact** - Add multiple contacts per client
 - **Duplicate Contact** - Quick copy existing contact (with "(Copy)" suffix for easy identification)
 - **Remove Contact** - Delete unwanted contacts
 - **Bulk Import** - Import multiple contacts at once using a simple text format
 
 **Bulk Import Format**
+
 ```
 Name | Designation | Email | Phone | LinkedIn | Department | ReportingTo
 John Doe | Director | john@company.com | 9876543210 | https://linkedin.com/in/john | Finance | CEO
@@ -88,6 +97,7 @@ Jane Smith | Developer | jane@company.com | 1234567890 | https://linkedin.com/in
 ### 3. Updated Create Client Page (`client/pages/CreateClient.tsx`)
 
 **Changes:**
+
 - Integrated new `ClientContactInformationSection` component
 - Replaced inline contact form with component-based approach
 - Updated contact type to include new fields (department, reportingTo)
@@ -134,10 +144,12 @@ All contact information is stored in the client's `notes` field as JSON:
 ## Duplicate Detection Logic
 
 ### Client Duplicates (During Import)
+
 - **Match Criteria**: Client name (case-insensitive, trimmed)
 - **Detection Point**: Before preview, within same batch
 
 ### Contact Duplicates (Within Client)
+
 - **Match Criteria**: Contact name + Email (case-insensitive)
 - **Detection Point**: Real-time, before submission
 - **Action**: Warning + one-click removal
@@ -183,23 +195,28 @@ All contact information is stored in the client's `notes` field as JSON:
 ## Validation Rules
 
 ### Contact Name
+
 - Required field
 - Cannot be empty
 
 ### Designation
+
 - Required field
 - Cannot be empty
 
 ### Email
+
 - Optional field
 - Must match email format if provided: `user@domain.com`
 
 ### Phone
+
 - Optional field
 - Must have at least 7 digits if provided
 - Accepts international formats with country prefixes
 
 ### LinkedIn
+
 - Optional field
 - Must contain "linkedin.com" in URL if provided
 
