@@ -323,26 +323,6 @@ export default function CreateClient() {
     createMutation.mutate();
   };
 
-  const updateContact = (idx: number, key: string, value: string) => {
-    setContacts((prev) =>
-      prev.map((c, i) => (i === idx ? { ...c, [key]: value } : c)),
-    );
-  };
-
-  const addContact = () =>
-    setContacts((prev) => [
-      ...prev,
-      {
-        contact_name: "",
-        designation: "",
-        phone_prefix: "+91",
-        phone: "",
-        email: "",
-        linkedin_profile_link: "",
-      },
-    ]);
-  const removeContact = (idx: number) =>
-    setContacts((prev) => prev.filter((_, i) => i !== idx));
 
   // Simple searchable combobox component
   function Combobox({
