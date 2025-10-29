@@ -251,19 +251,10 @@ export function ImportClientsModal({
       for (const client of clients) {
         const payload: any = {
           client_name: client.clientName.trim(),
-          phone: client.phone?.trim() || undefined,
-          contact_person: client.contactPerson?.trim() || undefined,
-          email: client.email?.trim() || undefined,
-          company_size: client.companySize?.trim() || undefined,
-          industry: client.industry?.trim() || undefined,
           address: client.address?.trim() || undefined,
           city: client.city?.trim() || undefined,
           state: client.state?.trim() || undefined,
           country: client.country?.trim() || undefined,
-          priority: client.priority || "medium",
-          expected_value: client.expectedValue
-            ? parseFloat(client.expectedValue)
-            : undefined,
           status: "active",
           notes: JSON.stringify({
             source: client.source || "Bulk Import",
