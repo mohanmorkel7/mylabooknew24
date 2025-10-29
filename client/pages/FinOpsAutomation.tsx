@@ -1,3 +1,4 @@
+import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -72,6 +73,9 @@ interface ProcessStep {
 export default function FinOpsAutomation() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // Add this line to define selectedTask
+  const [selectedTask, setSelectedTask] = useState<AutomationTask | null>(null);
 
   // Fetch workflow projects for FinOps
   const {
@@ -320,7 +324,7 @@ export default function FinOpsAutomation() {
 
         {/* Task Management Tab */}
         <TabsContent value="task-management" className="space-y-6">
-          <ClientBasedFinOpsTaskManager />
+          <ClientBasedFinOpsTaskManager task={selectedTask} />
         </TabsContent>
 
         {/* Notifications Tab */}
