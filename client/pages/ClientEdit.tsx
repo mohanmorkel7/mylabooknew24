@@ -293,13 +293,8 @@ export default function ClientEdit() {
   }, [clientInfo, addressInfo]);
 
   const clientInfoErrors = useMemo(() => {
-    const {
-      source,
-      client_name,
-      client_type,
-      payment_offerings,
-      geography,
-    } = errors;
+    const { source, client_name, client_type, payment_offerings, geography } =
+      errors;
     const filtered: Record<string, string> = {};
     if (source) filtered.source = source;
     if (client_name) filtered.client_name = client_name;
@@ -943,7 +938,11 @@ export default function ClientEdit() {
                       <Input
                         value={c.linkedin_profile_link || ""}
                         onChange={(e) =>
-                          updateContact(idx, "linkedin_profile_link", e.target.value)
+                          updateContact(
+                            idx,
+                            "linkedin_profile_link",
+                            e.target.value,
+                          )
                         }
                         placeholder="https://linkedin.com/in/..."
                         type="url"
