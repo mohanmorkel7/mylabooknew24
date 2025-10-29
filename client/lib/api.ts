@@ -1080,6 +1080,7 @@ export class ApiClient {
 
   // FinOps Task Management methods with enhanced error handling
   async getFinOpsTasks(date?: string) {
+    let userNameParam = "";
     try {
       if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
         console.log(
@@ -1088,7 +1089,6 @@ export class ApiClient {
         );
 
       // Include user_name from localStorage (if available) to enable server-side filtering
-      let userNameParam = "";
       try {
         if (typeof window !== "undefined") {
           const stored = localStorage.getItem("banani_user");
