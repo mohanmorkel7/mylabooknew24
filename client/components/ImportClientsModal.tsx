@@ -60,7 +60,15 @@ const TEMPLATE_HEADERS = [
 ];
 
 interface ImportClientRow {
+  source?: string;
+  sourceValue?: string;
   clientName: string;
+  clientType?: string;
+  paymentOffering?: string;
+  website?: string;
+  geography?: string;
+  txnVolume?: string;
+  productTagInfo?: string;
   contactPerson?: string;
   email?: string;
   phone?: string;
