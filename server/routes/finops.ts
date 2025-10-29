@@ -419,7 +419,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
           FROM finops_tasks t
           LEFT JOIN finops_tracker ft ON t.id = ft.task_id AND ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           WHERE t.deleted_at IS NULL
-          ${normalizedUser && !isManager && !callerIsAdmin ? "AND (LOWER(TRIM(REPLACE(REPLACE(REPLACE(COALESCE(t.assigned_to,''),'{',''),'}',''), '\"', ''))) = $1)" : ""}
+          ${normalizedUser && !isManager && !callerIsAdmin ? "AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.assigned_to,'[]'::jsonb)) a WHERE LOWER(TRIM(a)) = $1)" : ""}
           GROUP BY t.id
           ORDER BY t.created_at DESC
         `;
