@@ -44,6 +44,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { ImportClientsModal } from "@/components/ImportClientsModal";
 
 function getInitials(name?: string) {
   if (!name) return "CL";
