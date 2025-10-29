@@ -544,7 +544,9 @@ router.post("/tasks", async (req: Request, res: Response) => {
           description,
           client_id || null,
           client_name || null,
-          typeof assigned_to === "string" ? assigned_to : JSON.stringify(assigned_to || []),
+          typeof assigned_to === "string"
+            ? assigned_to
+            : JSON.stringify(assigned_to || []),
           JSON.stringify(reporting_managers),
           JSON.stringify(escalation_managers),
           effective_from,
@@ -703,7 +705,9 @@ router.put("/tasks/:id", async (req: Request, res: Response) => {
         await client.query(taskQuery, [
           task_name,
           description,
-          typeof assigned_to === "string" ? assigned_to : JSON.stringify(assigned_to || []),
+          typeof assigned_to === "string"
+            ? assigned_to
+            : JSON.stringify(assigned_to || []),
           JSON.stringify(reporting_managers),
           JSON.stringify(escalation_managers),
           effective_from,
