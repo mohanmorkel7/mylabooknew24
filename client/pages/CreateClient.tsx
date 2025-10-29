@@ -142,6 +142,7 @@ export default function CreateClient() {
       phone_prefix?: string;
       phone: string;
       email: string;
+      linkedin_profile_link?: string;
     }>
   >([
     {
@@ -150,6 +151,7 @@ export default function CreateClient() {
       phone_prefix: "+91",
       phone: "",
       email: "",
+      linkedin_profile_link: "",
     },
   ]);
 
@@ -197,29 +199,18 @@ export default function CreateClient() {
     if (clientInfo.payment_offerings.length === 0)
       e.payment_offerings = "Select at least one";
     if (!clientInfo.geography) e.geography = "Required";
-    if (!clientInfo.txn_volume) e.txn_volume = "Required";
-    if (!clientInfo.product_tag_info.trim()) e.product_tag_info = "Required";
     return e;
   }, [clientInfo, addressInfo]);
 
   const clientInfoErrors = useMemo(() => {
-    const {
-      source,
-      client_name,
-      client_type,
-      payment_offerings,
-      geography,
-      txn_volume,
-      product_tag_info,
-    } = errors;
+    const { source, client_name, client_type, payment_offerings, geography } =
+      errors;
     const filtered: Record<string, string> = {};
     if (source) filtered.source = source;
     if (client_name) filtered.client_name = client_name;
     if (client_type) filtered.client_type = client_type;
     if (payment_offerings) filtered.payment_offerings = payment_offerings;
     if (geography) filtered.geography = geography;
-    if (txn_volume) filtered.txn_volume = txn_volume;
-    if (product_tag_info) filtered.product_tag_info = product_tag_info;
     return filtered;
   }, [errors]);
 
@@ -346,6 +337,7 @@ export default function CreateClient() {
         phone_prefix: "+91",
         phone: "",
         email: "",
+        linkedin_profile_link: "",
       },
     ]);
   const removeContact = (idx: number) =>
@@ -690,7 +682,7 @@ export default function CreateClient() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Txn Volume / per day in million *</Label>
+                    <Label>Txn Volume / per day in million</Label>
                     <Select
                       value={clientInfo.txn_volume}
                       onValueChange={(v) =>
@@ -708,14 +700,9 @@ export default function CreateClient() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {showClientErrors && errors.txn_volume && (
-                      <p className="text-red-600 text-xs mt-1">
-                        {errors.txn_volume}
-                      </p>
-                    )}
                   </div>
                   <div>
-                    <Label>Product Tag Info *</Label>
+                    <Label>Product Tag Info</Label>
                     <Input
                       value={clientInfo.product_tag_info}
                       onChange={(e) =>
@@ -726,11 +713,6 @@ export default function CreateClient() {
                       }
                       placeholder="Enter product tags"
                     />
-                    {showClientErrors && errors.product_tag_info && (
-                      <p className="text-red-600 text-xs mt-1">
-                        {errors.product_tag_info}
-                      </p>
-                    )}
                   </div>
                 </div>
               </CardContent>
@@ -922,6 +904,22 @@ export default function CreateClient() {
                           </div>
                         </div>
                       </div>
+                    </div>
+
+                    <div>
+                      <Label>LinkedIn Profile Link (Optional)</Label>
+                      <Input
+                        value={c.linkedin_profile_link || ""}
+                        onChange={(e) =>
+                          updateContact(
+                            idx,
+                            "linkedin_profile_link",
+                            e.target.value,
+                          )
+                        }
+                        placeholder="https://linkedin.com/in/..."
+                        type="url"
+                      />
                     </div>
                   </div>
                 ))}
