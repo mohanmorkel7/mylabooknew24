@@ -460,19 +460,27 @@ export function ImportClientsModal({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[150px]">Client Name</TableHead>
-                      <TableHead className="w-[120px]">Contact</TableHead>
-                      <TableHead className="w-[150px]">Email</TableHead>
-                      <TableHead className="w-[120px]">Country</TableHead>
-                      <TableHead className="w-[100px]">Priority</TableHead>
-                      <TableHead className="w-[100px]">Contacts</TableHead>
+                      <TableHead className="w-[130px]">Client Name</TableHead>
+                      <TableHead className="w-[100px]">Type</TableHead>
+                      <TableHead className="w-[100px]">Geography</TableHead>
+                      <TableHead className="w-[120px]">Contact Person</TableHead>
+                      <TableHead className="w-[130px]">Email</TableHead>
+                      <TableHead className="w-[100px]">Country</TableHead>
+                      <TableHead className="w-[80px]">Priority</TableHead>
+                      <TableHead className="w-[80px]">Contacts</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {parsedData.map((row, idx) => (
                       <TableRow key={idx}>
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium text-sm">
                           {row.clientName}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {row.clientType || "-"}
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          {row.geography || "-"}
                         </TableCell>
                         <TableCell className="text-sm">
                           {row.contactPerson || "-"}
