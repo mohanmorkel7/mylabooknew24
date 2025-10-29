@@ -278,10 +278,19 @@ export default function ClientDashboard() {
           <h1 className="text-3xl font-bold text-gray-900">Client Dashboard</h1>
           <p className="text-gray-600 mt-1">Manage clients and onboarding</p>
         </div>
-        <Button onClick={() => navigate("/clients/create")}>
-          <Plus className="w-4 h-4 mr-2" />
-          Create Client
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setImportModalOpen(true)}
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            Import
+          </Button>
+          <Button onClick={() => navigate("/clients/create")}>
+            <Plus className="w-4 h-4 mr-2" />
+            Create Client
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
