@@ -458,14 +458,12 @@ export function ImportClientsModal({
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[130px]">Client Name</TableHead>
-                      <TableHead className="w-[100px]">Type</TableHead>
-                      <TableHead className="w-[100px]">Geography</TableHead>
-                      <TableHead className="w-[120px]">Contact Person</TableHead>
-                      <TableHead className="w-[130px]">Email</TableHead>
-                      <TableHead className="w-[100px]">Country</TableHead>
-                      <TableHead className="w-[80px]">Priority</TableHead>
-                      <TableHead className="w-[80px]">Contacts</TableHead>
+                      <TableHead className="w-[150px]">Client Name</TableHead>
+                      <TableHead className="w-[120px]">Type</TableHead>
+                      <TableHead className="w-[130px]">Geography</TableHead>
+                      <TableHead className="w-[120px]">Source</TableHead>
+                      <TableHead className="w-[120px]">Country</TableHead>
+                      <TableHead className="w-[100px]">Contacts</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -481,18 +479,10 @@ export function ImportClientsModal({
                           {row.geography || "-"}
                         </TableCell>
                         <TableCell className="text-sm">
-                          {row.contactPerson || "-"}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {row.email || "-"}
+                          {row.source || "-"}
                         </TableCell>
                         <TableCell className="text-sm">
                           {row.country || "-"}
-                        </TableCell>
-                        <TableCell>
-                          <span className="inline-flex items-center rounded-md bg-yellow-50 px-2 py-1 text-xs font-medium text-yellow-800">
-                            {row.priority || "medium"}
-                          </span>
                         </TableCell>
                         <TableCell className="text-sm text-center">
                           {row.contacts?.length || 0}
