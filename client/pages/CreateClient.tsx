@@ -53,6 +53,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { ClientContactInformationSection } from "@/components/ClientContactInformationSection";
 
 const SOURCES = [
   "LinkedIn - Outbound",
