@@ -417,16 +417,37 @@ export function ImportClientsModal({
                   <div className="text-sm text-blue-800">
                     <strong>Template Instructions:</strong>
                     <ul className="mt-2 space-y-1 list-disc list-inside">
-                      <li>Client Name is required</li>
                       <li>
-                        For multiple contacts per client, create separate rows
-                        with the same client name
+                        <strong>Required:</strong> Client Name
                       </li>
                       <li>
-                        All other fields are optional but recommended for
-                        complete data
+                        <strong>Source & Source Value:</strong> Select from:
+                        LinkedIn-Outbound, LinkedIn-Inbound, Email-Outbound,
+                        Email-Inbound, Call-Outbound, Call-Inbound, Existing
+                        Client, Business Team, Reference, General List
                       </li>
-                      <li>Phone Prefix defaults to +91 if not specified</li>
+                      <li>
+                        <strong>Payment Offering:</strong> For multiple values,
+                        separate with commas (e.g., "Online Payments, UPI
+                        Payments")
+                      </li>
+                      <li>
+                        <strong>Client Geography:</strong> Choose: Domestic or
+                        International
+                      </li>
+                      <li>
+                        <strong>Priority:</strong> low, medium, high, or urgent
+                        (defaults to medium)
+                      </li>
+                      <li>
+                        <strong>Multiple Contacts:</strong> Create separate rows
+                        with the same client name for each contact
+                      </li>
+                      <li>
+                        <strong>Phone Prefix:</strong> Defaults to +91 if not
+                        specified
+                      </li>
+                      <li>All other fields are optional</li>
                     </ul>
                   </div>
                 </div>
