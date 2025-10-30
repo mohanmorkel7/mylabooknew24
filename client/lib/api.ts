@@ -1278,10 +1278,11 @@ export class ApiClient {
     subtaskId: number,
     approver_name: string,
     note?: string,
+    tracker_id?: number,
   ) {
     return this.request(`/finops-production/subtasks/${subtaskId}/approve`, {
       method: "POST",
-      body: JSON.stringify({ approver_name, note }),
+      body: JSON.stringify({ approver_name, note, tracker_id }),
     });
   }
 
