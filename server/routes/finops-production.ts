@@ -199,35 +199,27 @@ async function sendReplicaDownAlertOnce(
 router.get("/tasks", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
-
     await ensureExternalAlertsSchema();
 
     const dateParam = (req.query.date as string) || null;
-
-    // Server-side user filter support: normalized caller name and manager detection
     const userNameRaw = (req.query.user_name as string) || null;
-    const normalizedUser = userNameRaw
-      ? userNameRaw.trim().toLowerCase()
-      : null;
-    // Accept explicit role from caller (if provided by client) to allow admin bypass
-    const callerRole =
-      (req.query.user_role as string) || (req.query.role as string) || null;
+    const normalizedUser = userNameRaw ? userNameRaw.trim().toLowerCase() : null;
+    const callerRole = (req.query.user_role as string) || (req.query.role as string) || null;
+
     let callerIsAdmin = callerRole === "admin";
-    // If role was not provided, try to look up the user's role from users table by matching name or email
+
     if (!callerIsAdmin && normalizedUser) {
       try {
         const ur = await pool.query(
           `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
-          [normalizedUser],
+          [normalizedUser]
         );
         if (ur.rows.length && ur.rows[0].role === "admin") callerIsAdmin = true;
       } catch (e) {
-        console.warn(
-          "Failed to resolve caller role from users table:",
-          (e as Error).message,
-        );
+        console.warn("Failed to resolve caller role from users table:", (e as Error).message);
       }
     }
+
     let callerIsManager = false;
     if (normalizedUser && !callerIsAdmin) {
       try {
@@ -236,7 +228,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
               EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
               OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
             ) LIMIT 1`,
-          [normalizedUser],
+          [normalizedUser]
         );
         callerIsManager = mg.rows.length > 0;
       } catch (e) {
@@ -244,8 +236,6 @@ router.get("/tasks", async (req: Request, res: Response) => {
       }
     }
 
-    // Build filter clauses used inside SQL templates (different param indices)
-    // Handle JSONB array format for assigned_to: ["name1", "name2"]
     const filterDateClause =
       normalizedUser && !callerIsManager && !callerIsAdmin
         ? "AND EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.assigned_to,'[]'::jsonb)) a WHERE LOWER(TRIM(a)) = $2)"
@@ -257,8 +247,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
         : "";
 
     let result;
+
     if (dateParam) {
-      // Historical view: Prefer finops_tracker for requested date, but fall back to finops_subtasks by scheduled_date when tracker rows are missing
       const trackerQuery = `
         SELECT
           t.*,
@@ -267,7 +257,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
         LEFT JOIN LATERAL (
           SELECT json_agg(s.* ORDER BY s.order_position) AS subtasks
           FROM (
-            -- Primary source: tracker rows for this date
+            -- Tracker branch
             SELECT
               ft.subtask_id AS id,
               ft.subtask_name AS name,
@@ -286,9 +276,9 @@ router.get("/tasks", async (req: Request, res: Response) => {
               ft.notification_sent_15min,
               ft.notification_sent_start,
               ft.notification_sent_escalation,
-              ft.assigned_to,
-              ft.reporting_managers,
-              ft.escalation_managers,
+              ft.assigned_to::jsonb AS assigned_to,
+              ft.reporting_managers AS reporting_managers,
+              ft.escalation_managers AS escalation_managers,
               (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_by,
               (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_at
             FROM finops_tracker ft
@@ -296,7 +286,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
             UNION ALL
 
-            -- Fallback: subtasks scheduled for this date not present in tracker
+            -- Subtask fallback branch
             SELECT
               st.id AS id,
               st.name AS name,
@@ -321,7 +311,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
               COALESCE(st.notification_sent_15min, false) AS notification_sent_15min,
               COALESCE(st.notification_sent_start, false) AS notification_sent_start,
               COALESCE(st.notification_sent_escalation, false) AS notification_sent_escalation,
-              COALESCE(st.assigned_to, t.assigned_to) AS assigned_to,
+              COALESCE(st.assigned_to::jsonb, t.assigned_to::jsonb, '[]'::jsonb) AS assigned_to,
               t.reporting_managers::text AS reporting_managers,
               t.escalation_managers::text AS escalation_managers,
               (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = st.id LIMIT 1) AS approved_by,
@@ -345,7 +335,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
           ? await pool.query(trackerQuery, [dateParam, normalizedUser])
           : await pool.query(trackerQuery, [dateParam]);
     } else {
-      // Today's view: read from finops_tracker for today's IST date
+      // Today's view
       const trackerTodayQuery = `
         SELECT
           t.*,
@@ -369,7 +359,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'notification_sent_15min', ft.notification_sent_15min,
                 'notification_sent_start', ft.notification_sent_start,
                 'notification_sent_escalation', ft.notification_sent_escalation,
-                'assigned_to', ft.assigned_to,
+                'assigned_to', ft.assigned_to::jsonb,
                 'reporting_managers', ft.reporting_managers,
                 'escalation_managers', ft.escalation_managers,
                 'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1),
@@ -403,10 +393,11 @@ router.get("/tasks", async (req: Request, res: Response) => {
     res.status(500).json({
       error: "Database connection failed",
       message: "Unable to fetch FinOps tasks from database",
-      details: error.message,
+      details: (error as Error).message,
     });
   }
 });
+
 
 // Create new FinOps task
 router.post("/tasks", async (req: Request, res: Response) => {
@@ -646,7 +637,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         ) VALUES (
           (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
         )
-        ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+        ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
         RETURNING *
       `,
           [
@@ -1541,9 +1532,9 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
       const period = String(row.duration || "daily");
       const result = await pool.query(
         `INSERT INTO finops_tracker (
-           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
          RETURNING id`,
         [
           runDate,
@@ -1555,6 +1546,13 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
           initialStatus,
           row.start_time || null,
           runDate,
+          row.subtask_description || null,
+          row.sla_hours || null,
+          row.sla_minutes || null,
+          row.order_position || null,
+          row.assigned_to || null,
+          row.reporting_managers || null,
+          row.escalation_managers || null,
         ],
       );
       if (result.rows.length > 0) inserted++;

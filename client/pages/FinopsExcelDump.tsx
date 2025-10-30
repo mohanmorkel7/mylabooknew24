@@ -60,7 +60,8 @@ const TaskUploadPage = () => {
             description: row["Description"],
             client_id: row["Client ID"],
             client_name: row["Client Name"],
-            assigned_to: row["Assigned To"] ? row["Assigned To"].trim() : "",
+            assigned_to: row["Assigned To"] ? row["Assigned To"].split(",").map((name: string) => name.trim())
+              : [],
             reporting_managers: row["Reporting Manager"]
               ? row["Reporting Manager"].split(",").map((name: string) => name.trim())
               : [],

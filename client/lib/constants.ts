@@ -26,7 +26,7 @@ export const INVESTOR_FEEDBACK = [
 
 // VC lead source options
 export const VC_LEAD_SOURCES = [
-  { value: "linkedin_outbound", label: "LinkedIn - Outbound" },
+  { value: "linkedin_outbound", label: "LinkedIn-Outbound" },
   { value: "linkedin_inbound", label: "LinkedIn - Inbound" },
   { value: "email_outbound", label: "Email - Outbound" },
   { value: "email_inbound", label: "Email - Inbound" },

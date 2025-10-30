@@ -26,13 +26,8 @@ import { MultiSelect } from "@/components/ui/multi-select";
 import { Country, State, City } from "country-state-city";
 import {
   Plus,
-  Minus,
-  Save,
   ArrowLeft,
   Building2,
-  User,
-  Mail,
-  Phone,
   Globe,
   MapPin,
   ChevronsUpDown,
@@ -53,6 +48,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
+import { ClientContactInformationSection } from "@/components/ClientContactInformationSection";
 
 const SOURCES = [
   "LinkedIn - Outbound",
@@ -143,6 +139,8 @@ export default function CreateClient() {
       phone: string;
       email: string;
       linkedin_profile_link?: string;
+      department?: string;
+      reportingTo?: string;
     }>
   >([
     {
@@ -152,6 +150,8 @@ export default function CreateClient() {
       phone: "",
       email: "",
       linkedin_profile_link: "",
+      department: "",
+      reportingTo: "",
     },
   ]);
 
@@ -321,27 +321,6 @@ export default function CreateClient() {
     e.preventDefault();
     createMutation.mutate();
   };
-
-  const updateContact = (idx: number, key: string, value: string) => {
-    setContacts((prev) =>
-      prev.map((c, i) => (i === idx ? { ...c, [key]: value } : c)),
-    );
-  };
-
-  const addContact = () =>
-    setContacts((prev) => [
-      ...prev,
-      {
-        contact_name: "",
-        designation: "",
-        phone_prefix: "+91",
-        phone: "",
-        email: "",
-        linkedin_profile_link: "",
-      },
-    ]);
-  const removeContact = (idx: number) =>
-    setContacts((prev) => prev.filter((_, i) => i !== idx));
 
   // Simple searchable combobox component
   function Combobox({
@@ -808,127 +787,10 @@ export default function CreateClient() {
               </CardContent>
             </Card>
 
-            <Card className="mt-4">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" /> Client Contact Information
-                </CardTitle>
-                <CardDescription>
-                  Primary and additional contacts
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {contacts.map((c, idx) => (
-                  <div key={idx} className="rounded-lg border p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Badge variant="secondary">Contact #{idx + 1}</Badge>
-                      {contacts.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeContact(idx)}
-                        >
-                          <Minus className="w-4 h-4 mr-1" /> Remove
-                        </Button>
-                      )}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Contact Name</Label>
-                        <Input
-                          value={c.contact_name}
-                          onChange={(e) =>
-                            updateContact(idx, "contact_name", e.target.value)
-                          }
-                          placeholder="Full name"
-                        />
-                      </div>
-                      <div>
-                        <Label>Designation</Label>
-                        <Input
-                          value={c.designation}
-                          onChange={(e) =>
-                            updateContact(idx, "designation", e.target.value)
-                          }
-                          placeholder="Job title"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                          <Input
-                            className="pl-10"
-                            value={c.email}
-                            onChange={(e) =>
-                              updateContact(idx, "email", e.target.value)
-                            }
-                            placeholder="name@company.com"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Phone</Label>
-                        <div className="flex gap-2">
-                          <Select
-                            value={c.phone_prefix || "+91"}
-                            onValueChange={(v) =>
-                              updateContact(idx, "phone_prefix", v)
-                            }
-                          >
-                            <SelectTrigger className="w-[140px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {PHONE_PREFIXES.map((p) => (
-                                <SelectItem key={p.code} value={p.code}>
-                                  {p.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <div className="relative flex-1">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                            <Input
-                              className="pl-10"
-                              value={c.phone}
-                              onChange={(e) =>
-                                updateContact(idx, "phone", e.target.value)
-                              }
-                              placeholder="98765 43210"
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label>LinkedIn Profile Link (Optional)</Label>
-                      <Input
-                        value={c.linkedin_profile_link || ""}
-                        onChange={(e) =>
-                          updateContact(
-                            idx,
-                            "linkedin_profile_link",
-                            e.target.value,
-                          )
-                        }
-                        placeholder="https://linkedin.com/in/..."
-                        type="url"
-                      />
-                    </div>
-                  </div>
-                ))}
-
-                <Button type="button" variant="outline" onClick={addContact}>
-                  <Plus className="w-4 h-4 mr-1" /> Add Another Contact
-                </Button>
-              </CardContent>
-            </Card>
+            <ClientContactInformationSection
+              contacts={contacts}
+              onContactsChange={setContacts}
+            />
           </TabsContent>
         </Tabs>
 

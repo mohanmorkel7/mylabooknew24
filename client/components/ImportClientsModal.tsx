@@ -25,10 +25,12 @@ import {
   AlertCircle,
   CheckCircle,
   XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 import { apiClient } from "@/lib/api";
 import * as XLSX from "xlsx";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const TEMPLATE_HEADERS = [
   "Source",
@@ -74,12 +76,93 @@ interface ImportClientRow {
     email?: string;
     linkedin_profile_link?: string;
   }>;
+  isDuplicate?: boolean;
+  duplicateOf?: string;
 }
 
 interface ValidationError {
   rowIndex: number;
   field: string;
   message: string;
+}
+
+interface DuplicateInfo {
+  clientName: string;
+  count: number;
+  contacts: Array<{
+    name: string;
+    email?: string;
+    phone?: string;
+  }>;
+}
+
+function createContactFingerprint(contact: any): string {
+  const name = (contact.contact_name || "").toLowerCase().trim();
+  const email = (contact.email || "").toLowerCase().trim();
+  const phone = (contact.phone || "").toLowerCase().trim();
+  return `${name}|${email}|${phone}`;
+}
+
+function createClientFingerprint(client: ImportClientRow): string {
+  const name = client.clientName.toLowerCase().trim();
+  return name;
+}
+
+function detectDuplicatesInBatch(rows: ImportClientRow[]): {
+  dedupedRows: ImportClientRow[];
+  duplicateInfo: DuplicateInfo[];
+} {
+  const seen = new Map<string, ImportClientRow>();
+  const duplicates = new Map<string, DuplicateInfo>();
+  const dedupedRows: ImportClientRow[] = [];
+
+  for (const row of rows) {
+    const fingerprint = createClientFingerprint(row);
+
+    if (seen.has(fingerprint)) {
+      const existingRow = seen.get(fingerprint)!;
+      row.isDuplicate = true;
+      row.duplicateOf = existingRow.clientName;
+
+      if (!duplicates.has(fingerprint)) {
+        duplicates.set(fingerprint, {
+          clientName: row.clientName,
+          count: 2,
+          contacts: [
+            ...(existingRow.contacts || []).map((c) => ({
+              name: c.contact_name,
+              email: c.email,
+              phone: c.phone,
+            })),
+            ...(row.contacts || []).map((c) => ({
+              name: c.contact_name,
+              email: c.email,
+              phone: c.phone,
+            })),
+          ],
+        });
+      } else {
+        const dupInfo = duplicates.get(fingerprint)!;
+        dupInfo.count++;
+        dupInfo.contacts.push(
+          ...(row.contacts || []).map((c) => ({
+            name: c.contact_name,
+            email: c.email,
+            phone: c.phone,
+          })),
+        );
+      }
+    } else {
+      seen.set(fingerprint, row);
+    }
+
+    dedupedRows.push(row);
+  }
+
+  return {
+    dedupedRows,
+    duplicateInfo: Array.from(duplicates.values()),
+  };
 }
 
 export function ImportClientsModal({
@@ -91,12 +174,15 @@ export function ImportClientsModal({
   onOpenChange: (open: boolean) => void;
   onImportSuccess: () => void;
 }) {
-  const [step, setStep] = useState<"download" | "upload" | "preview">(
-    "download",
-  );
+  const [step, setStep] = useState<
+    "download" | "upload" | "preview" | "duplicates"
+  >("download");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [parsedData, setParsedData] = useState<ImportClientRow[]>([]);
   const [errors, setErrors] = useState<ValidationError[]>([]);
+  const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo[]>([]);
+  const [rowsToImport, setRowsToImport] = useState<Set<number>>(new Set());
+  const [skipDuplicates, setSkipDuplicates] = useState(true);
 
   const downloadTemplate = () => {
     const workbook = XLSX.utils.book_new();
@@ -106,52 +192,188 @@ export function ImportClientsModal({
     XLSX.writeFile(workbook, "client_import_template.xlsx");
   };
 
-  const parseExcelFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+  // const parseExcelFile = (file: File) => {
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     try {
+  //       const data = new Uint8Array(e.target?.result as ArrayBuffer);
+  //       const workbook = XLSX.read(data, { type: "array" });
+  //       const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+  //       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-        if (jsonData.length < 2) {
-          toast({
-            title: "Invalid file",
-            description: "Excel file must have headers and at least one row",
-            variant: "destructive",
+  //       if (jsonData.length < 2) {
+  //         toast({
+  //           title: "Invalid file",
+  //           description: "Excel file must have headers and at least one row",
+  //           variant: "destructive",
+  //         });
+  //         return;
+  //       }
+
+  //       const headers = jsonData[0] as string[];
+  //       const rows = jsonData.slice(1);
+
+  //       const importedRows: ImportClientRow[] = [];
+  //       const validationErrors: ValidationError[] = [];
+
+  //       for (let i = 0; i < rows.length; i++) {
+  //         const row = rows[i] as any[];
+  //         if (!row || row.every((cell) => cell === undefined || cell === ""))
+  //           continue;
+
+  //         const headerMap: Record<string, number> = {};
+  //         headers.forEach((header, idx) => {
+  //           headerMap[header.toLowerCase().trim()] = idx;
+  //         });
+
+  //         const clientName = row[headerMap["client name"]]?.toString().trim();
+
+  //         if (!clientName) {
+  //           validationErrors.push({
+  //             rowIndex: i + 2,
+  //             field: "Client Name",
+  //             message: "Client name is required",
+  //           });
+  //           continue;
+  //         }
+
+  //         const importedRow: ImportClientRow = {
+  //           source: row[headerMap["source"]]?.toString().trim(),
+  //           sourceValue: row[headerMap["source value"]]?.toString().trim(),
+  //           clientName,
+  //           clientType: row[headerMap["client type"]]?.toString().trim(),
+  //           paymentOffering: row[headerMap["payment offering"]]
+  //             ?.toString()
+  //             .trim(),
+  //           website: row[headerMap["website"]]?.toString().trim(),
+  //           geography: row[headerMap["client geography"]]?.toString().trim(),
+  //           txnVolume: row[headerMap["txn volume / per day in million"]]
+  //             ?.toString()
+  //             .trim(),
+  //           productTagInfo: row[headerMap["product tag info"]]
+  //             ?.toString()
+  //             .trim(),
+  //           address: row[headerMap["street address"]]?.toString().trim(),
+  //           city: row[headerMap["city"]]?.toString().trim(),
+  //           state: row[headerMap["state"]]?.toString().trim(),
+  //           country: row[headerMap["country"]]?.toString().trim(),
+  //           contacts: [],
+  //         };
+
+  //         const contactName = row[headerMap["contact name"]]?.toString().trim();
+  //         if (contactName) {
+  //           importedRow.contacts = [
+  //             {
+  //               contact_name: contactName,
+  //               designation: row[headerMap["designation"]]?.toString().trim(),
+  //               phone_prefix:
+  //                 row[headerMap["phone prefix"]]?.toString().trim() || "+91",
+  //               phone: row[headerMap["contact phone"]]?.toString().trim(),
+  //               email: row[headerMap["contact email"]]?.toString().trim(),
+  //               linkedin_profile_link: row[headerMap["linkedin profile link"]]
+  //                 ?.toString()
+  //                 .trim(),
+  //             },
+  //           ];
+  //         }
+
+  //         importedRows.push(importedRow);
+  //       }
+
+  //       if (validationErrors.length > 0) {
+  //         setErrors(validationErrors);
+  //         toast({
+  //           title: "Validation errors found",
+  //           description: `${validationErrors.length} row(s) have errors`,
+  //           variant: "destructive",
+  //         });
+  //         return;
+  //       }
+
+  //       const { dedupedRows, duplicateInfo: dupes } =
+  //         detectDuplicatesInBatch(importedRows);
+
+  //       setParsedData(dedupedRows);
+  //       setDuplicateInfo(dupes);
+
+  //       if (dupes.length > 0) {
+  //         setSkipDuplicates(true);
+  //         const rowsToAdd = new Set<number>();
+  //         dedupedRows.forEach((row, idx) => {
+  //           if (!row.isDuplicate) {
+  //             rowsToAdd.add(idx);
+  //           }
+  //         });
+  //         setRowsToImport(rowsToAdd);
+  //         setStep("duplicates");
+  //       } else {
+  //         const allRows = new Set<number>();
+  //         dedupedRows.forEach((_, idx) => allRows.add(idx));
+  //         setRowsToImport(allRows);
+  //         setStep("preview");
+  //       }
+  //     } catch (error) {
+  //       toast({
+  //         title: "Failed to parse file",
+  //         description:
+  //           error instanceof Error ? error.message : "Unknown error occurred",
+  //         variant: "destructive",
+  //       });
+  //     }
+  //   };
+  //   reader.readAsArrayBuffer(file);
+  // };
+
+
+  const parseExcelFile = (file: File) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = new Uint8Array(e.target?.result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+      if (jsonData.length < 2) {
+        toast({
+          title: "Invalid file",
+          description: "Excel file must have headers and at least one row",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const headers = jsonData[0] as string[];
+      const rows = jsonData.slice(1);
+
+      const validationErrors: ValidationError[] = [];
+      const clientMap = new Map<string, ImportClientRow>();
+
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i] as any[];
+        if (!row || row.every((cell) => cell === undefined || cell === "")) continue;
+
+        const headerMap: Record<string, number> = {};
+        headers.forEach((header, idx) => {
+          headerMap[header.toLowerCase().trim()] = idx;
+        });
+
+        const clientName = row[headerMap["client name"]]?.toString().trim();
+        if (!clientName) {
+          validationErrors.push({
+            rowIndex: i + 2,
+            field: "Client Name",
+            message: "Client name is required",
           });
-          return;
+          continue;
         }
 
-        const headers = jsonData[0] as string[];
-        const rows = jsonData.slice(1);
+        // Check if client already exists
+        let existingClient = clientMap.get(clientName);
 
-        const importedRows: ImportClientRow[] = [];
-        const validationErrors: ValidationError[] = [];
-
-        for (let i = 0; i < rows.length; i++) {
-          const row = rows[i] as any[];
-          if (!row || row.every((cell) => cell === undefined || cell === ""))
-            continue;
-
-          const headerMap: Record<string, number> = {};
-          headers.forEach((header, idx) => {
-            headerMap[header.toLowerCase().trim()] = idx;
-          });
-
-          const clientName = row[headerMap["client name"]]?.toString().trim();
-
-          if (!clientName) {
-            validationErrors.push({
-              rowIndex: i + 2,
-              field: "Client Name",
-              message: "Client name is required",
-            });
-            continue;
-          }
-
-          const importedRow: ImportClientRow = {
+        if (!existingClient) {
+          // Create new client entry
+          existingClient = {
             source: row[headerMap["source"]]?.toString().trim(),
             sourceValue: row[headerMap["source value"]]?.toString().trim(),
             clientName,
@@ -173,50 +395,72 @@ export function ImportClientsModal({
             country: row[headerMap["country"]]?.toString().trim(),
             contacts: [],
           };
-
-          const contactName = row[headerMap["contact name"]]?.toString().trim();
-          if (contactName) {
-            importedRow.contacts = [
-              {
-                contact_name: contactName,
-                designation: row[headerMap["designation"]]?.toString().trim(),
-                phone_prefix:
-                  row[headerMap["phone prefix"]]?.toString().trim() || "+91",
-                phone: row[headerMap["contact phone"]]?.toString().trim(),
-                email: row[headerMap["contact email"]]?.toString().trim(),
-                linkedin_profile_link: row[headerMap["linkedin profile link"]]
-                  ?.toString()
-                  .trim(),
-              },
-            ];
-          }
-
-          importedRows.push(importedRow);
+          clientMap.set(clientName, existingClient);
         }
 
-        if (validationErrors.length > 0) {
-          setErrors(validationErrors);
-          toast({
-            title: "Validation errors found",
-            description: `${validationErrors.length} row(s) have errors`,
-            variant: "destructive",
+        // Handle contact
+        const contactName = row[headerMap["contact name"]]?.toString().trim();
+        if (contactName) {
+          existingClient.contacts.push({
+            contact_name: contactName,
+            designation: row[headerMap["designation"]]?.toString().trim(),
+            phone_prefix:
+              row[headerMap["phone prefix"]]?.toString().trim() || "+91",
+            phone: row[headerMap["contact phone"]]?.toString().trim(),
+            email: row[headerMap["contact email"]]?.toString().trim(),
+            linkedin_profile_link: row[headerMap["linkedin profile link"]]
+              ?.toString()
+              .trim(),
           });
-          return;
         }
+      }
 
-        setParsedData(importedRows);
-        setStep("preview");
-      } catch (error) {
+      if (validationErrors.length > 0) {
+        setErrors(validationErrors);
         toast({
-          title: "Failed to parse file",
-          description:
-            error instanceof Error ? error.message : "Unknown error occurred",
+          title: "Validation errors found",
+          description: `${validationErrors.length} row(s) have errors`,
           variant: "destructive",
         });
+        return;
       }
-    };
-    reader.readAsArrayBuffer(file);
+
+      // Convert map to array
+      const importedRows = Array.from(clientMap.values());
+
+      // Detect duplicates in merged data
+      const { dedupedRows, duplicateInfo: dupes } =
+        detectDuplicatesInBatch(importedRows);
+
+      setParsedData(dedupedRows);
+      setDuplicateInfo(dupes);
+
+      if (dupes.length > 0) {
+        setSkipDuplicates(true);
+        const rowsToAdd = new Set<number>();
+        dedupedRows.forEach((row, idx) => {
+          if (!row.isDuplicate) rowsToAdd.add(idx);
+        });
+        setRowsToImport(rowsToAdd);
+        setStep("duplicates");
+      } else {
+        const allRows = new Set<number>();
+        dedupedRows.forEach((_, idx) => allRows.add(idx));
+        setRowsToImport(allRows);
+        setStep("preview");
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to parse file",
+        description:
+          error instanceof Error ? error.message : "Unknown error occurred",
+        variant: "destructive",
+      });
+    }
   };
+  reader.readAsArrayBuffer(file);
+};
+
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -283,6 +527,8 @@ export function ImportClientsModal({
       setParsedData([]);
       setErrors([]);
       setSelectedFile(null);
+      setDuplicateInfo([]);
+      setRowsToImport(new Set());
       setStep("download");
       onImportSuccess();
     },
@@ -297,16 +543,50 @@ export function ImportClientsModal({
   });
 
   const handleImport = () => {
-    if (parsedData.length === 0) {
+    const clientsToImport = Array.from(rowsToImport).map(
+      (idx) => parsedData[idx],
+    );
+
+    if (clientsToImport.length === 0) {
       toast({
-        title: "No data to import",
-        description: "Please upload a file with client data",
+        title: "No clients to import",
+        description: "Please select at least one client to import",
         variant: "destructive",
       });
       return;
     }
 
-    importMutation.mutate(parsedData);
+    importMutation.mutate(clientsToImport);
+  };
+
+  const toggleRowSelection = (idx: number) => {
+    const newSet = new Set(rowsToImport);
+    if (newSet.has(idx)) {
+      newSet.delete(idx);
+    } else {
+      newSet.add(idx);
+    }
+    setRowsToImport(newSet);
+  };
+
+  const selectAllNonDuplicates = () => {
+    const nonDupes = new Set<number>();
+    parsedData.forEach((row, idx) => {
+      if (!row.isDuplicate) {
+        nonDupes.add(idx);
+      }
+    });
+    setRowsToImport(nonDupes);
+  };
+
+  const selectAll = () => {
+    const all = new Set<number>();
+    parsedData.forEach((_, idx) => all.add(idx));
+    setRowsToImport(all);
+  };
+
+  const selectNone = () => {
+    setRowsToImport(new Set());
   };
 
   return (
@@ -378,7 +658,8 @@ export function ImportClientsModal({
                     <strong>Template Instructions:</strong>
                     <ul className="mt-2 space-y-1 list-disc list-inside">
                       <li>
-                        <strong>Required:</strong> Client Name
+                        <strong>Required:</strong> Client Name (must be unique
+                        per import)
                       </li>
                       <li>
                         <strong>Source & Source Value:</strong> Select from:
@@ -396,21 +677,114 @@ export function ImportClientsModal({
                         International
                       </li>
                       <li>
-                        <strong>Priority:</strong> low, medium, high, or urgent
-                        (defaults to medium)
-                      </li>
-                      <li>
                         <strong>Multiple Contacts:</strong> Create separate rows
-                        with the same client name for each contact
+                        with the same client name for additional contacts. Each
+                        row will be merged into one client with all contacts.
                       </li>
                       <li>
                         <strong>Phone Prefix:</strong> Defaults to +91 if not
                         specified
                       </li>
+                      <li>
+                        <strong>Duplicate Detection:</strong> The system will
+                        detect duplicate client names and warn you before import
+                      </li>
                       <li>All other fields are optional</li>
                     </ul>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {step === "duplicates" && (
+            <div className="space-y-4">
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Duplicate Clients Detected!</strong>
+                  <p className="text-sm mt-1">
+                    {duplicateInfo.length} duplicate client(s) found in your
+                    import file. Select which clients to import below.
+                  </p>
+                </AlertDescription>
+              </Alert>
+
+              {duplicateInfo.map((dup, idx) => (
+                <Card key={idx} className="border-orange-200 bg-orange-50">
+                  <CardContent className="p-4">
+                    <h4 className="font-semibold text-orange-900">
+                      {dup.clientName} ({dup.count} occurrences)
+                    </h4>
+                    <p className="text-sm text-orange-800 mt-2">
+                      Contacts in this batch:
+                    </p>
+                    <ul className="text-sm text-orange-800 mt-1 list-disc list-inside">
+                      {dup.contacts.map((contact, cidx) => (
+                        <li key={cidx}>
+                          {contact.name}
+                          {contact.email && ` (${contact.email})`}
+                          {contact.phone && ` - ${contact.phone}`}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+              ))}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex gap-3">
+                  <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-sm text-blue-800">
+                    <strong>Options:</strong>
+                    <ul className="mt-2 space-y-2">
+                      <li>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <Checkbox
+                            checked={skipDuplicates}
+                            onCheckedChange={(checked) =>
+                              setSkipDuplicates(checked as boolean)
+                            }
+                          />
+                          Skip all duplicates and import only unique clients
+                        </label>
+                      </li>
+                      {!skipDuplicates && (
+                        <li className="text-yellow-700">
+                          ⚠️ Warning: Importing duplicates may create redundant
+                          records in the database
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setStep("download");
+                    setParsedData([]);
+                    setSelectedFile(null);
+                    setDuplicateInfo([]);
+                    setRowsToImport(new Set());
+                  }}
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (skipDuplicates) {
+                      selectAllNonDuplicates();
+                    } else {
+                      selectAll();
+                    }
+                    setStep("preview");
+                  }}
+                >
+                  Continue to Preview
+                </Button>
               </div>
             </div>
           )}
@@ -437,29 +811,47 @@ export function ImportClientsModal({
                 <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-green-900">
-                    {parsedData.length} client(s) ready to import
+                    {rowsToImport.size} of {parsedData.length} client(s)
+                    selected for import
                   </p>
                   <p className="text-sm text-green-800">
-                    Review the data below before importing
+                    Review the data below and select clients to import
                   </p>
                 </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={selectAll}>
+                  Select All
+                </Button>
+                <Button size="sm" variant="outline" onClick={selectNone}>
+                  Deselect All
+                </Button>
               </div>
 
               <div className="overflow-x-auto border rounded-lg">
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-[40px]"></TableHead>
                       <TableHead className="w-[150px]">Client Name</TableHead>
                       <TableHead className="w-[120px]">Type</TableHead>
                       <TableHead className="w-[130px]">Geography</TableHead>
                       <TableHead className="w-[120px]">Source</TableHead>
                       <TableHead className="w-[120px]">Country</TableHead>
                       <TableHead className="w-[100px]">Contacts</TableHead>
+                      <TableHead className="w-[80px]">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {parsedData.map((row, idx) => (
                       <TableRow key={idx}>
+                        <TableCell>
+                          <Checkbox
+                            checked={rowsToImport.has(idx)}
+                            onCheckedChange={() => toggleRowSelection(idx)}
+                          />
+                        </TableCell>
                         <TableCell className="font-medium text-sm">
                           {row.clientName}
                         </TableCell>
@@ -478,6 +870,17 @@ export function ImportClientsModal({
                         <TableCell className="text-sm text-center">
                           {row.contacts?.length || 0}
                         </TableCell>
+                        <TableCell className="text-sm">
+                          {row.isDuplicate ? (
+                            <span className="text-orange-600 text-xs font-medium">
+                              Duplicate
+                            </span>
+                          ) : (
+                            <span className="text-green-600 text-xs font-medium">
+                              New
+                            </span>
+                          )}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -488,20 +891,24 @@ export function ImportClientsModal({
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setStep("download");
+                    setStep(
+                      duplicateInfo.length > 0 ? "duplicates" : "download",
+                    );
                     setParsedData([]);
                     setSelectedFile(null);
+                    setDuplicateInfo([]);
+                    setRowsToImport(new Set());
                   }}
                 >
                   Back
                 </Button>
                 <Button
                   onClick={handleImport}
-                  disabled={importMutation.isPending}
+                  disabled={importMutation.isPending || rowsToImport.size === 0}
                 >
                   {importMutation.isPending
                     ? "Importing..."
-                    : "Submit & Import"}
+                    : `Submit & Import (${rowsToImport.size})`}
                 </Button>
               </div>
             </div>

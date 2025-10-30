@@ -360,16 +360,24 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 json_build_object(
                   'id', ft.subtask_id,
                   'name', ft.subtask_name,
-                  'description', NULL,
+                  'description', ft.description,
                   'start_time', ft.scheduled_time,
-                  'sla_hours', NULL,
-                  'sla_minutes', NULL,
-                  'order_position', ft.subtask_id,
+                  'sla_hours', ft.sla_hours,
+                  'sla_minutes', ft.sla_minutes,
+                  'order_position', ft.order_position,
                   'status', ft.status,
                   'started_at', ft.started_at,
                   'completed_at', ft.completed_at,
-                  'scheduled_date', ft.subtask_scheduled_date
-                ) ORDER BY ft.subtask_id
+                  'scheduled_date', ft.subtask_scheduled_date,
+                  'delay_reason', ft.delay_reason,
+                  'delay_notes', ft.delay_notes,
+                  'notification_sent_15min', ft.notification_sent_15min,
+                  'notification_sent_start', ft.notification_sent_start,
+                  'notification_sent_escalation', ft.notification_sent_escalation,
+                  'assigned_to', ft.assigned_to,
+                  'reporting_managers', ft.reporting_managers,
+                  'escalation_managers', ft.escalation_managers
+                ) ORDER BY ft.order_position
               ) FILTER (WHERE ft.subtask_id IS NOT NULL),
               '[]'::json
             ) as subtasks
@@ -488,7 +496,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
     }
 
     if (error.code === "ECONNREFUSED" || error.code === "ENOTFOUND") {
-      console.log("���� Database connection refused - using mock data");
+      console.log("����� Database connection refused - using mock data");
       return res.json(mockFinOpsTasks);
     }
 
@@ -595,7 +603,7 @@ router.post("/tasks", async (req: Request, res: Response) => {
                 (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $7, $8, $9, $10
               )
               ON CONFLICT (run_date, period, task_id, subtask_id)
-              DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+              DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, scheduled_time = EXCLUDED.scheduled_time, subtask_scheduled_date = EXCLUDED.subtask_scheduled_date, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, updated_at = NOW()
               `,
               [
                 String(duration || "daily"),
@@ -1088,7 +1096,7 @@ router.patch(
             ) VALUES (
               (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
             )
-            ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+            ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
             RETURNING *
           `,
             [
@@ -1746,9 +1754,10 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
         const period = String(row.duration || "daily");
         const result = await pool.query(
           `INSERT INTO finops_tracker (
-           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE
+         SET status = EXCLUDED.status, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
          RETURNING id`,
           [
             runDate,
@@ -1760,6 +1769,13 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
             initialStatus,
             row.start_time || null,
             runDate,
+            row.subtask_description || null,
+            row.sla_hours || null,
+            row.sla_minutes || null,
+            row.order_position || null,
+            row.assigned_to || null,
+            row.reporting_managers || null,
+            row.escalation_managers || null,
           ],
         );
         if (result.rows.length > 0) inserted++;
