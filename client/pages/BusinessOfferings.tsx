@@ -561,32 +561,42 @@ export default function BusinessOfferings({ initial, offeringId }: Props = {}) {
                   )}
                 </div>
 
-                <div>
-                  <Label>Products *</Label>
-                  <Select
-                    value={formA.product}
-                    onValueChange={(v) => {
-                      setFormA((p) => ({ ...p, product: v }));
-                      setErrors((e) => ({ ...e, product: "" }));
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select product" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {PRODUCTS.map((p) => (
-                        <SelectItem key={p} value={p}>
-                          {p}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.product && (
-                    <div className="text-sm text-red-600 mt-1">
-                      {errors.product}
-                    </div>
-                  )}
-                </div>
+              <div>
+  <Label>Products *</Label>
+  <Select
+    onValueChange={(v) => {
+      setFormA((prev) => {
+        const exists = prev.product.includes(v);
+        return {
+          ...prev,
+          product: exists
+            ? prev.product.filter((x) => x !== v) // remove if already selected
+            : [...prev.product, v], // add if not selected
+        };
+      });
+      setErrors((e) => ({ ...e, product: "" }));
+    }}
+  >
+    <SelectTrigger>
+      <SelectValue>
+        {formA.product.length > 0
+          ? formA.product.join(", ")
+          : "Select product"}
+      </SelectValue>
+    </SelectTrigger>
+    <SelectContent>
+      {PRODUCTS.map((p) => (
+        <SelectItem key={p} value={p}>
+          {formA.product.includes(p) ? "✅ " : ""}
+          {p}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  {errors.product && (
+    <div className="text-sm text-red-600 mt-1">{errors.product}</div>
+  )}
+</div>
 
                 <div>
                   <Label>
