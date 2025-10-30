@@ -405,7 +405,7 @@ class FinOpsScheduler {
           `
           WITH next_date AS (SELECT (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date + INTERVAL '1 day' AS d)
           INSERT INTO finops_tracker (
-            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date
+            run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position
           )
           SELECT
             nd.d::date,
@@ -418,11 +418,15 @@ class FinOpsScheduler {
             NULL,
             NULL,
             st.start_time,
-            nd.d::date
+            nd.d::date,
+            st.description,
+            st.sla_hours,
+            st.sla_minutes,
+            st.order_position
           FROM next_date nd
           JOIN finops_tasks t ON t.id = $1 AND t.effective_from <= nd.d::date AND t.is_active = true AND t.deleted_at IS NULL
           JOIN finops_subtasks st ON st.task_id = t.id
-          ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+          ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, updated_at = NOW()
         `,
           [taskId],
         );
