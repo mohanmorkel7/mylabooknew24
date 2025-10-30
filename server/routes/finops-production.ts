@@ -296,6 +296,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             -- Subtask fallback branch
             SELECT
               st.id AS id,
+              NULL::INTEGER AS tracker_id,
               st.name AS name,
               st.description,
               st.sla_hours,
