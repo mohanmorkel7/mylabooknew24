@@ -203,8 +203,11 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     const dateParam = (req.query.date as string) || null;
     const userNameRaw = (req.query.user_name as string) || null;
-    const normalizedUser = userNameRaw ? userNameRaw.trim().toLowerCase() : null;
-    const callerRole = (req.query.user_role as string) || (req.query.role as string) || null;
+    const normalizedUser = userNameRaw
+      ? userNameRaw.trim().toLowerCase()
+      : null;
+    const callerRole =
+      (req.query.user_role as string) || (req.query.role as string) || null;
 
     let callerIsAdmin = callerRole === "admin";
 
@@ -212,11 +215,14 @@ router.get("/tasks", async (req: Request, res: Response) => {
       try {
         const ur = await pool.query(
           `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
-          [normalizedUser]
+          [normalizedUser],
         );
         if (ur.rows.length && ur.rows[0].role === "admin") callerIsAdmin = true;
       } catch (e) {
-        console.warn("Failed to resolve caller role from users table:", (e as Error).message);
+        console.warn(
+          "Failed to resolve caller role from users table:",
+          (e as Error).message,
+        );
       }
     }
 
@@ -228,7 +234,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
               EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
               OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
             ) LIMIT 1`,
-          [normalizedUser]
+          [normalizedUser],
         );
         callerIsManager = mg.rows.length > 0;
       } catch (e) {
@@ -399,7 +405,6 @@ router.get("/tasks", async (req: Request, res: Response) => {
     });
   }
 });
-
 
 // Create new FinOps task
 router.post("/tasks", async (req: Request, res: Response) => {
@@ -866,7 +871,9 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       );
       if (existing.rows.length) {
         await client.query("ROLLBACK");
-        return res.status(409).json({ error: "Already approved for this tracker" });
+        return res
+          .status(409)
+          .json({ error: "Already approved for this tracker" });
       }
 
       // Insert approval record
@@ -874,7 +881,13 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
         `INSERT INTO finops_approvals (task_id, subtask_id, tracker_id, approved_by, note)
          VALUES ($1, $2, $3, $4, $5)
          ON CONFLICT (task_id, subtask_id, tracker_id) DO NOTHING`,
-        [row.task_id, subtaskId, tracker_id || null, approver_name, note || null],
+        [
+          row.task_id,
+          subtaskId,
+          tracker_id || null,
+          approver_name,
+          note || null,
+        ],
       );
 
       // Update finops_subtasks status to approved

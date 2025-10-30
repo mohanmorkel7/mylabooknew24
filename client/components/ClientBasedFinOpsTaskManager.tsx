@@ -127,7 +127,7 @@ const extractNameFromValue = (raw: string, depth: number = 0): string => {
           : raw;
       __nameParseCache.set(raw, res);
       return res;
-    } catch { }
+    } catch {}
   }
 
   // Name (email) => take name only
@@ -330,8 +330,6 @@ function SortableSubTaskItem({
   onStatusChange,
   isInline = false,
 }: SortableSubTaskItemProps) {
-
-
   // console.log("Tasks : " , subtask)
   const [showDelayDialog, setShowDelayDialog] = useState(false);
   const [delayReason, setDelayReason] = useState("");
@@ -442,111 +440,96 @@ function SortableSubTaskItem({
                     {/* Approve button: visible to admin, reporting managers, or escalation managers when subtask completed */}
                     {(() => {
                       try {
-
                         const currentUser = (useAuth() as any)?.user || null;
 
                         const normalize = (value: string) =>
-
-                          (value || "").toLowerCase().replace(/\s+/g, " ").trim();
+                          (value || "")
+                            .toLowerCase()
+                            .replace(/\s+/g, " ")
+                            .trim();
 
                         const normalizedUserName = normalize(
-
-                          currentUser?.name || currentUser?.email || ""
-
+                          currentUser?.name || currentUser?.email || "",
                         );
 
                         const isAdmin = currentUser?.role === "admin";
 
                         const isReporting =
-
                           Array.isArray(task?.reporting_managers) &&
-
-                          task.reporting_managers.map(normalize).includes(normalizedUserName);
+                          task.reporting_managers
+                            .map(normalize)
+                            .includes(normalizedUserName);
 
                         const isEscalation =
-
                           Array.isArray(task?.escalation_managers) &&
-
-                          task.escalation_managers.map(normalize).includes(normalizedUserName);
+                          task.escalation_managers
+                            .map(normalize)
+                            .includes(normalizedUserName);
 
                         const isAssigned =
-
                           Array.isArray(task?.assigned_to) &&
+                          task.assigned_to
+                            .map(normalize)
+                            .includes(normalizedUserName);
 
-                          task.assigned_to.map(normalize).includes(normalizedUserName);
-
-                        const isApproved = Boolean((subtask as any)?.approved_by);
+                        const isApproved = Boolean(
+                          (subtask as any)?.approved_by,
+                        );
 
                         // ✅ Only allow reporting, escalation, or admin users (not assigned ones)
 
                         const canSeeApproveButton =
-
                           (isReporting || isEscalation || isAdmin) &&
-
                           !isAssigned &&
-
                           ["completed", "approved"].includes(subtask.status) &&
-
                           !isApproved;
 
                         if (canSeeApproveButton) {
-
                           return (
                             <Button
-
                               size="sm"
-
                               variant="outline"
-
                               onClick={async () => {
-
                                 if (!confirm("Approve this subtask?")) return;
 
                                 try {
+                                  const approverName =
+                                    currentUser?.name ||
+                                    currentUser?.email ||
+                                    "";
 
-                                  const approverName = currentUser?.name || currentUser?.email || "";
-
-                                  await apiClient.approveFinOpsSubtask(Number(subtask.id), approverName, undefined, (subtask as any)?.tracker_id);
+                                  await apiClient.approveFinOpsSubtask(
+                                    Number(subtask.id),
+                                    approverName,
+                                    undefined,
+                                    (subtask as any)?.tracker_id,
+                                  );
 
                                   try {
-
-                                    queryClient.invalidateQueries({ queryKey: ["client-finops-tasks"] });
-
-                                  } catch { }
+                                    queryClient.invalidateQueries({
+                                      queryKey: ["client-finops-tasks"],
+                                    });
+                                  } catch {}
 
                                   toast({
-
                                     title: "Approved",
 
                                     description: `Approved by ${approverName}`,
-
                                   });
-
                                 } catch (e) {
-
                                   alert("Failed to approve");
-
                                 }
-
                               }}
                             >
-
                               Approve
                             </Button>
-
                           );
-
                         }
-
                       } catch {
-
                         // safely ignore any runtime errors
-
                       }
 
                       return null;
-
-
                     })()}
                   </div>
                 </div>
@@ -718,7 +701,6 @@ function SortableSubTaskItem({
 export default function ClientBasedFinOpsTaskManager() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-
 
   // Check if user can edit FinOps tasks
   const canEditFinOpsTasks = (task: ClientBasedFinOpsTask): boolean => {
@@ -914,7 +896,7 @@ export default function ClientBasedFinOpsTaskManager() {
     const key = `${args.taskId}-${args.subTaskId}`;
     try {
       recentManualUpdates.current[key] = Date.now();
-    } catch { }
+    } catch {}
     updateSubTaskMutation.mutate(args as any);
   };
 
@@ -1205,8 +1187,8 @@ export default function ClientBasedFinOpsTaskManager() {
       if (currentTask.duration === "weekly") {
         const days = Array.isArray((currentTask as any).weekly_days)
           ? ((currentTask as any).weekly_days as string[]).map((d) =>
-            d.toLowerCase(),
-          )
+              d.toLowerCase(),
+            )
           : [];
         if (days.length === 0) return false;
         const day = dayNames[today.getDay()];
@@ -1512,7 +1494,7 @@ export default function ClientBasedFinOpsTaskManager() {
     if (user?.role === "admin") {
       return true;
     }
-    console.log("USER ROLE", user.name)
+    console.log("USER ROLE", user.name);
     // Creator can edit their own task
     if (
       task.created_by === user?.id?.toString() ||
@@ -1749,8 +1731,8 @@ export default function ClientBasedFinOpsTaskManager() {
         if (task.duration === "weekly") {
           const days = Array.isArray((task as any).weekly_days)
             ? ((task as any).weekly_days as string[]).map((d) =>
-              d.toLowerCase(),
-            )
+                d.toLowerCase(),
+              )
             : [];
           if (days.length === 0) return false;
           const day = dayNames[filterDate.getDay()];
@@ -1786,12 +1768,12 @@ export default function ClientBasedFinOpsTaskManager() {
     filteredTasks.some(
       (task) =>
         (Array.isArray(task.reporting_managers) &&
-          task.reporting_managers.map(normalize).includes(normalizedUserName)) ||
+          task.reporting_managers
+            .map(normalize)
+            .includes(normalizedUserName)) ||
         (Array.isArray(task.escalation_managers) &&
-          task.escalation_managers.map(normalize).includes(normalizedUserName))
+          task.escalation_managers.map(normalize).includes(normalizedUserName)),
     );
-
-    
 
   if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
     console.log(
@@ -1827,14 +1809,14 @@ export default function ClientBasedFinOpsTaskManager() {
           try {
             if (typeof window !== "undefined")
               localStorage.setItem(key, String(next));
-          } catch { }
+          } catch {}
           initial[task.id] = 15 * 60;
         }
       } else {
         if (initial[task.id]) delete initial[task.id];
         try {
           if (typeof window !== "undefined") localStorage.removeItem(key);
-        } catch { }
+        } catch {}
       }
     });
     setOverdueTimers(initial);
@@ -1875,7 +1857,7 @@ export default function ClientBasedFinOpsTaskManager() {
                   "sla_overdue",
                   title,
                 );
-              } catch { }
+              } catch {}
             } catch (err) {
               if (typeof window !== "undefined" && (window as any).__APP_DEBUG)
                 console.warn(
@@ -1889,7 +1871,7 @@ export default function ClientBasedFinOpsTaskManager() {
         try {
           if (typeof window !== "undefined")
             localStorage.setItem(`finops_next_call_${taskId}`, String(nextMs));
-        } catch { }
+        } catch {}
         // reset timer
         setOverdueTimers((prev) => ({ ...prev, [taskId]: 15 * 60 }));
       }
@@ -2054,7 +2036,8 @@ export default function ClientBasedFinOpsTaskManager() {
               Daily process tracking and task execution monitoring for the
               selected date
             </p>
-          </div></div>
+          </div>
+        </div>
         {/* Real-time Status and Buttons (side-by-side, separate outlines) */}
         <div className="mt-2 flex items-center justify-between">
           {/* 🕒 Left: Status box with its own border */}
@@ -2065,46 +2048,43 @@ export default function ClientBasedFinOpsTaskManager() {
               (acc, task) =>
                 acc +
                 (task.subtasks?.filter(
-                  (st) => st.status === "pending" && st.start_time
+                  (st) => st.status === "pending" && st.start_time,
                 ).length || 0),
-              0
+              0,
             )}{" "}
             pending tasks monitored
           </div>
 
           {/* 🎯 Right: Action buttons (normal size, outside the box) */}
           <div className="flex gap-2 ml-4">
-            
             {/* Admin buttons */}
-{isAdmin && (
-  <>
-    <Button
-      variant="outline"
-      onClick={async () => {
-        // Seed tracker logic
-      }}
-    >
-      Seed Daily Tracker
-    </Button>
+            {isAdmin && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    // Seed tracker logic
+                  }}
+                >
+                  Seed Daily Tracker
+                </Button>
 
-    <Button onClick={() => setIsCreateDialogOpen(true)}>
-      <Plus className="w-4 h-4 mr-2" />
-      Create Task
-    </Button>
-  </>
-)}
+                <Button onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create Task
+                </Button>
+              </>
+            )}
 
-{/* Reporting/Escalation managers */}
-{!isAdmin && canCreateTask && (
-  <Button onClick={() => setIsCreateDialogOpen(true)}>
-    <Plus className="w-4 h-4 mr-2" />
-    Create Task
-  </Button>
-)}
-
+            {/* Reporting/Escalation managers */}
+            {!isAdmin && canCreateTask && (
+              <Button onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" />
+                Create Task
+              </Button>
+            )}
           </div>
         </div>
-
 
         {/* Database Status Alert */}
         {(error || clientsError || usersError) && (
@@ -2308,10 +2288,11 @@ export default function ClientBasedFinOpsTaskManager() {
                   ([clientName, summary]: [string, any]) => (
                     <div
                       key={clientName}
-                      className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${selectedClientFromSummary === clientName
-                        ? "bg-blue-50 border-blue-300 shadow-md"
-                        : "bg-gray-50 hover:bg-gray-100"
-                        }`}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all hover:shadow-md ${
+                        selectedClientFromSummary === clientName
+                          ? "bg-blue-50 border-blue-300 shadow-md"
+                          : "bg-gray-50 hover:bg-gray-100"
+                      }`}
                       onClick={() => {
                         if (selectedClientFromSummary === clientName) {
                           setSelectedClientFromSummary(null);
@@ -2555,8 +2536,8 @@ export default function ClientBasedFinOpsTaskManager() {
                               const result =
                                 assignedArray.length > 0
                                   ? assignedArray
-                                    .map((name) => extractNameFromValue(name))
-                                    .join(", ")
+                                      .map((name) => extractNameFromValue(name))
+                                      .join(", ")
                                   : "Unassigned";
 
                               if (
@@ -2584,23 +2565,23 @@ export default function ClientBasedFinOpsTaskManager() {
                             <span>
                               {task.subtasks && task.subtasks.length > 0
                                 ? (() => {
-                                  const subtasksWithTime =
-                                    task.subtasks.filter(
-                                      (st) => st.start_time,
+                                    const subtasksWithTime =
+                                      task.subtasks.filter(
+                                        (st) => st.start_time,
+                                      );
+                                    if (subtasksWithTime.length === 0)
+                                      return "No schedule set";
+                                    const sorted = subtasksWithTime.sort(
+                                      (a, b) =>
+                                        (a.start_time || "").localeCompare(
+                                          b.start_time || "",
+                                        ),
                                     );
-                                  if (subtasksWithTime.length === 0)
-                                    return "No schedule set";
-                                  const sorted = subtasksWithTime.sort(
-                                    (a, b) =>
-                                      (a.start_time || "").localeCompare(
-                                        b.start_time || "",
-                                      ),
-                                  );
-                                  const { time, period } = convertTo12Hour(
-                                    sorted[0].start_time,
-                                  );
-                                  return `Starts: ${time ? `${time} ${period}` : sorted[0].start_time}`;
-                                })()
+                                    const { time, period } = convertTo12Hour(
+                                      sorted[0].start_time,
+                                    );
+                                    return `Starts: ${time ? `${time} ${period}` : sorted[0].start_time}`;
+                                  })()
                                 : "No schedule set"}
                             </span>
                           </div>
@@ -2629,8 +2610,8 @@ export default function ClientBasedFinOpsTaskManager() {
                                     const stored =
                                       typeof window !== "undefined"
                                         ? localStorage.getItem(
-                                          `finops_next_call_${task.id}`,
-                                        )
+                                            `finops_next_call_${task.id}`,
+                                          )
                                         : null;
                                     if (stored) {
                                       const nextMs = parseInt(stored, 10);
@@ -2641,7 +2622,7 @@ export default function ClientBasedFinOpsTaskManager() {
                                       if (!isNaN(diff)) seconds = diff;
                                     }
                                   }
-                                } catch { }
+                                } catch {}
                                 const mins = Math.floor(seconds / 60);
                                 const secs = seconds % 60;
                                 return `${mins}m ${secs.toString().padStart(2, "0")}s`;
@@ -2703,126 +2684,145 @@ export default function ClientBasedFinOpsTaskManager() {
                     </div>
                   </div>
                 </CardHeader>
-{/* Inline Subtasks Management */}
-{task.subtasks && task.subtasks.length > 0 && (
-  <CardContent className="pt-0">
-    <div className="border-t pt-4">
-      <h4 className="font-medium flex items-center gap-2 mb-3 justify-center">
-        <Activity className="w-4 h-4" />
-        Subtasks ({completedSubtasks}/{totalSubtasks} completed)
-      </h4>
+                {/* Inline Subtasks Management */}
+                {task.subtasks && task.subtasks.length > 0 && (
+                  <CardContent className="pt-0">
+                    <div className="border-t pt-4">
+                      <h4 className="font-medium flex items-center gap-2 mb-3 justify-center">
+                        <Activity className="w-4 h-4" />
+                        Subtasks ({completedSubtasks}/{totalSubtasks} completed)
+                      </h4>
 
-      <div className="space-y-3">
-        {(() => {
-          const inProgressSubtasks = task.subtasks.filter(
-            (st) => st.status === "in_progress",
-          );
-          const otherSubtasks = task.subtasks.filter(
-            (st) => st.status !== "in_progress",
-          );
-          const isExpanded = expandedTasks.has(task.id);
+                      <div className="space-y-3">
+                        {(() => {
+                          const inProgressSubtasks = task.subtasks.filter(
+                            (st) => st.status === "in_progress",
+                          );
+                          const otherSubtasks = task.subtasks.filter(
+                            (st) => st.status !== "in_progress",
+                          );
+                          const isExpanded = expandedTasks.has(task.id);
 
-          // Always show in-progress subtasks
-          let subtasksToShow = [...inProgressSubtasks];
+                          // Always show in-progress subtasks
+                          let subtasksToShow = [...inProgressSubtasks];
 
-          if (isExpanded) {
-            // Show all subtasks when expanded
-            subtasksToShow = task.subtasks;
-          } else {
-            // Show in-progress + up to 2 others
-            subtasksToShow = [
-              ...inProgressSubtasks,
-              ...otherSubtasks.slice(
-                0,
-                Math.max(0, 3 - inProgressSubtasks.length),
-              ),
-            ];
-          }
+                          if (isExpanded) {
+                            // Show all subtasks when expanded
+                            subtasksToShow = task.subtasks;
+                          } else {
+                            // Show in-progress + up to 2 others
+                            subtasksToShow = [
+                              ...inProgressSubtasks,
+                              ...otherSubtasks.slice(
+                                0,
+                                Math.max(0, 3 - inProgressSubtasks.length),
+                              ),
+                            ];
+                          }
 
-          return subtasksToShow.map((subtask) => {
-            const slaWarning = getSLAWarning(
-              subtask.start_time,
-              subtask.status,
-            );
-            return (
-              <div key={subtask.id}>
-                <SortableSubTaskItem
-                  subtask={subtask}
-                  task={task}
-                  index={0}
-                  onUpdate={() => {}}
-                  onRemove={() => {}}
-                  onStatusChange={(
-                    subtaskId,
-                    status,
-                    delayReason,
-                    delayNotes,
-                  ) =>
-                    handleInlineSubTaskStatusChange(
-                      task.id,
-                      subtaskId,
-                      status,
-                      delayReason,
-                      delayNotes,
-                    )
-                  }
-                  isInline={true}
-                />
-                {(slaWarning || subtask.start_time) && (() => {
-                  const dayNames = [
-                    "sunday", "monday", "tuesday", "wednesday",
-                    "thursday", "friday", "saturday",
-                  ];
-                  const today = dateFilter
-                    ? new Date(dateFilter)
-                    : new Date();
-                  const taskStart = task.effective_from
-                    ? new Date(task.effective_from)
-                    : today;
+                          return subtasksToShow.map((subtask) => {
+                            const slaWarning = getSLAWarning(
+                              subtask.start_time,
+                              subtask.status,
+                            );
+                            return (
+                              <div key={subtask.id}>
+                                <SortableSubTaskItem
+                                  subtask={subtask}
+                                  task={task}
+                                  index={0}
+                                  onUpdate={() => {}}
+                                  onRemove={() => {}}
+                                  onStatusChange={(
+                                    subtaskId,
+                                    status,
+                                    delayReason,
+                                    delayNotes,
+                                  ) =>
+                                    handleInlineSubTaskStatusChange(
+                                      task.id,
+                                      subtaskId,
+                                      status,
+                                      delayReason,
+                                      delayNotes,
+                                    )
+                                  }
+                                  isInline={true}
+                                />
+                                {(slaWarning || subtask.start_time) &&
+                                  (() => {
+                                    const dayNames = [
+                                      "sunday",
+                                      "monday",
+                                      "tuesday",
+                                      "wednesday",
+                                      "thursday",
+                                      "friday",
+                                      "saturday",
+                                    ];
+                                    const today = dateFilter
+                                      ? new Date(dateFilter)
+                                      : new Date();
+                                    const taskStart = task.effective_from
+                                      ? new Date(task.effective_from)
+                                      : today;
 
-                  const show = (() => {
-                    if (task.duration === "daily") return taskStart <= today;
-                    if (task.duration === "weekly") {
-                      const days = Array.isArray((task as any).weekly_days)
-                        ? ((task as any).weekly_days as string[]).map((d) =>
-                            d.toLowerCase(),
-                          )
-                        : [];
-                      if (days.length === 0) return false;
-                      const day = dayNames[today.getDay()];
-                      return taskStart <= today && days.includes(day);
-                    }
-                    return taskStart.toDateString() === today.toDateString();
-                  })();
-                  return show;
-                })() && (
+                                    const show = (() => {
+                                      if (task.duration === "daily")
+                                        return taskStart <= today;
+                                      if (task.duration === "weekly") {
+                                        const days = Array.isArray(
+                                          (task as any).weekly_days,
+                                        )
+                                          ? (
+                                              (task as any)
+                                                .weekly_days as string[]
+                                            ).map((d) => d.toLowerCase())
+                                          : [];
+                                        if (days.length === 0) return false;
+                                        const day = dayNames[today.getDay()];
+                                        return (
+                                          taskStart <= today &&
+                                          days.includes(day)
+                                        );
+                                      }
+                                      return (
+                                        taskStart.toDateString() ===
+                                        today.toDateString()
+                                      );
+                                    })();
+                                    return show;
+                                  })() && (
                                     <Alert
-                                      className={`mt-2 p-2 ${slaWarning?.type === "overdue" ||
+                                      className={`mt-2 p-2 ${
+                                        slaWarning?.type === "overdue" ||
                                         subtask.status === "overdue"
-                                        ? "border-red-200 bg-red-50"
-                                        : slaWarning?.type === "warning"
-                                          ? "border-orange-200 bg-orange-50"
-                                          : "border-blue-200 bg-blue-50"
-                                        }`}
+                                          ? "border-red-200 bg-red-50"
+                                          : slaWarning?.type === "warning"
+                                            ? "border-orange-200 bg-orange-50"
+                                            : "border-blue-200 bg-blue-50"
+                                      }`}
                                     >
                                       <div className="flex items-center gap-1">
                                         <Clock
-                                          className={`h-3 w-3 flex-shrink-0 ${slaWarning?.type === "overdue" ||
+                                          className={`h-3 w-3 flex-shrink-0 ${
+                                            slaWarning?.type === "overdue" ||
                                             subtask.status === "overdue"
-                                            ? "text-red-600"
-                                            : slaWarning?.type === "warning"
-                                              ? "text-orange-600"
-                                              : "text-blue-600"
-                                            }`}
+                                              ? "text-red-600"
+                                              : slaWarning?.type === "warning"
+                                                ? "text-orange-600"
+                                                : "text-blue-600"
+                                          }`}
                                         />
                                         <AlertDescription
-                                          className={`text-xs ${slaWarning?.type === "overdue" ||
+                                          className={`text-xs ${
+                                            slaWarning?.type === "overdue" ||
                                             subtask.status === "overdue"
-                                            ? "text-red-700"
-                                            : slaWarning?.type === "warning"
-                                              ? "text-orange-700"
-                                              : "text-blue-700"
-                                            }`}
+                                              ? "text-red-700"
+                                              : slaWarning?.type === "warning"
+                                                ? "text-orange-700"
+                                                : "text-blue-700"
+                                          }`}
                                         >
                                           {(() => {
                                             const overdue =
@@ -2831,11 +2831,11 @@ export default function ClientBasedFinOpsTaskManager() {
                                             const timeText = subtask.start_time
                                               ? overdue
                                                 ? getTimeSinceStartStrict(
-                                                  subtask.start_time,
-                                                )
+                                                    subtask.start_time,
+                                                  )
                                                 : getTimeSinceStart(
-                                                  subtask.start_time,
-                                                )
+                                                    subtask.start_time,
+                                                  )
                                               : "";
                                             if (overdue) {
                                               return `Overdue${timeText ? " • " + timeText : ""}`;
@@ -2866,34 +2866,34 @@ export default function ClientBasedFinOpsTaskManager() {
                                     task.subtasks.filter(
                                       (st) => st.status === "in_progress",
                                     ).length +
-                                    Math.max(
-                                      0,
-                                      3 -
-                                      task.subtasks.filter(
-                                        (st) => st.status === "in_progress",
-                                      ).length,
-                                    ),
+                                      Math.max(
+                                        0,
+                                        3 -
+                                          task.subtasks.filter(
+                                            (st) => st.status === "in_progress",
+                                          ).length,
+                                      ),
                                   )}{" "}
                                 more subtasks hidden
                               </span>
                             </div>
                           )}
 
-
-        {/* Show More / Show Less Button */}
-        {task.subtasks.length > 3 && (
-          <div className="flex justify-center mt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => toggleTaskExpansion(task.id)}
-              className="text-blue-600 hover:text-blue-800"
-            >
-              {expandedTasks.has(task.id) ? "Show Less" : "Show More"}
-            </Button>
-          </div>
-        )}
-
+                        {/* Show More / Show Less Button */}
+                        {task.subtasks.length > 3 && (
+                          <div className="flex justify-center mt-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleTaskExpansion(task.id)}
+                              className="text-blue-600 hover:text-blue-800"
+                            >
+                              {expandedTasks.has(task.id)
+                                ? "Show Less"
+                                : "Show More"}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </CardContent>
