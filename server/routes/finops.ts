@@ -2140,15 +2140,15 @@ router.post(
             ),
           );
 
-          if (user_ids.length) {
-            fetch("https://pulsealerts.mylapay.com/direct-call", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
-            }).catch((err) => {
-              console.warn("Manual direct-call error:", (err as Error).message);
-            });
-          }
+          // if (user_ids.length) {
+          //   fetch("https://pulsealerts.mylapay.com/direct-call", {
+          //     method: "POST",
+          //     headers: { "Content-Type": "application/json" },
+          //     body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+          //   }).catch((err) => {
+          //     console.warn("Manual direct-call error:", (err as Error).message);
+          //   });
+          // }
         } catch (e) {
           console.warn(
             "Manual direct-call user resolution failed:",
