@@ -260,6 +260,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             -- Tracker branch
             SELECT
               ft.subtask_id AS id,
+              ft.id AS tracker_id,
               ft.subtask_name AS name,
               ft.description,
               ft.sla_hours,
