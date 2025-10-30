@@ -37,7 +37,7 @@ import {
   AlertTriangle,
   AlertCircle,
   Copy,
-  Copy2,
+  Duplicate,
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
