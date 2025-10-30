@@ -414,7 +414,7 @@ export function ImportClientsModal({
         if (!existingClient) {
           // Create new client entry
           existingClient = {
-            source: row[headerMap["source"]]?.toString().trim(),
+            source: normalizeSource(row[headerMap["source"]]?.toString()),
             sourceValue: row[headerMap["source value"]]?.toString().trim(),
             clientName,
             clientType: row[headerMap["client type"]]?.toString().trim(),
@@ -444,8 +444,9 @@ export function ImportClientsModal({
           existingClient.contacts.push({
             contact_name: contactName,
             designation: row[headerMap["designation"]]?.toString().trim(),
-            phone_prefix:
-              row[headerMap["phone prefix"]]?.toString().trim() || "+91",
+            phone_prefix: normalizePhonePrefix(
+              row[headerMap["phone prefix"]]?.toString(),
+            ),
             phone: row[headerMap["contact phone"]]?.toString().trim(),
             email: row[headerMap["contact email"]]?.toString().trim(),
             linkedin_profile_link: row[headerMap["linkedin profile link"]]
