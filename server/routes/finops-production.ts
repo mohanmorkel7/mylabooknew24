@@ -843,11 +843,9 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       });
     }
 
-    const client = await pool.connect();
+    // Ensure finops_approvals table exists and has correct schema (outside transaction)
     try {
-      await client.query("BEGIN");
-
-      await client.query(`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS finops_approvals (
           id SERIAL PRIMARY KEY,
           task_id INTEGER NOT NULL,
@@ -861,28 +859,28 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       `);
 
       // Add tracker_id column if it doesn't exist (migration)
-      await client.query(`
+      await pool.query(`
         ALTER TABLE finops_approvals ADD COLUMN IF NOT EXISTS tracker_id INTEGER
       `);
 
-      // Drop old UNIQUE constraint if it exists (to avoid conflicts)
-      try {
-        await client.query(`
-          ALTER TABLE finops_approvals DROP CONSTRAINT IF EXISTS finops_approvals_task_id_subtask_id_key
-        `);
-      } catch (e) {
-        // Constraint may not exist, that's fine
-      }
+      // Drop old UNIQUE constraint if it exists
+      await pool.query(`
+        ALTER TABLE finops_approvals DROP CONSTRAINT IF EXISTS finops_approvals_task_id_subtask_id_key
+      `);
 
       // Ensure new UNIQUE constraint exists with tracker_id
-      try {
-        await client.query(`
-          ALTER TABLE finops_approvals ADD CONSTRAINT finops_approvals_unique_tracker
-          UNIQUE(task_id, subtask_id, tracker_id)
-        `);
-      } catch (e) {
-        // Constraint may already exist, that's fine
-      }
+      await pool.query(`
+        ALTER TABLE finops_approvals ADD CONSTRAINT finops_approvals_unique_tracker
+        UNIQUE(task_id, subtask_id, tracker_id)
+      `);
+    } catch (e) {
+      // Schema setup errors are non-critical, log and continue
+      console.warn("Finops approvals schema setup:", (e as Error).message);
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
 
       // Prevent re-approval for the same tracker
       const existing = await client.query(
@@ -896,7 +894,7 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
           .json({ error: "Already approved for this tracker" });
       }
 
-      // Insert approval record (no ON CONFLICT needed since we already checked for existing)
+      // Insert approval record
       await client.query(
         `INSERT INTO finops_approvals (task_id, subtask_id, tracker_id, approved_by, note)
          VALUES ($1, $2, $3, $4, $5)`,
@@ -909,20 +907,6 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
         ],
       );
 
-      // Update finops_subtasks status to approved
-      // await client.query(
-      //   `UPDATE finops_subtasks SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      //   [subtaskId],
-      // );
-
-      // // Also update finops_tracker for today's date if it exists
-      // const todayStr = new Date().toISOString().slice(0, 10);
-      // await client.query(
-      //   `UPDATE finops_tracker SET status = 'approved', updated_at = CURRENT_TIMESTAMP
-      //    WHERE subtask_id = $1 AND run_date = $2`,
-      //   [subtaskId, todayStr],
-      // );
-
       await client.query("COMMIT");
 
       console.log(
@@ -931,7 +915,9 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
 
       res.json({ ok: true, approved: true, status: "approved" });
     } catch (error) {
-      await client.query("ROLLBACK");
+      await client.query("ROLLBACK").catch(() => {
+        // ROLLBACK might fail if transaction is already aborted, ignore
+      });
       throw error;
     } finally {
       client.release();
