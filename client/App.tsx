@@ -439,7 +439,7 @@ function AppRoutes() {
       <Route
         path="/upload-tasks"
         element={
-          <ProtectedRoute allowedRoles={["admin"]}>
+          <ProtectedRoute allowedRoles={["admin","finops"]}>
             <DashboardLayout>
               <TaskExcelUpload></TaskExcelUpload>
             </DashboardLayout>
