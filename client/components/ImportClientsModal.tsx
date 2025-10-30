@@ -364,144 +364,143 @@ export function ImportClientsModal({
   //   reader.readAsArrayBuffer(file);
   // };
 
-
   const parseExcelFile = (file: File) => {
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const data = new Uint8Array(e.target?.result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+        const workbook = XLSX.read(data, { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-      if (jsonData.length < 2) {
+        if (jsonData.length < 2) {
+          toast({
+            title: "Invalid file",
+            description: "Excel file must have headers and at least one row",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const headers = jsonData[0] as string[];
+        const rows = jsonData.slice(1);
+
+        const validationErrors: ValidationError[] = [];
+        const clientMap = new Map<string, ImportClientRow>();
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i] as any[];
+          if (!row || row.every((cell) => cell === undefined || cell === ""))
+            continue;
+
+          const headerMap: Record<string, number> = {};
+          headers.forEach((header, idx) => {
+            headerMap[header.toLowerCase().trim()] = idx;
+          });
+
+          const clientName = row[headerMap["client name"]]?.toString().trim();
+          if (!clientName) {
+            validationErrors.push({
+              rowIndex: i + 2,
+              field: "Client Name",
+              message: "Client name is required",
+            });
+            continue;
+          }
+
+          // Check if client already exists
+          let existingClient = clientMap.get(clientName);
+
+          if (!existingClient) {
+            // Create new client entry
+            existingClient = {
+              source: normalizeSource(row[headerMap["source"]]?.toString()),
+              sourceValue: row[headerMap["source value"]]?.toString().trim(),
+              clientName,
+              clientType: row[headerMap["client type"]]?.toString().trim(),
+              paymentOffering: row[headerMap["payment offering"]]
+                ?.toString()
+                .trim(),
+              website: row[headerMap["website"]]?.toString().trim(),
+              geography: row[headerMap["client geography"]]?.toString().trim(),
+              txnVolume: row[headerMap["txn volume / per day in million"]]
+                ?.toString()
+                .trim(),
+              productTagInfo: row[headerMap["product tag info"]]
+                ?.toString()
+                .trim(),
+              address: row[headerMap["street address"]]?.toString().trim(),
+              city: row[headerMap["city"]]?.toString().trim(),
+              state: row[headerMap["state"]]?.toString().trim(),
+              country: row[headerMap["country"]]?.toString().trim(),
+              contacts: [],
+            };
+            clientMap.set(clientName, existingClient);
+          }
+
+          // Handle contact
+          const contactName = row[headerMap["contact name"]]?.toString().trim();
+          if (contactName) {
+            existingClient.contacts.push({
+              contact_name: contactName,
+              designation: row[headerMap["designation"]]?.toString().trim(),
+              phone_prefix: normalizePhonePrefix(
+                row[headerMap["phone prefix"]]?.toString(),
+              ),
+              phone: row[headerMap["contact phone"]]?.toString().trim(),
+              email: row[headerMap["contact email"]]?.toString().trim(),
+              linkedin_profile_link: row[headerMap["linkedin profile link"]]
+                ?.toString()
+                .trim(),
+            });
+          }
+        }
+
+        if (validationErrors.length > 0) {
+          setErrors(validationErrors);
+          toast({
+            title: "Validation errors found",
+            description: `${validationErrors.length} row(s) have errors`,
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Convert map to array
+        const importedRows = Array.from(clientMap.values());
+
+        // Detect duplicates in merged data
+        const { dedupedRows, duplicateInfo: dupes } =
+          detectDuplicatesInBatch(importedRows);
+
+        setParsedData(dedupedRows);
+        setDuplicateInfo(dupes);
+
+        if (dupes.length > 0) {
+          setSkipDuplicates(true);
+          const rowsToAdd = new Set<number>();
+          dedupedRows.forEach((row, idx) => {
+            if (!row.isDuplicate) rowsToAdd.add(idx);
+          });
+          setRowsToImport(rowsToAdd);
+          setStep("duplicates");
+        } else {
+          const allRows = new Set<number>();
+          dedupedRows.forEach((_, idx) => allRows.add(idx));
+          setRowsToImport(allRows);
+          setStep("preview");
+        }
+      } catch (error) {
         toast({
-          title: "Invalid file",
-          description: "Excel file must have headers and at least one row",
+          title: "Failed to parse file",
+          description:
+            error instanceof Error ? error.message : "Unknown error occurred",
           variant: "destructive",
         });
-        return;
       }
-
-      const headers = jsonData[0] as string[];
-      const rows = jsonData.slice(1);
-
-      const validationErrors: ValidationError[] = [];
-      const clientMap = new Map<string, ImportClientRow>();
-
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i] as any[];
-        if (!row || row.every((cell) => cell === undefined || cell === "")) continue;
-
-        const headerMap: Record<string, number> = {};
-        headers.forEach((header, idx) => {
-          headerMap[header.toLowerCase().trim()] = idx;
-        });
-
-        const clientName = row[headerMap["client name"]]?.toString().trim();
-        if (!clientName) {
-          validationErrors.push({
-            rowIndex: i + 2,
-            field: "Client Name",
-            message: "Client name is required",
-          });
-          continue;
-        }
-
-        // Check if client already exists
-        let existingClient = clientMap.get(clientName);
-
-        if (!existingClient) {
-          // Create new client entry
-          existingClient = {
-            source: normalizeSource(row[headerMap["source"]]?.toString()),
-            sourceValue: row[headerMap["source value"]]?.toString().trim(),
-            clientName,
-            clientType: row[headerMap["client type"]]?.toString().trim(),
-            paymentOffering: row[headerMap["payment offering"]]
-              ?.toString()
-              .trim(),
-            website: row[headerMap["website"]]?.toString().trim(),
-            geography: row[headerMap["client geography"]]?.toString().trim(),
-            txnVolume: row[headerMap["txn volume / per day in million"]]
-              ?.toString()
-              .trim(),
-            productTagInfo: row[headerMap["product tag info"]]
-              ?.toString()
-              .trim(),
-            address: row[headerMap["street address"]]?.toString().trim(),
-            city: row[headerMap["city"]]?.toString().trim(),
-            state: row[headerMap["state"]]?.toString().trim(),
-            country: row[headerMap["country"]]?.toString().trim(),
-            contacts: [],
-          };
-          clientMap.set(clientName, existingClient);
-        }
-
-        // Handle contact
-        const contactName = row[headerMap["contact name"]]?.toString().trim();
-        if (contactName) {
-          existingClient.contacts.push({
-            contact_name: contactName,
-            designation: row[headerMap["designation"]]?.toString().trim(),
-            phone_prefix: normalizePhonePrefix(
-              row[headerMap["phone prefix"]]?.toString(),
-            ),
-            phone: row[headerMap["contact phone"]]?.toString().trim(),
-            email: row[headerMap["contact email"]]?.toString().trim(),
-            linkedin_profile_link: row[headerMap["linkedin profile link"]]
-              ?.toString()
-              .trim(),
-          });
-        }
-      }
-
-      if (validationErrors.length > 0) {
-        setErrors(validationErrors);
-        toast({
-          title: "Validation errors found",
-          description: `${validationErrors.length} row(s) have errors`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Convert map to array
-      const importedRows = Array.from(clientMap.values());
-
-      // Detect duplicates in merged data
-      const { dedupedRows, duplicateInfo: dupes } =
-        detectDuplicatesInBatch(importedRows);
-
-      setParsedData(dedupedRows);
-      setDuplicateInfo(dupes);
-
-      if (dupes.length > 0) {
-        setSkipDuplicates(true);
-        const rowsToAdd = new Set<number>();
-        dedupedRows.forEach((row, idx) => {
-          if (!row.isDuplicate) rowsToAdd.add(idx);
-        });
-        setRowsToImport(rowsToAdd);
-        setStep("duplicates");
-      } else {
-        const allRows = new Set<number>();
-        dedupedRows.forEach((_, idx) => allRows.add(idx));
-        setRowsToImport(allRows);
-        setStep("preview");
-      }
-    } catch (error) {
-      toast({
-        title: "Failed to parse file",
-        description:
-          error instanceof Error ? error.message : "Unknown error occurred",
-        variant: "destructive",
-      });
-    }
+    };
+    reader.readAsArrayBuffer(file);
   };
-  reader.readAsArrayBuffer(file);
-};
-
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
