@@ -506,7 +506,7 @@ function SortableSubTaskItem({
 
                                   const approverName = currentUser?.name || currentUser?.email || "";
 
-                                  await apiClient.approveFinOpsSubtask(Number(subtask.id), approverName);
+                                  await apiClient.approveFinOpsSubtask(Number(subtask.id), approverName, undefined, (subtask as any)?.tracker_id);
 
                                   try {
 
