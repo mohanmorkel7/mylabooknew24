@@ -864,6 +864,25 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
         ALTER TABLE finops_approvals ADD COLUMN IF NOT EXISTS tracker_id INTEGER
       `);
 
+      // Drop old UNIQUE constraint if it exists (to avoid conflicts)
+      try {
+        await client.query(`
+          ALTER TABLE finops_approvals DROP CONSTRAINT IF EXISTS finops_approvals_task_id_subtask_id_key
+        `);
+      } catch (e) {
+        // Constraint may not exist, that's fine
+      }
+
+      // Ensure new UNIQUE constraint exists with tracker_id
+      try {
+        await client.query(`
+          ALTER TABLE finops_approvals ADD CONSTRAINT finops_approvals_unique_tracker
+          UNIQUE(task_id, subtask_id, tracker_id)
+        `);
+      } catch (e) {
+        // Constraint may already exist, that's fine
+      }
+
       // Prevent re-approval for the same tracker
       const existing = await client.query(
         `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 AND tracker_id = $3 LIMIT 1`,
@@ -876,11 +895,10 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
           .json({ error: "Already approved for this tracker" });
       }
 
-      // Insert approval record
+      // Insert approval record (no ON CONFLICT needed since we already checked for existing)
       await client.query(
         `INSERT INTO finops_approvals (task_id, subtask_id, tracker_id, approved_by, note)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT (task_id, subtask_id, tracker_id) DO NOTHING`,
+         VALUES ($1, $2, $3, $4, $5)`,
         [
           row.task_id,
           subtaskId,
