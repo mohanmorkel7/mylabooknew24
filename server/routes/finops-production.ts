@@ -279,8 +279,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
               ft.assigned_to::jsonb AS assigned_to,
               ft.reporting_managers AS reporting_managers,
               ft.escalation_managers AS escalation_managers,
-              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_by,
-              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_at
+              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1) AS approved_by,
+              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1) AS approved_at
             FROM finops_tracker ft
             WHERE ft.task_id = t.id AND ft.run_date = $1
 
@@ -362,8 +362,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'assigned_to', ft.assigned_to::jsonb,
                 'reporting_managers', ft.reporting_managers,
                 'escalation_managers', ft.escalation_managers,
-                'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1),
-                'approved_at', (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1)
+                'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1),
+                'approved_at', (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1)
               ) ORDER BY ft.order_position
             ) FILTER (WHERE ft.subtask_id IS NOT NULL),
             '[]'::json
