@@ -646,7 +646,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         ) VALUES (
           (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
         )
-        ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+        ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
         RETURNING *
       `,
           [
@@ -1541,9 +1541,9 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
       const period = String(row.duration || "daily");
       const result = await pool.query(
         `INSERT INTO finops_tracker (
-           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date
-         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
-         ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+           run_date, period, task_id, task_name, subtask_id, subtask_name, status, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
+         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
+         ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
          RETURNING id`,
         [
           runDate,
@@ -1555,6 +1555,13 @@ router.post("/tracker/seed", async (req: Request, res: Response) => {
           initialStatus,
           row.start_time || null,
           runDate,
+          row.subtask_description || null,
+          row.sla_hours || null,
+          row.sla_minutes || null,
+          row.order_position || null,
+          row.assigned_to || null,
+          row.reporting_managers || null,
+          row.escalation_managers || null,
         ],
       );
       if (result.rows.length > 0) inserted++;
