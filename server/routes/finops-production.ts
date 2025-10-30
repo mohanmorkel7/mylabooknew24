@@ -762,7 +762,7 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
     const subtaskId = parseInt(req.params.id);
-    const { approver_name, note } = req.body || {};
+    const { approver_name, note, tracker_id } = req.body || {};
     if (!approver_name)
       return res.status(400).json({ error: "approver_name is required" });
 
@@ -844,29 +844,35 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
           id SERIAL PRIMARY KEY,
           task_id INTEGER NOT NULL,
           subtask_id INTEGER NOT NULL,
+          tracker_id INTEGER,
           approved_by TEXT NOT NULL,
           note TEXT,
           approved_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(task_id, subtask_id)
+          UNIQUE(task_id, subtask_id, tracker_id)
         )
       `);
 
-      // Prevent re-approval
+      // Add tracker_id column if it doesn't exist (migration)
+      await client.query(`
+        ALTER TABLE finops_approvals ADD COLUMN IF NOT EXISTS tracker_id INTEGER
+      `);
+
+      // Prevent re-approval for the same tracker
       const existing = await client.query(
-        `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 LIMIT 1`,
-        [row.task_id, subtaskId],
+        `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 AND tracker_id = $3 LIMIT 1`,
+        [row.task_id, subtaskId, tracker_id || null],
       );
       if (existing.rows.length) {
         await client.query("ROLLBACK");
-        return res.status(409).json({ error: "Already approved" });
+        return res.status(409).json({ error: "Already approved for this tracker" });
       }
 
       // Insert approval record
       await client.query(
-        `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (task_id, subtask_id) DO NOTHING`,
-        [row.task_id, subtaskId, approver_name, note || null],
+        `INSERT INTO finops_approvals (task_id, subtask_id, tracker_id, approved_by, note)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (task_id, subtask_id, tracker_id) DO NOTHING`,
+        [row.task_id, subtaskId, tracker_id || null, approver_name, note || null],
       );
 
       // Update finops_subtasks status to approved
