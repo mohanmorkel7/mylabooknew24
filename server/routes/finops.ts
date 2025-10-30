@@ -603,7 +603,7 @@ router.post("/tasks", async (req: Request, res: Response) => {
                 (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $7, $8, $9, $10
               )
               ON CONFLICT (run_date, period, task_id, subtask_id)
-              DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+              DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, scheduled_time = EXCLUDED.scheduled_time, subtask_scheduled_date = EXCLUDED.subtask_scheduled_date, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, updated_at = NOW()
               `,
               [
                 String(duration || "daily"),
@@ -1096,7 +1096,7 @@ router.patch(
             ) VALUES (
               (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
             )
-            ON CONFLICT (run_date, period, task_id, subtask_id) DO NOTHING
+            ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
             RETURNING *
           `,
             [

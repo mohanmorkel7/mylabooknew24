@@ -1019,7 +1019,7 @@ class FinOpsAlertService {
             (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, 'pending', NULL, NULL, $6, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $7, $8, $9, $10
           )
           ON CONFLICT (run_date, period, task_id, subtask_id)
-          DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, updated_at = NOW(), subtask_scheduled_date = EXCLUDED.subtask_scheduled_date
+          DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, scheduled_time = EXCLUDED.scheduled_time, subtask_scheduled_date = EXCLUDED.subtask_scheduled_date, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, updated_at = NOW()
           `,
           [
             String(task.duration || "daily"),
