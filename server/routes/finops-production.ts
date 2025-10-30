@@ -344,6 +344,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             json_agg(
               json_build_object(
                 'id', ft.subtask_id,
+                'tracker_id', ft.id,
                 'name', ft.subtask_name,
                 'description', ft.description,
                 'sla_hours', ft.sla_hours,
