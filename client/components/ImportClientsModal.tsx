@@ -54,6 +54,46 @@ const TEMPLATE_HEADERS = [
   "LinkedIn Profile Link",
 ];
 
+const VALID_SOURCES = [
+  "LinkedIn - Outbound",
+  "LinkedIn - Inbound",
+  "Email - Outbound",
+  "Email - Inbound",
+  "Call - Outbound",
+  "Call - Inbound",
+  "Existing Client",
+  "Business Team",
+  "Reference",
+  "General List",
+];
+
+const PHONE_PREFIXES = [
+  { code: "+1", label: "+1 (US)" },
+  { code: "+44", label: "+44 (UK)" },
+  { code: "+91", label: "+91 (IN)" },
+  { code: "+971", label: "+971 (UAE)" },
+  { code: "+61", label: "+61 (AU)" },
+  { code: "+65", label: "+65 (SG)" },
+  { code: "+81", label: "+81 (JP)" },
+  { code: "+49", label: "+49 (DE)" },
+];
+
+function normalizeSource(source: string | undefined): string | undefined {
+  if (!source) return source;
+  const trimmed = source.trim();
+  const normalized = trimmed.replace(/-/g, " - ");
+  return VALID_SOURCES.includes(normalized) ? normalized : trimmed;
+}
+
+function normalizePhonePrefix(prefix: string | undefined): string {
+  if (!prefix) return "+91";
+  const trimmed = prefix.trim();
+  if (trimmed.startsWith("+")) {
+    return trimmed;
+  }
+  return "+" + trimmed;
+}
+
 interface ImportClientRow {
   source?: string;
   sourceValue?: string;
