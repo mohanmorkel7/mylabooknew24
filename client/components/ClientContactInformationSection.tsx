@@ -359,7 +359,7 @@ export function ClientContactInformationSection({
                   onClick={() => duplicateContact(idx)}
                   title="Duplicate this contact"
                 >
-                  {/* <Copy2 className="w-4 h-4" /> */}
+                  <Copy className="w-4 h-4" />
                 </Button>
                 {contacts.length > 1 && (
                   <Button
