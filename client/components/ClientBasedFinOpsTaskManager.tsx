@@ -1312,6 +1312,7 @@ export default function ClientBasedFinOpsTaskManager() {
                 subTaskId: subtask.id,
                 status: "overdue",
                 userName: "Manual Status Update",
+                date: dateFilter,
               });
             }
           }
