@@ -646,12 +646,13 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         INSERT INTO finops_tracker (
           run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
         ) VALUES (
-          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
+          $1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $1::date, $11, $12, $13, $14, $15, $16, $17
         )
         ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
         RETURNING *
       `,
           [
+            updateDate,
             String(st.duration || "daily"),
             st.task_id,
             st.task_name || "",
@@ -678,10 +679,10 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       const updateFields: string[] = [
         "status = $1",
         "updated_at = CURRENT_TIMESTAMP",
-        "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+        "subtask_scheduled_date = $2::date",
       ];
-      const params: any[] = [status, subtaskId];
-      let pIdx = 3;
+      const params: any[] = [status, updateDate, subtaskId];
+      let pIdx = 4;
 
       if (status === "completed") {
         updateFields.push("completed_at = CURRENT_TIMESTAMP");
@@ -697,7 +698,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         params.push(delay_reason, delay_reason || "");
       }
 
-      const updateQuery = `UPDATE finops_tracker SET ${updateFields.join(", ")} WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND subtask_id = $2 RETURNING *`;
+      const updateQuery = `UPDATE finops_tracker SET ${updateFields.join(", ")} WHERE run_date = $2::date AND subtask_id = $3 RETURNING *`;
       const updatedRes = await client.query(updateQuery, params);
       const updated = updatedRes.rows[0];
 
