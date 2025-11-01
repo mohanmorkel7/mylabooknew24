@@ -955,6 +955,7 @@ export default function ClientBasedFinOpsTaskManager() {
                     subTaskId: subtask.id,
                     status: "overdue",
                     userName: "System Auto-Update",
+                    date: dateFilter,
                   });
                 }
               }
