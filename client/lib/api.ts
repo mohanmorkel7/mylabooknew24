@@ -1169,12 +1169,14 @@ export class ApiClient {
     subTaskId: string,
     status: string,
     userName?: string,
+    date?: string,
   ) {
     return this.request(`/finops/tasks/${taskId}/subtasks/${subTaskId}`, {
       method: "PATCH",
       body: JSON.stringify({
         status,
         user_name: userName,
+        date,
       }),
     });
   }
