@@ -1696,8 +1696,16 @@ export default function ClientBasedFinOpsTaskManager() {
       }
     }
 
-    // Status filter
-    if (statusFilter !== "all" && task.status !== statusFilter) return false;
+    // Status filter - filter by subtask status, not task status
+    if (statusFilter !== "all") {
+      // Check if any subtask has the selected status
+      const hasSubtaskWithStatus = task.subtasks && task.subtasks.length > 0
+        ? task.subtasks.some((subtask) => subtask.status === statusFilter)
+        : false;
+
+      // Only include task if it has at least one subtask with the selected status
+      if (!hasSubtaskWithStatus) return false;
+    }
 
     // Search filter
     if (
