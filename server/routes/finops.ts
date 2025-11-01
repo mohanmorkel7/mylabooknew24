@@ -1130,10 +1130,10 @@ router.patch(
         let updateFields: string[] = [
           "status = $1",
           "updated_at = CURRENT_TIMESTAMP",
-          "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+          "subtask_scheduled_date = $2::date",
         ];
-        const params: any[] = [status, taskId, Number(subtaskId)];
-        let pIdx = 4;
+        const params: any[] = [status, updateDate, taskId, Number(subtaskId)];
+        let pIdx = 5;
 
         if (status === "completed") {
           updateFields.push("completed_at = CURRENT_TIMESTAMP");
