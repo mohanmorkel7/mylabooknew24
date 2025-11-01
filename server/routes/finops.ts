@@ -1189,8 +1189,8 @@ router.patch(
 
         // Fetch updated tracker row for notifications/logging
         const updatedRes = await pool.query(
-          `SELECT ft.*, t.task_name FROM finops_tracker ft JOIN finops_tasks t ON ft.task_id = t.id WHERE ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND ft.task_id = $1 AND ft.subtask_id = $2 LIMIT 1`,
-          [taskId, Number(subtaskId)],
+          `SELECT ft.*, t.task_name FROM finops_tracker ft JOIN finops_tasks t ON ft.task_id = t.id WHERE ft.run_date = $1::date AND ft.task_id = $2 AND ft.subtask_id = $3 LIMIT 1`,
+          [updateDate, taskId, Number(subtaskId)],
         );
 
         const updated = updatedRes.rows[0];
