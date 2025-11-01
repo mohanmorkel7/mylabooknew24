@@ -1238,6 +1238,7 @@ export default function ClientBasedFinOpsTaskManager() {
       userName: user?.first_name + " " + user?.last_name,
       delayReason,
       delayNotes,
+      date: dateFilter,
     });
   };
 
@@ -2842,7 +2843,7 @@ export default function ClientBasedFinOpsTaskManager() {
                                                   )
                                               : "";
                                             if (overdue) {
-                                              return `Overdue${timeText ? " • " + timeText : ""}`;
+                                              return `Overdue${timeText ? " ��� " + timeText : ""}`;
                                             }
                                             if (slaWarning?.message) {
                                               return `${slaWarning.message}${timeText ? " • " + timeText : ""}`;
