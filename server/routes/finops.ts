@@ -280,7 +280,7 @@ const mockActivityLog = [
 // Get all FinOps tasks with enhanced error handling
 router.get("/tasks", async (req: Request, res: Response) => {
   try {
-    console.log("��� FinOps tasks requested");
+    console.log("����� FinOps tasks requested");
 
     // Add CORS headers for FullStory compatibility
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -1057,18 +1057,18 @@ router.patch(
             ADD COLUMN IF NOT EXISTS escalation_managers TEXT;
         `);
 
-        // Try to fetch tracker row for today's IST date
+        // Try to fetch tracker row for the specified date
         const trackerRes = await pool.query(
           `
           SELECT ft.*, t.duration, t.task_name, t.reporting_managers, t.escalation_managers, t.assigned_to
           FROM finops_tracker ft
           JOIN finops_tasks t ON ft.task_id = t.id
-          WHERE ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-            AND ft.task_id = $1
-            AND ft.subtask_id = $2
+          WHERE ft.run_date = $1::date
+            AND ft.task_id = $2
+            AND ft.subtask_id = $3
           LIMIT 1
         `,
-          [taskId, Number(subtaskId)],
+          [updateDate, taskId, Number(subtaskId)],
         );
 
         let trackerRow: any = trackerRes.rows[0];
