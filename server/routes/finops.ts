@@ -1153,7 +1153,7 @@ router.patch(
         const updateQuery = `
           UPDATE finops_tracker
           SET ${updateFields.join(", ")}
-          WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND task_id = $2 AND subtask_id = $3
+          WHERE run_date = $2::date AND task_id = $3 AND subtask_id = $4
         `;
 
         await pool.query(updateQuery, params);
