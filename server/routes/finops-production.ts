@@ -543,7 +543,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
     await requireDatabase();
 
     const subtaskId = parseInt(req.params.id);
-    const { status, delay_reason, user_name } = req.body;
+    const { status, delay_reason, user_name, date } = req.body;
 
     if (isNaN(subtaskId)) {
       return res.status(400).json({ error: "Invalid subtask ID" });
@@ -568,6 +568,9 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       });
     }
 
+    // Determine the date to update: use provided date or default to today
+    const updateDate = date || new Date().toISOString().split("T")[0];
+
     const client = await pool.connect();
 
     try {
@@ -582,7 +585,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
           ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
       `);
 
-      // Instead of mutating finops_subtasks directly, update finops_tracker for today's date
+      // Instead of mutating finops_subtasks directly, update finops_tracker for the specified date
 
       // Ensure finops_tracker exists with expanded columns
       await client.query(`
@@ -618,10 +621,10 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       );
     `);
 
-      // Try to find existing tracker row for today
+      // Try to find existing tracker row for the specified date
       const trackerRes = await client.query(
-        `SELECT * FROM finops_tracker WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND subtask_id = $1 LIMIT 1`,
-        [subtaskId],
+        `SELECT * FROM finops_tracker WHERE run_date = $1::date AND subtask_id = $2 LIMIT 1`,
+        [updateDate, subtaskId],
       );
 
       let trackerRow = trackerRes.rows[0];
