@@ -998,8 +998,11 @@ router.patch(
     try {
       const taskId = parseInt(req.params.taskId);
       const subtaskId = req.params.subtaskId;
-      const { status, user_name, delay_reason, delay_notes } = req.body;
+      const { status, user_name, delay_reason, delay_notes, date } = req.body;
       const userName = user_name || "Unknown User";
+
+      // Determine the date to update: use provided date or default to today
+      const updateDate = date || new Date().toISOString().split("T")[0];
 
       if (await isDatabaseAvailable()) {
         // Ensure finops_tracker has columns mirrored from finops_subtasks
