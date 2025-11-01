@@ -867,6 +867,7 @@ export default function ClientBasedFinOpsTaskManager() {
       userName,
       delayReason,
       delayNotes,
+      date,
     }: {
       taskId: number;
       subTaskId: string;
@@ -874,7 +875,8 @@ export default function ClientBasedFinOpsTaskManager() {
       userName?: string;
       delayReason?: string;
       delayNotes?: string;
-    }) => apiClient.updateFinOpsSubTask(taskId, subTaskId, status, userName),
+      date?: string;
+    }) => apiClient.updateFinOpsSubTask(taskId, subTaskId, status, userName, date),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-finops-tasks"] });
     },
