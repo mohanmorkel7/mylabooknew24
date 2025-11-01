@@ -876,7 +876,8 @@ export default function ClientBasedFinOpsTaskManager() {
       delayReason?: string;
       delayNotes?: string;
       date?: string;
-    }) => apiClient.updateFinOpsSubTask(taskId, subTaskId, status, userName, date),
+    }) =>
+      apiClient.updateFinOpsSubTask(taskId, subTaskId, status, userName, date),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["client-finops-tasks"] });
     },
@@ -1699,9 +1700,10 @@ export default function ClientBasedFinOpsTaskManager() {
     // Status filter - filter by subtask status, not task status
     if (statusFilter !== "all") {
       // Check if any subtask has the selected status
-      const hasSubtaskWithStatus = task.subtasks && task.subtasks.length > 0
-        ? task.subtasks.some((subtask) => subtask.status === statusFilter)
-        : false;
+      const hasSubtaskWithStatus =
+        task.subtasks && task.subtasks.length > 0
+          ? task.subtasks.some((subtask) => subtask.status === statusFilter)
+          : false;
 
       // Only include task if it has at least one subtask with the selected status
       if (!hasSubtaskWithStatus) return false;
