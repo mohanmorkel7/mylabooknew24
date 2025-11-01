@@ -894,6 +894,7 @@ export default function ClientBasedFinOpsTaskManager() {
     userName?: string;
     delayReason?: string;
     delayNotes?: string;
+    date?: string;
   }) => {
     const key = `${args.taskId}-${args.subTaskId}`;
     try {
