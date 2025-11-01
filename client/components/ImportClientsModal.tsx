@@ -528,8 +528,16 @@ export function ImportClientsModal({
       const results = [];
 
       for (const client of clients) {
+        // Extract primary (first) contact
+        const primaryContact = client.contacts && client.contacts.length > 0
+          ? client.contacts[0]
+          : null;
+
         const payload: any = {
           client_name: client.clientName.trim(),
+          contact_person: primaryContact?.contact_name || undefined,
+          email: primaryContact?.email || undefined,
+          phone: primaryContact?.phone || undefined,
           address: client.address?.trim() || undefined,
           city: client.city?.trim() || undefined,
           state: client.state?.trim() || undefined,
