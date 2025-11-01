@@ -1266,6 +1266,7 @@ export default function ClientBasedFinOpsTaskManager() {
           subTaskId: overdueReasonData.subtaskId,
           status: overdueReasonData.newStatus,
           userName: user?.first_name + " " + user?.last_name,
+          date: dateFilter,
         });
       }
 
@@ -2849,7 +2850,7 @@ export default function ClientBasedFinOpsTaskManager() {
                                               return `${slaWarning.message}${timeText ? " • " + timeText : ""}`;
                                             }
                                             return timeText
-                                              ? `Status • ${timeText}`
+                                              ? `Status �� ${timeText}`
                                               : "Status";
                                           })()}
                                         </AlertDescription>
