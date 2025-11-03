@@ -394,7 +394,6 @@ class FinOpsScheduler {
         WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
           AND period = 'daily'
         GROUP BY task_id
-        HAVING bool_and(status = 'completed')
       `,
       );
 

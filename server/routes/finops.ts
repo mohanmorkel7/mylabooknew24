@@ -998,8 +998,11 @@ router.patch(
     try {
       const taskId = parseInt(req.params.taskId);
       const subtaskId = req.params.subtaskId;
-      const { status, user_name, delay_reason, delay_notes } = req.body;
+      const { status, user_name, delay_reason, delay_notes, date } = req.body;
       const userName = user_name || "Unknown User";
+
+      // Determine the date to update: use provided date or default to today
+      const updateDate = date || new Date().toISOString().split("T")[0];
 
       if (await isDatabaseAvailable()) {
         // Ensure finops_tracker has columns mirrored from finops_subtasks
@@ -1054,18 +1057,18 @@ router.patch(
             ADD COLUMN IF NOT EXISTS escalation_managers TEXT;
         `);
 
-        // Try to fetch tracker row for today's IST date
+        // Try to fetch tracker row for the specified date
         const trackerRes = await pool.query(
           `
           SELECT ft.*, t.duration, t.task_name, t.reporting_managers, t.escalation_managers, t.assigned_to
           FROM finops_tracker ft
           JOIN finops_tasks t ON ft.task_id = t.id
-          WHERE ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date
-            AND ft.task_id = $1
-            AND ft.subtask_id = $2
+          WHERE ft.run_date = $1::date
+            AND ft.task_id = $2
+            AND ft.subtask_id = $3
           LIMIT 1
         `,
-          [taskId, Number(subtaskId)],
+          [updateDate, taskId, Number(subtaskId)],
         );
 
         let trackerRow: any = trackerRes.rows[0];
@@ -1094,12 +1097,13 @@ router.patch(
             INSERT INTO finops_tracker (
               run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
             ) VALUES (
-              (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
+              $1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $1::date, $11, $12, $13, $14, $15, $16, $17
             )
             ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
             RETURNING *
           `,
             [
+              updateDate,
               String(st.duration || "daily"),
               st.task_id,
               st.task_name || "",
@@ -1126,10 +1130,10 @@ router.patch(
         let updateFields: string[] = [
           "status = $1",
           "updated_at = CURRENT_TIMESTAMP",
-          "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+          "subtask_scheduled_date = $2::date",
         ];
-        const params: any[] = [status, taskId, Number(subtaskId)];
-        let pIdx = 4;
+        const params: any[] = [status, updateDate, taskId, Number(subtaskId)];
+        let pIdx = 5;
 
         if (status === "completed") {
           updateFields.push("completed_at = CURRENT_TIMESTAMP");
@@ -1149,7 +1153,7 @@ router.patch(
         const updateQuery = `
           UPDATE finops_tracker
           SET ${updateFields.join(", ")}
-          WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND task_id = $2 AND subtask_id = $3
+          WHERE run_date = $2::date AND task_id = $3 AND subtask_id = $4
         `;
 
         await pool.query(updateQuery, params);
@@ -1185,8 +1189,8 @@ router.patch(
 
         // Fetch updated tracker row for notifications/logging
         const updatedRes = await pool.query(
-          `SELECT ft.*, t.task_name FROM finops_tracker ft JOIN finops_tasks t ON ft.task_id = t.id WHERE ft.run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND ft.task_id = $1 AND ft.subtask_id = $2 LIMIT 1`,
-          [taskId, Number(subtaskId)],
+          `SELECT ft.*, t.task_name FROM finops_tracker ft JOIN finops_tasks t ON ft.task_id = t.id WHERE ft.run_date = $1::date AND ft.task_id = $2 AND ft.subtask_id = $3 LIMIT 1`,
+          [updateDate, taskId, Number(subtaskId)],
         );
 
         const updated = updatedRes.rows[0];
@@ -2140,15 +2144,15 @@ router.post(
             ),
           );
 
-          if (user_ids.length) {
-            fetch("https://pulsealerts.mylapay.com/direct-call", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
-            }).catch((err) => {
-              console.warn("Manual direct-call error:", (err as Error).message);
-            });
-          }
+          // if (user_ids.length) {
+          //   fetch("https://pulsealerts.mylapay.com/direct-call", {
+          //     method: "POST",
+          //     headers: { "Content-Type": "application/json" },
+          //     body: JSON.stringify({ receiver: "CRM_Switch", title, user_ids }),
+          //   }).catch((err) => {
+          //     console.warn("Manual direct-call error:", (err as Error).message);
+          //   });
+          // }
         } catch (e) {
           console.warn(
             "Manual direct-call user resolution failed:",

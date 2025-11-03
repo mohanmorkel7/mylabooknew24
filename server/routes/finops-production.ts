@@ -203,8 +203,11 @@ router.get("/tasks", async (req: Request, res: Response) => {
 
     const dateParam = (req.query.date as string) || null;
     const userNameRaw = (req.query.user_name as string) || null;
-    const normalizedUser = userNameRaw ? userNameRaw.trim().toLowerCase() : null;
-    const callerRole = (req.query.user_role as string) || (req.query.role as string) || null;
+    const normalizedUser = userNameRaw
+      ? userNameRaw.trim().toLowerCase()
+      : null;
+    const callerRole =
+      (req.query.user_role as string) || (req.query.role as string) || null;
 
     let callerIsAdmin = callerRole === "admin";
 
@@ -212,11 +215,14 @@ router.get("/tasks", async (req: Request, res: Response) => {
       try {
         const ur = await pool.query(
           `SELECT role FROM users WHERE LOWER(CONCAT(first_name,' ',last_name)) = $1 OR LOWER(email) = $1 LIMIT 1`,
-          [normalizedUser]
+          [normalizedUser],
         );
         if (ur.rows.length && ur.rows[0].role === "admin") callerIsAdmin = true;
       } catch (e) {
-        console.warn("Failed to resolve caller role from users table:", (e as Error).message);
+        console.warn(
+          "Failed to resolve caller role from users table:",
+          (e as Error).message,
+        );
       }
     }
 
@@ -228,7 +234,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
               EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.reporting_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
               OR EXISTS (SELECT 1 FROM jsonb_array_elements_text(COALESCE(t.escalation_managers,'[]'::jsonb)) m WHERE LOWER(TRIM(m)) = $1)
             ) LIMIT 1`,
-          [normalizedUser]
+          [normalizedUser],
         );
         callerIsManager = mg.rows.length > 0;
       } catch (e) {
@@ -260,6 +266,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             -- Tracker branch
             SELECT
               ft.subtask_id AS id,
+              ft.id AS tracker_id,
               ft.subtask_name AS name,
               ft.description,
               ft.sla_hours,
@@ -279,8 +286,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
               ft.assigned_to::jsonb AS assigned_to,
               ft.reporting_managers AS reporting_managers,
               ft.escalation_managers AS escalation_managers,
-              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_by,
-              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1) AS approved_at
+              (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1) AS approved_by,
+              (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1) AS approved_at
             FROM finops_tracker ft
             WHERE ft.task_id = t.id AND ft.run_date = $1
 
@@ -289,6 +296,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             -- Subtask fallback branch
             SELECT
               st.id AS id,
+              NULL::INTEGER AS tracker_id,
               st.name AS name,
               st.description,
               st.sla_hours,
@@ -343,6 +351,7 @@ router.get("/tasks", async (req: Request, res: Response) => {
             json_agg(
               json_build_object(
                 'id', ft.subtask_id,
+                'tracker_id', ft.id,
                 'name', ft.subtask_name,
                 'description', ft.description,
                 'sla_hours', ft.sla_hours,
@@ -362,8 +371,8 @@ router.get("/tasks", async (req: Request, res: Response) => {
                 'assigned_to', ft.assigned_to::jsonb,
                 'reporting_managers', ft.reporting_managers,
                 'escalation_managers', ft.escalation_managers,
-                'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1),
-                'approved_at', (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id LIMIT 1)
+                'approved_by', (SELECT a.approved_by FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1),
+                'approved_at', (SELECT a.approved_at FROM finops_approvals a WHERE a.task_id = t.id AND a.subtask_id = ft.subtask_id AND a.tracker_id = ft.id LIMIT 1)
               ) ORDER BY ft.order_position
             ) FILTER (WHERE ft.subtask_id IS NOT NULL),
             '[]'::json
@@ -397,7 +406,6 @@ router.get("/tasks", async (req: Request, res: Response) => {
     });
   }
 });
-
 
 // Create new FinOps task
 router.post("/tasks", async (req: Request, res: Response) => {
@@ -535,7 +543,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
     await requireDatabase();
 
     const subtaskId = parseInt(req.params.id);
-    const { status, delay_reason, user_name } = req.body;
+    const { status, delay_reason, user_name, date } = req.body;
 
     if (isNaN(subtaskId)) {
       return res.status(400).json({ error: "Invalid subtask ID" });
@@ -560,6 +568,9 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       });
     }
 
+    // Determine the date to update: use provided date or default to today
+    const updateDate = date || new Date().toISOString().split("T")[0];
+
     const client = await pool.connect();
 
     try {
@@ -574,7 +585,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
           ADD COLUMN IF NOT EXISTS notification_sent_escalation BOOLEAN DEFAULT false;
       `);
 
-      // Instead of mutating finops_subtasks directly, update finops_tracker for today's date
+      // Instead of mutating finops_subtasks directly, update finops_tracker for the specified date
 
       // Ensure finops_tracker exists with expanded columns
       await client.query(`
@@ -610,10 +621,10 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       );
     `);
 
-      // Try to find existing tracker row for today
+      // Try to find existing tracker row for the specified date
       const trackerRes = await client.query(
-        `SELECT * FROM finops_tracker WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND subtask_id = $1 LIMIT 1`,
-        [subtaskId],
+        `SELECT * FROM finops_tracker WHERE run_date = $1::date AND subtask_id = $2 LIMIT 1`,
+        [updateDate, subtaskId],
       );
 
       let trackerRow = trackerRes.rows[0];
@@ -635,12 +646,13 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         INSERT INTO finops_tracker (
           run_date, period, task_id, task_name, subtask_id, subtask_name, status, started_at, completed_at, scheduled_time, subtask_scheduled_date, description, sla_hours, sla_minutes, order_position, assigned_to, reporting_managers, escalation_managers
         ) VALUES (
-          (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $1, $2, $3, $4, $5, $6, $7, $8, $9, (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date, $10, $11, $12, $13, $14, $15, $16
+          $1::date, $2, $3, $4, $5, $6, $7, $8, $9, $10, $1::date, $11, $12, $13, $14, $15, $16, $17
         )
         ON CONFLICT (run_date, period, task_id, subtask_id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at, completed_at = EXCLUDED.completed_at, description = EXCLUDED.description, sla_hours = EXCLUDED.sla_hours, sla_minutes = EXCLUDED.sla_minutes, order_position = EXCLUDED.order_position, assigned_to = EXCLUDED.assigned_to, reporting_managers = EXCLUDED.reporting_managers, escalation_managers = EXCLUDED.escalation_managers, updated_at = NOW()
         RETURNING *
       `,
           [
+            updateDate,
             String(st.duration || "daily"),
             st.task_id,
             st.task_name || "",
@@ -667,10 +679,10 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
       const updateFields: string[] = [
         "status = $1",
         "updated_at = CURRENT_TIMESTAMP",
-        "subtask_scheduled_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date",
+        "subtask_scheduled_date = $2::date",
       ];
-      const params: any[] = [status, subtaskId];
-      let pIdx = 3;
+      const params: any[] = [status, updateDate, subtaskId];
+      let pIdx = 4;
 
       if (status === "completed") {
         updateFields.push("completed_at = CURRENT_TIMESTAMP");
@@ -686,7 +698,7 @@ router.put("/subtasks/:id", async (req: Request, res: Response) => {
         params.push(delay_reason, delay_reason || "");
       }
 
-      const updateQuery = `UPDATE finops_tracker SET ${updateFields.join(", ")} WHERE run_date = (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Kolkata')::date AND subtask_id = $2 RETURNING *`;
+      const updateQuery = `UPDATE finops_tracker SET ${updateFields.join(", ")} WHERE run_date = $2::date AND subtask_id = $3 RETURNING *`;
       const updatedRes = await client.query(updateQuery, params);
       const updated = updatedRes.rows[0];
 
@@ -762,7 +774,7 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
   try {
     await requireDatabase();
     const subtaskId = parseInt(req.params.id);
-    const { approver_name, note } = req.body || {};
+    const { approver_name, note, tracker_id } = req.body || {};
     if (!approver_name)
       return res.status(400).json({ error: "approver_name is required" });
 
@@ -835,53 +847,69 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
       });
     }
 
-    const client = await pool.connect();
+    // Ensure finops_approvals table exists and has correct schema (outside transaction)
     try {
-      await client.query("BEGIN");
-
-      await client.query(`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS finops_approvals (
           id SERIAL PRIMARY KEY,
           task_id INTEGER NOT NULL,
           subtask_id INTEGER NOT NULL,
+          tracker_id INTEGER,
           approved_by TEXT NOT NULL,
           note TEXT,
           approved_at TIMESTAMP DEFAULT NOW(),
-          UNIQUE(task_id, subtask_id)
+          UNIQUE(task_id, subtask_id, tracker_id)
         )
       `);
 
-      // Prevent re-approval
+      // Add tracker_id column if it doesn't exist (migration)
+      await pool.query(`
+        ALTER TABLE finops_approvals ADD COLUMN IF NOT EXISTS tracker_id INTEGER
+      `);
+
+      // Drop old UNIQUE constraint if it exists
+      await pool.query(`
+        ALTER TABLE finops_approvals DROP CONSTRAINT IF EXISTS finops_approvals_task_id_subtask_id_key
+      `);
+
+      // Ensure new UNIQUE constraint exists with tracker_id
+      await pool.query(`
+        ALTER TABLE finops_approvals ADD CONSTRAINT finops_approvals_unique_tracker
+        UNIQUE(task_id, subtask_id, tracker_id)
+      `);
+    } catch (e) {
+      // Schema setup errors are non-critical, log and continue
+      console.warn("Finops approvals schema setup:", (e as Error).message);
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Prevent re-approval for the same tracker
       const existing = await client.query(
-        `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 LIMIT 1`,
-        [row.task_id, subtaskId],
+        `SELECT 1 FROM finops_approvals WHERE task_id = $1 AND subtask_id = $2 AND tracker_id = $3 LIMIT 1`,
+        [row.task_id, subtaskId, tracker_id || null],
       );
       if (existing.rows.length) {
         await client.query("ROLLBACK");
-        return res.status(409).json({ error: "Already approved" });
+        return res
+          .status(409)
+          .json({ error: "Already approved for this tracker" });
       }
 
       // Insert approval record
       await client.query(
-        `INSERT INTO finops_approvals (task_id, subtask_id, approved_by, note)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (task_id, subtask_id) DO NOTHING`,
-        [row.task_id, subtaskId, approver_name, note || null],
+        `INSERT INTO finops_approvals (task_id, subtask_id, tracker_id, approved_by, note)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [
+          row.task_id,
+          subtaskId,
+          tracker_id || null,
+          approver_name,
+          note || null,
+        ],
       );
-
-      // Update finops_subtasks status to approved
-      // await client.query(
-      //   `UPDATE finops_subtasks SET status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = $1`,
-      //   [subtaskId],
-      // );
-
-      // // Also update finops_tracker for today's date if it exists
-      // const todayStr = new Date().toISOString().slice(0, 10);
-      // await client.query(
-      //   `UPDATE finops_tracker SET status = 'approved', updated_at = CURRENT_TIMESTAMP
-      //    WHERE subtask_id = $1 AND run_date = $2`,
-      //   [subtaskId, todayStr],
-      // );
 
       await client.query("COMMIT");
 
@@ -891,7 +919,9 @@ router.post("/subtasks/:id/approve", async (req: Request, res: Response) => {
 
       res.json({ ok: true, approved: true, status: "approved" });
     } catch (error) {
-      await client.query("ROLLBACK");
+      await client.query("ROLLBACK").catch(() => {
+        // ROLLBACK might fail if transaction is already aborted, ignore
+      });
       throw error;
     } finally {
       client.release();
